@@ -109,7 +109,7 @@ GOOGLE_CLIENT_SECRET=tu_client_secret
 ## Estructura del Proyecto
 
 ```
-emprendimiento-app/
+proyecto-postpenados/
 ├── app/                              # Código principal de la aplicación
 │   ├── models/                       # Modelos de datos
 │   ├── views/                        # Vistas/Controladores
@@ -176,12 +176,12 @@ black .
 
 1. Construye la imagen:
 ```bash
-docker build -t emprendimiento-app .
+docker build -t proyecto-postpenados .
 ```
 
 2. Ejecuta el contenedor:
 ```bash
-docker run -p 5000:5000 emprendimiento-app
+docker run -p 5000:5000 proyecto-postpenados
 ```
 
 O usa Docker Compose:
