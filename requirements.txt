@@ -1,0 +1,48 @@
+# Flask y extensiones principales
+Flask==2.3.3
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.5
+Flask-Login==0.6.3
+Flask-WTF==1.2.1
+Flask-Mail==0.9.1
+Flask-SocketIO==5.3.6
+python-dotenv==1.0.0
+Werkzeug==2.3.7
+Jinja2==3.1.2
+SQLAlchemy==2.0.23
+alembic==1.12.1
+WTForms==3.1.1
+email-validator==2.1.0
+itsdangerous==2.1.2
+gunicorn==21.2.0
+
+# Para manejo de archivos y datos
+Pillow==10.1.0
+openpyxl==3.1.2
+XlsxWriter==3.1.9
+PyPDF2==3.0.1
+reportlab==4.0.7
+pandas==2.1.2
+
+# Para el sistema de WebSockets
+eventlet==0.33.3
+python-socketio==5.10.0
+python-engineio==4.8.0
+
+# Para integraciones externas
+requests==2.31.0
+google-auth==2.23.4
+google-auth-oauthlib==1.1.0
+google-auth-httplib2==0.1.1
+google-api-python-client==2.108.0
+
+# Para seguridad
+bcrypt==4.0.1
+PyJWT==2.8.0
+
+# Para manejo de fechas y zonas horarias
+pytz==2023.3.post1
+
+# Extras y utilidades
+markdown==3.5.1
+humanize==4.9.0

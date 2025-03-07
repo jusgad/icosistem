@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Calendario de Reuniones | Panel del Aliado{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/fullcalendar.min.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar (si lo tienes en el diseño) -->
+        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+            {% include "ally/sidebar.html" %}
+        </div>
+        
+        <!-- Contenido principal -->
+        <div class="col-md-9 col-lg-10 ms-sm-auto px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Calendario de Actividades</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-add-event">
+                            <i class="bi bi-plus-circle"></i> Nueva Reunión
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-print-calendar">
+                            <i class="bi bi-printer"></i> Imprimir
+                        </button>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-filter"></i> Filtros
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <li><a class="dropdown-item" href="#" data-filter="all">Todos</a></li>
+                            <li><a class="dropdown-item" href="#" data-filter="meeting">Reuniones</a></li>
+                            <li><a class="dropdown-item" href="#" data-filter="deadline">Plazos</a></li>
+                            <li><a class="dropdown-item" href="#" data-filter="other">Otros</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerta para mensajes -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Calendario -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+
+            <!-- Próximas reuniones -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Próximas Reuniones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Hora</th>
+                                    <th>Emprendedor</th>
+                                    <th>Tipo</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if upcoming_meetings %}
+                                    {% for meeting in upcoming_meetings %}
+                                        <tr>
+                                            <td>{{ meeting.date.strftime('%d/%m/%Y') }}</td>
+                                            <td>{{ meeting.start_time.strftime('%H:%M') }}</td>
+                                            <td>{{ meeting.entrepreneur.user.name }}</td>
+                                            <td>{{ meeting.type }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ meeting.status_color }}">{{ meeting.status }}</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="{{ url_for('ally.calendar.view_meeting', meeting_id=meeting.id) }}" class="btn btn-outline-primary" title="Ver detalles">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    <a href="{{ url_for('ally.calendar.edit_meeting', meeting_id=meeting.id) }}" class="btn btn-outline-secondary" title="Editar">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    {% if meeting.status != 'completed' %}
+                                                        <a href="{{ url_for('ally.calendar.cancel_meeting', meeting_id=meeting.id) }}" class="btn btn-outline-danger" title="Cancelar" onclick="return confirm('¿Estás seguro de cancelar esta reunión?');">
+                                                            <i class="bi bi-x-circle"></i>
+                                                        </a>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-center">No hay reuniones próximas programadas</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para añadir/editar eventos -->
+<div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventModalLabel">Nueva Reunión</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="event-form" method="post" action="{{ url_for('ally.calendar.add_meeting') }}">
+                    {{ form.csrf_token }}
+                    <input type="hidden" name="meeting_id" id="meeting_id">
+                    
+                    <div class="mb-3">
+                        <label for="entrepreneur_id" class="form-label">Emprendedor</label>
+                        <select class="form-select" id="entrepreneur_id" name="entrepreneur_id" required>
+                            <option value="">Seleccionar emprendedor...</option>
+                            {% for entrepreneur in assigned_entrepreneurs %}
+                                <option value="{{ entrepreneur.id }}">{{ entrepreneur.user.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Título</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="date" class="form-label">Fecha</label>
+                            <input type="date" class="form-control" id="date" name="date" required>
+                        </div>
+                        <div class="col">
+                            <label for="time" class="form-label">Hora</label>
+                            <input type="time" class="form-control" id="time" name="time" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="duration" class="form-label">Duración (minutos)</label>
+                        <input type="number" class="form-control" id="duration" name="duration" min="15" step="15" value="60">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Ubicación/Enlace</label>
+                        <input type="text" class="form-control" id="location" name="location">
+                        <div class="form-text">Puede ser una dirección física o un enlace para reunión virtual</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="type" class="form-label">Tipo</label>
+                        <select class="form-select" id="type" name="type">
+                            <option value="regular">Reunión Regular</option>
+                            <option value="assessment">Evaluación</option>
+                            <option value="emergency">Urgente</option>
+                            <option value="other">Otro</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="send_notification" name="send_notification" checked>
+                        <label class="form-check-label" for="send_notification">
+                            Enviar notificación al emprendedor
+                        </label>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="add_to_google" name="add_to_google">
+                        <label class="form-check-label" for="add_to_google">
+                            Añadir a Google Calendar
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="save-event">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/fullcalendar.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/locale/es.js') }}"></script>
+<script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar calendario
+        const calendar = initCalendar('#calendar', {
+            events: {{ events|tojson }},
+            userId: {{ current_user.id }},
+            userRole: 'ally',
+            csrf_token: "{{ csrf_token() }}"
+        });
+        
+        // Manejar botón para añadir evento
+        document.getElementById('btn-add-event').addEventListener('click', function() {
+            // Resetear formulario
+            document.getElementById('event-form').reset();
+            document.getElementById('meeting_id').value = '';
+            document.getElementById('eventModalLabel').textContent = 'Nueva Reunión';
+            
+            // Establecer fecha predeterminada (hoy)
+            const today = new Date();
+            document.getElementById('date').value = today.toISOString().split('T')[0];
+            
+            // Mostrar modal
+            const eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
+            eventModal.show();
+        });
+        
+        // Manejar guardado de evento
+        document.getElementById('save-event').addEventListener('click', function() {
+            if (validateForm()) {
+                document.getElementById('event-form').submit();
+            }
+        });
+        
+        // Validar formulario
+        function validateForm() {
+            const form = document.getElementById('event-form');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return false;
+            }
+            return true;
+        }
+        
+        // Aplicar filtros
+        document.querySelectorAll('[data-filter]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const filter = this.getAttribute('data-filter');
+                if (filter === 'all') {
+                    calendar.getCalendar().getEvents().forEach(event => event.setProp('display', 'auto'));
+                } else {
+                    calendar.getCalendar().getEvents().forEach(event => {
+                        if (event.extendedProps.type === filter) {
+                            event.setProp('display', 'auto');
+                        } else {
+                            event.setProp('display', 'none');
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Manejar impresión
+        document.getElementById('btn-print-calendar').addEventListener('click', function() {
+            window.print();
+        });
+    });
+</script>
+{% endblock %}

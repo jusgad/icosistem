@@ -1,0 +1,1089 @@
+{% extends "base.html" %}
+
+{% block title %}Calendario | Portal de Emprendimiento{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/fullcalendar.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calendar.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar - Filtros y próximos eventos -->
+        <div class="col-md-3">
+            <!-- Filtros -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Filtros</h5>
+                </div>
+                <div class="card-body">
+                    <form id="calendarFilters">
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Evento</label>
+                            <div class="form-check">
+                                <input class="form-check-input event-type-filter" type="checkbox" value="meeting" id="meetingFilter" checked>
+                                <label class="form-check-label" for="meetingFilter">
+                                    <span class="badge bg-primary me-1">●</span> Reuniones
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input event-type-filter" type="checkbox" value="task" id="taskFilter" checked>
+                                <label class="form-check-label" for="taskFilter">
+                                    <span class="badge bg-success me-1">●</span> Tareas
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input event-type-filter" type="checkbox" value="deadline" id="deadlineFilter" checked>
+                                <label class="form-check-label" for="deadlineFilter">
+                                    <span class="badge bg-danger me-1">●</span> Fechas límite
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input event-type-filter" type="checkbox" value="other" id="otherFilter" checked>
+                                <label class="form-check-label" for="otherFilter">
+                                    <span class="badge bg-info me-1">●</span> Otros eventos
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Participantes</label>
+                            <div class="form-check">
+                                <input class="form-check-input participant-filter" type="checkbox" value="ally" id="allyFilter" checked>
+                                <label class="form-check-label" for="allyFilter">
+                                    Aliados
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input participant-filter" type="checkbox" value="entrepreneur" id="entrepreneurFilter" checked>
+                                <label class="form-check-label" for="entrepreneurFilter">
+                                    Otros emprendedores
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input participant-filter" type="checkbox" value="personal" id="personalFilter" checked>
+                                <label class="form-check-label" for="personalFilter">
+                                    Eventos personales
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="button" id="resetFilters" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-arrow-counterclockwise"></i> Restablecer filtros
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Próximos eventos -->
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Próximos Eventos</h5>
+                    <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#addEventModal">
+                        <i class="bi bi-plus"></i>
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush" id="upcomingEventsList">
+                        {% if upcoming_events %}
+                            {% for event in upcoming_events %}
+                                <a href="#" class="list-group-item list-group-item-action event-item" 
+                                   data-event-id="{{ event.id }}" data-bs-toggle="modal" data-bs-target="#viewEventModal">
+                                    <div class="d-flex w-100 justify-content-between align-items-center">
+                                        <h6 class="mb-1 text-truncate">
+                                            <span class="badge 
+                                                {% if event.event_type == 'meeting' %}bg-primary
+                                                {% elif event.event_type == 'task' %}bg-success
+                                                {% elif event.event_type == 'deadline' %}bg-danger
+                                                {% else %}bg-info{% endif %} me-1">●</span>
+                                            {{ event.title }}
+                                        </h6>
+                                        <small class="text-muted">
+                                            {% if event.is_today %}Hoy{% elif event.is_tomorrow %}Mañana{% else %}{{ event.start_time.strftime('%d/%m') }}{% endif %}
+                                        </small>
+                                    </div>
+                                    <div class="d-flex w-100 justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            {% if event.all_day %}
+                                                Todo el día
+                                            {% else %}
+                                                {{ event.start_time.strftime('%H:%M') }}
+                                                {% if event.end_time %} - {{ event.end_time.strftime('%H:%M') }}{% endif %}
+                                            {% endif %}
+                                        </small>
+                                        {% if event.participants %}
+                                            <small class="text-muted">
+                                                <i class="bi bi-people"></i> {{ event.participants|length }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-4">
+                                <p class="text-muted mb-0">No hay eventos próximos</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Calendario principal -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0 d-inline-block" id="calendarTitle">Calendario</h5>
+                        <div class="btn-group ms-3">
+                            <button type="button" id="prevBtn" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <button type="button" id="todayBtn" class="btn btn-sm btn-outline-primary">Hoy</button>
+                            <button type="button" id="nextBtn" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" id="monthViewBtn" class="btn btn-sm btn-outline-primary active">Mes</button>
+                        <button type="button" id="weekViewBtn" class="btn btn-sm btn-outline-primary">Semana</button>
+                        <button type="button" id="dayViewBtn" class="btn btn-sm btn-outline-primary">Día</button>
+                        <button type="button" id="listViewBtn" class="btn btn-sm btn-outline-primary">Lista</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para añadir evento -->
+<div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEventModalLabel">Añadir Evento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addEventForm" action="{{ url_for('entrepreneur.calendar.add_event') }}" method="post">
+                <div class="modal-body">
+                    {{ event_form.csrf_token }}
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Título</label>
+                        {{ event_form.title(class="form-control") }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="event_type" class="form-label">Tipo de evento</label>
+                        {{ event_form.event_type(class="form-select") }}
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ event_form.all_day(class="form-check-input") }}
+                            <label class="form-check-label" for="all_day">
+                                Todo el día
+                            </label>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="start_date" class="form-label">Fecha de inicio</label>
+                            {{ event_form.start_date(class="form-control", type="date") }}
+                        </div>
+                        <div class="col-md-6 time-field">
+                            <label for="start_time" class="form-label">Hora de inicio</label>
+                            {{ event_form.start_time(class="form-control", type="time") }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="end_date" class="form-label">Fecha de fin</label>
+                            {{ event_form.end_date(class="form-control", type="date") }}
+                        </div>
+                        <div class="col-md-6 time-field">
+                            <label for="end_time" class="form-label">Hora de fin</label>
+                            {{ event_form.end_time(class="form-control", type="time") }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descripción</label>
+                        {{ event_form.description(class="form-control", rows=3) }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Ubicación</label>
+                        {{ event_form.location(class="form-control") }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="participants" class="form-label">Participantes</label>
+                        {{ event_form.participants(class="form-select", multiple=True) }}
+                        <div class="form-text">Mantén presionada la tecla Ctrl para seleccionar múltiples participantes.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="color" class="form-label">Color</label>
+                        {{ event_form.color(class="form-control", type="color") }}
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ event_form.reminder(class="form-check-input") }}
+                            <label class="form-check-label" for="reminder">
+                                Recordatorio
+                            </label>
+                        </div>
+                    </div>
+                    <div id="reminderTimeField" class="mb-3 d-none">
+                        <label for="reminder_time" class="form-label">Tiempo de recordatorio</label>
+                        {{ event_form.reminder_time(class="form-select") }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ver evento -->
+<div class="modal fade" id="viewEventModal" tabindex="-1" aria-labelledby="viewEventModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewEventModalLabel">Detalles del Evento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="eventDetails">
+                    <h4 id="eventTitle" class="mb-3"></h4>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-calendar-event me-2 text-primary"></i>
+                            <strong>Fecha y hora:</strong>
+                        </div>
+                        <p id="eventDateTime" class="ms-4 mb-0"></p>
+                    </div>
+                    
+                    <div class="mb-3" id="eventLocationContainer">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-geo-alt me-2 text-primary"></i>
+                            <strong>Ubicación:</strong>
+                        </div>
+                        <p id="eventLocation" class="ms-4 mb-0"></p>
+                    </div>
+                    
+                    <div class="mb-3" id="eventDescriptionContainer">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-card-text me-2 text-primary"></i>
+                            <strong>Descripción:</strong>
+                        </div>
+                        <p id="eventDescription" class="ms-4 mb-0"></p>
+                    </div>
+                    
+                    <div class="mb-3" id="eventParticipantsContainer">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-people me-2 text-primary"></i>
+                            <strong>Participantes:</strong>
+                        </div>
+                        <div id="eventParticipants" class="ms-4"></div>
+                    </div>
+                    
+                    <div class="mb-3" id="eventReminderContainer">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-bell me-2 text-primary"></i>
+                            <strong>Recordatorio:</strong>
+                        </div>
+                        <p id="eventReminder" class="ms-4 mb-0"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="editEventBtn">Editar</button>
+                <button type="button" class="btn btn-danger" id="deleteEventBtn">Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para editar evento -->
+<div class="modal fade" id="editEventModal" tabindex="-1" aria-labelledby="editEventModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editEventModalLabel">Editar Evento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editEventForm" action="{{ url_for('entrepreneur.calendar.edit_event') }}" method="post">
+                <div class="modal-body">
+                    {{ edit_form.csrf_token }}
+                    <input type="hidden" id="edit_event_id" name="event_id">
+                    <div class="mb-3">
+                        <label for="edit_title" class="form-label">Título</label>
+                        {{ edit_form.title(class="form-control", id="edit_title") }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_event_type" class="form-label">Tipo de evento</label>
+                        {{ edit_form.event_type(class="form-select", id="edit_event_type") }}
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ edit_form.all_day(class="form-check-input", id="edit_all_day") }}
+                            <label class="form-check-label" for="edit_all_day">
+                                Todo el día
+                            </label>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit_start_date" class="form-label">Fecha de inicio</label>
+                            {{ edit_form.start_date(class="form-control", type="date", id="edit_start_date") }}
+                        </div>
+                        <div class="col-md-6 edit-time-field">
+                            <label for="edit_start_time" class="form-label">Hora de inicio</label>
+                            {{ edit_form.start_time(class="form-control", type="time", id="edit_start_time") }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="edit_end_date" class="form-label">Fecha de fin</label>
+                            {{ edit_form.end_date(class="form-control", type="date", id="edit_end_date") }}
+                        </div>
+                        <div class="col-md-6 edit-time-field">
+                            <label for="edit_end_time" class="form-label">Hora de fin</label>
+                            {{ edit_form.end_time(class="form-control", type="time", id="edit_end_time") }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_description" class="form-label">Descripción</label>
+                        {{ edit_form.description(class="form-control", rows=3, id="edit_description") }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_location" class="form-label">Ubicación</label>
+                        {{ edit_form.location(class="form-control", id="edit_location") }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_participants" class="form-label">Participantes</label>
+                        {{ edit_form.participants(class="form-select", multiple=True, id="edit_participants") }}
+                        <div class="form-text">Mantén presionada la tecla Ctrl para seleccionar múltiples participantes.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_color" class="form-label">Color</label>
+                        {{ edit_form.color(class="form-control", type="color", id="edit_color") }}
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ edit_form.reminder(class="form-check-input", id="edit_reminder") }}
+                            <label class="form-check-label" for="edit_reminder">
+                                Recordatorio
+                            </label>
+                        </div>
+                    </div>
+                    <div id="editReminderTimeField" class="mb-3 d-none">
+                        <label for="edit_reminder_time" class="form-label">Tiempo de recordatorio</label>
+                        {{ edit_form.reminder_time(class="form-select", id="edit_reminder_time") }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar evento -->
+<div class="modal fade" id="deleteEventConfirmModal" tabindex="-1" aria-labelledby="deleteEventConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteEventConfirmModalLabel">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar este evento? Esta acción no se puede deshacer.</p>
+                <p><strong>Evento: </strong><span id="deleteEventTitle"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteEventForm" action="{{ url_for('entrepreneur.calendar.delete_event') }}" method="post">
+                    <input type="hidden" id="delete_event_id" name="event_id">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/fullcalendar.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/es.js') }}"></script>
+<script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
+<script>
+    $(document).ready(function() {
+        // Inicializar FullCalendar
+        var calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+            locale: 'es',
+            initialView: 'dayGridMonth',
+            headerToolbar: false,
+            selectable: true,
+            selectMirror: true,
+            editable: true,
+            dayMaxEvents: true,
+            events: {{ events_json|safe }},
+            select: function(info) {
+                // Preparar modal para añadir evento
+                $('#start_date').val(info.startStr);
+                if (info.end) {
+                    // Restar un día a la fecha de fin para eventos de todo el día
+                    var endDate = new Date(info.end);
+                    endDate.setDate(endDate.getDate() - 1);
+                    $('#end_date').val(endDate.toISOString().split('T')[0]);
+                } else {
+                    $('#end_date').val(info.startStr);
+                }
+                
+                // Abrir modal
+                $('#addEventModal').modal('show');
+            },
+            eventClick: function(info) {
+                // Cargar datos del evento en el modal de visualización
+                $('#eventTitle').text(info.event.title);
+                
+                // Formatear fecha y hora
+                var startDate = info.event.start;
+                var endDate = info.event.end;
+                var dateTimeText = '';
+                
+                if (info.event.allDay) {
+                    if (endDate) {
+                        // Restar un día a la fecha de fin para eventos de todo el día
+                        endDate = new Date(endDate);
+                        endDate.setDate(endDate.getDate() - 1);
+                        
+                        if (startDate.toDateString() === endDate.toDateString()) {
+                            dateTimeText = moment(startDate).format('DD/MM/YYYY') + ' (Todo el día)';
+                        } else {
+                            dateTimeText = moment(startDate).format('DD/MM/YYYY') + ' - ' + 
+                                          moment(endDate).format('DD/MM/YYYY') + ' (Todo el día)';
+                        }
+                    } else {
+                        dateTimeText = moment(startDate).format('DD/MM/YYYY') + ' (Todo el día)';
+                    }
+                } else {
+                    if (endDate) {
+                        if (startDate.toDateString() === endDate.toDateString()) {
+                            dateTimeText = moment(startDate).format('DD/MM/YYYY, HH:mm') + ' - ' + 
+                                          moment(endDate).format('HH:mm');
+                        } else {
+                            dateTimeText = moment(startDate).format('DD/MM/YYYY, HH:mm') + ' - ' + 
+                                          moment(endDate).format('DD/MM/YYYY, HH:mm');
+                        }
+                    } else {
+                        dateTimeText = moment(startDate).format('DD/MM/YYYY, HH:mm');
+                    }
+                }
+                
+                $('#eventDateTime').text(dateTimeText);
+                
+                // Ubicación
+                if (info.event.extendedProps.location) {
+                    $('#eventLocation').text(info.event.extendedProps.location);
+                    $('#eventLocationContainer').show();
+                } else {
+                    $('#eventLocationContainer').hide();
+                }
+                
+                // Descripción
+                if (info.event.extendedProps.description) {
+                    $('#eventDescription').text(info.event.extendedProps.description);
+                    $('#eventDescriptionContainer').show();
+                } else {
+                    $('#eventDescriptionContainer').hide();
+                }
+                
+                // Participantes
+                if (info.event.extendedProps.participants && info.event.extendedProps.participants.length > 0) {
+                    var participantsHtml = '';
+                    info.event.extendedProps.participants.forEach(function(participant) {
+                        participantsHtml += `
+                            <div class="d-flex align-items-center mb-2">
+                                <img src="${participant.image_url}" alt="${participant.name}" 
+                                     class="rounded-circle me-2" width="30" height="30">
+                                <span>${participant.name}</span>
+                            </div>
+                        `;
+                    });
+                    $('#eventParticipants').html(participantsHtml);
+                    $('#eventParticipantsContainer').show();
+                } else {
+                    $('#eventParticipantsContainer').hide();
+                }
+                
+                // Recordatorio
+                if (info.event.extendedProps.reminder) {
+                    $('#eventReminder').text(info.event.extendedProps.reminder_text);
+                    $('#eventReminderContainer').show();
+                } else {
+                    $('#eventReminderContainer').hide();
+                }
+                
+                // Guardar ID del evento para edición/eliminación
+                $('#edit_event_id').val(info.event.id);
+                $('#delete_event_id').val(info.event.id);
+                $('#deleteEventTitle').text(info.event.title);
+
+                // Abrir modal
+$('#viewEventModal').modal('show');
+},
+eventDrop: function(info) {
+    // Actualizar evento después de arrastrar
+    $.ajax({
+        url: "{{ url_for('entrepreneur.calendar.update_event_dates') }}",
+        type: 'POST',
+        data: {
+            event_id: info.event.id,
+            start_date: info.event.start.toISOString(),
+            end_date: info.event.end ? info.event.end.toISOString() : null,
+            all_day: info.event.allDay
+        },
+        success: function(response) {
+            if (response.status === 'success') {
+                // Actualizar lista de próximos eventos
+                updateUpcomingEvents();
+            } else {
+                alert('Error al actualizar el evento: ' + response.message);
+                info.revert();
+            }
+        },
+        error: function() {
+            alert('Error de conexión al actualizar el evento');
+            info.revert();
+        }
+    });
+},
+eventResize: function(info) {
+    // Actualizar evento después de redimensionar
+    $.ajax({
+        url: "{{ url_for('entrepreneur.calendar.update_event_dates') }}",
+        type: 'POST',
+        data: {
+            event_id: info.event.id,
+            start_date: info.event.start.toISOString(),
+            end_date: info.event.end ? info.event.end.toISOString() : null,
+            all_day: info.event.allDay
+        },
+        success: function(response) {
+            if (response.status === 'success') {
+                // Actualizar lista de próximos eventos
+                updateUpcomingEvents();
+            } else {
+                alert('Error al actualizar el evento: ' + response.message);
+                info.revert();
+            }
+        },
+        error: function() {
+            alert('Error de conexión al actualizar el evento');
+            info.revert();
+        }
+    });
+}
+});
+
+// Botones de navegación del calendario
+$('#prevBtn').click(function() {
+    calendar.prev();
+    updateCalendarTitle();
+});
+
+$('#nextBtn').click(function() {
+    calendar.next();
+    updateCalendarTitle();
+});
+
+$('#todayBtn').click(function() {
+    calendar.today();
+    updateCalendarTitle();
+});
+
+// Botones de vista del calendario
+$('#monthViewBtn').click(function() {
+    calendar.changeView('dayGridMonth');
+    updateViewButtons(this);
+});
+
+$('#weekViewBtn').click(function() {
+    calendar.changeView('timeGridWeek');
+    updateViewButtons(this);
+});
+
+$('#dayViewBtn').click(function() {
+    calendar.changeView('timeGridDay');
+    updateViewButtons(this);
+});
+
+$('#listViewBtn').click(function() {
+    calendar.changeView('listWeek');
+    updateViewButtons(this);
+});
+
+// Actualizar título del calendario
+function updateCalendarTitle() {
+    var view = calendar.view;
+    var title = '';
+    
+    if (view.type === 'dayGridMonth') {
+        title = moment(view.currentStart).format('MMMM YYYY');
+    } else if (view.type === 'timeGridWeek' || view.type === 'listWeek') {
+        title = moment(view.currentStart).format('D MMM') + ' - ' + 
+                moment(view.currentEnd).subtract(1, 'days').format('D MMM, YYYY');
+    } else if (view.type === 'timeGridDay') {
+        title = moment(view.currentStart).format('D [de] MMMM, YYYY');
+    }
+    
+    $('#calendarTitle').text(title.charAt(0).toUpperCase() + title.slice(1));
+}
+
+// Actualizar botones de vista
+function updateViewButtons(activeButton) {
+    $('#monthViewBtn, #weekViewBtn, #dayViewBtn, #listViewBtn').removeClass('active');
+    $(activeButton).addClass('active');
+}
+
+// Inicializar título del calendario
+updateCalendarTitle();
+
+// Filtros de calendario
+$('.event-type-filter, .participant-filter').change(function() {
+    applyFilters();
+});
+
+$('#resetFilters').click(function() {
+    $('.event-type-filter, .participant-filter').prop('checked', true);
+    applyFilters();
+});
+
+function applyFilters() {
+    var selectedEventTypes = [];
+    var selectedParticipantTypes = [];
+    
+    $('.event-type-filter:checked').each(function() {
+        selectedEventTypes.push($(this).val());
+    });
+    
+    $('.participant-filter:checked').each(function() {
+        selectedParticipantTypes.push($(this).val());
+    });
+    
+    calendar.getEvents().forEach(function(event) {
+        var eventType = event.extendedProps.event_type;
+        var participantType = event.extendedProps.participant_type;
+        
+        var showEvent = selectedEventTypes.includes(eventType) && 
+                        (participantType ? selectedParticipantTypes.includes(participantType) : true);
+        
+        event.setProp('display', showEvent ? 'auto' : 'none');
+    });
+}
+
+// Manejo de eventos de todo el día
+$('#all_day').change(function() {
+    if ($(this).is(':checked')) {
+        $('.time-field').hide();
+    } else {
+        $('.time-field').show();
+    }
+});
+
+$('#edit_all_day').change(function() {
+    if ($(this).is(':checked')) {
+        $('.edit-time-field').hide();
+    } else {
+        $('.edit-time-field').show();
+    }
+});
+
+// Manejo de recordatorios
+$('#reminder').change(function() {
+    if ($(this).is(':checked')) {
+        $('#reminderTimeField').removeClass('d-none');
+    } else {
+        $('#reminderTimeField').addClass('d-none');
+    }
+});
+
+$('#edit_reminder').change(function() {
+    if ($(this).is(':checked')) {
+        $('#editReminderTimeField').removeClass('d-none');
+    } else {
+        $('#editReminderTimeField').addClass('d-none');
+    }
+});
+
+// Botón de editar evento
+$('#editEventBtn').click(function() {
+    var eventId = $('#edit_event_id').val();
+    
+    // Cargar datos del evento en el formulario de edición
+    $.ajax({
+        url: "{{ url_for('entrepreneur.calendar.get_event') }}",
+        type: 'GET',
+        data: { event_id: eventId },
+        success: function(response) {
+            if (response.status === 'success') {
+                var event = response.event;
+                
+                // Llenar formulario con datos del evento
+                $('#edit_title').val(event.title);
+                $('#edit_event_type').val(event.event_type);
+                $('#edit_all_day').prop('checked', event.all_day);
+                
+                // Fechas y horas
+                $('#edit_start_date').val(event.start_date);
+                $('#edit_start_time').val(event.start_time);
+                $('#edit_end_date').val(event.end_date);
+                $('#edit_end_time').val(event.end_time);
+                
+                // Otros campos
+                $('#edit_description').val(event.description);
+                $('#edit_location').val(event.location);
+                $('#edit_color').val(event.color);
+                
+                // Participantes
+                $('#edit_participants').val(event.participants);
+                
+                // Recordatorio
+                $('#edit_reminder').prop('checked', event.reminder);
+                if (event.reminder) {
+                    $('#edit_reminder_time').val(event.reminder_time);
+                    $('#editReminderTimeField').removeClass('d-none');
+                } else {
+                    $('#editReminderTimeField').addClass('d-none');
+                }
+                
+                // Mostrar/ocultar campos de tiempo según si es todo el día
+                if (event.all_day) {
+                    $('.edit-time-field').hide();
+                } else {
+                    $('.edit-time-field').show();
+                }
+                
+                // Cerrar modal de visualización y abrir modal de edición
+                $('#viewEventModal').modal('hide');
+                $('#editEventModal').modal('show');
+            } else {
+                alert('Error al cargar los datos del evento: ' + response.message);
+            }
+        },
+        error: function() {
+            alert('Error de conexión al cargar los datos del evento');
+        }
+    });
+});
+
+// Botón de eliminar evento
+$('#deleteEventBtn').click(function() {
+    $('#viewEventModal').modal('hide');
+    $('#deleteEventConfirmModal').modal('show');
+});
+
+// Actualizar lista de próximos eventos
+function updateUpcomingEvents() {
+    $.ajax({
+        url: "{{ url_for('entrepreneur.calendar.get_upcoming_events') }}",
+        type: 'GET',
+        success: function(response) {
+            if (response.status === 'success') {
+                var upcomingEventsHtml = '';
+                
+                if (response.events.length > 0) {
+                    response.events.forEach(function(event) {
+                        var badgeClass = 'bg-info';
+                        if (event.event_type === 'meeting') badgeClass = 'bg-primary';
+                        else if (event.event_type === 'task') badgeClass = 'bg-success';
+                        else if (event.event_type === 'deadline') badgeClass = 'bg-danger';
+                        
+                        var dateText = event.is_today ? 'Hoy' : 
+                                      (event.is_tomorrow ? 'Mañana' : event.date);
+                        
+                        upcomingEventsHtml += `
+                            <a href="#" class="list-group-item list-group-item-action event-item" 
+                               data-event-id="${event.id}" data-bs-toggle="modal" data-bs-target="#viewEventModal">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <h6 class="mb-1 text-truncate">
+                                        <span class="badge ${badgeClass} me-1">●</span>
+                                        ${event.title}
+                                    </h6>
+                                    <small class="text-muted">${dateText}</small>
+                                </div>
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        ${event.all_day ? 'Todo el día' : event.time}
+                                    </small>
+                                    ${event.participants_count > 0 ? 
+                                        `<small class="text-muted">
+                                            <i class="bi bi-people"></i> ${event.participants_count}
+                                        </small>` : ''}
+                                </div>
+                            </a>
+                        `;
+                    });
+                } else {
+                    upcomingEventsHtml = `
+                        <div class="text-center py-4">
+                            <p class="text-muted mb-0">No hay eventos próximos</p>
+                        </div>
+                    `;
+                }
+                
+                $('#upcomingEventsList').html(upcomingEventsHtml);
+                
+                // Actualizar manejador de eventos para los nuevos elementos
+                $('.event-item').click(function() {
+                    var eventId = $(this).data('event-id');
+                    var event = calendar.getEventById(eventId);
+                    if (event) {
+                        calendar.gotoDate(event.start);
+                        setTimeout(function() {
+                            event.setProp('display', 'auto');
+                        }, 100);
+                    }
+                });
+            }
+        }
+    });
+}
+
+// Manejar envío de formularios
+$('#addEventForm').submit(function(e) {
+    e.preventDefault();
+    
+    $.ajax({
+        url: $(this).attr('action'),
+        type: 'POST',
+        data: $(this).serialize(),
+        success: function(response) {
+            if (response.status === 'success') {
+                // Añadir evento al calendario
+                calendar.addEvent({
+                    id: response.event.id,
+                    title: response.event.title,
+                    start: response.event.start,
+                    end: response.event.end,
+                    allDay: response.event.all_day,
+                    color: response.event.color,
+                    extendedProps: {
+                        event_type: response.event.event_type,
+                        description: response.event.description,
+                        location: response.event.location,
+                        participant_type: response.event.participant_type,
+                        participants: response.event.participants,
+                        reminder: response.event.reminder,
+                        reminder_text: response.event.reminder_text
+                    }
+                });
+                
+                // Cerrar modal y limpiar formulario
+                $('#addEventModal').modal('hide');
+                $('#addEventForm')[0].reset();
+                
+                // Actualizar lista de próximos eventos
+                updateUpcomingEvents();
+            } else {
+                alert('Error al crear el evento: ' + response.message);
+            }
+        },
+        error: function() {
+            alert('Error de conexión al crear el evento');
+        }
+    });
+});
+
+$('#editEventForm').submit(function(e) {
+    e.preventDefault();
+    
+    $.ajax({
+        url: $(this).attr('action'),
+        type: 'POST',
+        data: $(this).serialize(),
+        success: function(response) {
+            if (response.status === 'success') {
+                // Actualizar evento en el calendario
+                var event = calendar.getEventById(response.event.id);
+                if (event) {
+                    event.setProp('title', response.event.title);
+                    event.setProp('color', response.event.color);
+                    event.setStart(response.event.start);
+                    event.setEnd(response.event.end);
+                    event.setAllDay(response.event.all_day);
+                    event.setExtendedProp('event_type', response.event.event_type);
+                    event.setExtendedProp('description', response.event.description);
+                    event.setExtendedProp('location', response.event.location);
+                    event.setExtendedProp('participant_type', response.event.participant_type);
+                    event.setExtendedProp('participants', response.event.participants);
+                    event.setExtendedProp('reminder', response.event.reminder);
+                    event.setExtendedProp('reminder_text', response.event.reminder_text);
+                }
+                
+                // Cerrar modal
+                $('#editEventModal').modal('hide');
+                
+                // Actualizar lista de próximos eventos
+                updateUpcomingEvents();
+            } else {
+                alert('Error al actualizar el evento: ' + response.message);
+            }
+        },
+        error: function() {
+            alert('Error de conexión al actualizar el evento');
+        }
+    });
+});
+
+$('#deleteEventForm').submit(function(e) {
+    e.preventDefault();
+    
+    $.ajax({
+        url: $(this).attr('action'),
+        type: 'POST',
+        data: $(this).serialize(),
+        success: function(response) {
+            if (response.status === 'success') {
+                // Eliminar evento del calendario
+                var event = calendar.getEventById($('#delete_event_id').val());
+                if (event) {
+                    event.remove();
+                }
+                
+                // Cerrar modal
+                $('#deleteEventConfirmModal').modal('hide');
+                
+                // Actualizar lista de próximos eventos
+                updateUpcomingEvents();
+            } else {
+                alert('Error al eliminar el evento: ' + response.message);
+            }
+        },
+        error: function() {
+            alert('Error de conexión al eliminar el evento');
+        }
+    });
+});
+
+// Manejar clic en eventos de la lista de próximos eventos
+$(document).on('click', '.event-item', function() {
+    var eventId = $(this).data('event-id');
+    
+    // Cargar datos del evento en el modal de visualización
+    $.ajax({
+        url: "{{ url_for('entrepreneur.calendar.get_event') }}",
+        type: 'GET',
+        data: { event_id: eventId },
+        success: function(response) {
+            if (response.status === 'success') {
+                var event = response.event;
+                
+                // Título
+                $('#eventTitle').text(event.title);
+                
+                // Fecha y hora
+                var dateTimeText = '';
+                if (event.all_day) {
+                    if (event.start_date === event.end_date) {
+                        dateTimeText = moment(event.start_date).format('DD/MM/YYYY') + ' (Todo el día)';
+                    } else {
+                        dateTimeText = moment(event.start_date).format('DD/MM/YYYY') + ' - ' + 
+                                      moment(event.end_date).format('DD/MM/YYYY') + ' (Todo el día)';
+                    }
+                } else {
+                    if (event.start_date === event.end_date) {
+                        dateTimeText = moment(event.start_date).format('DD/MM/YYYY') + ', ' + 
+                                      event.start_time + ' - ' + event.end_time;
+                    } else {
+                        dateTimeText = moment(event.start_date).format('DD/MM/YYYY') + ', ' + event.start_time + ' - ' + 
+                                      moment(event.end_date).format('DD/MM/YYYY') + ', ' + event.end_time;
+                    }
+                }
+                $('#eventDateTime').text(dateTimeText);
+                
+                // Ubicación
+                if (event.location) {
+                    $('#eventLocation').text(event.location);
+                    $('#eventLocationContainer').show();
+                } else {
+                    $('#eventLocationContainer').hide();
+                }
+                
+                // Descripción
+                if (event.description) {
+                    $('#eventDescription').text(event.description);
+                    $('#eventDescriptionContainer').show();
+                } else {
+                    $('#eventDescriptionContainer').hide();
+                }
+                
+                // Participantes
+                if (event.participants && event.participants.length > 0) {
+                    var participantsHtml = '';
+                    event.participants.forEach(function(participant) {
+                        participantsHtml += `
+                            <div class="d-flex align-items-center mb-2">
+                                <img src="${participant.image_url}" alt="${participant.name}" 
+                                     class="rounded-circle me-2" width="30" height="30">
+                                <span>${participant.name}</span>
+                            </div>
+                        `;
+                    });
+                    $('#eventParticipants').html(participantsHtml);
+                    $('#eventParticipantsContainer').show();
+                } else {
+                    $('#eventParticipantsContainer').hide();
+                }
+                
+                // Recordatorio
+                if (event.reminder) {
+                    $('#eventReminder').text(event.reminder_text);
+                    $('#eventReminderContainer').show();
+                } else {
+                    $('#eventReminderContainer').hide();
+                }
+                
+                // Guardar ID del evento para edición/eliminación
+                $('#edit_event_id').val(event.id);
+                $('#delete_event_id').val(event.id);
+                $('#deleteEventTitle').text(event.title);
+                
+                // Resaltar evento en el calendario
+                var calEvent = calendar.getEventById(event.id);
+                if (calEvent) {
+                    calendar.gotoDate(calEvent.start);
+                    setTimeout(function() {
+                        calEvent.setProp('display', 'auto');
+                    }, 100);
+                }
+            } else {
+                alert('Error al cargar los datos del evento: ' + response.message);
+            }
+        },
+        error: function() {
+            alert('Error de conexión al cargar los datos del evento');
+        }
+    });
+});
+
+// Inicializar calendario
+calendar.render();
+});
+</script>
+{% endblock %}
+
+{% endblock content %}

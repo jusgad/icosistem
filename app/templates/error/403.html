@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Acceso denegado - Plataforma de Emprendimiento{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="display-1 text-danger">403</h1>
+            <h2 class="mb-4">Acceso denegado</h2>
+            <p class="lead mb-5">Lo sentimos, no tienes permiso para acceder a esta página.</p>
+            <img src="{{ url_for('static', filename='images/403-illustration.svg') }}" alt="Acceso denegado" class="img-fluid mb-4" style="max-height: 300px;">
+            <div>
+                <a href="{{ url_for('main.index') }}" class="btn btn-primary">Volver al inicio</a>
+                {% if not current_user.is_authenticated %}
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary ms-2">Iniciar sesión</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

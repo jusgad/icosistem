@@ -1,0 +1,679 @@
+{% extends "base.html" %}
+
+{% block title %}Mensajes | Portal de Emprendimiento{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/messages.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar - Lista de contactos -->
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Mensajes</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="input-group p-2 border-bottom">
+                        <input type="text" class="form-control" id="searchContact" placeholder="Buscar contacto...">
+                        <button class="btn btn-outline-secondary" type="button">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                    <div class="contact-list">
+                        <!-- Aliados asignados -->
+                        {% if entrepreneur.allies %}
+                            <div class="list-group-item fw-bold bg-light">Mis Aliados</div>
+                            {% for relationship in entrepreneur.allies %}
+                                <a href="{{ url_for('entrepreneur.messages.chat', contact_id=relationship.ally.id, contact_type='ally') }}" 
+                                   class="list-group-item list-group-item-action d-flex align-items-center p-3 
+                                   {% if active_chat and active_chat.id == relationship.ally.id and active_chat_type == 'ally' %}active{% endif %}">
+                                    <div class="position-relative me-3">
+                                        {% if relationship.ally.profile_image %}
+                                            <img src="{{ url_for('static', filename='uploads/' + relationship.ally.profile_image) }}" 
+                                                 alt="Foto de perfil" class="rounded-circle" width="40" height="40">
+                                        {% else %}
+                                            <img src="{{ url_for('static', filename='images/default-profile.png') }}" 
+                                                 alt="Foto de perfil por defecto" class="rounded-circle" width="40" height="40">
+                                        {% endif %}
+                                        <span class="position-absolute bottom-0 end-0 
+                                            {% if relationship.ally.user.is_online %}bg-success{% else %}bg-secondary{% endif %} 
+                                            rounded-circle p-1" style="width: 12px; height: 12px;"></span>
+                                    </div>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0 text-truncate">{{ relationship.ally.user.full_name }}</h6>
+                                            {% if relationship.ally.unread_messages_count > 0 %}
+                                                <span class="badge bg-danger rounded-pill">{{ relationship.ally.unread_messages_count }}</span>
+                                            {% endif %}
+                                        </div>
+                                        <p class="text-muted small mb-0 text-truncate">
+                                            {% if relationship.ally.last_message %}
+                                                {{ relationship.ally.last_message.content | truncate(30) }}
+                                            {% else %}
+                                                <em>No hay mensajes</em>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        {% endif %}
+                        
+                        <!-- Otros emprendedores -->
+                        <div class="list-group-item fw-bold bg-light">Otros Emprendedores</div>
+                        {% for other_entrepreneur in other_entrepreneurs %}
+                            <a href="{{ url_for('entrepreneur.messages.chat', contact_id=other_entrepreneur.id, contact_type='entrepreneur') }}" 
+                               class="list-group-item list-group-item-action d-flex align-items-center p-3
+                               {% if active_chat and active_chat.id == other_entrepreneur.id and active_chat_type == 'entrepreneur' %}active{% endif %}">
+                                <div class="position-relative me-3">
+                                    {% if other_entrepreneur.profile_image %}
+                                        <img src="{{ url_for('static', filename='uploads/' + other_entrepreneur.profile_image) }}" 
+                                             alt="Foto de perfil" class="rounded-circle" width="40" height="40">
+                                    {% else %}
+                                        <img src="{{ url_for('static', filename='images/default-profile.png') }}" 
+                                             alt="Foto de perfil por defecto" class="rounded-circle" width="40" height="40">
+                                    {% endif %}
+                                    <span class="position-absolute bottom-0 end-0 
+                                        {% if other_entrepreneur.user.is_online %}bg-success{% else %}bg-secondary{% endif %} 
+                                        rounded-circle p-1" style="width: 12px; height: 12px;"></span>
+                                </div>
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0 text-truncate">{{ other_entrepreneur.user.full_name }}</h6>
+                                        {% if other_entrepreneur.unread_messages_count > 0 %}
+                                            <span class="badge bg-danger rounded-pill">{{ other_entrepreneur.unread_messages_count }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <p class="text-muted small mb-0 text-truncate">
+                                        {% if other_entrepreneur.last_message %}
+                                            {{ other_entrepreneur.last_message.content | truncate(30) }}
+                                        {% else %}
+                                            <em>No hay mensajes</em>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Área de chat -->
+        <div class="col-md-9">
+            <div class="card">
+                {% if active_chat %}
+                    <!-- Encabezado del chat -->
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center p-3">
+                        <div class="d-flex align-items-center">
+                            <div class="position-relative me-3">
+                                {% if active_chat.profile_image %}
+                                    <img src="{{ url_for('static', filename='uploads/' + active_chat.profile_image) }}" 
+                                         alt="Foto de perfil" class="rounded-circle" width="45" height="45">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename='images/default-profile.png') }}" 
+                                         alt="Foto de perfil por defecto" class="rounded-circle" width="45" height="45">
+                                {% endif %}
+                                <span class="position-absolute bottom-0 end-0 
+                                    {% if active_chat.user.is_online %}bg-success{% else %}bg-secondary{% endif %} 
+                                    rounded-circle p-1" style="width: 12px; height: 12px;"></span>
+                            </div>
+                            <div>
+                                <h5 class="mb-0">{{ active_chat.user.full_name }}</h5>
+                                <p class="text-muted small mb-0">
+                                    {% if active_chat_type == 'ally' %}
+                                        Aliado - {{ active_chat.specialty }}
+                                    {% else %}
+                                        Emprendedor - {{ active_chat.business_name }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div>
+                            <button class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#scheduleModal">
+                                <i class="bi bi-calendar-plus"></i> Agendar
+                            </button>
+                            <div class="dropdown d-inline-block">
+                                <button class="btn btn-outline-secondary" type="button" id="chatOptionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chatOptionsDropdown">
+                                    <li><a class="dropdown-item" href="#" id="clearChatBtn"><i class="bi bi-trash"></i> Limpiar chat</a></li>
+                                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#attachmentsModal"><i class="bi bi-paperclip"></i> Ver archivos</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('entrepreneur.profile.view', user_id=active_chat.user.id) }}"><i class="bi bi-person"></i> Ver perfil</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cuerpo del chat -->
+                    <div class="card-body chat-body" id="chatMessages">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="d-flex mb-3 {% if message.sender_id == current_user.id %}justify-content-end{% endif %}">
+                                    {% if message.sender_id != current_user.id %}
+                                        <div class="me-2">
+                                            {% if active_chat.profile_image %}
+                                                <img src="{{ url_for('static', filename='uploads/' + active_chat.profile_image) }}" 
+                                                     alt="Foto de perfil" class="rounded-circle" width="35" height="35">
+                                            {% else %}
+                                                <img src="{{ url_for('static', filename='images/default-profile.png') }}" 
+                                                     alt="Foto de perfil por defecto" class="rounded-circle" width="35" height="35">
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="message-bubble {% if message.sender_id == current_user.id %}sent{% else %}received{% endif %}">
+                                        {% if message.attachment %}
+                                            <div class="attachment-preview mb-2">
+                                                {% if message.attachment.endswith(('.jpg', '.jpeg', '.png', '.gif')) %}
+                                                    <img src="{{ url_for('static', filename='uploads/attachments/' + message.attachment) }}" 
+                                                         alt="Imagen adjunta" class="img-fluid rounded" style="max-height: 200px;">
+                                                {% elif message.attachment.endswith(('.pdf')) %}
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-file-pdf text-danger fs-2 me-2"></i>
+                                                        <span>{{ message.attachment }}</span>
+                                                    </div>
+                                                {% elif message.attachment.endswith(('.doc', '.docx')) %}
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-file-word text-primary fs-2 me-2"></i>
+                                                        <span>{{ message.attachment }}</span>
+                                                    </div>
+                                                {% elif message.attachment.endswith(('.xls', '.xlsx')) %}
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-file-excel text-success fs-2 me-2"></i>
+                                                        <span>{{ message.attachment }}</span>
+                                                    </div>
+                                                {% else %}
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-file-earmark fs-2 me-2"></i>
+                                                        <span>{{ message.attachment }}</span>
+                                                    </div>
+                                                {% endif %}
+                                                <a href="{{ url_for('static', filename='uploads/attachments/' + message.attachment) }}" 
+                                                   class="btn btn-sm btn-outline-primary mt-1" download>
+                                                    <i class="bi bi-download"></i> Descargar
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                        <div class="message-content">{{ message.content }}</div>
+                                        <div class="message-meta text-end">
+                                            <small class="text-muted">
+                                                {{ message.created_at.strftime('%H:%M') }}
+                                                {% if message.sender_id == current_user.id %}
+                                                    {% if message.is_read %}
+                                                        <i class="bi bi-check-all text-primary"></i>
+                                                    {% else %}
+                                                        <i class="bi bi-check"></i>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-chat-dots text-muted" style="font-size: 3rem;"></i>
+                                <p class="mt-3 text-muted">No hay mensajes aún. ¡Comienza la conversación!</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Formulario de envío de mensajes -->
+<div class="card-footer bg-white">
+    <form id="messageForm" action="{{ url_for('entrepreneur.messages.send', contact_id=active_chat.id, contact_type=active_chat_type) }}" method="post" enctype="multipart/form-data">
+        {{ message_form.csrf_token }}
+        <div class="input-group">
+            <button class="btn btn-outline-secondary" type="button" id="attachButton">
+                <i class="bi bi-paperclip"></i>
+            </button>
+            {{ message_form.content(class="form-control", placeholder="Escribe un mensaje...", autocomplete="off") }}
+            <button class="btn btn-primary" type="submit">
+                <i class="bi bi-send"></i>
+            </button>
+        </div>
+        <div class="d-none">
+            {{ message_form.attachment }}
+        </div>
+        <div id="attachmentPreview" class="mt-2 d-none">
+            <div class="d-flex align-items-center p-2 bg-light rounded">
+                <i class="bi bi-file-earmark me-2"></i>
+                <span id="attachmentName" class="flex-grow-1 text-truncate"></span>
+                <button type="button" class="btn-close" id="removeAttachment" aria-label="Eliminar"></button>
+            </div>
+        </div>
+    </form>
+</div>
+{% else %}
+<!-- Estado inicial - Sin chat seleccionado -->
+<div class="card-body d-flex flex-column justify-content-center align-items-center" style="min-height: 500px;">
+    <img src="{{ url_for('static', filename='images/icons/chat-icon.svg') }}" alt="Chat" class="mb-4" style="width: 100px; opacity: 0.5;">
+    <h4 class="text-muted">Selecciona un contacto para comenzar a chatear</h4>
+    <p class="text-muted">Puedes comunicarte con tus aliados asignados y otros emprendedores</p>
+</div>
+{% endif %}
+</div>
+</div>
+</div>
+
+<!-- Modal para agendar reunión -->
+<div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true">
+<div class="modal-dialog">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="scheduleModalLabel">Agendar Reunión</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form action="{{ url_for('entrepreneur.calendar.schedule_meeting') }}" method="post">
+            <div class="modal-body">
+                {{ schedule_form.csrf_token }}
+                <input type="hidden" name="participant_id" value="{{ active_chat.id if active_chat else '' }}">
+                <input type="hidden" name="participant_type" value="{{ active_chat_type if active_chat_type else '' }}">
+                
+                <div class="mb-3">
+                    <label for="title" class="form-label">Título de la reunión</label>
+                    {{ schedule_form.title(class="form-control") }}
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Descripción</label>
+                    {{ schedule_form.description(class="form-control", rows=3) }}
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="date" class="form-label">Fecha</label>
+                        {{ schedule_form.date(class="form-control", type="date") }}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="time" class="form-label">Hora</label>
+                        {{ schedule_form.time(class="form-control", type="time") }}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="duration" class="form-label">Duración (minutos)</label>
+                    {{ schedule_form.duration(class="form-control") }}
+                </div>
+                <div class="mb-3">
+                    <label for="meeting_type" class="form-label">Tipo de reunión</label>
+                    {{ schedule_form.meeting_type(class="form-select") }}
+                </div>
+                <div id="locationField" class="mb-3 d-none">
+                    <label for="location" class="form-label">Ubicación</label>
+                    {{ schedule_form.location(class="form-control") }}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Agendar</button>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+
+<!-- Modal para ver archivos adjuntos -->
+<div class="modal fade" id="attachmentsModal" tabindex="-1" aria-labelledby="attachmentsModalLabel" aria-hidden="true">
+<div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="attachmentsModalLabel">Archivos Compartidos</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            {% if attachments %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Archivo</th>
+                                <th>Tipo</th>
+                                <th>Enviado por</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for attachment in attachments %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if attachment.file_name.endswith(('.jpg', '.jpeg', '.png', '.gif')) %}
+                                                <i class="bi bi-file-image text-primary me-2"></i>
+                                            {% elif attachment.file_name.endswith(('.pdf')) %}
+                                                <i class="bi bi-file-pdf text-danger me-2"></i>
+                                            {% elif attachment.file_name.endswith(('.doc', '.docx')) %}
+                                                <i class="bi bi-file-word text-primary me-2"></i>
+                                            {% elif attachment.file_name.endswith(('.xls', '.xlsx')) %}
+                                                <i class="bi bi-file-excel text-success me-2"></i>
+                                            {% else %}
+                                                <i class="bi bi-file-earmark me-2"></i>
+                                            {% endif %}
+                                            {{ attachment.file_name }}
+                                        </div>
+                                    </td>
+                                    <td>{{ attachment.file_type }}</td>
+                                    <td>{{ attachment.sender.full_name }}</td>
+                                    <td>{{ attachment.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('static', filename='uploads/attachments/' + attachment.file_name) }}" 
+                                           class="btn btn-sm btn-outline-primary" download>
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-files text-muted" style="font-size: 3rem;"></i>
+                    <p class="mt-3 text-muted">No hay archivos compartidos en esta conversación.</p>
+                </div>
+            {% endif %}
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+    </div>
+</div>
+</div>
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+<script>
+    $(document).ready(function() {
+        // Scroll al final del chat
+        const chatMessages = document.getElementById('chatMessages');
+        if (chatMessages) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Manejo de archivos adjuntos
+        $('#attachButton').click(function() {
+            $('#attachment').click();
+        });
+        
+        $('#attachment').change(function() {
+            const file = this.files[0];
+            if (file) {
+                $('#attachmentName').text(file.name);
+                $('#attachmentPreview').removeClass('d-none');
+                
+                // Cambiar el icono según el tipo de archivo
+                let fileIcon = 'bi-file-earmark';
+                if (file.type.startsWith('image/')) {
+                    fileIcon = 'bi-file-image';
+                } else if (file.type === 'application/pdf') {
+                    fileIcon = 'bi-file-pdf';
+                } else if (file.type.includes('word')) {
+                    fileIcon = 'bi-file-word';
+                } else if (file.type.includes('excel') || file.type.includes('spreadsheet')) {
+                    fileIcon = 'bi-file-excel';
+                }
+                
+                $('#attachmentPreview i').removeClass().addClass('bi ' + fileIcon + ' me-2');
+            }
+        });
+        
+        $('#removeAttachment').click(function() {
+            $('#attachment').val('');
+            $('#attachmentPreview').addClass('d-none');
+        });
+        
+        // Filtrar contactos
+        $('#searchContact').on('input', function() {
+            const searchText = $(this).val().toLowerCase();
+            $('.contact-list a').each(function() {
+                const contactName = $(this).find('h6').text().toLowerCase();
+                if (contactName.includes(searchText)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        });
+        
+        // Cambiar tipo de reunión
+        $('#meeting_type').change(function() {
+            if ($(this).val() === 'presencial') {
+                $('#locationField').removeClass('d-none');
+            } else {
+                $('#locationField').addClass('d-none');
+            }
+        });
+        
+        // Confirmar limpieza del chat
+        $('#clearChatBtn').click(function(e) {
+            e.preventDefault();
+            if (confirm('¿Estás seguro de que deseas limpiar este chat? Esta acción no se puede deshacer.')) {
+                window.location.href = "{{ url_for('entrepreneur.messages.clear_chat', contact_id=active_chat.id if active_chat else '', contact_type=active_chat_type if active_chat_type else '') }}";
+            }
+        });
+        
+        // Inicializar Socket.IO
+        {% if active_chat %}
+            const socket = io();
+            const chatId = '{{ current_user.id }}_{{ active_chat.user.id }}';
+            const currentUserId = {{ current_user.id }};
+            
+            socket.on('connect', function() {
+                console.log('Conectado a Socket.IO');
+                socket.emit('join', { chat_id: chatId });
+            });
+            
+            socket.on('message', function(data) {
+                if (data.sender_id !== currentUserId) {
+                    // Crear elemento de mensaje
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'd-flex mb-3';
+                    
+                    // Avatar
+                    const avatarDiv = document.createElement('div');
+                    avatarDiv.className = 'me-2';
+                    avatarDiv.innerHTML = `
+                        <img src="{{ url_for('static', filename='images/default-profile.png') if not active_chat.profile_image else url_for('static', filename='uploads/' + active_chat.profile_image) }}" 
+                             alt="Foto de perfil" class="rounded-circle" width="35" height="35">
+                    `;
+                    messageDiv.appendChild(avatarDiv);
+                    
+                    // Burbuja de mensaje
+                    const bubbleDiv = document.createElement('div');
+                    bubbleDiv.className = 'message-bubble received';
+                    
+                    // Contenido del mensaje
+                    let messageContent = `<div class="message-content">${data.content}</div>`;
+                    
+                    // Adjunto (si existe)
+                    if (data.attachment) {
+                        let attachmentPreview = '';
+                        const fileExt = data.attachment.split('.').pop().toLowerCase();
+                        
+                        if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
+                            attachmentPreview = `
+                                <div class="attachment-preview mb-2">
+                                    <img src="${data.attachment_url}" alt="Imagen adjunta" class="img-fluid rounded" style="max-height: 200px;">
+                                    <a href="${data.attachment_url}" class="btn btn-sm btn-outline-primary mt-1" download>
+                                        <i class="bi bi-download"></i> Descargar
+                                    </a>
+                                </div>
+                            `;
+                        } else {
+                            let iconClass = 'bi-file-earmark';
+                            if (fileExt === 'pdf') iconClass = 'bi-file-pdf text-danger';
+                            else if (['doc', 'docx'].includes(fileExt)) iconClass = 'bi-file-word text-primary';
+                            else if (['xls', 'xlsx'].includes(fileExt)) iconClass = 'bi-file-excel text-success';
+                            
+                            attachmentPreview = `
+                                <div class="attachment-preview mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi ${iconClass} fs-2 me-2"></i>
+                                        <span>${data.attachment}</span>
+                                    </div>
+                                    <a href="${data.attachment_url}" class="btn btn-sm btn-outline-primary mt-1" download>
+                                        <i class="bi bi-download"></i> Descargar
+                                    </a>
+                                </div>
+                            `;
+                        }
+                        
+                        messageContent = attachmentPreview + messageContent;
+                    }
+                    
+                    // Metadatos del mensaje
+messageContent += `
+    <div class="message-meta text-end">
+        <small class="text-muted">${data.time}</small>
+    </div>
+`;
+
+bubbleDiv.innerHTML = messageContent;
+messageDiv.appendChild(bubbleDiv);
+
+// Añadir mensaje al chat
+document.getElementById('chatMessages').appendChild(messageDiv);
+
+// Scroll al final del chat
+chatMessages.scrollTop = chatMessages.scrollHeight;
+
+// Marcar como leído
+socket.emit('read_message', {
+    chat_id: chatId,
+    message_id: data.message_id
+});
+
+// Actualizar contador de mensajes no leídos
+const contactElement = document.querySelector(`.contact-list a[href*="${data.sender_id}"]`);
+if (contactElement) {
+    const badgeElement = contactElement.querySelector('.badge');
+    if (badgeElement) {
+        badgeElement.remove();
+    }
+}
+}
+});
+
+// Enviar mensaje con Socket.IO
+$('#messageForm').submit(function(e) {
+    e.preventDefault();
+    
+    const content = $('#content').val().trim();
+    const attachment = $('#attachment')[0].files[0];
+    
+    if (!content && !attachment) {
+        return false;
+    }
+    
+    const formData = new FormData(this);
+    
+    $.ajax({
+        url: $(this).attr('action'),
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            if (response.status === 'success') {
+                // Crear elemento de mensaje
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'd-flex mb-3 justify-content-end';
+                
+                // Burbuja de mensaje
+                const bubbleDiv = document.createElement('div');
+                bubbleDiv.className = 'message-bubble sent';
+                
+                // Contenido del mensaje
+                let messageContent = `<div class="message-content">${response.message.content}</div>`;
+                
+                // Adjunto (si existe)
+                if (response.message.attachment) {
+                    let attachmentPreview = '';
+                    const fileExt = response.message.attachment.split('.').pop().toLowerCase();
+                    
+                    if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
+                        attachmentPreview = `
+                            <div class="attachment-preview mb-2">
+                                <img src="${response.message.attachment_url}" alt="Imagen adjunta" class="img-fluid rounded" style="max-height: 200px;">
+                                <a href="${response.message.attachment_url}" class="btn btn-sm btn-outline-primary mt-1" download>
+                                    <i class="bi bi-download"></i> Descargar
+                                </a>
+                            </div>
+                        `;
+                    } else {
+                        let iconClass = 'bi-file-earmark';
+                        if (fileExt === 'pdf') iconClass = 'bi-file-pdf text-danger';
+                        else if (['doc', 'docx'].includes(fileExt)) iconClass = 'bi-file-word text-primary';
+                        else if (['xls', 'xlsx'].includes(fileExt)) iconClass = 'bi-file-excel text-success';
+                        
+                        attachmentPreview = `
+                            <div class="attachment-preview mb-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi ${iconClass} fs-2 me-2"></i>
+                                    <span>${response.message.attachment}</span>
+                                </div>
+                                <a href="${response.message.attachment_url}" class="btn btn-sm btn-outline-primary mt-1" download>
+                                    <i class="bi bi-download"></i> Descargar
+                                </a>
+                            </div>
+                        `;
+                    }
+                    
+                    messageContent = attachmentPreview + messageContent;
+                }
+                
+                // Metadatos del mensaje
+                messageContent += `
+                    <div class="message-meta text-end">
+                        <small class="text-muted">${response.message.time} <i class="bi bi-check"></i></small>
+                    </div>
+                `;
+                
+                bubbleDiv.innerHTML = messageContent;
+                messageDiv.appendChild(bubbleDiv);
+                
+                // Añadir mensaje al chat
+                document.getElementById('chatMessages').appendChild(messageDiv);
+                
+                // Limpiar formulario
+                $('#content').val('');
+                $('#attachment').val('');
+                $('#attachmentPreview').addClass('d-none');
+                
+                // Scroll al final del chat
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Emitir evento de mensaje enviado
+                socket.emit('send_message', {
+                    chat_id: chatId,
+                    message_id: response.message.id,
+                    content: response.message.content,
+                    sender_id: currentUserId,
+                    receiver_id: {{ active_chat.user.id }},
+                    time: response.message.time,
+                    attachment: response.message.attachment,
+                    attachment_url: response.message.attachment_url
+                });
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error al enviar mensaje:', error);
+            alert('Error al enviar el mensaje. Por favor, inténtalo de nuevo.');
+        }
+    });
+});
+
+// Marcar mensajes como leídos al cargar la página
+socket.emit('read_all_messages', {
+    chat_id: chatId,
+    user_id: currentUserId
+});
+{% endif %}
+});
+</script>
+{% endblock %}
+
+{% endblock content %}

@@ -1,0 +1,547 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Nuevo Usuario' if is_new else 'Editar Usuario' }} - Plataforma de Emprendimiento{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
+                            <i class="bi bi-speedometer2 me-2"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin.users') }}">
+                            <i class="bi bi-people me-2"></i>
+                            Usuarios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.entrepreneurs') }}">
+                            <i class="bi bi-briefcase me-2"></i>
+                            Emprendedores
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.allies') }}">
+                            <i class="bi bi-person-check me-2"></i>
+                            Aliados
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.assign_ally') }}">
+                            <i class="bi bi-link-45deg me-2"></i>
+                            Asignar Aliados
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.settings') }}">
+                            <i class="bi bi-gear me-2"></i>
+                            Configuración
+                        </a>
+                    </li>
+                </ul>
+
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                    <span>Reportes</span>
+                </h6>
+                <ul class="nav flex-column mb-2">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.reports_activity') }}">
+                            <i class="bi bi-file-earmark-text me-2"></i>
+                            Actividad
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.reports_impact') }}">
+                            <i class="bi bi-graph-up me-2"></i>
+                            Impacto
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">{{ 'Nuevo Usuario' if is_new else 'Editar Usuario' }}</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Volver a la lista
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <form method="POST" enctype="multipart/form-data" id="userForm">
+                                {{ form.csrf_token }}
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="first_name" class="form-label">Nombre <span class="text-danger">*</span></label>
+                                        {{ form.first_name(class="form-control" + (" is-invalid" if form.first_name.errors else "")) }}
+                                        {% if form.first_name.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.first_name.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="last_name" class="form-label">Apellido <span class="text-danger">*</span></label>
+                                        {{ form.last_name(class="form-control" + (" is-invalid" if form.last_name.errors else "")) }}
+                                        {% if form.last_name.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.last_name.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Correo electrónico <span class="text-danger">*</span></label>
+                                    {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), type="email") }}
+                                    {% if form.email.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.email.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="phone" class="form-label">Teléfono</label>
+                                        {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else "")) }}
+                                        {% if form.phone.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.phone.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="role" class="form-label">Rol <span class="text-danger">*</span></label>
+                                        {{ form.role(class="form-select" + (" is-invalid" if form.role.errors else "")) }}
+                                        {% if form.role.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.role.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                {% if is_new %}
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="password" class="form-label">Contraseña <span class="text-danger">*</span></label>
+                                        {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), type="password") }}
+                                        {% if form.password.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.password.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <div class="form-text">Mínimo 8 caracteres, incluyendo mayúsculas, minúsculas y números.</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="confirm_password" class="form-label">Confirmar contraseña <span class="text-danger">*</span></label>
+                                        {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else ""), type="password") }}
+                                        {% if form.confirm_password.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.confirm_password.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="mb-3">
+                                    <label for="profile_image" class="form-label">Imagen de perfil</label>
+                                    {{ form.profile_image(class="form-control" + (" is-invalid" if form.profile_image.errors else ""), accept="image/*") }}
+                                    {% if form.profile_image.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.profile_image.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <div class="form-text">Formatos aceptados: JPG, PNG. Tamaño máximo: 2MB.</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="address" class="form-label">Dirección</label>
+                                    {{ form.address(class="form-control" + (" is-invalid" if form.address.errors else "")) }}
+                                    {% if form.address.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.address.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label for="city" class="form-label">Ciudad</label>
+                                        {{ form.city(class="form-control" + (" is-invalid" if form.city.errors else "")) }}
+                                        {% if form.city.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.city.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="state" class="form-label">Estado/Provincia</label>
+                                        {{ form.state(class="form-control" + (" is-invalid" if form.state.errors else "")) }}
+                                        {% if form.state.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.state.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="country" class="form-label">País</label>
+                                        {{ form.country(class="form-select" + (" is-invalid" if form.country.errors else "")) }}
+                                        {% if form.country.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.country.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="bio" class="form-label">Biografía</label>
+                                    {{ form.bio(class="form-control" + (" is-invalid" if form.bio.errors else ""), rows="4") }}
+                                    {% if form.bio.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.bio.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Campos específicos según el rol -->
+    <div id="entrepreneur-fields" class="role-specific-fields d-none">
+        <h5 class="mt-4 mb-3">Información de Emprendedor</h5>
+        <div class="mb-3">
+            <label for="company_name" class="form-label">Nombre de la empresa</label>
+            {{ form.company_name(class="form-control" + (" is-invalid" if form.company_name.errors else "")) }}
+            {% if form.company_name.errors %}
+                <div class="invalid-feedback">
+                    {% for error in form.company_name.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="industry" class="form-label">Industria</label>
+            {{ form.industry(class="form-select" + (" is-invalid" if form.industry.errors else "")) }}
+            {% if form.industry.errors %}
+                <div class="invalid-feedback">
+                    {% for error in form.industry.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="company_stage" class="form-label">Etapa de la empresa</label>
+            {{ form.company_stage(class="form-select" + (" is-invalid" if form.company_stage.errors else "")) }}
+            {% if form.company_stage.errors %}
+                <div class="invalid-feedback">
+                    {% for error in form.company_stage.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="ally-fields" class="role-specific-fields d-none">
+        <h5 class="mt-4 mb-3">Información de Aliado</h5>
+        <div class="mb-3">
+            <label for="expertise" class="form-label">Áreas de experiencia</label>
+            {{ form.expertise(class="form-control" + (" is-invalid" if form.expertise.errors else "")) }}
+            {% if form.expertise.errors %}
+                <div class="invalid-feedback">
+                    {% for error in form.expertise.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <div class="form-text">Separa las áreas de experiencia con comas.</div>
+        </div>
+        <div class="mb-3">
+            <label for="years_experience" class="form-label">Años de experiencia</label>
+            {{ form.years_experience(class="form-control" + (" is-invalid" if form.years_experience.errors else ""), type="number", min="0") }}
+            {% if form.years_experience.errors %}
+                <div class="invalid-feedback">
+                    {% for error in form.years_experience.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="availability" class="form-label">Disponibilidad (horas/semana)</label>
+            {{ form.availability(class="form-control" + (" is-invalid" if form.availability.errors else ""), type="number", min="1", max="40") }}
+            {% if form.availability.errors %}
+                <div class="invalid-feedback">
+                    {% for error in form.availability.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="client-fields" class="role-specific-fields d-none">
+        <h5 class="mt-4 mb-3">Información de Cliente</h5>
+        <div class="mb-3">
+            <label for="organization" class="form-label">Organización</label>
+            {{ form.organization(class="form-control" + (" is-invalid" if form.organization.errors else "")) }}
+            {% if form.organization.errors %}
+                <div class="invalid-feedback">
+                    {% for error in form.organization.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="position" class="form-label">Cargo</label>
+            {{ form.position(class="form-control" + (" is-invalid" if form.position.errors else "")) }}
+            {% if form.position.errors %}
+                <div class="invalid-feedback">
+                    {% for error in form.position.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="interests" class="form-label">Intereses</label>
+            {{ form.interests(class="form-control" + (" is-invalid" if form.interests.errors else "")) }}
+            {% if form.interests.errors %}
+                <div class="invalid-feedback">
+                    {% for error in form.interests.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <div class="form-text">Separa los intereses con comas.</div>
+        </div>
+    </div>
+
+    <div class="mb-3 form-check">
+        {{ form.active(class="form-check-input" + (" is-invalid" if form.active.errors else "")) }}
+        <label class="form-check-label" for="active">Usuario activo</label>
+        {% if form.active.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.active.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="mb-3 form-check">
+        {{ form.send_welcome_email(class="form-check-input" + (" is-invalid" if form.send_welcome_email.errors else "")) }}
+        <label class="form-check-label" for="send_welcome_email">Enviar email de bienvenida</label>
+        {% if form.send_welcome_email.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.send_welcome_email.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">{{ 'Crear Usuario' if is_new else 'Guardar Cambios' }}</button>
+    </div>
+    </form>
+    </div>
+    </div>
+    </div>
+
+    <div class="col-lg-4">
+        {% if not is_new %}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h5 class="card-title mb-3">Información del Usuario</h5>
+                
+                <div class="text-center mb-4">
+                    <img src="{{ user.profile_image or url_for('static', filename='images/default-profile.png') }}" alt="{{ user.name }}" class="rounded-circle img-thumbnail" style="width: 120px; height: 120px; object-fit: cover;">
+                    <h5 class="mt-3 mb-0">{{ user.name }}</h5>
+                    <p class="text-muted">{{ user.role|capitalize }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-muted mb-2">ID de Usuario</h6>
+                    <p class="mb-0">{{ user.id }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-muted mb-2">Fecha de Registro</h6>
+                    <p class="mb-0">{{ user.created_at|datetime }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-muted mb-2">Último Acceso</h6>
+                    <p class="mb-0">{{ user.last_login|datetime or 'Nunca' }}</p>
+                </div>
+                
+                <div class="d-grid gap-2 mt-4">
+                    <a href="{{ url_for('admin.user_reset_password', user_id=user.id) }}" class="btn btn-outline-primary">
+                        <i class="bi bi-key me-1"></i> Resetear Contraseña
+                    </a>
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal">
+                        <i class="bi bi-trash me-1"></i> Eliminar Usuario
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h5 class="card-title mb-3">Actividad Reciente</h5>
+                
+                {% if user_activities %}
+                    <ul class="list-group list-group-flush">
+                        {% for activity in user_activities %}
+                            <li class="list-group-item px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <p class="mb-0">{{ activity.description }}</p>
+                                        <small class="text-muted">{{ activity.timestamp|datetime }}</small>
+                                    </div>
+                                    <span class="badge bg-{{ activity.status_color }}">{{ activity.status }}</span>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="d-grid mt-3">
+                        <a href="{{ url_for('admin.user_activity', user_id=user.id) }}" class="btn btn-sm btn-outline-secondary">Ver todo</a>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No hay actividad reciente.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    </div>
+    </main>
+    </div>
+    </div>
+
+<!-- Delete User Modal -->
+{% if not is_new %}
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteUserModalLabel">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar a <strong>{{ user.name }}</strong>? Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" action="{{ url_for('admin.user_delete', user_id=user.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mostrar/ocultar campos específicos según el rol seleccionado
+        const roleSelect = document.getElementById('role');
+        const roleFields = document.querySelectorAll('.role-specific-fields');
+        
+        function updateRoleFields() {
+            // Ocultar todos los campos específicos
+            roleFields.forEach(field => {
+                field.classList.add('d-none');
+            });
+            
+            // Mostrar los campos correspondientes al rol seleccionado
+            const selectedRole = roleSelect.value;
+            if (selectedRole) {
+                const fieldsToShow = document.getElementById(selectedRole + '-fields');
+                if (fieldsToShow) {
+                    fieldsToShow.classList.remove('d-none');
+                }
+            }
+        }
+        
+        // Actualizar campos al cargar la página
+        updateRoleFields();
+        
+        // Actualizar campos cuando cambia el rol
+        roleSelect.addEventListener('change', updateRoleFields);
+        
+        // Vista previa de la imagen de perfil
+        const profileImageInput = document.getElementById('profile_image');
+        if (profileImageInput) {
+            profileImageInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const profileImage = document.querySelector('.img-thumbnail');
+                        if (profileImage) {
+                            profileImage.src = e.target.result;
+                        }
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

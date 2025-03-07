@@ -1,0 +1,492 @@
+{% extends "base.html" %}
+
+{% block title %}Emprendedores - Plataforma de Emprendimiento{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
+                            <i class="bi bi-speedometer2 me-2"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.users') }}">
+                            <i class="bi bi-people me-2"></i>
+                            Usuarios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin.entrepreneurs') }}">
+                            <i class="bi bi-briefcase me-2"></i>
+                            Emprendedores
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.allies') }}">
+                            <i class="bi bi-person-check me-2"></i>
+                            Aliados
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.assign_ally') }}">
+                            <i class="bi bi-link-45deg me-2"></i>
+                            Asignar Aliados
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.settings') }}">
+                            <i class="bi bi-gear me-2"></i>
+                            Configuración
+                        </a>
+                    </li>
+                </ul>
+
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                    <span>Reportes</span>
+                </h6>
+                <ul class="nav flex-column mb-2">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.reports_activity') }}">
+                            <i class="bi bi-file-earmark-text me-2"></i>
+                            Actividad
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.reports_impact') }}">
+                            <i class="bi bi-graph-up me-2"></i>
+                            Impacto
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Emprendedores</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="input-group me-2">
+                        <input type="text" class="form-control" placeholder="Buscar emprendedores..." id="searchEntrepreneurs">
+                        <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                    <a href="{{ url_for('admin.user_new', role='entrepreneur') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i> Nuevo Emprendedor
+                    </a>
+                </div>
+            </div>
+
+            <!-- Stats cards -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted fw-normal mb-0">Total Emprendedores</h6>
+                                    <h2 class="fw-bold mb-0">{{ stats.total }}</h2>
+                                </div>
+                                <div class="icon-shape bg-light text-primary rounded-circle">
+                                    <i class="bi bi-briefcase"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted fw-normal mb-0">Con Aliado Asignado</h6>
+                                    <h2 class="fw-bold mb-0">{{ stats.with_ally }}</h2>
+                                </div>
+                                <div class="icon-shape bg-light text-success rounded-circle">
+                                    <i class="bi bi-person-check"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted fw-normal mb-0">Sin Aliado</h6>
+                                    <h2 class="fw-bold mb-0">{{ stats.without_ally }}</h2>
+                                </div>
+                                <div class="icon-shape bg-light text-warning rounded-circle">
+                                    <i class="bi bi-person-dash"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted fw-normal mb-0">Nuevos este mes</h6>
+                                    <h2 class="fw-bold mb-0">{{ stats.new_this_month }}</h2>
+                                </div>
+                                <div class="icon-shape bg-light text-info rounded-circle">
+                                    <i class="bi bi-calendar-plus"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <form id="filterForm" class="row g-3 align-items-end">
+                                <div class="col-md-3">
+                                    <label for="industryFilter" class="form-label">Industria</label>
+                                    <select class="form-select" id="industryFilter" name="industry">
+                                        <option value="">Todas las industrias</option>
+                                        {% for industry in industries %}
+                                        <option value="{{ industry.id }}" {% if request.args.get('industry') == industry.id|string %}selected{% endif %}>{{ industry.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="stageFilter" class="form-label">Etapa</label>
+                                    <select class="form-select" id="stageFilter" name="stage">
+                                        <option value="">Todas las etapas</option>
+                                        {% for stage in stages %}
+                                        <option value="{{ stage.id }}" {% if request.args.get('stage') == stage.id|string %}selected{% endif %}>{{ stage.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="allyFilter" class="form-label">Aliado</label>
+                                    <select class="form-select" id="allyFilter" name="ally">
+                                        <option value="">Todos</option>
+                                        <option value="assigned" {% if request.args.get('ally') == 'assigned' %}selected{% endif %}>Con aliado asignado</option>
+                                        <option value="unassigned" {% if request.args.get('ally') == 'unassigned' %}selected{% endif %}>Sin aliado asignado</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 d-flex">
+                                    <button type="submit" class="btn btn-primary me-2">Filtrar</button>
+                                    <button type="reset" class="btn btn-outline-secondary">Limpiar</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Entrepreneurs cards -->
+            <div class="row">
+                {% for entrepreneur in entrepreneurs %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <img src="{{ entrepreneur.profile_image or url_for('static', filename='images/default-profile.png') }}" class="rounded-circle me-3" width="60" height="60" alt="{{ entrepreneur.name }}">
+                                <div>
+                                    <h5 class="card-title mb-0">{{ entrepreneur.name }}</h5>
+                                    <p class="text-muted mb-0">{{ entrepreneur.company_name or 'Sin empresa' }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <span class="badge bg-primary">{{ entrepreneur.industry }}</span>
+                                <span class="badge bg-secondary">{{ entrepreneur.company_stage }}</span>
+                                {% if entrepreneur.ally %}
+                                <span class="badge bg-success">Con aliado</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">Sin aliado</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <small class="text-muted d-block mb-1">
+                                    <i class="bi bi-envelope me-1"></i> {{ entrepreneur.email }}
+                                </small>
+                                {% if entrepreneur.phone %}
+                                <small class="text-muted d-block mb-1">
+                                    <i class="bi bi-telephone me-1"></i> {{ entrepreneur.phone }}
+                                </small>
+                                {% endif %}
+                                <small class="text-muted d-block">
+                                    <i class="bi bi-calendar me-1"></i> Registrado: {{ entrepreneur.created_at|datetime }}
+                                </small>
+                            </div>
+                            
+                            {% if entrepreneur.ally %}
+                            <div class="mb-3 p-2 bg-light rounded">
+                                <small class="text-muted d-block mb-1">Aliado asignado:</small>
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ entrepreneur.ally.profile_image or url_for('static', filename='images/default-profile.png') }}" class="rounded-circle me-2" width="30" height="30" alt="{{ entrepreneur.ally.name }}">
+                                    <div>
+                                        <small class="d-block">{{ entrepreneur.ally.name }}</small>
+                                        <small class="text-muted">{{ entrepreneur.ally.email }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="d-flex justify-content-between mt-3">
+                                <a href="{{ url_for('admin.entrepreneur_detail', entrepreneur_id=entrepreneur.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye me-1"></i> Ver detalles
+                                </a>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ entrepreneur.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton{{ entrepreneur.id }}">
+                                        <li><a class="dropdown-item" href="{{ url_for('admin.user_edit', user_id=entrepreneur.user_id) }}">
+                                            <i class="bi bi-pencil me-2"></i> Editar
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{{ url_for('admin.assign_ally_to', entrepreneur_id=entrepreneur.id) }}">
+                                            <i class="bi bi-person-plus me-2"></i> Asignar aliado
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteEntrepreneurModal" data-entrepreneur-id="{{ entrepreneur.id }}" data-entrepreneur-name="{{ entrepreneur.name }}">
+                                            <i class="bi bi-trash me-2"></i> Eliminar
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                {% if not entrepreneurs %}
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        <i class="bi bi-info-circle me-2"></i> No se encontraron emprendedores con los filtros seleccionados.
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Pagination -->
+{% if pagination.pages|length > 1 %}
+<nav class="d-flex justify-content-center mt-4">
+    <ul class="pagination">
+        <li class="page-item {% if pagination.current_page == 1 %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('admin.entrepreneurs', page=pagination.current_page-1, **request.args) }}" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+        {% for page in pagination.pages %}
+        <li class="page-item {% if page == pagination.current_page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('admin.entrepreneurs', page=page, **request.args) }}">{{ page }}</a>
+        </li>
+        {% endfor %}
+        <li class="page-item {% if pagination.current_page == pagination.total_pages %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('admin.entrepreneurs', page=pagination.current_page+1, **request.args) }}" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+
+</main>
+</div>
+</div>
+
+<!-- Delete Entrepreneur Modal -->
+<div class="modal fade" id="deleteEntrepreneurModal" tabindex="-1" aria-labelledby="deleteEntrepreneurModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteEntrepreneurModalLabel">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar a <span id="entrepreneurName"></span>? Esta acción no se puede deshacer.</p>
+                <p class="text-danger"><strong>Nota:</strong> Esto eliminará tanto el perfil de emprendedor como la cuenta de usuario asociada.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteEntrepreneurForm" method="POST" action="{{ url_for('admin.entrepreneur_delete') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="entrepreneur_id" id="deleteEntrepreneurId">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportModalLabel">Exportar datos de emprendedores</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="exportForm">
+                    <div class="mb-3">
+                        <label for="exportFormat" class="form-label">Formato</label>
+                        <select class="form-select" id="exportFormat" name="format">
+                            <option value="csv">CSV</option>
+                            <option value="excel">Excel</option>
+                            <option value="pdf">PDF</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Campos a incluir</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="basic_info" id="exportBasicInfo" name="fields" checked>
+                            <label class="form-check-label" for="exportBasicInfo">
+                                Información básica (nombre, email, teléfono)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="company_info" id="exportCompanyInfo" name="fields" checked>
+                            <label class="form-check-label" for="exportCompanyInfo">
+                                Información de empresa (nombre, industria, etapa)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="ally_info" id="exportAllyInfo" name="fields" checked>
+                            <label class="form-check-label" for="exportAllyInfo">
+                                Información de aliado asignado
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="metrics" id="exportMetrics" name="fields">
+                            <label class="form-check-label" for="exportMetrics">
+                                Métricas (horas de mentoría, reuniones, etc.)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="1" id="applyFilters" name="apply_filters" checked>
+                            <label class="form-check-label" for="applyFilters">
+                                Aplicar filtros actuales
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="exportButton">Exportar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Search functionality
+        const searchInput = document.getElementById('searchEntrepreneurs');
+        const searchButton = document.getElementById('searchButton');
+        
+        searchButton.addEventListener('click', function() {
+            const searchTerm = searchInput.value.trim();
+            if (searchTerm) {
+                window.location.href = "{{ url_for('admin.entrepreneurs') }}?search=" + encodeURIComponent(searchTerm);
+            }
+        });
+        
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchButton.click();
+            }
+        });
+        
+        // Filter form submission
+        const filterForm = document.getElementById('filterForm');
+        filterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(filterForm);
+            const params = new URLSearchParams();
+            
+            for (const [key, value] of formData.entries()) {
+                if (value) {
+                    params.append(key, value);
+                }
+            }
+            
+            window.location.href = "{{ url_for('admin.entrepreneurs') }}?" + params.toString();
+        });
+        
+        filterForm.addEventListener('reset', function() {
+            setTimeout(() => {
+                window.location.href = "{{ url_for('admin.entrepreneurs') }}";
+            }, 10);
+        });
+        
+        // Delete entrepreneur modal
+        const deleteEntrepreneurModal = document.getElementById('deleteEntrepreneurModal');
+        if (deleteEntrepreneurModal) {
+            deleteEntrepreneurModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const entrepreneurId = button.getAttribute('data-entrepreneur-id');
+                const entrepreneurName = button.getAttribute('data-entrepreneur-name');
+                
+                document.getElementById('deleteEntrepreneurId').value = entrepreneurId;
+                document.getElementById('entrepreneurName').textContent = entrepreneurName;
+            });
+        }
+        
+        // Export functionality
+        const exportButton = document.getElementById('exportButton');
+        if (exportButton) {
+            exportButton.addEventListener('click', function() {
+                const formData = new FormData(document.getElementById('exportForm'));
+                const params = new URLSearchParams();
+                
+                // Get selected fields
+                const selectedFields = [];
+                document.querySelectorAll('input[name="fields"]:checked').forEach(checkbox => {
+                    selectedFields.push(checkbox.value);
+                });
+                
+                params.append('format', formData.get('format'));
+                params.append('fields', selectedFields.join(','));
+                
+                if (formData.get('apply_filters')) {
+                    // Add current filter parameters
+                    {% for key, value in request.args.items() %}
+                    {% if key != 'page' and key != 'format' %}
+                    params.append('{{ key }}', '{{ value }}');
+                    {% endif %}
+                    {% endfor %}
+                }
+                
+                window.location.href = "{{ url_for('admin.export_entrepreneurs') }}?" + params.toString();
+                
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('exportModal'));
+                modal.hide();
+            });
+        }
+    });
+</script>
+{% endblock %}

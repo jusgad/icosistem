@@ -1,0 +1,602 @@
+{% extends "base.html" %}
+
+{% block title %}Mensajería | Panel del Aliado{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+  .chat-container {
+    height: calc(100vh - 240px);
+    min-height: 400px;
+  }
+  
+  .contact-list {
+    height: 100%;
+    overflow-y: auto;
+    border-right: 1px solid #dee2e6;
+  }
+  
+  .chat-messages {
+    height: calc(100% - 60px);
+    overflow-y: auto;
+    padding: 1rem;
+    background-color: #f8f9fa;
+  }
+  
+  .message-input {
+    border-top: 1px solid #dee2e6;
+    padding: 0.75rem;
+    background-color: #fff;
+  }
+  
+  .contact-item {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f1f1f1;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .contact-item:hover, .contact-item.active {
+    background-color: #f1f5f9;
+  }
+  
+  .contact-item .unread-badge {
+    font-size: 0.7rem;
+  }
+  
+  .message {
+    margin-bottom: 1rem;
+    max-width: 75%;
+  }
+  
+  .message-sent {
+    margin-left: auto;
+    background-color: #0d6efd;
+    color: white;
+    border-radius: 15px 15px 0 15px;
+  }
+  
+  .message-received {
+    margin-right: auto;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 15px 15px 15px 0;
+  }
+  
+  .message-time {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+  }
+  
+  .message-sent .message-time {
+    text-align: right;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .message-received .message-time {
+    color: #6c757d;
+  }
+  
+  .contact-search {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: #fff;
+  }
+  
+  .typing-indicator {
+    font-style: italic;
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    color: #6c757d;
+  }
+  
+  .attachment-preview {
+    max-width: 100px;
+    max-height: 100px;
+    margin-right: 0.5rem;
+  }
+  
+  .message-attachment {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 5px;
+    margin-top: 0.5rem;
+  }
+  
+  .file-attachment {
+    display: flex;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 5px;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  
+  .file-icon {
+    font-size: 1.5rem;
+    margin-right: 0.5rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <h1 class="mb-4">Mensajería</h1>
+  
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="row g-0 chat-container">
+        <!-- Lista de contactos -->
+        <div class="col-md-4 col-lg-3 contact-list">
+          <div class="contact-search p-3 border-bottom">
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0">
+                <i class="bi bi-search"></i>
+              </span>
+              <input type="text" id="contact-search" class="form-control border-start-0" placeholder="Buscar contacto...">
+            </div>
+          </div>
+          
+          <div id="contacts-container">
+            {% for contact in contacts %}
+            <div class="contact-item{% if contact.id == active_contact.id %} active{% endif %}" data-contact-id="{{ contact.id }}">
+              <div class="d-flex align-items-center">
+                <div class="flex-shrink-0">
+                  <img src="{{ contact.avatar or url_for('static', filename='images/default-profile.png') }}" 
+                       class="rounded-circle" width="40" height="40" alt="{{ contact.name }}">
+                  <span class="position-absolute translate-middle bg-{{ contact.online and 'success' or 'secondary' }} rounded-circle"
+                       style="width: 10px; height: 10px; top: 35px; left: 35px;"></span>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">{{ contact.name }}</h6>
+                    {% if contact.unread_count %}
+                    <span class="badge bg-primary rounded-pill unread-badge">{{ contact.unread_count }}</span>
+                    {% endif %}
+                  </div>
+                  <p class="text-muted text-truncate mb-0" style="max-width: 150px;">
+                    {% if contact.typing %}
+                    <small><i>Escribiendo...</i></small>
+                    {% else %}
+                    <small>{{ contact.last_message or "" }}</small>
+                    {% endif %}
+                  </p>
+                </div>
+              </div>
+              {% if contact.last_message_time %}
+              <div class="text-muted mt-1" style="font-size: 0.75rem;">
+                {{ contact.last_message_time|format_datetime }}
+              </div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        
+        <!-- Área de chat -->
+        <div class="col-md-8 col-lg-9 d-flex flex-column">
+          {% if active_contact %}
+          <!-- Cabecera del chat -->
+          <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+              <img src="{{ active_contact.avatar or url_for('static', filename='images/default-profile.png') }}" 
+                   class="rounded-circle me-2" width="40" height="40" alt="{{ active_contact.name }}">
+              <div>
+                <h5 class="mb-0">{{ active_contact.name }}</h5>
+                <small class="text-muted">
+                  {% if active_contact.online %}
+                  <span class="text-success">En línea</span>
+                  {% else %}
+                  Última vez {{ active_contact.last_seen|format_datetime }}
+                  {% endif %}
+                </small>
+              </div>
+            </div>
+            <div>
+              <button class="btn btn-light" id="btn-call" title="Llamar">
+                <i class="bi bi-telephone"></i>
+              </button>
+              <button class="btn btn-light" id="btn-video" title="Videollamada">
+                <i class="bi bi-camera-video"></i>
+              </button>
+              <button class="btn btn-light" id="btn-chat-options" title="Opciones">
+                <i class="bi bi-three-dots-vertical"></i>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Mensajes -->
+          <div class="chat-messages" id="chat-messages">
+            {% if messages %}
+              {% for message in messages %}
+              <div class="message p-3 {{ message.is_sent and 'message-sent' or 'message-received' }}">
+                {{ message.content }}
+                
+                {% if message.attachment %}
+                  {% if message.attachment.type == 'image' %}
+                  <div>
+                    <img src="{{ url_for('static', filename='uploads/' + message.attachment.filename) }}" 
+                         class="message-attachment" alt="Imagen adjunta">
+                  </div>
+                  {% else %}
+                  <div class="file-attachment">
+                    <i class="bi bi-file-earmark file-icon"></i>
+                    <div>
+                      <div>{{ message.attachment.filename }}</div>
+                      <small>{{ message.attachment.size }}</small>
+                    </div>
+                  </div>
+                  {% endif %}
+                {% endif %}
+                
+                <div class="message-time">
+                  {{ message.timestamp|format_datetime }}
+                  {% if message.is_sent %}
+                    {% if message.read %}
+                    <i class="bi bi-check2-all"></i>
+                    {% else %}
+                    <i class="bi bi-check2"></i>
+                    {% endif %}
+                  {% endif %}
+                </div>
+              </div>
+              {% endfor %}
+              
+              {% if active_contact.typing %}
+              <div class="typing-indicator">
+                {{ active_contact.name }} está escribiendo...
+              </div>
+              {% endif %}
+            {% else %}
+              <div class="empty-state text-center">
+                <i class="bi bi-chat-dots" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                <p>Aún no hay mensajes con {{ active_contact.name }}.</p>
+                <p>¡Envía un mensaje para iniciar la conversación!</p>
+              </div>
+            {% endif %}
+          </div>
+          
+          <!-- Entrada de mensajes -->
+          <div class="message-input">
+            <form id="message-form" class="d-flex align-items-end">
+              <input type="hidden" name="contact_id" value="{{ active_contact.id }}">
+              
+              <button type="button" class="btn btn-light me-2" id="btn-attachment">
+                <i class="bi bi-paperclip"></i>
+              </button>
+              
+              <div class="flex-grow-1 me-2">
+                <div id="attachment-preview" class="d-flex flex-wrap mb-2" style="display: none !important;"></div>
+                <textarea class="form-control" id="message-text" name="message" rows="1" 
+                          placeholder="Escribe un mensaje..." required></textarea>
+              </div>
+              
+              <button type="submit" class="btn btn-primary px-3">
+                <i class="bi bi-send"></i>
+              </button>
+            </form>
+            <input type="file" id="file-input" style="display: none;" multiple>
+          </div>
+          
+          {% else %}
+          <!-- Estado vacío -->
+          <div class="empty-state text-center">
+            <i class="bi bi-chat-square-text" style="font-size: 4rem; margin-bottom: 1rem;"></i>
+            <h4>Selecciona un contacto para comenzar a chatear</h4>
+            <p class="text-muted">Aquí podrás comunicarte con los emprendedores asignados y otros aliados</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Conectar Socket.IO
+    const socket = io('/messages');
+    
+    // Referencias a elementos del DOM
+    const messagesContainer = document.getElementById('chat-messages');
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-text');
+    const contactsContainer = document.getElementById('contacts-container');
+    const contactSearch = document.getElementById('contact-search');
+    const btnAttachment = document.getElementById('btn-attachment');
+    const fileInput = document.getElementById('file-input');
+    const attachmentPreview = document.getElementById('attachment-preview');
+    
+    // Ajustar altura de textarea automáticamente
+    messageInput?.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    });
+    
+    // Enviar mensaje
+    messageForm?.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const contactId = this.elements.contact_id.value;
+      const messageText = messageInput.value.trim();
+      
+      if (messageText) {
+        // Enviar mensaje al servidor
+        socket.emit('send_message', {
+          recipient_id: contactId,
+          content: messageText,
+          attachments: getAttachmentData()
+        });
+        
+        // Limpiar entrada y resetear altura
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+        clearAttachments();
+        
+        // Desplazar al final de los mensajes
+        scrollToBottom();
+      }
+    });
+    
+    // Buscar contactos
+    contactSearch?.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      const contacts = contactsContainer.querySelectorAll('.contact-item');
+      
+      contacts.forEach(contact => {
+        const name = contact.querySelector('h6').textContent.toLowerCase();
+        if (name.includes(searchTerm)) {
+          contact.style.display = 'block';
+        } else {
+          contact.style.display = 'none';
+        }
+      });
+    });
+    
+    // Cambiar de contacto
+    const contactItems = document.querySelectorAll('.contact-item');
+    contactItems.forEach(item => {
+      item.addEventListener('click', function() {
+        const contactId = this.dataset.contactId;
+        window.location.href = "{{ url_for('ally.messages.index') }}?contact_id=" + contactId;
+      });
+    });
+    
+    // Adjuntar archivos
+    btnAttachment?.addEventListener('click', function() {
+      fileInput.click();
+    });
+    
+    fileInput?.addEventListener('change', function() {
+      if (this.files.length > 0) {
+        attachmentPreview.style.display = 'flex';
+        
+        for (let i = 0; i < this.files.length; i++) {
+          const file = this.files[i];
+          const preview = document.createElement('div');
+          preview.className = 'position-relative me-2 mb-2';
+          
+          if (file.type.startsWith('image/')) {
+            const img = document.createElement('img');
+            img.className = 'attachment-preview';
+            img.file = file;
+            preview.appendChild(img);
+            
+            const reader = new FileReader();
+            reader.onload = (function(aImg) {
+              return function(e) {
+                aImg.src = e.target.result;
+              };
+            })(img);
+            reader.readAsDataURL(file);
+          } else {
+            const icon = document.createElement('div');
+            icon.className = 'attachment-preview d-flex align-items-center justify-content-center bg-light';
+            icon.innerHTML = `<i class="bi bi-file-earmark fs-2"></i>`;
+            preview.appendChild(icon);
+          }
+          
+          const removeBtn = document.createElement('button');
+          removeBtn.className = 'btn btn-sm btn-danger position-absolute top-0 end-0 rounded-circle p-0';
+          removeBtn.style.width = '20px';
+          removeBtn.style.height = '20px';
+          removeBtn.innerHTML = '&times;';
+          removeBtn.addEventListener('click', function() {
+            preview.remove();
+            if (attachmentPreview.children.length === 0) {
+              attachmentPreview.style.display = 'none';
+            }
+          });
+          preview.appendChild(removeBtn);
+          
+          attachmentPreview.appendChild(preview);
+        }
+      }
+    });
+    
+    // Funciones auxiliares
+    function scrollToBottom() {
+      if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+    }
+    
+    function getAttachmentData() {
+      // Lógica para procesar archivos adjuntos
+      // En una implementación real, esto enviaría los archivos al servidor
+      return [];
+    }
+    
+    function clearAttachments() {
+      if (attachmentPreview) {
+        attachmentPreview.innerHTML = '';
+        attachmentPreview.style.display = 'none';
+      }
+    }
+    
+    // Eventos de Socket.IO
+    socket.on('connect', function() {
+      console.log('Conectado al servidor de mensajería');
+    });
+    
+    socket.on('receive_message', function(data) {
+      // Lógica para añadir mensaje recibido al chat
+      if (messagesContainer && data.sender_id == {{ active_contact.id if active_contact else 'null' }}) {
+        appendMessage(data, false);
+        scrollToBottom();
+        
+        // Marcar como leído
+        socket.emit('mark_read', { message_id: data.id });
+      }
+      
+      // Actualizar lista de contactos
+      updateContactLastMessage(data.sender_id, data.content);
+    });
+    
+    socket.on('message_sent', function(data) {
+      // Añadir mensaje enviado a la conversación
+      if (messagesContainer) {
+        appendMessage(data, true);
+        scrollToBottom();
+      }
+    });
+    
+    socket.on('message_read', function(data) {
+      // Actualizar indicadores de lectura
+      const messages = document.querySelectorAll('.message-sent');
+      messages.forEach(message => {
+        const timeElement = message.querySelector('.message-time');
+        if (timeElement) {
+          timeElement.innerHTML = timeElement.innerHTML.replace(
+            '<i class="bi bi-check2"></i>',
+            '<i class="bi bi-check2-all"></i>'
+          );
+        }
+      });
+    });
+    
+    socket.on('contact_typing', function(data) {
+      // Mostrar indicador de escritura
+      if (data.contact_id == {{ active_contact.id if active_contact else 'null' }}) {
+        const typingIndicator = document.createElement('div');
+        typingIndicator.className = 'typing-indicator';
+        typingIndicator.innerText = '{{ active_contact.name if active_contact else "" }} está escribiendo...';
+        
+        const existingIndicator = document.querySelector('.typing-indicator');
+        if (!existingIndicator) {
+          messagesContainer.appendChild(typingIndicator);
+          scrollToBottom();
+          
+          // Quitar después de un tiempo si no hay más eventos
+          setTimeout(() => {
+            if (typingIndicator.parentNode) {
+              typingIndicator.remove();
+            }
+          }, 3000);
+        }
+      }
+      
+      // Actualizar estado en lista de contactos
+      updateContactTypingStatus(data.contact_id, true);
+    });
+    
+    // Evento de escritura
+    let typingTimer;
+    messageInput?.addEventListener('keyup', function() {
+      clearTimeout(typingTimer);
+      
+      socket.emit('typing', {
+        recipient_id: messageForm.elements.contact_id.value
+      });
+      
+      typingTimer = setTimeout(() => {
+        socket.emit('stop_typing', {
+          recipient_id: messageForm.elements.contact_id.value
+        });
+      }, 3000);
+    });
+    
+    // Func para agregar mensaje a la interfaz
+    function appendMessage(data, isSent) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message p-3 ${isSent ? 'message-sent' : 'message-received'}`;
+      
+      messageDiv.innerText = data.content;
+      
+      const timeDiv = document.createElement('div');
+      timeDiv.className = 'message-time';
+      
+      const now = new Date();
+      timeDiv.innerText = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+      
+      if (isSent) {
+        timeDiv.innerHTML += ' <i class="bi bi-check2"></i>';
+      }
+      
+      messageDiv.appendChild(timeDiv);
+      messagesContainer.appendChild(messageDiv);
+    }
+    
+    function updateContactLastMessage(contactId, message) {
+      const contactItem = document.querySelector(`.contact-item[data-contact-id="${contactId}"]`);
+      if (contactItem) {
+        const lastMessageEl = contactItem.querySelector('p.text-muted small');
+        if (lastMessageEl) {
+          lastMessageEl.innerText = message;
+        }
+        
+        // Incrementar contador de no leídos si no es el contacto activo
+        if (contactId != {{ active_contact.id if active_contact else 'null' }}) {
+          let badge = contactItem.querySelector('.unread-badge');
+          if (badge) {
+            badge.innerText = parseInt(badge.innerText) + 1;
+          } else {
+            const nameContainer = contactItem.querySelector('.d-flex.justify-content-between');
+            badge = document.createElement('span');
+            badge.className = 'badge bg-primary rounded-pill unread-badge';
+            badge.innerText = '1';
+            nameContainer.appendChild(badge);
+          }
+        }
+        
+        // Mover contacto al principio de la lista
+        const parent = contactItem.parentNode;
+        parent.insertBefore(contactItem, parent.firstChild);
+      }
+    }
+    
+    function updateContactTypingStatus(contactId, isTyping) {
+      const contactItem = document.querySelector(`.contact-item[data-contact-id="${contactId}"]`);
+      if (contactItem) {
+        const statusEl = contactItem.querySelector('p.text-muted small');
+        if (statusEl) {
+          if (isTyping) {
+            statusEl.innerHTML = '<i>Escribiendo...</i>';
+          } else {
+            // Revertir al último mensaje
+            // Esto debería ser implementado para recuperar el último mensaje real
+            statusEl.innerText = '';
+          }
+        }
+      }
+    }
+    
+    // Desplazar al final de los mensajes al cargar
+    scrollToBottom();
+  });
+</script>
+{% endblock %}

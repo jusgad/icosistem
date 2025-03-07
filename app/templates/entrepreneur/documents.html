@@ -1,0 +1,712 @@
+{% extends "base.html" %}
+
+{% block title %}Documentos | Portal de Emprendimiento{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/documents.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar - Categorías y filtros -->
+        <div class="col-md-3">
+            <!-- Botón de subir documento -->
+            <div class="d-grid gap-2 mb-4">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
+                    <i class="bi bi-cloud-upload"></i> Subir documento
+                </button>
+            </div>
+            
+            <!-- Categorías -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Categorías</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('entrepreneur.documents.index') }}" 
+                           class="list-group-item list-group-item-action d-flex justify-content-between align-items-center
+                           {% if not current_category %}active{% endif %}">
+                            <span><i class="bi bi-folder me-2"></i> Todos los documentos</span>
+                            <span class="badge bg-primary rounded-pill">{{ total_documents }}</span>
+                        </a>
+                        {% for category in categories %}
+                            <a href="{{ url_for('entrepreneur.documents.by_category', category_id=category.id) }}" 
+                               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center
+                               {% if current_category and current_category.id == category.id %}active{% endif %}">
+                                <span>
+                                    <i class="bi 
+                                    {% if category.name == 'Legal' %}bi-file-earmark-text
+                                    {% elif category.name == 'Financiero' %}bi-cash-coin
+                                    {% elif category.name == 'Marketing' %}bi-graph-up
+                                    {% elif category.name == 'Técnico' %}bi-gear
+                                    {% elif category.name == 'Presentaciones' %}bi-easel
+                                    {% else %}bi-folder{% endif %} me-2"></i>
+                                    {{ category.name }}
+                                </span>
+                                <span class="badge bg-primary rounded-pill">{{ category.document_count }}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-sm btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                        <i class="bi bi-plus"></i> Nueva categoría
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Filtros -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Filtros</h5>
+                </div>
+                <div class="card-body">
+                    <form id="filterForm" action="{{ url_for('entrepreneur.documents.filter') }}" method="get">
+                        <div class="mb-3">
+                            <label for="search" class="form-label">Buscar</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="search" name="search" 
+                                       placeholder="Nombre de documento" value="{{ request.args.get('search', '') }}">
+                                <button class="btn btn-outline-secondary" type="submit">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="file_type" class="form-label">Tipo de archivo</label>
+                            <select class="form-select" id="file_type" name="file_type">
+                                <option value="">Todos los tipos</option>
+                                <option value="pdf" {% if request.args.get('file_type') == 'pdf' %}selected{% endif %}>PDF</option>
+                                <option value="doc" {% if request.args.get('file_type') == 'doc' %}selected{% endif %}>Word</option>
+                                <option value="xls" {% if request.args.get('file_type') == 'xls' %}selected{% endif %}>Excel</option>
+                                <option value="ppt" {% if request.args.get('file_type') == 'ppt' %}selected{% endif %}>PowerPoint</option>
+                                <option value="img" {% if request.args.get('file_type') == 'img' %}selected{% endif %}>Imágenes</option>
+                                <option value="other" {% if request.args.get('file_type') == 'other' %}selected{% endif %}>Otros</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="date_range" class="form-label">Fecha de subida</label>
+                            <select class="form-select" id="date_range" name="date_range">
+                                <option value="">Cualquier fecha</option>
+                                <option value="today" {% if request.args.get('date_range') == 'today' %}selected{% endif %}>Hoy</option>
+                                <option value="week" {% if request.args.get('date_range') == 'week' %}selected{% endif %}>Esta semana</option>
+                                <option value="month" {% if request.args.get('date_range') == 'month' %}selected{% endif %}>Este mes</option>
+                                <option value="year" {% if request.args.get('date_range') == 'year' %}selected{% endif %}>Este año</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="sort_by" class="form-label">Ordenar por</label>
+                            <select class="form-select" id="sort_by" name="sort_by">
+                                <option value="date_desc" {% if request.args.get('sort_by') == 'date_desc' %}selected{% endif %}>Más recientes</option>
+                                <option value="date_asc" {% if request.args.get('sort_by') == 'date_asc' %}selected{% endif %}>Más antiguos</option>
+                                <option value="name_asc" {% if request.args.get('sort_by') == 'name_asc' %}selected{% endif %}>Nombre (A-Z)</option>
+                                <option value="name_desc" {% if request.args.get('sort_by') == 'name_desc' %}selected{% endif %}>Nombre (Z-A)</option>
+                                <option value="size_asc" {% if request.args.get('sort_by') == 'size_asc' %}selected{% endif %}>Tamaño (menor a mayor)</option>
+                                <option value="size_desc" {% if request.args.get('sort_by') == 'size_desc' %}selected{% endif %}>Tamaño (mayor a menor)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Aplicar filtros</button>
+                            <button type="button" id="resetFilters" class="btn btn-outline-secondary">Restablecer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contenido principal - Lista de documentos -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        {% if current_category %}
+                            Documentos en {{ current_category.name }}
+                        {% elif search_query %}
+                            Resultados para "{{ search_query }}"
+                        {% else %}
+                            Todos los documentos
+                        {% endif %}
+                    </h5>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-primary view-btn active" data-view="grid">
+                            <i class="bi bi-grid"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary view-btn" data-view="list">
+                            <i class="bi bi-list"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Alertas -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <!-- Vista de cuadrícula -->
+                    <div id="gridView" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                        {% if documents %}
+                            {% for document in documents %}
+                                <div class="col">
+                                    <div class="card h-100 document-card">
+                                        <div class="card-body">
+                                            <div class="document-icon mb-3 text-center">
+                                                {% if document.file_type == 'pdf' %}
+                                                    <i class="bi bi-file-earmark-pdf text-danger fs-1"></i>
+                                                {% elif document.file_type in ['doc', 'docx'] %}
+                                                    <i class="bi bi-file-earmark-word text-primary fs-1"></i>
+                                                {% elif document.file_type in ['xls', 'xlsx'] %}
+                                                    <i class="bi bi-file-earmark-excel text-success fs-1"></i>
+                                                {% elif document.file_type in ['ppt', 'pptx'] %}
+                                                    <i class="bi bi-file-earmark-slides text-warning fs-1"></i>
+                                                {% elif document.file_type in ['jpg', 'jpeg', 'png', 'gif'] %}
+                                                    <i class="bi bi-file-earmark-image text-info fs-1"></i>
+                                                {% else %}
+                                                    <i class="bi bi-file-earmark text-secondary fs-1"></i>
+                                                {% endif %}
+                                            </div>
+                                            <h5 class="card-title text-truncate">{{ document.name }}</h5>
+                                            <p class="card-text small text-muted mb-1">
+                                                <i class="bi bi-folder"></i> {{ document.category.name }}
+                                            </p>
+                                            <p class="card-text small text-muted mb-1">
+                                                <i class="bi bi-clock"></i> {{ document.created_at.strftime('%d/%m/%Y %H:%M') }}
+                                            </p>
+                                            <p class="card-text small text-muted">
+                                                <i class="bi bi-hdd"></i> {{ document.size_formatted }}
+                                            </p>
+                                        </div>
+                                        <div class="card-footer bg-white border-top-0">
+                                            <div class="btn-group w-100">
+                                                <a href="{{ url_for('entrepreneur.documents.download', document_id=document.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-download"></i>
+                                                </a>
+                                                <a href="{{ url_for('entrepreneur.documents.preview', document_id=document.id) }}" 
+                                                   class="btn btn-sm btn-outline-secondary" target="_blank">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-outline-success share-btn" 
+                                                        data-document-id="{{ document.id }}" data-document-name="{{ document.name }}">
+                                                    <i class="bi bi-share"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger delete-btn" 
+                                                        data-document-id="{{ document.id }}" data-document-name="{{ document.name }}">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="col-12 text-center py-5">
+                                <i class="bi bi-folder2-open text-muted" style="font-size: 4rem;"></i>
+                                <h4 class="mt-3 text-muted">No se encontraron documentos</h4>
+                                <p class="text-muted">
+                                    {% if search_query %}
+                                        No hay resultados para "{{ search_query }}". Intenta con otra búsqueda.
+                                    {% elif current_category %}
+                                        No hay documentos en la categoría "{{ current_category.name }}".
+                                    {% else %}
+                                        Aún no has subido ningún documento. ¡Comienza ahora!
+                                    {% endif %}
+                                </p>
+                                <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
+                                    <i class="bi bi-cloud-upload"></i> Subir documento
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Vista de lista -->
+<div id="listView" class="table-responsive" style="display: none;">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th>Tipo</th>
+                <th>Tamaño</th>
+                <th>Fecha</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if documents %}
+                {% for document in documents %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if document.file_type == 'pdf' %}
+                                    <i class="bi bi-file-earmark-pdf text-danger me-2"></i>
+                                {% elif document.file_type in ['doc', 'docx'] %}
+                                    <i class="bi bi-file-earmark-word text-primary me-2"></i>
+                                {% elif document.file_type in ['xls', 'xlsx'] %}
+                                    <i class="bi bi-file-earmark-excel text-success me-2"></i>
+                                {% elif document.file_type in ['ppt', 'pptx'] %}
+                                    <i class="bi bi-file-earmark-slides text-warning me-2"></i>
+                                {% elif document.file_type in ['jpg', 'jpeg', 'png', 'gif'] %}
+                                    <i class="bi bi-file-earmark-image text-info me-2"></i>
+                                {% else %}
+                                    <i class="bi bi-file-earmark text-secondary me-2"></i>
+                                {% endif %}
+                                <span class="text-truncate" style="max-width: 200px;">{{ document.name }}</span>
+                            </div>
+                        </td>
+                        <td>{{ document.category.name }}</td>
+                        <td>{{ document.file_type.upper() }}</td>
+                        <td>{{ document.size_formatted }}</td>
+                        <td>{{ document.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('entrepreneur.documents.download', document_id=document.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                                <a href="{{ url_for('entrepreneur.documents.preview', document_id=document.id) }}" 
+                                   class="btn btn-sm btn-outline-secondary" target="_blank">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-success share-btn" 
+                                        data-document-id="{{ document.id }}" data-document-name="{{ document.name }}">
+                                    <i class="bi bi-share"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger delete-btn" 
+                                        data-document-id="{{ document.id }}" data-document-name="{{ document.name }}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <i class="bi bi-folder2-open text-muted d-block mb-3" style="font-size: 2rem;"></i>
+                        <p class="text-muted mb-2">No se encontraron documentos</p>
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
+                            <i class="bi bi-cloud-upload"></i> Subir documento
+                        </button>
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Paginación -->
+{% if pagination and pagination.pages > 1 %}
+<nav aria-label="Navegación de páginas">
+    <ul class="pagination justify-content-center mt-4">
+        <li class="page-item {% if pagination.page == 1 %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.page-1, **request.args) }}" aria-label="Anterior">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+        
+        {% for page in pagination.iter_pages() %}
+            {% if page %}
+                <li class="page-item {% if page == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for(request.endpoint, page=page, **request.args) }}">{{ page }}</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            {% endif %}
+        {% endfor %}
+        
+        <li class="page-item {% if pagination.page == pagination.pages %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.page+1, **request.args) }}" aria-label="Siguiente">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+
+</div>
+</div>
+</div>
+</div>
+
+<!-- Modal para subir documento -->
+<div class="modal fade" id="uploadDocumentModal" tabindex="-1" aria-labelledby="uploadDocumentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadDocumentModalLabel">Subir documento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('entrepreneur.documents.upload') }}" method="post" enctype="multipart/form-data">
+                <div class="modal-body">
+                    {{ upload_form.csrf_token }}
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Seleccionar archivo</label>
+                        {{ upload_form.file(class="form-control") }}
+                        <div class="form-text">Tamaño máximo: 10MB. Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, GIF.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nombre del documento</label>
+                        {{ upload_form.name(class="form-control", placeholder="Nombre descriptivo") }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="category_id" class="form-label">Categoría</label>
+                        {{ upload_form.category_id(class="form-select") }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descripción (opcional)</label>
+                        {{ upload_form.description(class="form-control", rows=3, placeholder="Breve descripción del contenido") }}
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ upload_form.is_public(class="form-check-input") }}
+                            <label class="form-check-label" for="is_public">
+                                Compartir con aliados
+                            </label>
+                            <div class="form-text">Si marcas esta opción, tus aliados asignados podrán ver este documento.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Subir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para añadir categoría -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCategoryModalLabel">Nueva categoría</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('entrepreneur.documents.add_category') }}" method="post">
+                <div class="modal-body">
+                    {{ category_form.csrf_token }}
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nombre de la categoría</label>
+                        {{ category_form.name(class="form-control", placeholder="Ej: Legal, Financiero, Marketing...") }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descripción (opcional)</label>
+                        {{ category_form.description(class="form-control", rows=3, placeholder="Breve descripción de la categoría") }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para compartir documento -->
+<div class="modal fade" id="shareDocumentModal" tabindex="-1" aria-labelledby="shareDocumentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shareDocumentModalLabel">Compartir documento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('entrepreneur.documents.share') }}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="share_document_id" name="document_id">
+                    <p>Compartir "<span id="shareDocumentName"></span>" con:</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Aliados</label>
+                        <div class="allies-list">
+                            {% if allies %}
+                                {% for ally in allies %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="ally_ids" value="{{ ally.id }}" id="ally{{ ally.id }}">
+                                        <label class="form-check-label d-flex align-items-center" for="ally{{ ally.id }}">
+                                            {% if ally.profile_image %}
+                                                <img src="{{ url_for('static', filename='uploads/' + ally.profile_image) }}" 
+                                                     alt="Foto de perfil" class="rounded-circle me-2" width="30" height="30">
+                                            {% else %}
+                                                <img src="{{ url_for('static', filename='images/default-profile.png') }}" 
+                                                     alt="Foto de perfil por defecto" class="rounded-circle me-2" width="30" height="30">
+                                            {% endif %}
+                                            {{ ally.user.full_name }} - {{ ally.specialty }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted">No tienes aliados asignados.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Otros emprendedores</label>
+                        <div class="entrepreneurs-list">
+                            {% if other_entrepreneurs %}
+                                {% for entrepreneur in other_entrepreneurs %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="entrepreneur_ids" value="{{ entrepreneur.id }}" id="entrepreneur{{ entrepreneur.id }}">
+                                        <label class="form-check-label d-flex align-items-center" for="entrepreneur{{ entrepreneur.id }}">
+                                            {% if entrepreneur.profile_image %}
+                                                <img src="{{ url_for('static', filename='uploads/' + entrepreneur.profile_image) }}" 
+                                                     alt="Foto de perfil" class="rounded-circle me-2" width="30" height="30">
+                                            {% else %}
+                                                <img src="{{ url_for('static', filename='images/default-profile.png') }}" 
+                                                     alt="Foto de perfil por defecto" class="rounded-circle me-2" width="30" height="30">
+                                            {% endif %}
+                                            {{ entrepreneur.user.full_name }} - {{ entrepreneur.business_name }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted">No hay otros emprendedores disponibles.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="share_message" class="form-label">Mensaje (opcional)</label>
+                        <textarea class="form-control" id="share_message" name="message" rows="3" 
+                                  placeholder="Añade un mensaje para los destinatarios"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Compartir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar documento -->
+<div class="modal fade" id="deleteDocumentModal" tabindex="-1" aria-labelledby="deleteDocumentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteDocumentModalLabel">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar el documento "<span id="deleteDocumentName"></span>"?</p>
+                <p class="text-danger">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteDocumentForm" action="{{ url_for('entrepreneur.documents.delete') }}" method="post">
+                    <input type="hidden" id="delete_document_id" name="document_id">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+{{ super() }}
+<script>
+    $(document).ready(function() {
+        // Cambiar entre vista de cuadrícula y lista
+        $('.view-btn').click(function() {
+            $('.view-btn').removeClass('active');
+            $(this).addClass('active');
+            
+            const view = $(this).data('view');
+            if (view === 'grid') {
+                $('#gridView').show();
+                $('#listView').hide();
+            } else {
+                $('#gridView').hide();
+                $('#listView').show();
+            }
+        });
+        
+        // Restablecer filtros
+        $('#resetFilters').click(function() {
+            $('#search').val('');
+            $('#file_type').val('');
+            $('#date_range').val('');
+            $('#sort_by').val('date_desc');
+            $('#filterForm').submit();
+        });
+        
+        // Manejar cambio en el input de archivo para mostrar el nombre
+        $('#file').change(function() {
+            const fileName = $(this).val().split('\\').pop();
+            if (fileName) {
+                // Autocompletar el nombre del documento si está vacío
+                if (!$('#name').val()) {
+                    // Eliminar la extensión del archivo para el nombre
+                    const nameWithoutExt = fileName.split('.').slice(0, -1).join('.');
+                    $('#name').val(nameWithoutExt);
+                }
+            }
+        });
+        
+        // Configurar modal de compartir
+        $('.share-btn').click(function() {
+            const documentId = $(this).data('document-id');
+            const documentName = $(this).data('document-name');
+            
+            $('#share_document_id').val(documentId);
+            $('#shareDocumentName').text(documentName);
+            
+            // Cargar usuarios con los que ya está compartido el documento
+            $.ajax({
+                url: "{{ url_for('entrepreneur.documents.get_shared_users') }}",
+                type: 'GET',
+                data: { document_id: documentId },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        // Marcar los checkboxes de los usuarios con los que ya está compartido
+                        $('input[name="ally_ids"]').prop('checked', false);
+                        $('input[name="entrepreneur_ids"]').prop('checked', false);
+                        
+                        response.shared_allies.forEach(function(allyId) {
+                            $(`#ally${allyId}`).prop('checked', true);
+                        });
+                        
+                        response.shared_entrepreneurs.forEach(function(entrepreneurId) {
+                            $(`#entrepreneur${entrepreneurId}`).prop('checked', true);
+                        });
+                    }
+                }
+            });
+            
+            $('#shareDocumentModal').modal('show');
+        });
+        
+        // Configurar modal de eliminar
+        $('.delete-btn').click(function() {
+            const documentId = $(this).data('document-id');
+            const documentName = $(this).data('document-name');
+            
+            $('#delete_document_id').val(documentId);
+            $('#deleteDocumentName').text(documentName);
+            
+            $('#deleteDocumentModal').modal('show');
+        });
+        
+        // Búsqueda en tiempo real para listas de usuarios en el modal de compartir
+        $('#shareUserSearch').on('input', function() {
+            const searchText = $(this).val().toLowerCase();
+            
+            // Filtrar aliados
+            $('.allies-list .form-check').each(function() {
+                const userName = $(this).find('label').text().toLowerCase();
+                if (userName.includes(searchText)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+            
+            // Filtrar emprendedores
+            $('.entrepreneurs-list .form-check').each(function() {
+                const userName = $(this).find('label').text().toLowerCase();
+                if (userName.includes(searchText)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        });
+        
+        // Seleccionar/deseleccionar todos los aliados
+        $('#selectAllAllies').change(function() {
+            const isChecked = $(this).prop('checked');
+            $('input[name="ally_ids"]').prop('checked', isChecked);
+        });
+        
+        // Seleccionar/deseleccionar todos los emprendedores
+        $('#selectAllEntrepreneurs').change(function() {
+            const isChecked = $(this).prop('checked');
+            $('input[name="entrepreneur_ids"]').prop('checked', isChecked);
+        });
+        
+        // Previsualización de documentos
+        $('.preview-btn').click(function(e) {
+            e.preventDefault();
+            const previewUrl = $(this).attr('href');
+            
+            // Verificar si es una imagen
+            const documentName = $(this).data('document-name').toLowerCase();
+            const isImage = /\.(jpg|jpeg|png|gif)$/i.test(documentName);
+            
+            if (isImage) {
+                // Mostrar imagen en un modal
+                $('#previewImageModal img').attr('src', previewUrl);
+                $('#previewImageModal').modal('show');
+            } else {
+                // Abrir en una nueva pestaña para otros tipos de documentos
+                window.open(previewUrl, '_blank');
+            }
+        });
+        
+        // Drag and drop para subir archivos
+        const dropZone = document.getElementById('dropZone');
+        
+        if (dropZone) {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropZone.classList.add('highlight');
+            }
+            
+            function unhighlight() {
+                dropZone.classList.remove('highlight');
+            }
+            
+            dropZone.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files.length > 0) {
+                    document.getElementById('file').files = files;
+                    // Disparar el evento change para actualizar el nombre
+                    $('#file').trigger('change');
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
+
+{% endblock content %}

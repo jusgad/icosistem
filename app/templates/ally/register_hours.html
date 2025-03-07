@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Registro de Horas | Panel del Aliado{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">Registro de Horas de Acompañamiento</h1>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Formulario de registro de horas -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Registrar Nuevo Acompañamiento</h5>
+                    
+                    <form method="POST" action="{{ url_for('ally.hours.register') }}">
+                        {{ form.csrf_token }}
+                        
+                        <div class="mb-3">
+                            <label for="entrepreneur" class="form-label">Emprendedor</label>
+                            {{ form.entrepreneur(class="form-select") }}
+                            {% if form.entrepreneur.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.entrepreneur.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="date" class="form-label">Fecha</label>
+                                {{ form.date(class="form-control", type="date") }}
+                                {% if form.date.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.date.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="duration" class="form-label">Duración (horas)</label>
+                                <div class="input-group">
+                                    {{ form.duration(class="form-control") }}
+                                    <span class="input-group-text">hrs</span>
+                                    {% if form.duration.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.duration.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="activity_type" class="form-label">Tipo de Actividad</label>
+                            {{ form.activity_type(class="form-select") }}
+                            {% if form.activity_type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.activity_type.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descripción de la Actividad</label>
+                            {{ form.description(class="form-control", rows=3) }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Describe brevemente el propósito y los logros de la sesión de acompañamiento.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="outcomes" class="form-label">Resultados y Acuerdos</label>
+                            {{ form.outcomes(class="form-control", rows=3) }}
+                            {% if form.outcomes.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.outcomes.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <div class="d-flex align-items-center">
+                                {{ form.follow_up(class="form-check-input me-2") }}
+                                <label class="form-check-label" for="follow_up">
+                                    Requiere seguimiento
+                                </label>
+                            </div>
+                            {% if form.follow_up.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.follow_up.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div id="follow_up_fields" class="mb-3 ps-4 border-start" style="display: none;">
+                            <div class="mb-3">
+                                <label for="follow_up_date" class="form-label">Fecha de Seguimiento</label>
+                                {{ form.follow_up_date(class="form-control", type="date") }}
+                                {% if form.follow_up_date.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.follow_up_date.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="follow_up_notes" class="form-label">Notas para el Seguimiento</label>
+                                {{ form.follow_up_notes(class="form-control", rows=2) }}
+                                {% if form.follow_up_notes.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.follow_up_notes.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end">
+                            <a href="{{ url_for('ally.hours.index') }}" class="btn btn-light me-2">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Registrar Horas</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Resumen de horas registradas -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Resumen de Horas</h5>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Este Mes</h6>
+                        <div class="progress mb-2" style="height: 10px;">
+                            <div class="progress-bar" role="progressbar" style="width: {{ monthly_percent }}%;" 
+                                 aria-valuenow="{{ monthly_hours }}" aria-valuemin="0" aria-valuemax="{{ monthly_goal }}">
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>{{ monthly_hours }} horas</span>
+                            <span>Meta: {{ monthly_goal }} horas</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h6 class="text-muted mb-2">Por Emprendedor</h6>
+                        <ul class="list-group list-group-flush">
+                            {% for entrepreneur in entrepreneurs %}
+                            <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                <span>{{ entrepreneur.name }}</span>
+                                <span class="badge bg-primary rounded-pill">{{ entrepreneur.hours }} hrs</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{{ url_for('ally.hours.statistics') }}" class="text-decoration-none">
+                        Ver estadísticas completas →
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Próximas reuniones -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Próximas Reuniones</h5>
+                    
+                    {% if upcoming_meetings %}
+                        <ul class="list-group list-group-flush">
+                            {% for meeting in upcoming_meetings %}
+                            <li class="list-group-item px-0">
+                                <p class="mb-1 fw-bold">{{ meeting.entrepreneur.name }}</p>
+                                <p class="mb-1">
+                                    <i class="bi bi-calendar-event me-2"></i>
+                                    {{ meeting.date|format_date }}
+                                </p>
+                                <p class="mb-0 text-muted small">{{ meeting.description }}</p>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No hay reuniones programadas próximamente.</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{{ url_for('ally.calendar.index') }}" class="text-decoration-none">
+                        Ver calendario completo →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Script para mostrar/ocultar campos de seguimiento
+    document.addEventListener('DOMContentLoaded', function() {
+        const followUpCheckbox = document.getElementById('follow_up');
+        const followUpFields = document.getElementById('follow_up_fields');
+        
+        function toggleFollowUpFields() {
+            if (followUpCheckbox.checked) {
+                followUpFields.style.display = 'block';
+            } else {
+                followUpFields.style.display = 'none';
+            }
+        }
+        
+        // Verificar estado inicial
+        toggleFollowUpFields();
+        
+        // Añadir listener para cambios
+        followUpCheckbox.addEventListener('change', toggleFollowUpFields);
+    });
+</script>
+{% endblock %}

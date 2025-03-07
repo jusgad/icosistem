@@ -1,0 +1,507 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Perfil | Portal de Emprendimiento{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Sidebar / Profile Photo Section -->
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="profile-image-container mb-3">
+                        {% if entrepreneur.profile_image %}
+                            <img src="{{ url_for('static', filename='uploads/' + entrepreneur.profile_image) }}" 
+                                 alt="Foto de perfil" class="img-fluid rounded-circle profile-image">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='images/default-profile.png') }}" 
+                                 alt="Foto de perfil por defecto" class="img-fluid rounded-circle profile-image">
+                        {% endif %}
+                    </div>
+                    <h5 class="card-title">{{ entrepreneur.user.full_name }}</h5>
+                    <p class="text-muted">{{ entrepreneur.business_name }}</p>
+                    
+                    <div class="mt-3">
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#updatePhotoModal">
+                            <i class="bi bi-camera"></i> Cambiar foto
+                        </button>
+                    </div>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="#personal-info" class="list-group-item list-group-item-action">Información Personal</a>
+                    <a href="#business-info" class="list-group-item list-group-item-action">Información del Emprendimiento</a>
+                    <a href="#contact-info" class="list-group-item list-group-item-action">Información de Contacto</a>
+                    <a href="#security" class="list-group-item list-group-item-action">Seguridad</a>
+                </div>
+            </div>
+            
+            <!-- Ally Information Card (if assigned) -->
+            {% if entrepreneur.allies %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Mi Aliado Asignado</h5>
+                </div>
+                <div class="card-body">
+                    {% for relationship in entrepreneur.allies %}
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-shrink-0">
+                                {% if relationship.ally.profile_image %}
+                                    <img src="{{ url_for('static', filename='uploads/' + relationship.ally.profile_image) }}" 
+                                         alt="Foto de aliado" class="img-fluid rounded-circle" style="width: 50px; height: 50px;">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename='images/default-profile.png') }}" 
+                                         alt="Foto de aliado por defecto" class="img-fluid rounded-circle" style="width: 50px; height: 50px;">
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0">{{ relationship.ally.user.full_name }}</h6>
+                                <p class="text-muted small mb-0">{{ relationship.ally.specialty }}</p>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('entrepreneur.messages.chat', ally_id=relationship.ally.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-chat-dots"></i> Enviar mensaje
+                            </a>
+                            <a href="{{ url_for('entrepreneur.calendar.schedule', ally_id=relationship.ally.id) }}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-calendar-plus"></i> Agendar reunión
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <!-- Alert for success/error messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Personal Information Section -->
+            <div class="card mb-4" id="personal-info">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Información Personal</h5>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editPersonalInfoModal">
+                        <i class="bi bi-pencil"></i> Editar
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Nombre Completo</h6>
+                            <p>{{ entrepreneur.user.full_name }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Correo Electrónico</h6>
+                            <p>{{ entrepreneur.user.email }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Fecha de Nacimiento</h6>
+                            <p>{{ entrepreneur.birth_date.strftime('%d/%m/%Y') if entrepreneur.birth_date else 'No especificado' }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Género</h6>
+                            <p>{{ entrepreneur.gender or 'No especificado' }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Documento de Identidad</h6>
+                            <p>{{ entrepreneur.id_type }}: {{ entrepreneur.id_number }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Nivel Educativo</h6>
+                            <p>{{ entrepreneur.education_level or 'No especificado' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Business Information Section -->
+            <div class="card mb-4" id="business-info">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Información del Emprendimiento</h5>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editBusinessInfoModal">
+                        <i class="bi bi-pencil"></i> Editar
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Nombre del Emprendimiento</h6>
+                            <p>{{ entrepreneur.business_name }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Sector</h6>
+                            <p>{{ entrepreneur.business_sector or 'No especificado' }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Etapa</h6>
+                            <p>{{ entrepreneur.business_stage or 'No especificado' }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Año de Fundación</h6>
+                            <p>{{ entrepreneur.founding_year or 'No especificado' }}</p>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <h6 class="text-muted">Descripción</h6>
+                            <p>{{ entrepreneur.business_description or 'No hay descripción disponible.' }}</p>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <h6 class="text-muted">Sitio Web</h6>
+                            <p>
+                                {% if entrepreneur.website %}
+                                    <a href="{{ entrepreneur.website }}" target="_blank">{{ entrepreneur.website }}</a>
+                                {% else %}
+                                    No especificado
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Information Section -->
+            <div class="card mb-4" id="contact-info">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Información de Contacto</h5>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editContactInfoModal">
+                        <i class="bi bi-pencil"></i> Editar
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Teléfono</h6>
+                            <p>{{ entrepreneur.phone or 'No especificado' }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Dirección</h6>
+                            <p>{{ entrepreneur.address or 'No especificado' }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Ciudad</h6>
+                            <p>{{ entrepreneur.city or 'No especificado' }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">País</h6>
+                            <p>{{ entrepreneur.country or 'No especificado' }}</p>
+                        </div>
+                        <div class="col-12">
+                            <h6 class="text-muted">Redes Sociales</h6>
+                            <div class="social-links">
+                                {% if entrepreneur.linkedin %}
+                                    <a href="{{ entrepreneur.linkedin }}" target="_blank" class="me-2">
+                                        <i class="bi bi-linkedin"></i> LinkedIn
+                                    </a>
+                                {% endif %}
+                                {% if entrepreneur.facebook %}
+                                    <a href="{{ entrepreneur.facebook }}" target="_blank" class="me-2">
+                                        <i class="bi bi-facebook"></i> Facebook
+                                    </a>
+                                {% endif %}
+                                {% if entrepreneur.instagram %}
+                                    <a href="{{ entrepreneur.instagram }}" target="_blank" class="me-2">
+                                        <i class="bi bi-instagram"></i> Instagram
+                                    </a>
+                                {% endif %}
+                                {% if entrepreneur.twitter %}
+                                    <a href="{{ entrepreneur.twitter }}" target="_blank">
+                                        <i class="bi bi-twitter"></i> Twitter
+                                    </a>
+                                {% endif %}
+                                {% if not entrepreneur.linkedin and not entrepreneur.facebook and not entrepreneur.instagram and not entrepreneur.twitter %}
+                                    <p>No hay redes sociales especificadas.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Security Section -->
+            <div class="card" id="security">
+                <div class="card-header">
+                    <h5 class="mb-0">Seguridad</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-muted">Contraseña</h6>
+                        <p>********</p>
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                            <i class="bi bi-key"></i> Cambiar contraseña
+                        </button>
+                    </div>
+                    <div>
+                        <h6 class="text-muted">Último acceso</h6>
+                        <p>{{ entrepreneur.user.last_login.strftime('%d/%m/%Y %H:%M') if entrepreneur.user.last_login else 'No disponible' }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<!-- Update Photo Modal -->
+<div class="modal fade" id="updatePhotoModal" tabindex="-1" aria-labelledby="updatePhotoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updatePhotoModalLabel">Actualizar Foto de Perfil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('entrepreneur.profile.update_photo') }}" method="post" enctype="multipart/form-data">
+                <div class="modal-body">
+                    {{ photo_form.csrf_token }}
+                    <div class="mb-3">
+                        <label for="profile_image" class="form-label">Seleccionar nueva imagen</label>
+                        {{ photo_form.profile_image(class="form-control") }}
+                        <div class="form-text">La imagen debe ser de formato JPG, PNG o GIF y no exceder 5MB.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Personal Information Modal -->
+<div class="modal fade" id="editPersonalInfoModal" tabindex="-1" aria-labelledby="editPersonalInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPersonalInfoModalLabel">Editar Información Personal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('entrepreneur.profile.update_personal_info') }}" method="post">
+                <div class="modal-body">
+                    {{ personal_form.csrf_token }}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="first_name" class="form-label">Nombre</label>
+                            {{ personal_form.first_name(class="form-control", value=entrepreneur.user.first_name) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="last_name" class="form-label">Apellido</label>
+                            {{ personal_form.last_name(class="form-control", value=entrepreneur.user.last_name) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="birth_date" class="form-label">Fecha de Nacimiento</label>
+                            {{ personal_form.birth_date(class="form-control", value=entrepreneur.birth_date) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="gender" class="form-label">Género</label>
+                            {{ personal_form.gender(class="form-select") }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_type" class="form-label">Tipo de Documento</label>
+                            {{ personal_form.id_type(class="form-select") }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_number" class="form-label">Número de Documento</label>
+                            {{ personal_form.id_number(class="form-control", value=entrepreneur.id_number) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="education_level" class="form-label">Nivel Educativo</label>
+                            {{ personal_form.education_level(class="form-select") }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Business Information Modal -->
+<div class="modal fade" id="editBusinessInfoModal" tabindex="-1" aria-labelledby="editBusinessInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editBusinessInfoModalLabel">Editar Información del Emprendimiento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('entrepreneur.profile.update_business_info') }}" method="post">
+                <div class="modal-body">
+                    {{ business_form.csrf_token }}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="business_name" class="form-label">Nombre del Emprendimiento</label>
+                            {{ business_form.business_name(class="form-control", value=entrepreneur.business_name) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="business_sector" class="form-label">Sector</label>
+                            {{ business_form.business_sector(class="form-select") }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="business_stage" class="form-label">Etapa</label>
+                            {{ business_form.business_stage(class="form-select") }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="founding_year" class="form-label">Año de Fundación</label>
+                            {{ business_form.founding_year(class="form-control", value=entrepreneur.founding_year) }}
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="business_description" class="form-label">Descripción</label>
+                            {{ business_form.business_description(class="form-control", rows=4) }}
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="website" class="form-label">Sitio Web</label>
+                            {{ business_form.website(class="form-control", value=entrepreneur.website) }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Contact Information Modal -->
+<div class="modal fade" id="editContactInfoModal" tabindex="-1" aria-labelledby="editContactInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editContactInfoModalLabel">Editar Información de Contacto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('entrepreneur.profile.update_contact_info') }}" method="post">
+                <div class="modal-body">
+                    {{ contact_form.csrf_token }}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">Teléfono</label>
+                            {{ contact_form.phone(class="form-control", value=entrepreneur.phone) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="address" class="form-label">Dirección</label>
+                            {{ contact_form.address(class="form-control", value=entrepreneur.address) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="city" class="form-label">Ciudad</label>
+                            {{ contact_form.city(class="form-control", value=entrepreneur.city) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="country" class="form-label">País</label>
+                            {{ contact_form.country(class="form-select") }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="linkedin" class="form-label">LinkedIn</label>
+                            {{ contact_form.linkedin(class="form-control", value=entrepreneur.linkedin) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="facebook" class="form-label">Facebook</label>
+                            {{ contact_form.facebook(class="form-control", value=entrepreneur.facebook) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="instagram" class="form-label">Instagram</label>
+                            {{ contact_form.instagram(class="form-control", value=entrepreneur.instagram) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="twitter" class="form-label">Twitter</label>
+                            {{ contact_form.twitter(class="form-control", value=entrepreneur.twitter) }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changePasswordModalLabel">Cambiar Contraseña</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('entrepreneur.profile.change_password') }}" method="post">
+                <div class="modal-body">
+                    {{ password_form.csrf_token }}
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label">Contraseña Actual</label>
+                        {{ password_form.current_password(class="form-control") }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">Nueva Contraseña</label>
+                        {{ password_form.new_password(class="form-control") }}
+                        <div class="form-text">La contraseña debe tener al menos 8 caracteres e incluir letras y números.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirmar Nueva Contraseña</label>
+                        {{ password_form.confirm_password(class="form-control") }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Cambiar Contraseña</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Initialize date picker for birth date field
+    $(function() {
+        $('#birth_date').datepicker({
+            format: 'dd/mm/yyyy',
+            autoclose: true,
+            todayHighlight: true,
+            language: 'es'
+        });
+    });
+    
+    // Form validation
+    (function() {
+        'use strict'
+        
+        // Fetch all forms we want to apply validation to
+        var forms = document.querySelectorAll('.needs-validation')
+        
+        // Loop over them and prevent submission
+        Array.prototype.slice.call(forms)
+            .forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    
+                    form.classList.add('was-validated')
+                }, false)
+            })
+    })()
+</script>
+{% endblock %}
+
+{% endblock content %}

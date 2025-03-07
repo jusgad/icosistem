@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Directorio de Emprendimientos{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2">Directorio de Emprendimientos</h1>
+            <p class="text-muted">Explora los diferentes emprendimientos en nuestra plataforma</p>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Filtros</h5>
+            <form method="GET" action="{{ url_for('client.directory') }}" id="filter-form">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="category" class="form-label">Categoría</label>
+                        <select class="form-select" id="category" name="category">
+                            <option value="">Todas las categorías</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if request.args.get('category')|int == category.id %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sector" class="form-label">Sector</label>
+                        <select class="form-select" id="sector" name="sector">
+                            <option value="">Todos los sectores</option>
+                            {% for sector in sectors %}
+                            <option value="{{ sector.id }}" {% if request.args.get('sector')|int == sector.id %}selected{% endif %}>
+                                {{ sector.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="location" class="form-label">Ubicación</label>
+                        <select class="form-select" id="location" name="location">
+                            <option value="">Todas las ubicaciones</option>
+                            {% for location in locations %}
+                            <option value="{{ location.id }}" {% if request.args.get('location')|int == location.id %}selected{% endif %}>
+                                {{ location.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sort" class="form-label">Ordenar por</label>
+                        <select class="form-select" id="sort" name="sort">
+                            <option value="newest" {% if request.args.get('sort') == 'newest' %}selected{% endif %}>Más recientes</option>
+                            <option value="oldest" {% if request.args.get('sort') == 'oldest' %}selected{% endif %}>Más antiguos</option>
+                            <option value="name_asc" {% if request.args.get('sort') == 'name_asc' %}selected{% endif %}>Nombre (A-Z)</option>
+                            <option value="name_desc" {% if request.args.get('sort') == 'name_desc' %}selected{% endif %}>Nombre (Z-A)</option>
+                        </select>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary">Aplicar Filtros</button>
+                        <a href="{{ url_for('client.directory') }}" class="btn btn-outline-secondary">Limpiar</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Contador de resultados -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <p class="m-0">Mostrando {{ entrepreneurs|length }} emprendimiento(s)</p>
+        </div>
+        <div>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-secondary active" id="grid-view">
+                    <i class="bi bi-grid-3x3-gap-fill"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="list-view">
+                    <i class="bi bi-list-ul"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vista de directorio -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="entrepreneurs-grid">
+        {% for entrepreneur in entrepreneurs %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <span class="badge bg-{{ entrepreneur.status_color }}">{{ entrepreneur.status_name }}</span>
+                    <small class="text-muted">Desde {{ entrepreneur.created_at|date }}</small>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        {% if entrepreneur.logo %}
+                        <img src="{{ url_for('static', filename='uploads/' + entrepreneur.logo) }}" alt="{{ entrepreneur.name }}" class="img-fluid entrepreneur-logo mb-2" style="max-height: 80px;">
+                        {% else %}
+                        <div class="entrepreneur-placeholder-logo mb-2">{{ entrepreneur.name[:2].upper() }}</div>
+                        {% endif %}
+                        <h5 class="card-title">{{ entrepreneur.name }}</h5>
+                        <p class="text-muted">{{ entrepreneur.category.name }} | {{ entrepreneur.sector.name }}</p>
+                    </div>
+                    <p class="card-text">{{ entrepreneur.description|truncate(100) }}</p>
+                    <div class="d-flex flex-wrap mt-3">
+                        {% for tag in entrepreneur.tags %}
+                        <span class="badge bg-light text-dark me-1 mb-1">{{ tag.name }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-grid">
+                        <a href="{{ url_for('client.entrepreneur_detail', id=entrepreneur.id) }}" class="btn btn-outline-primary">Ver Detalles</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Vista de lista (oculta por defecto) -->
+    <div class="card d-none" id="entrepreneurs-list">
+        <div class="card-body p-0">
+            <table class="table table-hover m-0">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Categoría</th>
+                        <th>Sector</th>
+                        <th>Ubicación</th>
+                        <th>Estado</th>
+                        <th>Fecha de Inicio</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entrepreneur in entrepreneurs %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if entrepreneur.logo %}
+                                <img src="{{ url_for('static', filename='uploads/' + entrepreneur.logo) }}" alt="{{ entrepreneur.name }}" class="me-2" width="30">
+                                {% else %}
+                                <div class="list-placeholder-logo me-2">{{ entrepreneur.name[:2].upper() }}</div>
+                                {% endif %}
+                                {{ entrepreneur.name }}
+                            </div>
+                        </td>
+                        <td>{{ entrepreneur.category.name }}</td>
+                        <td>{{ entrepreneur.sector.name }}</td>
+                        <td>{{ entrepreneur.location.name }}</td>
+                        <td><span class="badge bg-{{ entrepreneur.status_color }}">{{ entrepreneur.status_name }}</span></td>
+                        <td>{{ entrepreneur.created_at|date }}</td>
+                        <td>
+                            <a href="{{ url_for('client.entrepreneur_detail', id=entrepreneur.id) }}" class="btn btn-sm btn-outline-primary">Ver</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Paginación -->
+    {% if pages > 1 %}
+    <nav aria-label="Navegación de páginas" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('client.directory', page=page-1, **request.args) }}">Anterior</a>
+            </li>
+            {% for p in range(1, pages+1) %}
+            <li class="page-item {% if p == page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('client.directory', page=p, **request.args) }}">{{ p }}</a>
+            </li>
+            {% endfor %}
+            <li class="page-item {% if page == pages %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('client.directory', page=page+1, **request.args) }}">Siguiente</a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle entre vista de cuadrícula y lista
+        const gridView = document.getElementById('grid-view');
+        const listView = document.getElementById('list-view');
+        const entrepreneursGrid = document.getElementById('entrepreneurs-grid');
+        const entrepreneursList = document.getElementById('entrepreneurs-list');
+
+        gridView.addEventListener('click', function() {
+            entrepreneursGrid.classList.remove('d-none');
+            entrepreneursList.classList.add('d-none');
+            gridView.classList.add('active');
+            listView.classList.remove('active');
+        });
+
+        listView.addEventListener('click', function() {
+            entrepreneursGrid.classList.add('d-none');
+            entrepreneursList.classList.remove('d-none');
+            gridView.classList.remove('active');
+            listView.classList.add('active');
+        });
+
+        // Aplicar filtros al cambiar los select
+        const selects = document.querySelectorAll('#filter-form select');
+        selects.forEach(select => {
+            select.addEventListener('change', function() {
+                // Reiniciar a la página 1 al cambiar filtros
+                const pageInput = document.querySelector('input[name="page"]');
+                if (pageInput) pageInput.value = 1;
+            });
+        });
+    });
+</script>
+{% endblock %}

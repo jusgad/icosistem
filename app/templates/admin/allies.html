@@ -1,0 +1,464 @@
+{% extends "base.html" %}
+
+{% block title %}Aliados - Plataforma de Emprendimiento{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
+                            <i class="bi bi-speedometer2 me-2"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.users') }}">
+                            <i class="bi bi-people me-2"></i>
+                            Usuarios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.entrepreneurs') }}">
+                            <i class="bi bi-briefcase me-2"></i>
+                            Emprendedores
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin.allies') }}">
+                            <i class="bi bi-person-check me-2"></i>
+                            Aliados
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.assign_ally') }}">
+                            <i class="bi bi-link-45deg me-2"></i>
+                            Asignar Aliados
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.settings') }}">
+                            <i class="bi bi-gear me-2"></i>
+                            Configuración
+                        </a>
+                    </li>
+                </ul>
+
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                    <span>Reportes</span>
+                </h6>
+                <ul class="nav flex-column mb-2">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.reports_activity') }}">
+                            <i class="bi bi-file-earmark-text me-2"></i>
+                            Actividad
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.reports_impact') }}">
+                            <i class="bi bi-graph-up me-2"></i>
+                            Impacto
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Aliados</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="input-group me-2">
+                        <input type="text" class="form-control" placeholder="Buscar aliados..." id="searchAllies">
+                        <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                    <a href="{{ url_for('admin.user_new', role='ally') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i> Nuevo Aliado
+                    </a>
+                </div>
+            </div>
+
+            <!-- Stats cards -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted fw-normal mb-0">Total Aliados</h6>
+                                    <h2 class="fw-bold mb-0">{{ stats.total }}</h2>
+                                </div>
+                                <div class="icon-shape bg-light text-primary rounded-circle">
+                                    <i class="bi bi-person-check"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted fw-normal mb-0">Aliados Activos</h6>
+                                    <h2 class="fw-bold mb-0">{{ stats.active }}</h2>
+                                </div>
+                                <div class="icon-shape bg-light text-success rounded-circle">
+                                    <i class="bi bi-check-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted fw-normal mb-0">Horas de Mentoría</h6>
+                                    <h2 class="fw-bold mb-0">{{ stats.total_hours }}</h2>
+                                </div>
+                                <div class="icon-shape bg-light text-info rounded-circle">
+                                    <i class="bi bi-clock"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted fw-normal mb-0">Emprendedores Asignados</h6>
+                                    <h2 class="fw-bold mb-0">{{ stats.assigned_entrepreneurs }}</h2>
+                                </div>
+                                <div class="icon-shape bg-light text-warning rounded-circle">
+                                    <i class="bi bi-people"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <form id="filterForm" class="row g-3 align-items-end">
+                                <div class="col-md-3">
+                                    <label for="expertiseFilter" class="form-label">Área de experiencia</label>
+                                    <select class="form-select" id="expertiseFilter" name="expertise">
+                                        <option value="">Todas las áreas</option>
+                                        {% for expertise in expertise_areas %}
+                                        <option value="{{ expertise.id }}" {% if request.args.get('expertise') == expertise.id|string %}selected{% endif %}>{{ expertise.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="experienceFilter" class="form-label">Años de experiencia</label>
+                                    <select class="form-select" id="experienceFilter" name="experience">
+                                        <option value="">Cualquier experiencia</option>
+                                        <option value="0-2" {% if request.args.get('experience') == '0-2' %}selected{% endif %}>0-2 años</option>
+                                        <option value="3-5" {% if request.args.get('experience') == '3-5' %}selected{% endif %}>3-5 años</option>
+                                        <option value="6-10" {% if request.args.get('experience') == '6-10' %}selected{% endif %}>6-10 años</option>
+                                        <option value="10+" {% if request.args.get('experience') == '10+' %}selected{% endif %}>Más de 10 años</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="availabilityFilter" class="form-label">Disponibilidad</label>
+                                    <select class="form-select" id="availabilityFilter" name="availability">
+                                        <option value="">Cualquier disponibilidad</option>
+                                        <option value="high" {% if request.args.get('availability') == 'high' %}selected{% endif %}>Alta (10+ horas/semana)</option>
+                                        <option value="medium" {% if request.args.get('availability') == 'medium' %}selected{% endif %}>Media (5-10 horas/semana)</option>
+                                        <option value="low" {% if request.args.get('availability') == 'low' %}selected{% endif %}>Baja (< 5 horas/semana)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 d-flex">
+                                    <button type="submit" class="btn btn-primary me-2">Filtrar</button>
+                                    <button type="reset" class="btn btn-outline-secondary">Limpiar</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                <!-- Allies cards -->
+                <div class="row">
+                    {% for ally in allies %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <img src="{{ ally.profile_image or url_for('static', filename='images/default-profile.png') }}" class="rounded-circle me-3" width="60" height="60" alt="{{ ally.name }}">
+                                    <div>
+                                        <h5 class="card-title mb-0">{{ ally.name }}</h5>
+                                        <p class="text-muted mb-0">{{ ally.years_experience }} años de experiencia</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {% for expertise in ally.expertise_list %}
+                                    <span class="badge bg-primary">{{ expertise }}</span>
+                                    {% endfor %}
+                                    <span class="badge bg-info">{{ ally.availability }} hrs/semana</span>
+                                    {% if ally.is_active %}
+                                    <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inactivo</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <small class="text-muted d-block mb-1">
+                                        <i class="bi bi-envelope me-1"></i> {{ ally.email }}
+                                    </small>
+                                    {% if ally.phone %}
+                                    <small class="text-muted d-block mb-1">
+                                        <i class="bi bi-telephone me-1"></i> {{ ally.phone }}
+                                    </small>
+                                    {% endif %}
+                                    <small class="text-muted d-block">
+                                        <i class="bi bi-calendar me-1"></i> Registrado: {{ ally.created_at|datetime }}
+                                    </small>
+                                </div>
+                                
+                                <div class="mb-3 p-2 bg-light rounded">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <small class="text-muted">Emprendedores asignados:</small>
+                                        <span class="badge bg-secondary">{{ ally.entrepreneurs|length }}</span>
+                                    </div>
+                                    {% if ally.entrepreneurs %}
+                                    <div class="d-flex flex-wrap">
+                                        {% for entrepreneur in ally.entrepreneurs[:3] %}
+                                        <div class="me-2 mb-1" data-bs-toggle="tooltip" title="{{ entrepreneur.name }}">
+                                            <img src="{{ entrepreneur.profile_image or url_for('static', filename='images/default-profile.png') }}" class="rounded-circle" width="30" height="30" alt="{{ entrepreneur.name }}">
+                                        </div>
+                                        {% endfor %}
+                                        {% if ally.entrepreneurs|length > 3 %}
+                                        <div class="me-2 mb-1 bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;" data-bs-toggle="tooltip" title="Ver todos">
+                                            <small class="text-white">+{{ ally.entrepreneurs|length - 3 }}</small>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% else %}
+                                    <small class="text-muted">No tiene emprendedores asignados</small>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="d-flex justify-content-between mt-3">
+                                    <a href="{{ url_for('admin.ally_detail', ally_id=ally.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye me-1"></i> Ver detalles
+                                    </a>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ ally.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton{{ ally.id }}">
+                                            <li><a class="dropdown-item" href="{{ url_for('admin.user_edit', user_id=ally.user_id) }}">
+                                                <i class="bi bi-pencil me-2"></i> Editar
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="{{ url_for('admin.assign_entrepreneurs_to', ally_id=ally.id) }}">
+                                                <i class="bi bi-people me-2"></i> Asignar emprendedores
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <a class="dropdown-item text-danger toggle-status-btn" href="#" 
+                                                   data-ally-id="{{ ally.id }}" 
+                                                   data-current-status="{{ 'active' if ally.is_active else 'inactive' }}">
+                                                    {% if ally.is_active %}
+                                                    <i class="bi bi-slash-circle me-2"></i> Desactivar
+                                                    {% else %}
+                                                    <i class="bi bi-check-circle me-2"></i> Activar
+                                                    {% endif %}
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if not allies %}
+                    <div class="col-12">
+                        <div class="alert alert-info text-center">
+                            <i class="bi bi-info-circle me-2"></i> No hay aliados registrados en el sistema.
+                            <a href="{{ url_for('admin.user_new', role='ally') }}" class="alert-link">Registrar un nuevo aliado</a>.
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if pagination and pagination.pages > 1 %}
+                <nav aria-label="Paginación de aliados">
+                    <ul class="pagination justify-content-center">
+                        {% if pagination.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.allies', page=pagination.prev_num, **request.args) }}" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for page in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                            {% if page %}
+                                {% if page == pagination.page %}
+                                <li class="page-item active">
+                                    <a class="page-link" href="#">{{ page }}</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.allies', page=page, **request.args) }}">{{ page }}</a>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#">...</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if pagination.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.allies', page=pagination.next_num, **request.args) }}" aria-label="Siguiente">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="Siguiente">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para confirmar cambio de estado -->
+<div class="modal fade" id="statusChangeModal" tabindex="-1" aria-labelledby="statusChangeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="statusChangeModalLabel">Confirmar cambio de estado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p id="statusChangeMessage">¿Estás seguro que deseas cambiar el estado de este aliado?</p>
+                <p class="text-muted small">
+                    <i class="bi bi-info-circle me-1"></i> 
+                    <span id="statusChangeInfo">
+                        Al desactivar un aliado, este no podrá acceder al sistema y no se le asignarán nuevos emprendedores.
+                        Los emprendedores ya asignados seguirán vinculados.
+                    </span>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="statusChangeForm" method="POST" action="">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn" id="confirmStatusChangeBtn">Confirmar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Manejar cambio de estado de aliados
+        const statusBtns = document.querySelectorAll('.toggle-status-btn');
+        const statusModal = new bootstrap.Modal(document.getElementById('statusChangeModal'));
+        const statusForm = document.getElementById('statusChangeForm');
+        const statusMessage = document.getElementById('statusChangeMessage');
+        const statusInfo = document.getElementById('statusChangeInfo');
+        const confirmBtn = document.getElementById('confirmStatusChangeBtn');
+        
+        statusBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const allyId = this.dataset.allyId;
+                const currentStatus = this.dataset.currentStatus;
+                
+                // Configurar el formulario y mensajes
+                statusForm.action = "{{ url_for('admin.ally_toggle_status', ally_id=0) }}".replace('0', allyId);
+                
+                if (currentStatus === 'active') {
+                    statusMessage.textContent = '¿Estás seguro que deseas desactivar este aliado?';
+                    statusInfo.textContent = 'Al desactivar un aliado, este no podrá acceder al sistema y no se le asignarán nuevos emprendedores. Los emprendedores ya asignados seguirán vinculados.';
+                    confirmBtn.textContent = 'Desactivar';
+                    confirmBtn.className = 'btn btn-danger';
+                } else {
+                    statusMessage.textContent = '¿Estás seguro que deseas activar este aliado?';
+                    statusInfo.textContent = 'Al activar un aliado, este podrá acceder al sistema y se le podrán asignar emprendedores.';
+                    confirmBtn.textContent = 'Activar';
+                    confirmBtn.className = 'btn btn-success';
+                }
+                
+                statusModal.show();
+            });
+        });
+        
+        // Filtros avanzados toggle
+        const toggleFiltersBtn = document.getElementById('toggleFiltersBtn');
+        const advancedFilters = document.getElementById('advancedFilters');
+        
+        if (toggleFiltersBtn && advancedFilters) {
+            toggleFiltersBtn.addEventListener('click', function() {
+                if (advancedFilters.classList.contains('d-none')) {
+                    advancedFilters.classList.remove('d-none');
+                    this.innerHTML = '<i class="bi bi-funnel-fill me-1"></i> Ocultar filtros avanzados';
+                } else {
+                    advancedFilters.classList.add('d-none');
+                    this.innerHTML = '<i class="bi bi-funnel me-1"></i> Mostrar filtros avanzados';
+                }
+            });
+        }
+        
+        // Limpiar filtros
+        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+        if (clearFiltersBtn) {
+            clearFiltersBtn.addEventListener('click', function() {
+                window.location.href = "{{ url_for('admin.allies') }}";
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio - Plataforma de Emprendimiento{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Conectamos emprendedores con aliados estratégicos</h1>
+                <p class="lead mb-4">Nuestra plataforma facilita el acompañamiento y crecimiento de emprendimientos a través de mentorías, recursos y seguimiento personalizado.</p>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg px-4 me-md-2">Comenzar ahora</a>
+                    <a href="#como-funciona" class="btn btn-outline-secondary btn-lg px-4">Cómo funciona</a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <img src="{{ url_for('static', filename='images/hero-image.jpg') }}" alt="Emprendedores colaborando" class="img-fluid rounded shadow-lg">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Estadísticas -->
+<section class="stats-section py-5 bg-light">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-4 mb-4 mb-md-0">
+                <div class="stat-card p-4 bg-white rounded shadow-sm">
+                    <h2 class="display-4 fw-bold text-primary">{{ stats.entrepreneurs }}</h2>
+                    <p class="lead">Emprendedores</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4 mb-md-0">
+                <div class="stat-card p-4 bg-white rounded shadow-sm">
+                    <h2 class="display-4 fw-bold text-primary">{{ stats.allies }}</h2>
+                    <p class="lead">Aliados estratégicos</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card p-4 bg-white rounded shadow-sm">
+                    <h2 class="display-4 fw-bold text-primary">{{ stats.hours }}</h2>
+                    <p class="lead">Horas de mentoría</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Cómo funciona -->
+<section id="como-funciona" class="how-it-works-section py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Cómo funciona nuestra plataforma</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4 mb-md-0">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-primary text-white rounded-circle mb-3 mx-auto">
+                            <i class="bi bi-person-plus-fill"></i>
+                        </div>
+                        <h3 class="h4 mb-3">1. Regístrate</h3>
+                        <p class="card-text">Crea tu perfil como emprendedor, aliado o cliente y accede a todas las funcionalidades de la plataforma.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4 mb-md-0">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-primary text-white rounded-circle mb-3 mx-auto">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <h3 class="h4 mb-3">2. Conecta</h3>
+                        <p class="card-text">Los emprendedores son asignados a aliados estratégicos según sus necesidades y áreas de experiencia.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-primary text-white rounded-circle mb-3 mx-auto">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                        <h3 class="h4 mb-3">3. Crece</h3>
+                        <p class="card-text">Aprovecha las herramientas de seguimiento, comunicación y gestión para impulsar tu emprendimiento.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonios -->
+<section class="testimonials-section py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">Lo que dicen nuestros usuarios</h2>
+        <div class="row">
+            {% for testimonial in testimonials %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="{{ testimonial.image }}" alt="{{ testimonial.name }}" class="rounded-circle me-3" width="60" height="60">
+                            <div>
+                                <h5 class="mb-0">{{ testimonial.name }}</h5>
+                                <p class="text-muted mb-0">{{ testimonial.role }}</p>
+                            </div>
+                        </div>
+                        <p class="card-text mb-0">"{{ testimonial.text }}"</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Llamado a la acción -->
+<section class="cta-section py-5 bg-primary text-white">
+    <div class="container text-center">
+        <h2 class="mb-4">¿Listo para impulsar tu emprendimiento?</h2>
+        <p class="lead mb-4">Únete a nuestra comunidad y accede a recursos, mentorías y herramientas para hacer crecer tu negocio.</p>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg px-4">Registrarse ahora</a>
+    </div>
+</section>
+
+<!-- Aliados y patrocinadores -->
+<section class="partners-section py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Nuestros aliados y patrocinadores</h2>
+        <div class="row align-items-center justify-content-center">
+            {% for partner in partners %}
+            <div class="col-6 col-md-3 col-lg-2 mb-4 text-center">
+                <img src="{{ partner.logo }}" alt="{{ partner.name }}" class="img-fluid partner-logo" style="max-height: 80px;">
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+{% endblock %}

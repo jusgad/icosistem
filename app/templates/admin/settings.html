@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Configuración del Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h2 mb-4">Configuración del Sistema</h1>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5>Configuración General</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.settings.update') }}">
+                {{ form.csrf_token }}
+                
+                <div class="mb-3">
+                    <label for="site_name" class="form-label">Nombre del Sitio</label>
+                    {{ form.site_name(class="form-control", id="site_name") }}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="contact_email" class="form-label">Email de Contacto</label>
+                    {{ form.contact_email(class="form-control", id="contact_email") }}
+                </div>
+                
+                <div class="mb-3 form-check">
+                    {{ form.enable_registration(class="form-check-input", id="enable_registration") }}
+                    <label class="form-check-label" for="enable_registration">Permitir Registro de Usuarios</label>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="max_file_size" class="form-label">Tamaño Máximo de Archivo (MB)</label>
+                    {{ form.max_file_size(class="form-control", id="max_file_size") }}
+                </div>
+                
+                <hr>
+                
+                <h5 class="mb-3">Parámetros de Emprendimiento</h5>
+                
+                <div class="mb-3">
+                    <label for="max_entrepreneurs_per_ally" class="form-label">Máximo de Emprendedores por Aliado</label>
+                    {{ form.max_entrepreneurs_per_ally(class="form-control", id="max_entrepreneurs_per_ally") }}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="min_hours_per_month" class="form-label">Mínimo de Horas Mensuales</label>
+                    {{ form.min_hours_per_month(class="form-control", id="min_hours_per_month") }}
+                </div>
+                
+                <hr>
+                
+                <h5 class="mb-3">Notificaciones</h5>
+                
+                <div class="mb-3 form-check">
+                    {{ form.email_notifications(class="form-check-input", id="email_notifications") }}
+                    <label class="form-check-label" for="email_notifications">Notificaciones por Email</label>
+                </div>
+                
+                <div class="mb-3 form-check">
+                    {{ form.system_notifications(class="form-check-input", id="system_notifications") }}
+                    <label class="form-check-label" for="system_notifications">Notificaciones del Sistema</label>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Guardar Configuración</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Respaldo del Sistema</h5>
+        </div>
+        <div class="card-body">
+            <p>Realiza un respaldo de la base de datos y los archivos del sistema.</p>
+            <a href="{{ url_for('admin.settings.backup') }}" class="btn btn-secondary">Generar Respaldo</a>
+        </div>
+    </div>
+    
+    <div class="card mt-4 text-white bg-danger">
+        <div class="card-header">
+            <h5>Zona de Peligro</h5>
+        </div>
+        <div class="card-body">
+            <p>Las siguientes acciones son irreversibles y deben ser usadas con precaución.</p>
+            <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#resetModal">
+                Reiniciar Base de Datos
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación -->
+<div class="modal fade" id="resetModal" tabindex="-1" aria-labelledby="resetModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetModalLabel">Confirmar Reinicio</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-danger">¿Está seguro que desea reiniciar la base de datos? Esta acción eliminará todos los datos y no se puede deshacer.</p>
+                <form id="resetForm" method="POST" action="{{ url_for('admin.settings.reset_database') }}">
+                    <div class="mb-3">
+                        <label for="confirm_text" class="form-label">Para confirmar, escriba "REINICIAR"</label>
+                        <input type="text" class="form-control" id="confirm_text" required>
+                    </div>
+                    {{ form.csrf_token }}
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmReset" disabled>Confirmar Reinicio</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Script para habilitar/deshabilitar el botón de confirmación de reinicio
+    document.getElementById('confirm_text').addEventListener('input', function() {
+        const confirmButton = document.getElementById('confirmReset');
+        confirmButton.disabled = this.value !== 'REINICIAR';
+    });
+    
+    // Script para enviar el formulario cuando se confirma el reinicio
+    document.getElementById('confirmReset').addEventListener('click', function() {
+        document.getElementById('resetForm').submit();
+    });
+</script>
+{% endblock %}

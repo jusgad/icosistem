@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+
+{% block title %}Mis Emprendedores | Panel de Aliado{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Mis Emprendedores Asignados</h5>
+                    <div>
+                        <input type="text" id="searchEntrepreneur" class="form-control form-control-sm" 
+                               placeholder="Buscar por nombre o sector...">
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if entrepreneurs %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Emprendedor</th>
+                                    <th>Emprendimiento</th>
+                                    <th>Sector</th>
+                                    <th>Fecha de asignación</th>
+                                    <th>Última interacción</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for relationship in relationships %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{ relationship.entrepreneur.profile_image or url_for('static', filename='images/default-profile.png') }}" 
+                                                 alt="Foto de perfil" class="rounded-circle me-2" width="40" height="40">
+                                            <div>
+                                                <div>{{ relationship.entrepreneur.user.full_name }}</div>
+                                                <small class="text-muted">{{ relationship.entrepreneur.user.email }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ relationship.entrepreneur.business_name }}</td>
+                                    <td>{{ relationship.entrepreneur.sector }}</td>
+                                    <td>{{ relationship.created_at.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        {% if relationship.last_interaction %}
+                                            {{ relationship.last_interaction.strftime('%d/%m/%Y') }}
+                                        {% else %}
+                                            <span class="text-muted">Sin interacciones</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if relationship.status == 'active' %}
+                                            <span class="badge bg-success">Activo</span>
+                                        {% elif relationship.status == 'inactive' %}
+                                            <span class="badge bg-secondary">Inactivo</span>
+                                        {% elif relationship.status == 'paused' %}
+                                            <span class="badge bg-warning">Pausado</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('ally.entrepreneurs.detail', entrepreneur_id=relationship.entrepreneur.id) }}" 
+                                               class="btn btn-sm btn-outline-primary" title="Ver detalle">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('ally.messages.chat', user_id=relationship.entrepreneur.user.id) }}" 
+                                               class="btn btn-sm btn-outline-info" title="Enviar mensaje">
+                                                <i class="bi bi-chat"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-success"
+                                                    data-bs-toggle="modal" data-bs-target="#scheduleMeetingModal"
+                                                    data-entrepreneur-id="{{ relationship.entrepreneur.id }}"
+                                                    data-entrepreneur-name="{{ relationship.entrepreneur.user.full_name }}"
+                                                    title="Agendar reunión">
+                                                <i class="bi bi-calendar-plus"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                    data-bs-toggle="modal" data-bs-target="#registerHoursModal"
+                                                    data-entrepreneur-id="{{ relationship.entrepreneur.id }}"
+                                                    data-entrepreneur-name="{{ relationship.entrepreneur.user.full_name }}"
+                                                    title="Registrar horas">
+                                                <i class="bi bi-clock"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <nav aria-label="Navegación de páginas">
+                            <ul class="pagination justify-content-center">
+                                {% if pagination.has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('ally.entrepreneurs.list', page=pagination.prev_num) }}">Anterior</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">Anterior</span>
+                                </li>
+                                {% endif %}
+                                
+                                {% for page in pagination.iter_pages() %}
+                                    {% if page %}
+                                        {% if page != pagination.page %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('ally.entrepreneurs.list', page=page) }}">{{ page }}</a>
+                                        </li>
+                                        {% else %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ page }}</span>
+                                        </li>
+                                        {% endif %}
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if pagination.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('ally.entrepreneurs.list', page=pagination.next_num) }}">Siguiente</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">Siguiente</span>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-people display-4 text-muted"></i>
+                        <h5 class="mt-3">No tienes emprendedores asignados</h5>
+                        <p class="text-muted">Cuando se te asignen emprendedores, aparecerán en esta lista.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Estadísticas rápidas -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Total de horas este mes</h6>
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-clock-history text-primary fs-1 me-3"></i>
+                        <div>
+                            <h3 class="mb-0">{{ stats.monthly_hours }}</h3>
+                            {% if stats.hours_trend > 0 %}
+                            <small class="text-success">
+                                <i class="bi bi-arrow-up"></i> {{ stats.hours_trend }}% vs. mes anterior
+                            </small>
+                            {% elif stats.hours_trend < 0 %}
+                            <small class="text-danger">
+                                <i class="bi bi-arrow-down"></i> {{ stats.hours_trend|abs }}% vs. mes anterior
+                            </small>
+                            {% else %}
+                            <small class="text-muted">Sin cambios vs. mes anterior</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Reuniones agendadas</h6>
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-calendar-check text-success fs-1 me-3"></i>
+                        <div>
+                            <h3 class="mb-0">{{ stats.upcoming_meetings }}</h3>
+                            <small class="text-muted">Próximos 7 días</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Mensajes no leídos</h6>
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-chat-dots text-info fs-1 me-3"></i>
+                        <div>
+                            <h3 class="mb-0">{{ stats.unread_messages }}</h3>
+                            <small class="text-muted">De {{ stats.unread_message_sources }} emprendedor(es)</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agendar reunión -->
+<div class="modal fade" id="scheduleMeetingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agendar reunión</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="scheduleMeetingForm" method="POST" action="{{ url_for('ally.calendar.schedule_meeting') }}">
+                <div class="modal-body">
+                    {{ meeting_form.csrf_token }}
+                    {{ meeting_form.entrepreneur_id }}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Emprendedor</label>
+                        <input type="text" class="form-control" id="entrepreneurName" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="meetingTitle" class="form-label">Título de la reunión</label>
+                        {{ meeting_form.title(class="form-control", id="meetingTitle") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="meetingDate" class="form-label">Fecha</label>
+                        {{ meeting_form.date(class="form-control", id="meetingDate", type="date") }}
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="meetingStartTime" class="form-label">Hora inicio</label>
+                            {{ meeting_form.start_time(class="form-control", id="meetingStartTime", type="time") }}
+                        </div>
+                        <div class="col">
+                            <label for="meetingEndTime" class="form-label">Hora fin</label>
+                            {{ meeting_form.end_time(class="form-control", id="meetingEndTime", type="time") }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="meetingLocation" class="form-label">Ubicación</label>
+                        {{ meeting_form.location(class="form-control", id="meetingLocation") }}
+                        <div class="form-text">Puede ser física o virtual (enlace)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="meetingDescription" class="form-label">Descripción / Agenda</label>
+                        {{ meeting_form.description(class="form-control", id="meetingDescription", rows=3) }}
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        {{ meeting_form.send_notification(class="form-check-input", id="sendNotification") }}
+                        <label class="form-check-label" for="sendNotification">
+                            Enviar notificación al emprendedor
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Agendar reunión</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para registrar horas -->
+<div class="modal fade" id="registerHoursModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Registrar horas de acompañamiento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="registerHoursForm" method="POST" action="{{ url_for('ally.hours.register') }}">
+                <div class="modal-body">
+                    {{ hours_form.csrf_token }}
+                    {{ hours_form.entrepreneur_id }}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Emprendedor</label>
+                        <input type="text" class="form-control" id="entrepreneurNameHours" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="hoursDate" class="form-label">Fecha</label>
+                        {{ hours_form.date(class="form-control", id="hoursDate", type="date") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="activityType" class="form-label">Tipo de actividad</label>
+                        {{ hours_form.activity_type(class="form-select", id="activityType") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="hoursSpent" class="form-label">Horas dedicadas</label>
+                        {{ hours_form.hours(class="form-control", id="hoursSpent", type="number", step="0.5", min="0.5", max="8") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="hoursDescription" class="form-label">Descripción de actividades</label>
+                        {{ hours_form.description(class="form-control", id="hoursDescription", rows=3) }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="outcome" class="form-label">Resultados / Logros</label>
+                        {{ hours_form.outcome(class="form-control", id="outcome", rows=2) }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="nextSteps" class="form-label">Próximos pasos</label>
+                        {{ hours_form.next_steps(class="form-control", id="nextSteps", rows=2) }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Registrar horas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    $(document).ready(function() {
+        // Inicializar búsqueda
+        $('#searchEntrepreneur').on('keyup', function() {
+            var value = $(this).val().toLowerCase();
+            $('tbody tr').filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+        
+        // Configurar modal de reuniones
+        $('#scheduleMeetingModal').on('show.bs.modal', function(event) {
+            var button = $(event.relatedTarget);
+            var entrepreneurId = button.data('entrepreneur-id');
+            var entrepreneurName = button.data('entrepreneur-name');
+            
+            var modal = $(this);
+            modal.find('#entrepreneurName').val(entrepreneurName);
+            modal.find('input[name="entrepreneur_id"]').val(entrepreneurId);
+            
+            // Establecer fecha mínima al día actual
+            var today = new Date().toISOString().split('T')[0];
+            $('#meetingDate').attr('min', today);
+        });
+        
+        // Configurar modal de registro de horas
+        $('#registerHoursModal').on('show.bs.modal', function(event) {
+            var button = $(event.relatedTarget);
+            var entrepreneurId = button.data('entrepreneur-id');
+            var entrepreneurName = button.data('entrepreneur-name');
+            
+            var modal = $(this);
+            modal.find('#entrepreneurNameHours').val(entrepreneurName);
+            modal.find('input[name="entrepreneur_id"]').val(entrepreneurId);
+            
+            // Establecer fecha máxima al día actual
+            var today = new Date().toISOString().split('T')[0];
+            $('#hoursDate').attr('max', today);
+        });
+    });
+</script>
+{% endblock %}

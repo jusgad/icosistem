@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard del Emprendedor{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+      <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a class="nav-link active" href="{{ url_for('entrepreneur.dashboard') }}">
+              <i class="bi bi-house-door"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('entrepreneur.profile') }}">
+              <i class="bi bi-person"></i> Mi Perfil
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('entrepreneur.messages') }}">
+              <i class="bi bi-chat"></i> Mensajes
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('entrepreneur.calendar') }}">
+              <i class="bi bi-calendar"></i> Calendario
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('entrepreneur.desktop') }}">
+              <i class="bi bi-briefcase"></i> Escritorio de Trabajo
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('entrepreneur.documents') }}">
+              <i class="bi bi-file-earmark"></i> Documentos
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('entrepreneur.tasks') }}">
+              <i class="bi bi-check-square"></i> Tareas
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Dashboard de {{ current_user.entrepreneur.business_name }}</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary">Compartir</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary">Exportar</button>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
+            <i class="bi bi-calendar"></i> Esta semana
+          </button>
+        </div>
+      </div>
+
+      <!-- Statistics Cards -->
+      <div class="row">
+        <div class="col-md-4 mb-4">
+          <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+              <div class="row no-gutters align-items-center">
+                <div class="col mr-2">
+                  <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                    Reuniones Pendientes</div>
+                  <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.pending_meetings }}</div>
+                </div>
+                <div class="col-auto">
+                  <i class="bi bi-calendar-check fs-2 text-gray-300"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+          <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+              <div class="row no-gutters align-items-center">
+                <div class="col mr-2">
+                  <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                    Tareas Completadas</div>
+                  <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.completed_tasks }}/{{ stats.total_tasks }}</div>
+                </div>
+                <div class="col-auto">
+                  <i class="bi bi-check-circle fs-2 text-gray-300"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+          <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+              <div class="row no-gutters align-items-center">
+                <div class="col mr-2">
+                  <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                    Horas con Aliado</div>
+                  <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.ally_hours }}</div>
+                </div>
+                <div class="col-auto">
+                  <i class="bi bi-clock fs-2 text-gray-300"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Chart -->
+      <div class="row">
+        <div class="col-xl-8 col-lg-7">
+          <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+              <h6 class="m-0 font-weight-bold text-primary">Progreso del Emprendimiento</h6>
+              <div class="dropdown no-arrow">
+                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                  data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="bi bi-three-dots-vertical text-gray-400"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                  aria-labelledby="dropdownMenuLink">
+                  <div class="dropdown-header">Opciones:</div>
+                  <a class="dropdown-item" href="#">Ver detalles</a>
+                  <a class="dropdown-item" href="#">Exportar datos</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="#">Configurar</a>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="chart-area">
+                <canvas id="progressChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ally Information -->
+        <div class="col-xl-4 col-lg-5">
+          <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+              <h6 class="m-0 font-weight-bold text-primary">Mi Aliado</h6>
+            </div>
+            <div class="card-body">
+              {% if current_user.entrepreneur.ally %}
+              <div class="text-center">
+                <img class="img-fluid px-3 px-sm-4 mt-3 mb-4" style="width: 15rem;"
+                  src="{{ url_for('static', filename='images/default-profile.png') }}" alt="Perfil del aliado">
+              </div>
+              <div class="text-center mb-2">
+                <h5>{{ current_user.entrepreneur.ally.user.name }}</h5>
+                <p>{{ current_user.entrepreneur.ally.specialty }}</p>
+              </div>
+              <div class="text-center mb-3">
+                <a href="{{ url_for('entrepreneur.messages') }}" class="btn btn-primary btn-sm">
+                  <i class="bi bi-chat"></i> Enviar mensaje
+                </a>
+                <a href="#" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#meetingModal">
+                  <i class="bi bi-calendar-plus"></i> Programar reunión
+                </a>
+              </div>
+              <p class="mb-0">Próxima reunión: <strong>{{ next_meeting.date|date('d/m/Y H:i') if next_meeting else 'Sin programar' }}</strong></p>
+              {% else %}
+              <div class="text-center py-4">
+                <p>Aún no tienes un aliado asignado.</p>
+                <p>Contacta al administrador para solicitar la asignación.</p>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upcoming Tasks -->
+      <h2>Tareas pendientes</h2>
+      <div class="table-responsive">
+        <table class="table table-bordered" id="tasksTable" width="100%" cellspacing="0">
+          <thead>
+            <tr>
+              <th>Tarea</th>
+              <th>Fecha límite</th>
+              <th>Prioridad</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for task in upcoming_tasks %}
+            <tr>
+              <td>{{ task.title }}</td>
+              <td>{{ task.due_date|date('d/m/Y') }}</td>
+              <td>
+                <span class="badge bg-{{ task.priority_color }}">{{ task.priority }}</span>
+              </td>
+              <td>
+                <div class="progress">
+                  <div class="progress-bar" role="progressbar" style="width: {{ task.progress }}%;" 
+                    aria-valuenow="{{ task.progress }}" aria-valuemin="0" aria-valuemax="100">{{ task.progress }}%</div>
+                </div>
+              </td>
+              <td>
+                <a href="{{ url_for('entrepreneur.tasks_detail', task_id=task.id) }}" class="btn btn-info btn-sm">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{{ url_for('entrepreneur.tasks_edit', task_id=task.id) }}" class="btn btn-warning btn-sm">
+                  <i class="bi bi-pencil"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Meeting Modal -->
+<div class="modal fade" id="meetingModal" tabindex="-1" aria-labelledby="meetingModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="meetingModalLabel">Programar Reunión</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="meetingForm" method="post" action="{{ url_for('entrepreneur.schedule_meeting') }}">
+          {{ meeting_form.csrf_token }}
+          <div class="mb-3">
+            {{ meeting_form.title.label(class="form-label") }}
+            {{ meeting_form.title(class="form-control") }}
+          </div>
+          <div class="mb-3">
+            {{ meeting_form.date.label(class="form-label") }}
+            {{ meeting_form.date(class="form-control", type="datetime-local") }}
+          </div>
+          <div class="mb-3">
+            {{ meeting_form.description.label(class="form-label") }}
+            {{ meeting_form.description(class="form-control", rows=3) }}
+          </div>
+          <div class="mb-3 form-check">
+            {{ meeting_form.virtual(class="form-check-input") }}
+            {{ meeting_form.virtual.label(class="form-check-label") }}
+          </div>
+          <div id="locationField" class="mb-3">
+            {{ meeting_form.location.label(class="form-label") }}
+            {{ meeting_form.location(class="form-control") }}
+          </div>
+          <button type="submit" class="btn btn-primary">Programar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the progress chart
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    const progressData = {
+      labels: {{ progress_labels|tojson }},
+      datasets: [{
+        label: 'Progreso',
+        data: {{ progress_data|tojson }},
+        backgroundColor: 'rgba(78, 115, 223, 0.2)',
+        borderColor: 'rgba(78, 115, 223, 1)',
+        pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: 'rgba(78, 115, 223, 1)',
+        lineTension: 0.3
+      }]
+    };
+    
+    initProgressChart(ctx, progressData);
+    
+    // Meeting form toggle for virtual/in-person
+    const virtualCheckbox = document.getElementById('virtual');
+    const locationField = document.getElementById('locationField');
+    
+    virtualCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        locationField.style.display = 'none';
+      } else {
+        locationField.style.display = 'block';
+      }
+    });
+    
+    // Trigger the change event on load
+    virtualCheckbox.dispatchEvent(new Event('change'));
+  });
+</script>
+{% endblock %}
