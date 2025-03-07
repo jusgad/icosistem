@@ -1,4 +1,4 @@
-# Emprendimiento App
+# Proyecto Postpenados
 
 Plataforma web para la gestión de emprendedores, aliados y clientes en un ecosistema de emprendimiento. Esta aplicación facilita la conexión entre emprendedores y mentores (aliados), permitiendo el seguimiento de actividades, comunicación en tiempo real, y medición de impacto.
 
