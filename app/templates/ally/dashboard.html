@@ -156,7 +156,9 @@
               <h5 class="mb-0">Distribución de horas por emprendedor</h5>
             </div>
             <div class="card-body">
-              <canvas id="hoursChart" height="250"></canvas>
+              <canvas id="hoursChart" height="250" 
+                      data-names="{{ entrepreneurs_names|tojson|safe }}"
+                      data-hours="{{ entrepreneurs_hours|tojson|safe }}"></canvas>
             </div>
           </div>
         </div>
@@ -166,7 +168,9 @@
               <h5 class="mb-0">Progreso de emprendedores</h5>
             </div>
             <div class="card-body">
-              <canvas id="progressChart" height="250"></canvas>
+              <canvas id="progressChart" height="250"
+                      data-names="{{ entrepreneurs_names|tojson|safe }}"
+                      data-progress="{{ entrepreneurs_progress|tojson|safe }}"></canvas>
             </div>
           </div>
         </div>
@@ -226,10 +230,11 @@
                   <td>
                     <div class="progress">
                       <div class="progress-bar bg-success" role="progressbar" 
-                           style="width: {{ entrepreneur.progress }}%;" 
-                           aria-valuenow="{{ entrepreneur.progress }}" 
-                           aria-valuemin="0" aria-valuemax="100">
-                        {{ entrepreneur.progress }}%
+                           style="width: 0%;" 
+                           aria-valuenow="0" 
+                           aria-valuemin="0" aria-valuemax="100"
+                           data-progress="{{ entrepreneur.progress }}">
+                        0%
                       </div>
                     </div>
                   </td>
@@ -266,76 +271,113 @@
 <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Gráfico de distribución de horas
-  const hoursCtx = document.getElementById('hoursChart').getContext('2d');
-  new Chart(hoursCtx, {
-    type: 'pie',
-    data: {
-      labels: {{ entrepreneurs_names|tojson }},
-      datasets: [{
-        data: {{ entrepreneurs_hours|tojson }},
-        backgroundColor: [
-          '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
-          '#5a5c69', '#6f42c1', '#20c9a6', '#f8f9fc', '#858796'
-        ],
-        hoverOffset: 4
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: 'right',
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              return context.label + ': ' + context.raw + ' horas';
-            }
-          }
-        }
-      }
+  // Inicializar las barras de progreso
+  document.querySelectorAll('.progress-bar[data-progress]').forEach(bar => {
+    try {
+      let progress = parseFloat(bar.getAttribute('data-progress'));
+      if (isNaN(progress)) progress = 0;
+      if (progress > 100) progress = 100;
+      if (progress < 0) progress = 0;
+      
+      bar.style.width = progress + '%';
+      bar.setAttribute('aria-valuenow', progress);
+      bar.textContent = Math.round(progress) + '%';
+    } catch (e) {
+      console.error('Error al procesar barra de progreso:', e);
+      bar.style.width = '0%';
+      bar.textContent = '0%';
     }
   });
 
-  // Gráfico de progreso
-  const progressCtx = document.getElementById('progressChart').getContext('2d');
-  new Chart(progressCtx, {
-    type: 'bar',
-    data: {
-      labels: {{ entrepreneurs_names|tojson }},
-      datasets: [{
-        label: 'Progreso (%)',
-        data: {{ entrepreneurs_progress|tojson }},
-        backgroundColor: '#1cc88a',
-        borderColor: '#169a6f',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true,
-          max: 100,
-          ticks: {
-            callback: function(value) {
-              return value + '%';
+  try {
+    // Gráfico de distribución de horas
+    const hoursChart = document.getElementById('hoursChart');
+    if (hoursChart) {
+      const hoursCtx = hoursChart.getContext('2d');
+      const hoursNames = JSON.parse(hoursChart.dataset.names || '[]');
+      const hoursData = JSON.parse(hoursChart.dataset.hours || '[]');
+      
+      new Chart(hoursCtx, {
+        type: 'pie',
+        data: {
+          labels: hoursNames,
+          datasets: [{
+            data: hoursData,
+            backgroundColor: [
+              '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+              '#5a5c69', '#6f42c1', '#20c9a6', '#f8f9fc', '#858796'
+            ],
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'right',
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.label + ': ' + context.raw + ' horas';
+                }
+              }
             }
           }
         }
-      },
-      plugins: {
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              return 'Progreso: ' + context.raw + '%';
-            }
-          }
-        }
-      }
+      });
     }
-  });
+
+    // Gráfico de progreso
+    const progressChart = document.getElementById('progressChart');
+    if (progressChart) {
+      const progressCtx = progressChart.getContext('2d');
+      const progressNames = JSON.parse(progressChart.dataset.names || '[]');
+      const progressData = JSON.parse(progressChart.dataset.progress || '[]');
+      
+      new Chart(progressCtx, {
+        type: 'bar',
+        data: {
+          labels: progressNames,
+          datasets: [{
+            label: 'Progreso (%)',
+            data: progressData,
+            backgroundColor: '#1cc88a',
+            borderColor: '#169a6f',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                callback: function(value) {
+                  return value + '%';
+                }
+              }
+            }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return 'Progreso: ' + context.raw + '%';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error al inicializar los gráficos:', error);
+    document.querySelectorAll('canvas').forEach(canvas => {
+      canvas.parentNode.innerHTML = '<div class="alert alert-danger">Error al cargar el gráfico. Por favor, recargue la página.</div>';
+    });
+  }
 
   // Manejo del filtro de periodo
   const periodLinks = document.querySelectorAll('[data-period]');
@@ -348,10 +390,13 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Manejo de la descarga de reportes
-  document.getElementById('downloadReportBtn').addEventListener('click', function() {
-    const period = new URLSearchParams(window.location.search).get('period') || 'month';
-    window.location.href = `{{ url_for('ally.download_report') }}?period=${period}`;
-  });
+  const downloadReportBtn = document.getElementById('downloadReportBtn');
+  if (downloadReportBtn) {
+    downloadReportBtn.addEventListener('click', function() {
+      const period = new URLSearchParams(window.location.search).get('period') || 'month';
+      window.location.href = `{{ url_for('ally.download_report') }}?period=${period}`;
+    });
+  }
 });
 </script>
 {% endblock %}

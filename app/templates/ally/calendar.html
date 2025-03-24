@@ -57,7 +57,12 @@
             <!-- Calendario -->
             <div class="card shadow-sm mb-4">
                 <div class="card-body">
-                    <div id="calendar"></div>
+                    <!-- Añadimos los atributos de datos al div del calendario -->
+                    <div id="calendar" 
+                         data-events="{{ events|tojson|safe }}" 
+                         data-user-id="{{ current_user.id }}" 
+                         data-csrf-token="{{ csrf_token() }}">
+                    </div>
                 </div>
             </div>
 
@@ -131,7 +136,7 @@
             </div>
             <div class="modal-body">
                 <form id="event-form" method="post" action="{{ url_for('ally.calendar.add_meeting') }}">
-                    {{ form.csrf_token }}
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="meeting_id" id="meeting_id">
                     
                     <div class="mb-3">
@@ -218,70 +223,87 @@
 <script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Inicializar calendario
-        const calendar = initCalendar('#calendar', {
-            events: {{ events|tojson }},
-            userId: {{ current_user.id }},
-            userRole: 'ally',
-            csrf_token: "{{ csrf_token() }}"
-        });
-        
-        // Manejar botón para añadir evento
-        document.getElementById('btn-add-event').addEventListener('click', function() {
-            // Resetear formulario
-            document.getElementById('event-form').reset();
-            document.getElementById('meeting_id').value = '';
-            document.getElementById('eventModalLabel').textContent = 'Nueva Reunión';
+        try {
+            // Obtener los datos de atributos de datos en el elemento del calendario
+            const calendarEl = document.getElementById('calendar');
+            const eventsData = JSON.parse(calendarEl.dataset.events || '[]');
+            const userId = parseInt(calendarEl.dataset.userId || '0');
+            const csrfToken = calendarEl.dataset.csrfToken || '';
             
-            // Establecer fecha predeterminada (hoy)
-            const today = new Date();
-            document.getElementById('date').value = today.toISOString().split('T')[0];
+            // Inicializar calendario
+            const calendar = initCalendar('#calendar', {
+                events: eventsData,
+                userId: userId,
+                userRole: 'ally',
+                csrf_token: csrfToken
+            });
             
-            // Mostrar modal
-            const eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
-            eventModal.show();
-        });
-        
-        // Manejar guardado de evento
-        document.getElementById('save-event').addEventListener('click', function() {
-            if (validateForm()) {
-                document.getElementById('event-form').submit();
-            }
-        });
-        
-        // Validar formulario
-        function validateForm() {
-            const form = document.getElementById('event-form');
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return false;
-            }
-            return true;
-        }
-        
-        // Aplicar filtros
-        document.querySelectorAll('[data-filter]').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const filter = this.getAttribute('data-filter');
-                if (filter === 'all') {
-                    calendar.getCalendar().getEvents().forEach(event => event.setProp('display', 'auto'));
-                } else {
-                    calendar.getCalendar().getEvents().forEach(event => {
-                        if (event.extendedProps.type === filter) {
-                            event.setProp('display', 'auto');
-                        } else {
-                            event.setProp('display', 'none');
-                        }
-                    });
+            // Manejar botón para añadir evento
+            document.getElementById('btn-add-event').addEventListener('click', function() {
+                // Resetear formulario
+                document.getElementById('event-form').reset();
+                document.getElementById('meeting_id').value = '';
+                document.getElementById('eventModalLabel').textContent = 'Nueva Reunión';
+                
+                // Establecer fecha predeterminada (hoy)
+                const today = new Date();
+                document.getElementById('date').value = today.toISOString().split('T')[0];
+                
+                // Mostrar modal
+                const eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
+                eventModal.show();
+            });
+            
+            // Manejar guardado de evento
+            document.getElementById('save-event').addEventListener('click', function() {
+                if (validateForm()) {
+                    document.getElementById('event-form').submit();
                 }
             });
-        });
-        
-        // Manejar impresión
-        document.getElementById('btn-print-calendar').addEventListener('click', function() {
-            window.print();
-        });
+            
+            // Validar formulario
+            function validateForm() {
+                const form = document.getElementById('event-form');
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return false;
+                }
+                return true;
+            }
+            
+            // Aplicar filtros
+            document.querySelectorAll('[data-filter]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const filter = this.getAttribute('data-filter');
+                    
+                    if (filter === 'all') {
+                        // Mostrar todos los eventos
+                        calendar.getCalendar().getEvents().forEach(event => {
+                            event.setProp('display', 'auto');
+                        });
+                    } else {
+                        // Filtrar por tipo
+                        calendar.getCalendar().getEvents().forEach(event => {
+                            const eventType = event.extendedProps.type || 'other';
+                            if (eventType === filter) {
+                                event.setProp('display', 'auto');
+                            } else {
+                                event.setProp('display', 'none');
+                            }
+                        });
+                    }
+                });
+            });
+            
+            // Manejar impresión
+            document.getElementById('btn-print-calendar').addEventListener('click', function() {
+                window.print();
+            });
+        } catch (error) {
+            console.error('Error al inicializar el calendario:', error);
+            document.getElementById('calendar').innerHTML = '<div class="alert alert-danger">Error al cargar el calendario. Por favor, recargue la página o contacte al soporte técnico.</div>';
+        }
     });
 </script>
 {% endblock %}

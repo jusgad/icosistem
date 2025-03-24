@@ -77,11 +77,14 @@
                 <h1 class="h2">Emprendedores</h1>
                 <div class="btn-toolbar mb-2 mb-md-0">
                     <div class="input-group me-2">
-                        <input type="text" class="form-control" placeholder="Buscar emprendedores..." id="searchEntrepreneurs">
+                        <input type="text" class="form-control" placeholder="Buscar emprendedores..." id="searchEntrepreneurs" value="{{ request.args.get('search', '') }}">
                         <button class="btn btn-outline-secondary" type="button" id="searchButton">
                             <i class="bi bi-search"></i>
                         </button>
                     </div>
+                    <button type="button" class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#exportModal">
+                        <i class="bi bi-download me-1"></i> Exportar
+                    </button>
                     <a href="{{ url_for('admin.user_new', role='entrepreneur') }}" class="btn btn-primary">
                         <i class="bi bi-plus-lg me-1"></i> Nuevo Emprendedor
                     </a>
@@ -160,7 +163,7 @@
                 <div class="col-md-12">
                     <div class="card border-0 shadow-sm">
                         <div class="card-body">
-                            <form id="filterForm" class="row g-3 align-items-end">
+                            <form id="filterForm" class="row g-3 align-items-end" action="{{ url_for('admin.entrepreneurs') }}" method="GET">
                                 <div class="col-md-3">
                                     <label for="industryFilter" class="form-label">Industria</label>
                                     <select class="form-select" id="industryFilter" name="industry">
@@ -187,7 +190,16 @@
                                         <option value="unassigned" {% if request.args.get('ally') == 'unassigned' %}selected{% endif %}>Sin aliado asignado</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3 d-flex">
+                                <div class="col-md-3">
+                                    <label for="dateFilter" class="form-label">Fecha de registro</label>
+                                    <select class="form-select" id="dateFilter" name="date_filter">
+                                        <option value="">Todas las fechas</option>
+                                        <option value="this_month" {% if request.args.get('date_filter') == 'this_month' %}selected{% endif %}>Este mes</option>
+                                        <option value="last_month" {% if request.args.get('date_filter') == 'last_month' %}selected{% endif %}>Mes anterior</option>
+                                        <option value="last_3_months" {% if request.args.get('date_filter') == 'last_3_months' %}selected{% endif %}>Últimos 3 meses</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-12 d-flex mt-3">
                                     <button type="submit" class="btn btn-primary me-2">Filtrar</button>
                                     <button type="reset" class="btn btn-outline-secondary">Limpiar</button>
                                 </div>
@@ -199,116 +211,116 @@
 
             <!-- Entrepreneurs cards -->
             <div class="row">
-                {% for entrepreneur in entrepreneurs %}
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-3">
-                                <img src="{{ entrepreneur.profile_image or url_for('static', filename='images/default-profile.png') }}" class="rounded-circle me-3" width="60" height="60" alt="{{ entrepreneur.name }}">
-                                <div>
-                                    <h5 class="card-title mb-0">{{ entrepreneur.name }}</h5>
-                                    <p class="text-muted mb-0">{{ entrepreneur.company_name or 'Sin empresa' }}</p>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <span class="badge bg-primary">{{ entrepreneur.industry }}</span>
-                                <span class="badge bg-secondary">{{ entrepreneur.company_stage }}</span>
-                                {% if entrepreneur.ally %}
-                                <span class="badge bg-success">Con aliado</span>
-                                {% else %}
-                                <span class="badge bg-warning text-dark">Sin aliado</span>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="mb-3">
-                                <small class="text-muted d-block mb-1">
-                                    <i class="bi bi-envelope me-1"></i> {{ entrepreneur.email }}
-                                </small>
-                                {% if entrepreneur.phone %}
-                                <small class="text-muted d-block mb-1">
-                                    <i class="bi bi-telephone me-1"></i> {{ entrepreneur.phone }}
-                                </small>
-                                {% endif %}
-                                <small class="text-muted d-block">
-                                    <i class="bi bi-calendar me-1"></i> Registrado: {{ entrepreneur.created_at|datetime }}
-                                </small>
-                            </div>
-                            
-                            {% if entrepreneur.ally %}
-                            <div class="mb-3 p-2 bg-light rounded">
-                                <small class="text-muted d-block mb-1">Aliado asignado:</small>
-                                <div class="d-flex align-items-center">
-                                    <img src="{{ entrepreneur.ally.profile_image or url_for('static', filename='images/default-profile.png') }}" class="rounded-circle me-2" width="30" height="30" alt="{{ entrepreneur.ally.name }}">
+                {% if entrepreneurs is defined and entrepreneurs|length > 0 %}
+                    {% for entrepreneur in entrepreneurs %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <img src="{{ entrepreneur.profile_image or url_for('static', filename='images/default-profile.png') }}" class="rounded-circle me-3" width="60" height="60" alt="{{ entrepreneur.name }}">
                                     <div>
-                                        <small class="d-block">{{ entrepreneur.ally.name }}</small>
-                                        <small class="text-muted">{{ entrepreneur.ally.email }}</small>
+                                        <h5 class="card-title mb-0">{{ entrepreneur.name }}</h5>
+                                        <p class="text-muted mb-0">{{ entrepreneur.company_name or 'Sin empresa' }}</p>
                                     </div>
                                 </div>
-                            </div>
-                            {% endif %}
-                            
-                            <div class="d-flex justify-content-between mt-3">
-                                <a href="{{ url_for('admin.entrepreneur_detail', entrepreneur_id=entrepreneur.id) }}" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-eye me-1"></i> Ver detalles
-                                </a>
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ entrepreneur.id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="bi bi-three-dots-vertical"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton{{ entrepreneur.id }}">
-                                        <li><a class="dropdown-item" href="{{ url_for('admin.user_edit', user_id=entrepreneur.user_id) }}">
-                                            <i class="bi bi-pencil me-2"></i> Editar
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="{{ url_for('admin.assign_ally_to', entrepreneur_id=entrepreneur.id) }}">
-                                            <i class="bi bi-person-plus me-2"></i> Asignar aliado
-                                        </a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteEntrepreneurModal" data-entrepreneur-id="{{ entrepreneur.id }}" data-entrepreneur-name="{{ entrepreneur.name }}">
-                                            <i class="bi bi-trash me-2"></i> Eliminar
-                                        </a></li>
-                                    </ul>
+                                
+                                <div class="mb-3">
+                                    <span class="badge bg-primary">{{ entrepreneur.industry }}</span>
+                                    <span class="badge bg-secondary">{{ entrepreneur.company_stage }}</span>
+                                    {% if entrepreneur.ally %}
+                                    <span class="badge bg-success">Con aliado</span>
+                                    {% else %}
+                                    <span class="badge bg-warning text-dark">Sin aliado</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <small class="text-muted d-block mb-1">
+                                        <i class="bi bi-envelope me-1"></i> {{ entrepreneur.email }}
+                                    </small>
+                                    {% if entrepreneur.phone %}
+                                    <small class="text-muted d-block mb-1">
+                                        <i class="bi bi-telephone me-1"></i> {{ entrepreneur.phone }}
+                                    </small>
+                                    {% endif %}
+                                    <small class="text-muted d-block">
+                                        <i class="bi bi-calendar me-1"></i> Registrado: {{ entrepreneur.created_at|datetime }}
+                                    </small>
+                                </div>
+                                
+                                {% if entrepreneur.ally %}
+                                <div class="mb-3 p-2 bg-light rounded">
+                                    <small class="text-muted d-block mb-1">Aliado asignado:</small>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ entrepreneur.ally.profile_image or url_for('static', filename='images/default-profile.png') }}" class="rounded-circle me-2" width="30" height="30" alt="{{ entrepreneur.ally.name }}">
+                                        <div>
+                                            <small class="d-block">{{ entrepreneur.ally.name }}</small>
+                                            <small class="text-muted">{{ entrepreneur.ally.email }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="d-flex justify-content-between mt-3">
+                                    <a href="{{ url_for('admin.entrepreneur_detail', entrepreneur_id=entrepreneur.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye me-1"></i> Ver detalles
+                                    </a>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ entrepreneur.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton{{ entrepreneur.id }}">
+                                            <li><a class="dropdown-item" href="{{ url_for('admin.user_edit', user_id=entrepreneur.user_id) }}">
+                                                <i class="bi bi-pencil me-2"></i> Editar
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="{{ url_for('admin.entrepreneur_assign_ally', entrepreneur_id=entrepreneur.id) }}">
+                                                <i class="bi bi-person-plus me-2"></i> Asignar aliado
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteEntrepreneurModal" data-entrepreneur-id="{{ entrepreneur.id }}" data-entrepreneur-name="{{ entrepreneur.name }}">
+                                                <i class="bi bi-trash me-2"></i> Eliminar
+                                            </a></li>
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                {% endfor %}
-                
-                {% if not entrepreneurs %}
-                <div class="col-12">
-                    <div class="alert alert-info text-center">
-                        <i class="bi bi-info-circle me-2"></i> No se encontraron emprendedores con los filtros seleccionados.
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info text-center">
+                            <i class="bi bi-info-circle me-2"></i> No se encontraron emprendedores con los filtros seleccionados.
+                        </div>
                     </div>
-                </div>
                 {% endif %}
             </div>
 
             <!-- Pagination -->
-{% if pagination.pages|length > 1 %}
-<nav class="d-flex justify-content-center mt-4">
-    <ul class="pagination">
-        <li class="page-item {% if pagination.current_page == 1 %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('admin.entrepreneurs', page=pagination.current_page-1, **request.args) }}" aria-label="Previous">
-                <span aria-hidden="true">&laquo;</span>
-            </a>
-        </li>
-        {% for page in pagination.pages %}
-        <li class="page-item {% if page == pagination.current_page %}active{% endif %}">
-            <a class="page-link" href="{{ url_for('admin.entrepreneurs', page=page, **request.args) }}">{{ page }}</a>
-        </li>
-        {% endfor %}
-        <li class="page-item {% if pagination.current_page == pagination.total_pages %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('admin.entrepreneurs', page=pagination.current_page+1, **request.args) }}" aria-label="Next">
-                <span aria-hidden="true">&raquo;</span>
-            </a>
-        </li>
-    </ul>
-</nav>
-{% endif %}
+            {% if pagination.pages is defined and pagination.pages|length > 1 %}
+            <nav class="d-flex justify-content-center mt-4">
+                <ul class="pagination">
+                    <li class="page-item {% if pagination.current_page == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.entrepreneurs', page=pagination.current_page-1, **{k:v for k,v in request.args.items() if k != 'page'}) }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% for page in pagination.pages %}
+                    <li class="page-item {% if page == pagination.current_page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.entrepreneurs', page=page, **{k:v for k,v in request.args.items() if k != 'page'}) }}">{{ page }}</a>
+                    </li>
+                    {% endfor %}
+                    <li class="page-item {% if pagination.current_page == pagination.total_pages %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.entrepreneurs', page=pagination.current_page+1, **{k:v for k,v in request.args.items() if k != 'page'}) }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
 
-</main>
-</div>
+        </main>
+    </div>
 </div>
 
 <!-- Delete Entrepreneur Modal -->
@@ -422,19 +434,17 @@
         
         // Filter form submission
         const filterForm = document.getElementById('filterForm');
-        filterForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(filterForm);
-            const params = new URLSearchParams();
-            
-            for (const [key, value] of formData.entries()) {
-                if (value) {
-                    params.append(key, value);
+        if (filterForm) {
+            filterForm.addEventListener('submit', function(e) {
+                // Permitimos el comportamiento normal del formulario con método GET
+                // Pero aseguramos que los campos vacíos no se incluyan en la URL
+                for (const element of filterForm.elements) {
+                    if (element.value === '') {
+                        element.name = ''; // Evitamos enviar parámetros vacíos
+                    }
                 }
-            }
-            
-            window.location.href = "{{ url_for('admin.entrepreneurs') }}?" + params.toString();
-        });
+            });
+        }
         
         filterForm.addEventListener('reset', function() {
             setTimeout(() => {
@@ -459,32 +469,42 @@
         const exportButton = document.getElementById('exportButton');
         if (exportButton) {
             exportButton.addEventListener('click', function() {
-                const formData = new FormData(document.getElementById('exportForm'));
-                const params = new URLSearchParams();
-                
-                // Get selected fields
-                const selectedFields = [];
-                document.querySelectorAll('input[name="fields"]:checked').forEach(checkbox => {
-                    selectedFields.push(checkbox.value);
-                });
-                
-                params.append('format', formData.get('format'));
-                params.append('fields', selectedFields.join(','));
-                
-                if (formData.get('apply_filters')) {
-                    // Add current filter parameters
-                    {% for key, value in request.args.items() %}
-                    {% if key != 'page' and key != 'format' %}
-                    params.append('{{ key }}', '{{ value }}');
-                    {% endif %}
-                    {% endfor %}
+                try {
+                    const formData = new FormData(document.getElementById('exportForm'));
+                    const params = new URLSearchParams();
+                    
+                    // Get selected fields
+                    const selectedFields = [];
+                    document.querySelectorAll('input[name="fields"]:checked').forEach(checkbox => {
+                        selectedFields.push(checkbox.value);
+                    });
+                    
+                    params.append('format', formData.get('format'));
+                    params.append('fields', selectedFields.join(','));
+                    
+                    if (formData.get('apply_filters')) {
+                        // Obtener los parámetros de búsqueda actuales de la URL
+                        const currentUrl = new URL(window.location.href);
+                        const searchParams = currentUrl.searchParams;
+                        
+                        // Iterar sobre todos los parámetros actuales y añadirlos
+                        for (const [key, value] of searchParams.entries()) {
+                            // Excluir page y format de los parámetros
+                            if (key !== 'page' && key !== 'format') {
+                                params.append(key, value);
+                            }
+                        }
+                    }
+                    
+                    window.location.href = "{{ url_for('admin.export_entrepreneurs') }}?" + params.toString();
+                    
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('exportModal'));
+                    modal.hide();
+                } catch (error) {
+                    console.error('Error al exportar datos:', error);
+                    alert('Ha ocurrido un error al exportar los datos. Por favor, inténtalo de nuevo.');
                 }
-                
-                window.location.href = "{{ url_for('admin.export_entrepreneurs') }}?" + params.toString();
-                
-                // Close modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('exportModal'));
-                modal.hide();
             });
         }
     });

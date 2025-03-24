@@ -223,11 +223,7 @@
                                 <canvas id="industryChart"></canvas>
                             </div>
                             <div class="mt-4 text-center small" id="chartLegend">
-                                {% for industry in stats.industry_distribution %}
-                                <span class="mr-2">
-                                    <i class="fas fa-circle" style="color:{{ industry.color }}"></i> {{ industry.name }}
-                                </span>
-                                {% endfor %}
+                                <!-- La leyenda se generará dinámicamente via JavaScript -->
                             </div>
                         </div>
                     </div>
@@ -310,10 +306,20 @@
 <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
 <script>
     // Datos para los gráficos pasados desde el backend
-    const activityData = {{ activity_data|tojson }};
-    const industryData = {{ industry_data|tojson }};
+    const activityData = JSON.parse('{{ activity_data|tojson|safe }}');
+    const industryData = JSON.parse('{{ industry_data|tojson|safe }}');
+    const industryDistribution = JSON.parse('{{ stats.industry_distribution|tojson|safe }}');
     
     document.addEventListener('DOMContentLoaded', function() {
+        // Generar la leyenda
+        const chartLegend = document.getElementById('chartLegend');
+        industryDistribution.forEach(industry => {
+            const span = document.createElement('span');
+            span.className = 'mr-2';
+            span.innerHTML = `<i class="fas fa-circle" style="color:${industry.color}"></i> ${industry.name}`;
+            chartLegend.appendChild(span);
+        });
+        
         // Inicializar gráficos
         initActivityChart('activityChart', activityData);
         initIndustryChart('industryChart', industryData);
