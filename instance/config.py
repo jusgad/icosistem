@@ -1,30 +1,31 @@
-# instance/config.py
-# Este archivo contiene configuraciones sensibles y específicas de la instancia
-# NO debe incluirse en el control de versiones (Git)
+"""
+Configuración específica de la instancia.
+Este archivo no debe incluirse en el control de versiones.
+"""
+import os
 
-# Configuración de seguridad
-SECRET_KEY = 'clave-secreta-muy-segura-generada-aleatoriamente'
+# Configuración de la base de datos PostgreSQL
+SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+    'postgresql://postpenados_user:secure_password@localhost:5432/postpenados_db'
 
-# Configuración de base de datos
-SQLALCHEMY_DATABASE_URI = 'postgresql://usuario:contraseña@localhost/emprendimiento_db'
+# Asegúrate de que esta ruta exista y tenga permisos de escritura
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'app/static/uploads')
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
-# Configuración de correo electrónico
+# Configuración de correo electrónico (ejemplo)
 MAIL_SERVER = 'smtp.gmail.com'
 MAIL_PORT = 587
 MAIL_USE_TLS = True
 MAIL_USERNAME = 'tu_correo@gmail.com'
-MAIL_PASSWORD = 'tu_contraseña_o_token_de_app'
-MAIL_DEFAULT_SENDER = 'tu_correo@gmail.com'
+MAIL_PASSWORD = 'tu_contraseña_segura'
+MAIL_DEFAULT_SENDER = 'no-reply@postpenados.org'
 
-# Credenciales de Google (para Calendar, Meet, etc.)
-GOOGLE_CLIENT_ID = 'tu-client-id.apps.googleusercontent.com'
-GOOGLE_CLIENT_SECRET = 'tu-client-secret'
+# Clave secreta para la aplicación
+SECRET_KEY = 'clave_super_secreta_para_produccion'
+SECURITY_PASSWORD_SALT = 'salt_seguro_para_produccion'
 
-# Configuración de almacenamiento (S3, Google Cloud Storage, etc.)
-STORAGE_BUCKET = 'nombre-del-bucket'
-STORAGE_ACCESS_KEY = 'clave-de-acceso'
-STORAGE_SECRET_KEY = 'clave-secreta'
-
-# Otras configuraciones específicas del entorno
-DEBUG = False
-TESTING = False
+# Configuración de la sesión
+SESSION_TYPE = 'filesystem'
+SESSION_PERMANENT = True
+SESSION_USE_SIGNER = True
