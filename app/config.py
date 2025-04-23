@@ -1,11 +1,15 @@
 import os
 from datetime import timedelta
+from dotenv import load_dotenv
+
+# Cargar variables de entorno desde el archivo .env
+load_dotenv()
 
 class Config:
     """Configuración base para la aplicación"""
     # Configuración básica
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'clave-secreta-por-defecto-cambiar-en-produccion'
-    APP_NAME = 'Plataforma de Emprendimiento'
+    APP_NAME = 'Plataforma de Postpenados'
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
     
     # Configuración de base de datos
@@ -54,9 +58,12 @@ class Config:
     GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
     
     # Configuración de moneda y localización
-    DEFAULT_CURRENCY = 'USD'
+    DEFAULT_CURRENCY = 'COP'  # Peso colombiano
     DEFAULT_LANGUAGE = 'es'
     DEFAULT_TIMEZONE = 'America/Bogota'
+    
+    # Configuración de logging
+    LOG_TO_STDOUT = os.environ.get('LOG_TO_STDOUT')
     
     @staticmethod
     def init_app(app):
@@ -71,8 +78,13 @@ class DevelopmentConfig(Config):
     """Configuración para entorno de desarrollo"""
     DEBUG = True
     TESTING = False
+    
+    # Conexión PostgreSQL para desarrollo
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
-        'sqlite:///' + os.path.join(os.path.dirname(os.path.abspath(__file__)), '../instance/dev.sqlite')
+        'postgresql://app_postpenados:contraseña_segura@localhost/proyecto_postpenados'
+    
+    # Activar echo de SQL para depuración
+    SQLALCHEMY_ECHO = True
     
     # Configuración de correo para desarrollo (opcional)
     MAIL_SUPPRESS_SEND = True  # No enviar correos reales en desarrollo
@@ -86,8 +98,10 @@ class TestingConfig(Config):
     """Configuración para entorno de pruebas"""
     DEBUG = False
     TESTING = True
+    
+    # Conexión PostgreSQL para pruebas
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
-        'sqlite:///' + os.path.join(os.path.dirname(os.path.abspath(__file__)), '../instance/test.sqlite')
+        'postgresql://app_postpenados:contraseña_segura@localhost/proyecto_postpenados_test'
     
     # Desactivar CSRF para pruebas
     WTF_CSRF_ENABLED = False
@@ -106,7 +120,13 @@ class ProductionConfig(Config):
     """Configuración para entorno de producción"""
     DEBUG = False
     TESTING = False
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    
+    # Conexión PostgreSQL para producción
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+        'postgresql://app_postpenados:contraseña_segura@localhost/proyecto_postpenados'
+    
+    # Deshabilitar ECHO de SQL en producción por rendimiento
+    SQLALCHEMY_ECHO = False
     
     # Configuración de seguridad para producción
     SESSION_COOKIE_SECURE = True
@@ -128,14 +148,14 @@ class ProductionConfig(Config):
         if not os.path.exists('logs'):
             os.mkdir('logs')
             
-        file_handler = RotatingFileHandler('logs/emprendimiento.log', maxBytes=10240, backupCount=10)
+        file_handler = RotatingFileHandler('logs/postpenados.log', maxBytes=10240, backupCount=10)
         file_handler.setFormatter(logging.Formatter(
             '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
         ))
         file_handler.setLevel(logging.INFO)
         app.logger.addHandler(file_handler)
         app.logger.setLevel(logging.INFO)
-        app.logger.info('Emprendimiento startup')
+        app.logger.info('Postpenados startup')
         
         # Configuración para proxy
         from werkzeug.middleware.proxy_fix import ProxyFix
@@ -144,6 +164,11 @@ class ProductionConfig(Config):
 
 class DockerConfig(ProductionConfig):
     """Configuración específica para despliegue con Docker"""
+    
+    # Conexión PostgreSQL para Docker (generalmente usa el nombre del servicio como host)
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+        'postgresql://app_postpenados:contraseña_segura@postgres/proyecto_postpenados'
+    
     @classmethod
     def init_app(cls, app):
         ProductionConfig.init_app(app)
@@ -166,7 +191,7 @@ class DockerConfig(ProductionConfig):
 
 
 # Diccionario de configuraciones disponibles
-config_dict = {
+config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
