@@ -1,406 +1,731 @@
+"""
+Comandos CLI personalizados para el ecosistema de emprendimiento.
+Este módulo define comandos Flask-CLI para automatizar tareas administrativas.
+"""
+
+import os
+import sys
+import json
+import csv
+from datetime import datetime, timedelta
+from pathlib import Path
 import click
-from flask.cli import with_appcontext
+from flask import current_app
+from flask.cli import with_appcontext, AppGroup
+
+# Importar modelos
 from app.extensions import db
 from app.models.user import User
+from app.models.admin import Admin
 from app.models.entrepreneur import Entrepreneur
 from app.models.ally import Ally
 from app.models.client import Client
-from app.models.relationship import Relationship
-from app.models.task import Task
-from app.models.document import Document
-import os
-from datetime import datetime, timedelta
-import random
-import shutil
+from app.models.organization import Organization
+from app.models.program import Program
+from app.models.project import Project
 
-def register_commands(app):
-    """Registra comandos personalizados para la CLI de Flask"""
-    
-    @app.cli.command('create-db')
-    @with_appcontext
-    def create_db():
-        """Crea todas las tablas de la base de datos."""
+# Importar servicios
+from app.services.user_service import UserService
+from app.services.email import EmailService
+from app.services.analytics_service import AnalyticsService
+
+# Importar utilidades
+from app.utils.export_utils import ExportUtils
+from app.utils.import_utils import ImportUtils
+
+
+# ====================================
+# GRUPOS DE COMANDOS
+# ====================================
+
+# Grupo para comandos de base de datos
+db_cli = AppGroup('db', help='Comandos de base de datos')
+
+# Grupo para comandos de usuarios
+user_cli = AppGroup('user', help='Comandos de gestión de usuarios')
+
+# Grupo para comandos de datos
+data_cli = AppGroup('data', help='Comandos de importación/exportación de datos')
+
+# Grupo para comandos de reportes
+report_cli = AppGroup('report', help='Comandos de generación de reportes')
+
+# Grupo para comandos de mantenimiento
+maintenance_cli = AppGroup('maintenance', help='Comandos de mantenimiento')
+
+# Grupo para comandos de desarrollo
+dev_cli = AppGroup('dev', help='Comandos de desarrollo')
+
+
+# ====================================
+# COMANDOS DE BASE DE DATOS
+# ====================================
+
+@db_cli.command('init')
+@with_appcontext
+def init_db():
+    """Inicializar la base de datos con tablas y datos básicos."""
+    try:
+        # Crear todas las tablas
         db.create_all()
-        click.echo('Base de datos creada.')
-    
-    @app.cli.command('drop-db')
-    @with_appcontext
-    def drop_db():
-        """Elimina todas las tablas de la base de datos."""
-        if click.confirm('¿Estás seguro? Esta acción eliminará todos los datos.'):
-            db.drop_all()
-            click.echo('Base de datos eliminada.')
-    
-    @app.cli.command('reset-db')
-    @with_appcontext
-    def reset_db():
-        """Elimina y vuelve a crear todas las tablas de la base de datos."""
-        if click.confirm('¿Estás seguro? Esta acción eliminará todos los datos.'):
-            db.drop_all()
-            db.create_all()
-            click.echo('Base de datos reiniciada.')
-    
-    @app.cli.command('create-admin')
-    @click.argument('email')
-    @click.argument('password')
-    @click.argument('name')
-    @with_appcontext
-    def create_admin(email, password, name):
-        """Crea un usuario administrador."""
-        if User.query.filter_by(email=email).first():
-            click.echo(f'El usuario con email {email} ya existe.')
+        click.echo('✅ Tablas de base de datos creadas exitosamente.')
+        
+        # Crear datos básicos
+        create_default_data()
+        click.echo('✅ Datos básicos creados exitosamente.')
+        
+    except Exception as e:
+        click.echo(f'❌ Error al inicializar la base de datos: {str(e)}', err=True)
+        sys.exit(1)
+
+
+@db_cli.command('reset')
+@click.option('--force', is_flag=True, help='Forzar reset sin confirmación')
+@with_appcontext
+def reset_db(force):
+    """Resetear completamente la base de datos."""
+    if not force:
+        if not click.confirm('¿Estás seguro de que quieres resetear la base de datos? Esto eliminará todos los datos.'):
+            click.echo('Operación cancelada.')
             return
-        
-        admin = User(
-            email=email,
-            name=name,
-            role='admin',
-            is_active=True,
-            created_at=datetime.now()
-        )
-        admin.set_password(password)
-        
-        db.session.add(admin)
-        db.session.commit()
-        click.echo(f'Administrador {email} creado exitosamente.')
     
-    @app.cli.command('seed-db')
-    @with_appcontext
-    def seed_db():
-        """Puebla la base de datos con datos de ejemplo."""
-        if not click.confirm('¿Deseas poblar la base de datos con datos de ejemplo?'):
-            return
+    try:
+        # Eliminar todas las tablas
+        db.drop_all()
+        click.echo('🗑️  Tablas eliminadas.')
         
-        # Crear usuarios de ejemplo
-        admin = User(
-            email='admin@example.com', 
-            name='Administrador', 
-            role='admin',
-            is_active=True,
-            created_at=datetime.now()
-        )
-        admin.set_password('admin123')
+        # Recrear tablas
+        db.create_all()
+        click.echo('🔄 Tablas recreadas.')
         
-        entrepreneur1 = User(
-            email='emprendedor1@example.com', 
-            name='Emprendedor Uno', 
-            role='entrepreneur',
-            is_active=True,
-            created_at=datetime.now() - timedelta(days=30)
-        )
-        entrepreneur1.set_password('password')
+        # Crear datos básicos
+        create_default_data()
+        click.echo('✅ Base de datos reseteada exitosamente.')
         
-        entrepreneur2 = User(
-            email='emprendedor2@example.com', 
-            name='Emprendedor Dos', 
-            role='entrepreneur',
-            is_active=True,
-            created_at=datetime.now() - timedelta(days=25)
-        )
-        entrepreneur2.set_password('password')
-        
-        ally1 = User(
-            email='aliado1@example.com', 
-            name='Aliado Uno', 
-            role='ally',
-            is_active=True,
-            created_at=datetime.now() - timedelta(days=20)
-        )
-        ally1.set_password('password')
-        
-        ally2 = User(
-            email='aliado2@example.com', 
-            name='Aliado Dos', 
-            role='ally',
-            is_active=True,
-            created_at=datetime.now() - timedelta(days=15)
-        )
-        ally2.set_password('password')
-        
-        client1 = User(
-            email='cliente1@example.com', 
-            name='Cliente Uno', 
-            role='client',
-            is_active=True,
-            created_at=datetime.now() - timedelta(days=10)
-        )
-        client1.set_password('password')
-        
-        db.session.add_all([admin, entrepreneur1, entrepreneur2, ally1, ally2, client1])
-        db.session.commit()
-        
-        # Crear perfiles
-        entrepreneur_profile1 = Entrepreneur(
-            user_id=entrepreneur1.id,
-            business_name='Emprendimiento Uno',
-            business_description='Descripción del emprendimiento uno. Este es un negocio innovador en el sector tecnológico que busca revolucionar la forma en que las personas interactúan con la tecnología en su día a día.',
-            industry='Tecnología',
-            founding_date='2022-01-01',
-            website='https://emprendimiento1.com',
-            phone='123456789',
-            address='Dirección 1',
-            city='Ciudad 1',
-            country='País 1',
-            employees=5,
-            stage='growth',
-            revenue_range='10k-50k',
-            social_media={
-                'facebook': 'https://facebook.com/emprendimiento1',
-                'instagram': 'https://instagram.com/emprendimiento1',
-                'linkedin': 'https://linkedin.com/company/emprendimiento1'
-            }
-        )
-        
-        entrepreneur_profile2 = Entrepreneur(
-            user_id=entrepreneur2.id,
-            business_name='Emprendimiento Dos',
-            business_description='Descripción del emprendimiento dos. Este es un negocio innovador en el sector alimenticio que busca ofrecer alternativas saludables y sostenibles para la alimentación diaria.',
-            industry='Alimentación',
-            founding_date='2021-06-15',
-            website='https://emprendimiento2.com',
-            phone='987654321',
-            address='Dirección 2',
-            city='Ciudad 2',
-            country='País 2',
-            employees=10,
-            stage='early',
-            revenue_range='0-10k',
-            social_media={
-                'facebook': 'https://facebook.com/emprendimiento2',
-                'instagram': 'https://instagram.com/emprendimiento2',
-                'twitter': 'https://twitter.com/emprendimiento2'
-            }
-        )
-        
-        ally_profile1 = Ally(
-            user_id=ally1.id,
-            specialty='Marketing Digital',
-            experience='5 años de experiencia en marketing digital para startups y empresas tecnológicas. Especialista en estrategias de crecimiento y posicionamiento de marca.',
-            availability='Lunes a Viernes, 9am-5pm',
-            phone='123123123',
-            linkedin='https://linkedin.com/in/aliado1',
-            hourly_rate=50,
-            max_entrepreneurs=5,
-            areas_of_expertise=['SEO', 'SEM', 'Social Media', 'Content Marketing'],
-            languages=['Español', 'Inglés']
-        )
-        
-        ally_profile2 = Ally(
-            user_id=ally2.id,
-            specialty='Finanzas',
-            experience='10 años de experiencia en finanzas corporativas y asesoría financiera para emprendimientos en etapa temprana y de crecimiento.',
-            availability='Martes y Jueves, 10am-6pm',
-            phone='456456456',
-            linkedin='https://linkedin.com/in/aliado2',
-            hourly_rate=75,
-            max_entrepreneurs=3,
-            areas_of_expertise=['Planificación Financiera', 'Valoración', 'Captación de Fondos', 'Contabilidad'],
-            languages=['Español', 'Inglés', 'Francés']
-        )
-        
-        client_profile1 = Client(
-            user_id=client1.id,
-            company_name='Empresa Cliente',
-            industry='Consultoría',
-            phone='789789789',
-            website='https://cliente1.com',
-            address='Dirección Cliente 1',
-            city='Ciudad Cliente',
-            country='País Cliente',
-            company_size='medium',
-            interests=['Tecnología', 'Innovación', 'Sostenibilidad'],
-            contact_person='Contacto Principal'
-        )
-        
-        db.session.add_all([
-            entrepreneur_profile1, 
-            entrepreneur_profile2, 
-            ally_profile1, 
-            ally_profile2, 
-            client_profile1
-        ])
-        db.session.commit()
-        
-        # Crear relaciones entre emprendedores y aliados
-        relationship1 = Relationship(
-            entrepreneur_id=entrepreneur_profile1.id,
-            ally_id=ally_profile1.id,
-            status='active',
-            start_date=datetime.now() - timedelta(days=15),
-            hours_assigned=20,
-            hours_used=5,
-            notes='Relación de mentoría en marketing digital para mejorar la presencia online del emprendimiento.'
-        )
-        
-        relationship2 = Relationship(
-            entrepreneur_id=entrepreneur_profile1.id,
-            ally_id=ally_profile2.id,
-            status='active',
-            start_date=datetime.now() - timedelta(days=10),
-            hours_assigned=15,
-            hours_used=2,
-            notes='Asesoría financiera para planificación de crecimiento y búsqueda de inversión.'
-        )
-        
-        relationship3 = Relationship(
-            entrepreneur_id=entrepreneur_profile2.id,
-            ally_id=ally_profile1.id,
-            status='pending',
-            start_date=None,
-            hours_assigned=10,
-            hours_used=0,
-            notes='Pendiente de aprobación para iniciar mentoría en marketing digital.'
-        )
-        
-        db.session.add_all([relationship1, relationship2, relationship3])
-        db.session.commit()
-        
-        # Crear tareas
-        task_statuses = ['pending', 'in_progress', 'completed', 'cancelled']
-        task_priorities = ['low', 'medium', 'high']
-        
-        for i in range(1, 11):
-            task = Task(
-                title=f'Tarea de ejemplo {i}',
-                description=f'Descripción detallada de la tarea de ejemplo {i}',
-                status=random.choice(task_statuses),
-                priority=random.choice(task_priorities),
-                due_date=datetime.now() + timedelta(days=random.randint(1, 30)),
-                created_at=datetime.now() - timedelta(days=random.randint(1, 15)),
-                updated_at=datetime.now() - timedelta(days=random.randint(0, 5)),
-                created_by_id=random.choice([ally1.id, ally2.id, entrepreneur1.id, entrepreneur2.id]),
-                assigned_to_id=random.choice([ally1.id, ally2.id, entrepreneur1.id, entrepreneur2.id]),
-                relationship_id=random.choice([relationship1.id, relationship2.id])
-            )
-            db.session.add(task)
-        
-        # Crear documentos
-        document_types = ['report', 'contract', 'presentation', 'other']
-        
-        for i in range(1, 6):
-            document = Document(
-                title=f'Documento de ejemplo {i}',
-                description=f'Descripción del documento de ejemplo {i}',
-                file_path=f'/static/uploads/documents/example_{i}.pdf',
-                file_type='application/pdf',
-                file_size=random.randint(100, 5000),
-                document_type=random.choice(document_types),
-                uploaded_at=datetime.now() - timedelta(days=random.randint(1, 30)),
-                uploaded_by_id=random.choice([ally1.id, ally2.id, entrepreneur1.id, entrepreneur2.id]),
-                relationship_id=random.choice([relationship1.id, relationship2.id])
-            )
-            db.session.add(document)
-        
-        db.session.commit()
-        
-        click.echo('Base de datos poblada con datos de ejemplo.')
-    
-    @app.cli.command('clean-uploads')
-    @with_appcontext
-    def clean_uploads():
-        """Limpia archivos huérfanos en la carpeta de uploads."""
-        upload_folder = app.config['UPLOAD_FOLDER']
-        
-        # Obtener todos los documentos registrados en la base de datos
-        documents = Document.query.all()
-        registered_files = set(doc.file_path.split('/')[-1] for doc in documents)
-        
-        # Verificar archivos en el sistema de archivos
-        file_count = 0
-        deleted_count = 0
-        
-        for root, dirs, files in os.walk(upload_folder):
-            for file in files:
-                file_count += 1
-                if file not in registered_files:
-                    # El archivo no está registrado en la base de datos
-                    file_path = os.path.join(root, file)
-                    # Verificar si el archivo tiene más de 24 horas
-                    file_age = datetime.now() - datetime.fromtimestamp(os.path.getctime(file_path))
-                    if file_age > timedelta(hours=24):
-                        os.remove(file_path)
-                        deleted_count += 1
-        
-        click.echo(f'Limpieza de archivos completada. {deleted_count} archivos huérfanos eliminados de un total de {file_count} archivos.')
-    
-    @app.cli.command('export-users')
-    @click.argument('output_file', type=click.Path())
-    @with_appcontext
-    def export_users(output_file):
-        """Exporta la lista de usuarios a un archivo CSV."""
-        import csv
-        
-        users = User.query.all()
-        
-        with open(output_file, 'w', newline='') as csvfile:
-            fieldnames = ['id', 'email', 'name', 'role', 'is_active', 'created_at', 'last_login']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            
-            writer.writeheader()
-            for user in users:
-                writer.writerow({
-                    'id': user.id,
-                    'email': user.email,
-                    'name': user.name,
-                    'role': user.role,
-                    'is_active': user.is_active,
-                    'created_at': user.created_at,
-                    'last_login': user.last_login
-                })
-        
-        click.echo(f'Usuarios exportados a {output_file}')
-    
-    @app.cli.command('check-health')
-    @with_appcontext
-    def check_health():
-        """Verifica el estado de la aplicación y sus dependencias."""
-        # Verificar conexión a la base de datos
-        try:
-            db.session.execute('SELECT 1')
-            click.echo('Base de datos: OK')
-        except Exception as e:
-            click.echo(f'Base de datos: ERROR - {str(e)}')
-        
-        # Verificar directorios de almacenamiento
-        upload_folder = app.config['UPLOAD_FOLDER']
-        if os.path.exists(upload_folder) and os.access(upload_folder, os.W_OK):
-            click.echo('Directorio de uploads: OK')
+    except Exception as e:
+        click.echo(f'❌ Error al resetear la base de datos: {str(e)}', err=True)
+        sys.exit(1)
+
+
+@db_cli.command('seed')
+@click.option('--type', default='basic', help='Tipo de datos: basic, demo, full')
+@with_appcontext
+def seed_db(type):
+    """Llenar la base de datos con datos de prueba."""
+    try:
+        if type == 'basic':
+            create_basic_seed_data()
+        elif type == 'demo':
+            create_demo_data()
+        elif type == 'full':
+            create_full_seed_data()
         else:
-            click.echo('Directorio de uploads: ERROR - No existe o no tiene permisos de escritura')
+            click.echo('❌ Tipo no válido. Usa: basic, demo, full')
+            return
+            
+        click.echo(f'✅ Datos de tipo "{type}" creados exitosamente.')
         
-        # Verificar configuración de correo
-        mail_config = {
-            'MAIL_SERVER': app.config.get('MAIL_SERVER'),
-            'MAIL_PORT': app.config.get('MAIL_PORT'),
-            'MAIL_USERNAME': app.config.get('MAIL_USERNAME'),
-            'MAIL_PASSWORD': app.config.get('MAIL_PASSWORD'),
-            'MAIL_DEFAULT_SENDER': app.config.get('MAIL_DEFAULT_SENDER')
+    except Exception as e:
+        click.echo(f'❌ Error al crear datos: {str(e)}', err=True)
+
+
+@db_cli.command('backup')
+@click.option('--output', default='backup.sql', help='Archivo de salida')
+@with_appcontext
+def backup_db(output):
+    """Crear backup de la base de datos."""
+    try:
+        # Determinar tipo de base de datos
+        database_url = current_app.config['SQLALCHEMY_DATABASE_URI']
+        
+        if database_url.startswith('sqlite'):
+            backup_sqlite(database_url, output)
+        elif database_url.startswith('postgresql'):
+            backup_postgresql(database_url, output)
+        else:
+            click.echo('❌ Tipo de base de datos no soportado para backup')
+            return
+            
+        click.echo(f'✅ Backup creado: {output}')
+        
+    except Exception as e:
+        click.echo(f'❌ Error al crear backup: {str(e)}', err=True)
+
+
+# ====================================
+# COMANDOS DE USUARIOS
+# ====================================
+
+@user_cli.command('create')
+@click.option('--email', prompt=True, help='Email del usuario')
+@click.option('--password', prompt=True, hide_input=True, help='Contraseña')
+@click.option('--role', type=click.Choice(['admin', 'entrepreneur', 'ally', 'client']), 
+              prompt=True, help='Rol del usuario')
+@click.option('--name', prompt=True, help='Nombre completo')
+@with_appcontext
+def create_user(email, password, role, name):
+    """Crear un nuevo usuario."""
+    try:
+        user_data = {
+            'email': email,
+            'password': password,
+            'first_name': name.split()[0],
+            'last_name': ' '.join(name.split()[1:]) if len(name.split()) > 1 else '',
+            'role': role,
+            'is_active': True,
+            'email_verified': True
         }
         
-        if all(mail_config.values()):
-            click.echo('Configuración de correo: OK')
-        else:
-            missing = [k for k, v in mail_config.items() if not v]
-            click.echo(f'Configuración de correo: ADVERTENCIA - Faltan valores: {", ".join(missing)}')
+        user = UserService.create_user(user_data)
+        click.echo(f'✅ Usuario creado exitosamente: {user.email} ({user.role})')
         
-        # Verificar configuración de Socket.IO
-        if app.config.get('SECRET_KEY'):
-            click.echo('Configuración de Socket.IO: OK')
-        else:
-            click.echo('Configuración de Socket.IO: ERROR - Falta SECRET_KEY')
+    except Exception as e:
+        click.echo(f'❌ Error al crear usuario: {str(e)}', err=True)
+
+
+@user_cli.command('activate')
+@click.argument('email')
+@with_appcontext
+def activate_user(email):
+    """Activar un usuario."""
+    try:
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            click.echo(f'❌ Usuario no encontrado: {email}')
+            return
+            
+        user.is_active = True
+        user.email_verified = True
+        db.session.commit()
         
-        # Verificar espacio en disco
+        click.echo(f'✅ Usuario activado: {email}')
+        
+    except Exception as e:
+        click.echo(f'❌ Error al activar usuario: {str(e)}', err=True)
+
+
+@user_cli.command('deactivate')
+@click.argument('email')
+@with_appcontext
+def deactivate_user(email):
+    """Desactivar un usuario."""
+    try:
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            click.echo(f'❌ Usuario no encontrado: {email}')
+            return
+            
+        user.is_active = False
+        db.session.commit()
+        
+        click.echo(f'✅ Usuario desactivado: {email}')
+        
+    except Exception as e:
+        click.echo(f'❌ Error al desactivar usuario: {str(e)}', err=True)
+
+
+@user_cli.command('list')
+@click.option('--role', help='Filtrar por rol')
+@click.option('--active', is_flag=True, help='Solo usuarios activos')
+@with_appcontext
+def list_users(role, active):
+    """Listar usuarios."""
+    try:
+        query = User.query
+        
+        if role:
+            query = query.filter_by(role=role)
+        if active:
+            query = query.filter_by(is_active=True)
+            
+        users = query.all()
+        
+        click.echo(f'\n📋 Lista de usuarios ({len(users)} encontrados):')
+        click.echo('-' * 80)
+        
+        for user in users:
+            status = '🟢' if user.is_active else '🔴'
+            verified = '✅' if user.email_verified else '❌'
+            click.echo(f'{status} {user.email:<30} {user.role:<15} {verified} {user.full_name}')
+            
+    except Exception as e:
+        click.echo(f'❌ Error al listar usuarios: {str(e)}', err=True)
+
+
+@user_cli.command('change-password')
+@click.argument('email')
+@click.option('--password', prompt=True, hide_input=True, help='Nueva contraseña')
+@with_appcontext
+def change_password(email, password):
+    """Cambiar contraseña de un usuario."""
+    try:
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            click.echo(f'❌ Usuario no encontrado: {email}')
+            return
+            
+        user.set_password(password)
+        db.session.commit()
+        
+        click.echo(f'✅ Contraseña cambiada para: {email}')
+        
+    except Exception as e:
+        click.echo(f'❌ Error al cambiar contraseña: {str(e)}', err=True)
+
+
+# ====================================
+# COMANDOS DE DATOS
+# ====================================
+
+@data_cli.command('export')
+@click.option('--type', type=click.Choice(['users', 'entrepreneurs', 'projects', 'all']),
+              default='all', help='Tipo de datos a exportar')
+@click.option('--format', type=click.Choice(['json', 'csv', 'excel']),
+              default='json', help='Formato de exportación')
+@click.option('--output', help='Archivo de salida')
+@with_appcontext
+def export_data(type, format, output):
+    """Exportar datos del sistema."""
+    try:
+        if not output:
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            output = f'export_{type}_{timestamp}.{format}'
+        
+        export_utils = ExportUtils(current_app)
+        
+        if type == 'users':
+            export_utils.export_users(output, format)
+        elif type == 'entrepreneurs':
+            export_utils.export_entrepreneurs(output, format)
+        elif type == 'projects':
+            export_utils.export_projects(output, format)
+        elif type == 'all':
+            export_utils.export_all(output, format)
+            
+        click.echo(f'✅ Datos exportados a: {output}')
+        
+    except Exception as e:
+        click.echo(f'❌ Error al exportar datos: {str(e)}', err=True)
+
+
+@data_cli.command('import')
+@click.argument('file_path')
+@click.option('--type', type=click.Choice(['users', 'entrepreneurs', 'projects']),
+              required=True, help='Tipo de datos a importar')
+@click.option('--dry-run', is_flag=True, help='Simulación sin cambios reales')
+@with_appcontext
+def import_data(file_path, type, dry_run):
+    """Importar datos al sistema."""
+    try:
+        if not os.path.exists(file_path):
+            click.echo(f'❌ Archivo no encontrado: {file_path}')
+            return
+            
+        import_utils = ImportUtils(current_app)
+        
+        if dry_run:
+            click.echo('🔍 Modo simulación - sin cambios reales')
+        
+        if type == 'users':
+            result = import_utils.import_users(file_path, dry_run=dry_run)
+        elif type == 'entrepreneurs':
+            result = import_utils.import_entrepreneurs(file_path, dry_run=dry_run)
+        elif type == 'projects':
+            result = import_utils.import_projects(file_path, dry_run=dry_run)
+            
+        click.echo(f'✅ Importación completada: {result["success"]} éxitos, {result["errors"]} errores')
+        
+        if result["errors"] > 0:
+            click.echo('⚠️  Revisa los logs para detalles de errores')
+            
+    except Exception as e:
+        click.echo(f'❌ Error al importar datos: {str(e)}', err=True)
+
+
+# ====================================
+# COMANDOS DE REPORTES
+# ====================================
+
+@report_cli.command('analytics')
+@click.option('--period', type=click.Choice(['daily', 'weekly', 'monthly']),
+              default='monthly', help='Período del reporte')
+@click.option('--output', help='Archivo de salida (opcional)')
+@with_appcontext
+def generate_analytics(period, output):
+    """Generar reporte de analytics."""
+    try:
+        analytics_service = AnalyticsService()
+        
+        if period == 'daily':
+            report = analytics_service.generate_daily_report()
+        elif period == 'weekly':
+            report = analytics_service.generate_weekly_report()
+        elif period == 'monthly':
+            report = analytics_service.generate_monthly_report()
+            
+        if output:
+            with open(output, 'w', encoding='utf-8') as f:
+                json.dump(report, f, indent=2, ensure_ascii=False, default=str)
+            click.echo(f'✅ Reporte guardado en: {output}')
+        else:
+            click.echo(json.dumps(report, indent=2, ensure_ascii=False, default=str))
+            
+    except Exception as e:
+        click.echo(f'❌ Error al generar reporte: {str(e)}', err=True)
+
+
+@report_cli.command('users')
+@click.option('--detailed', is_flag=True, help='Reporte detallado')
+@with_appcontext
+def user_report(detailed):
+    """Generar reporte de usuarios."""
+    try:
+        users = User.query.all()
+        
+        # Estadísticas básicas
+        total_users = len(users)
+        active_users = len([u for u in users if u.is_active])
+        by_role = {}
+        
+        for user in users:
+            by_role[user.role] = by_role.get(user.role, 0) + 1
+        
+        click.echo('\n📊 REPORTE DE USUARIOS')
+        click.echo('=' * 50)
+        click.echo(f'Total de usuarios: {total_users}')
+        click.echo(f'Usuarios activos: {active_users}')
+        click.echo(f'Usuarios inactivos: {total_users - active_users}')
+        click.echo('\nPor rol:')
+        for role, count in by_role.items():
+            click.echo(f'  - {role.capitalize()}: {count}')
+        
+        if detailed:
+            click.echo('\n📋 DETALLE DE USUARIOS:')
+            click.echo('-' * 80)
+            for user in users:
+                status = '🟢 Activo' if user.is_active else '🔴 Inactivo'
+                click.echo(f'{user.email:<30} {user.role:<15} {status}')
+                
+    except Exception as e:
+        click.echo(f'❌ Error al generar reporte: {str(e)}', err=True)
+
+
+@report_cli.command('projects')
+@with_appcontext
+def project_report():
+    """Generar reporte de proyectos."""
+    try:
+        projects = Project.query.all()
+        
+        total_projects = len(projects)
+        by_status = {}
+        
+        for project in projects:
+            by_status[project.status] = by_status.get(project.status, 0) + 1
+        
+        click.echo('\n📊 REPORTE DE PROYECTOS')
+        click.echo('=' * 50)
+        click.echo(f'Total de proyectos: {total_projects}')
+        click.echo('\nPor estado:')
+        for status, count in by_status.items():
+            click.echo(f'  - {status.capitalize()}: {count}')
+            
+    except Exception as e:
+        click.echo(f'❌ Error al generar reporte: {str(e)}', err=True)
+
+
+# ====================================
+# COMANDOS DE MANTENIMIENTO
+# ====================================
+
+@maintenance_cli.command('cleanup')
+@click.option('--type', type=click.Choice(['temp', 'logs', 'sessions', 'all']),
+              default='all', help='Tipo de limpieza')
+@with_appcontext
+def cleanup(type):
+    """Limpiar archivos temporales y datos obsoletos."""
+    try:
+        cleaned_items = 0
+        
+        if type in ['temp', 'all']:
+            temp_cleaned = cleanup_temp_files()
+            cleaned_items += temp_cleaned
+            click.echo(f'🧹 Archivos temporales limpiados: {temp_cleaned}')
+        
+        if type in ['logs', 'all']:
+            logs_cleaned = cleanup_old_logs()
+            cleaned_items += logs_cleaned
+            click.echo(f'📋 Logs antiguos limpiados: {logs_cleaned}')
+        
+        if type in ['sessions', 'all']:
+            sessions_cleaned = cleanup_expired_sessions()
+            cleaned_items += sessions_cleaned
+            click.echo(f'🔐 Sesiones expiradas limpiadas: {sessions_cleaned}')
+        
+        click.echo(f'✅ Limpieza completada. Total de elementos limpiados: {cleaned_items}')
+        
+    except Exception as e:
+        click.echo(f'❌ Error durante la limpieza: {str(e)}', err=True)
+
+
+@maintenance_cli.command('health-check')
+@with_appcontext
+def health_check():
+    """Verificar el estado del sistema."""
+    try:
+        issues = []
+        
+        # Verificar conexión a base de datos
         try:
-            total, used, free = shutil.disk_usage('/')
-            free_gb = free // (2**30)
-            if free_gb < 1:
-                click.echo(f'Espacio en disco: CRÍTICO - Solo {free_gb} GB disponibles')
-            elif free_gb < 5:
-                click.echo(f'Espacio en disco: ADVERTENCIA - Solo {free_gb} GB disponibles')
-            else:
-                click.echo(f'Espacio en disco: OK - {free_gb} GB disponibles')
+            db.session.execute('SELECT 1')
+            click.echo('✅ Base de datos: OK')
         except Exception as e:
-            click.echo(f'Espacio en disco: ERROR - {str(e)}')
+            issues.append(f'Base de datos: {str(e)}')
+            click.echo('❌ Base de datos: ERROR')
         
-        # Resumen
-        click.echo('Verificación de salud completada.')
+        # Verificar configuración de email
+        if current_app.config.get('MAIL_USERNAME'):
+            click.echo('✅ Configuración de email: OK')
+        else:
+            issues.append('Email no configurado')
+            click.echo('⚠️  Configuración de email: ADVERTENCIA')
+        
+        # Verificar directorios de uploads
+        upload_dir = current_app.config.get('UPLOAD_FOLDER')
+        if upload_dir and os.path.exists(upload_dir):
+            click.echo('✅ Directorio de uploads: OK')
+        else:
+            issues.append('Directorio de uploads no existe')
+            click.echo('❌ Directorio de uploads: ERROR')
+        
+        if issues:
+            click.echo(f'\n⚠️  Se encontraron {len(issues)} problemas:')
+            for issue in issues:
+                click.echo(f'  - {issue}')
+        else:
+            click.echo('\n🎉 Sistema saludable - no se encontraron problemas')
+            
+    except Exception as e:
+        click.echo(f'❌ Error durante verificación de salud: {str(e)}', err=True)
+
+
+# ====================================
+# COMANDOS DE DESARROLLO
+# ====================================
+
+@dev_cli.command('routes')
+@with_appcontext
+def show_routes():
+    """Mostrar todas las rutas de la aplicación."""
+    from flask import url_for
+    
+    click.echo('\n🛣️  RUTAS DE LA APLICACIÓN')
+    click.echo('=' * 80)
+    
+    routes = []
+    for rule in current_app.url_map.iter_rules():
+        routes.append({
+            'endpoint': rule.endpoint,
+            'methods': list(rule.methods),
+            'rule': rule.rule
+        })
+    
+    # Ordenar por endpoint
+    routes.sort(key=lambda x: x['endpoint'])
+    
+    for route in routes:
+        methods = ', '.join([m for m in route['methods'] if m not in ['HEAD', 'OPTIONS']])
+        click.echo(f"{route['endpoint']:<40} {methods:<20} {route['rule']}")
+
+
+@dev_cli.command('config')
+@with_appcontext
+def show_config():
+    """Mostrar configuración actual de la aplicación."""
+    click.echo('\n⚙️  CONFIGURACIÓN DE LA APLICACIÓN')
+    click.echo('=' * 60)
+    
+    # Configuraciones seguras para mostrar
+    safe_keys = [
+        'DEBUG', 'TESTING', 'FLASK_ENV', 'SQLALCHEMY_DATABASE_URI',
+        'MAIL_SERVER', 'MAIL_PORT', 'WTF_CSRF_ENABLED', 'CACHE_TYPE'
+    ]
+    
+    for key in sorted(current_app.config.keys()):
+        if key in safe_keys:
+            value = current_app.config[key]
+            # Ocultar passwords en URLs de base de datos
+            if 'DATABASE_URI' in key and isinstance(value, str):
+                value = value.split('@')[-1] if '@' in value else value
+            click.echo(f'{key:<30} = {value}')
+
+
+# ====================================
+# FUNCIONES AUXILIARES
+# ====================================
+
+def create_default_data():
+    """Crear datos básicos necesarios para el funcionamiento."""
+    
+    # Crear usuario administrador por defecto
+    admin_email = 'admin@ecosistema.com'
+    if not User.query.filter_by(email=admin_email).first():
+        admin_data = {
+            'email': admin_email,
+            'password': 'admin123',
+            'first_name': 'Administrador',
+            'last_name': 'Sistema',
+            'role': 'admin',
+            'is_active': True,
+            'email_verified': True
+        }
+        UserService.create_user(admin_data)
+        click.echo(f'👤 Usuario administrador creado: {admin_email}')
+
+
+def create_basic_seed_data():
+    """Crear datos básicos para pruebas."""
+    
+    # Crear algunos usuarios de ejemplo
+    sample_users = [
+        {
+            'email': 'emprendedor@test.com',
+            'password': 'test123',
+            'first_name': 'Juan',
+            'last_name': 'Emprendedor',
+            'role': 'entrepreneur'
+        },
+        {
+            'email': 'mentor@test.com',
+            'password': 'test123',
+            'first_name': 'María',
+            'last_name': 'Mentora',
+            'role': 'ally'
+        }
+    ]
+    
+    for user_data in sample_users:
+        if not User.query.filter_by(email=user_data['email']).first():
+            user_data.update({'is_active': True, 'email_verified': True})
+            UserService.create_user(user_data)
+
+
+def create_demo_data():
+    """Crear datos de demostración completos."""
+    create_basic_seed_data()
+    # Aquí se pueden agregar más datos de demostración
+    pass
+
+
+def create_full_seed_data():
+    """Crear conjunto completo de datos para desarrollo."""
+    create_demo_data()
+    # Aquí se pueden agregar datos exhaustivos para desarrollo
+    pass
+
+
+def backup_sqlite(database_url, output):
+    """Crear backup de base de datos SQLite."""
+    import shutil
+    db_path = database_url.replace('sqlite:///', '')
+    shutil.copy2(db_path, output)
+
+
+def backup_postgresql(database_url, output):
+    """Crear backup de base de datos PostgreSQL."""
+    import subprocess
+    cmd = f'pg_dump {database_url} > {output}'
+    subprocess.run(cmd, shell=True, check=True)
+
+
+def cleanup_temp_files():
+    """Limpiar archivos temporales."""
+    temp_dir = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+    temp_path = os.path.join(temp_dir, 'temp')
+    
+    if not os.path.exists(temp_path):
+        return 0
+    
+    count = 0
+    cutoff_time = datetime.now() - timedelta(hours=24)
+    
+    for file in os.listdir(temp_path):
+        file_path = os.path.join(temp_path, file)
+        if os.path.isfile(file_path):
+            file_time = datetime.fromtimestamp(os.path.getmtime(file_path))
+            if file_time < cutoff_time:
+                os.remove(file_path)
+                count += 1
+    
+    return count
+
+
+def cleanup_old_logs():
+    """Limpiar logs antiguos."""
+    logs_dir = 'logs'
+    if not os.path.exists(logs_dir):
+        return 0
+    
+    count = 0
+    cutoff_time = datetime.now() - timedelta(days=30)
+    
+    for file in os.listdir(logs_dir):
+        if file.endswith('.log') and file != 'app.log':
+            file_path = os.path.join(logs_dir, file)
+            file_time = datetime.fromtimestamp(os.path.getmtime(file_path))
+            if file_time < cutoff_time:
+                os.remove(file_path)
+                count += 1
+    
+    return count
+
+
+def cleanup_expired_sessions():
+    """Limpiar sesiones expiradas."""
+    # Implementar según el backend de sesiones usado
+    return 0
+
+
+# ====================================
+# REGISTRO DE COMANDOS
+# ====================================
+
+def register_commands(app):
+    """Registrar todos los comandos CLI con la aplicación Flask."""
+    
+    # Registrar grupos de comandos
+    app.cli.add_command(db_cli)
+    app.cli.add_command(user_cli)
+    app.cli.add_command(data_cli)
+    app.cli.add_command(report_cli)
+    app.cli.add_command(maintenance_cli)
+    app.cli.add_command(dev_cli)
+    
+    # Comando de setup inicial
+    @app.cli.command()
+    @with_appcontext
+    def setup():
+        """Configuración inicial completa del sistema."""
+        click.echo('🚀 Iniciando configuración del ecosistema de emprendimiento...')
+        
+        try:
+            # Crear base de datos
+            db.create_all()
+            click.echo('✅ Base de datos inicializada')
+            
+            # Crear datos básicos
+            create_default_data()
+            click.echo('✅ Datos básicos creados')
+            
+            # Crear directorios necesarios
+            upload_dir = app.config.get('UPLOAD_FOLDER', 'uploads')
+            os.makedirs(upload_dir, exist_ok=True)
+            os.makedirs('logs', exist_ok=True)
+            click.echo('✅ Directorios creados')
+            
+            click.echo('\n🎉 ¡Configuración completada exitosamente!')
+            click.echo('👤 Usuario admin: admin@ecosistema.com / admin123')
+            
+        except Exception as e:
+            click.echo(f'❌ Error durante la configuración: {str(e)}', err=True)
+            sys.exit(1)
