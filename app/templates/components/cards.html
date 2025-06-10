@@ -1,0 +1,795 @@
+{# =========================================================================
+   CARDS COMPONENT - Componentes de tarjetas reutilizables
+   Ecosistema de Emprendimiento
+   ========================================================================= #}
+
+{# Macro: Tarjeta de Perfil de Usuario #}
+{% macro user_profile_card(user, size='normal', show_actions=True, custom_class='') %}
+<div class="card user-profile-card {{ 'card-sm' if size == 'small' else '' }} {{ custom_class }}">
+  <div class="card-body">
+    <div class="d-flex align-items-center">
+      <div class="avatar-container me-3">
+        {% if user.profile_picture %}
+          <img src="{{ user.profile_picture }}" alt="{{ user.full_name }}" class="avatar {{ 'avatar-sm' if size == 'small' else 'avatar-md' }}">
+        {% else %}
+          <div class="avatar {{ 'avatar-sm' if size == 'small' else 'avatar-md' }} bg-primary">
+            {{ user.first_name[0] }}{{ user.last_name[0] if user.last_name else '' }}
+          </div>
+        {% endif %}
+        {% if user.is_online %}
+          <span class="avatar-status bg-success"></span>
+        {% endif %}
+      </div>
+      
+      <div class="flex-grow-1">
+        <h6 class="card-title mb-1">
+          <a href="{{ url_for('main.user_profile', user_id=user.id) }}" class="text-decoration-none">
+            {{ user.full_name }}
+          </a>
+        </h6>
+        
+        <div class="user-meta">
+          <span class="badge bg-{{ 'success' if user.role == 'entrepreneur' else 'info' if user.role == 'ally' else 'secondary' }}">
+            {{ user.role.title() }}
+          </span>
+          
+          {% if user.organization %}
+            <small class="text-muted d-block">{{ user.organization.name }}</small>
+          {% endif %}
+          
+          {% if user.expertise_areas and size != 'small' %}
+            <div class="expertise-tags mt-2">
+              {% for expertise in user.expertise_areas[:3] %}
+                <span class="badge bg-light text-dark me-1">{{ expertise }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+      
+      {% if show_actions %}
+        <div class="card-actions">
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{{ url_for('main.user_profile', user_id=user.id) }}">
+                <i class="fas fa-user me-2"></i>Ver Perfil
+              </a></li>
+              <li><a class="dropdown-item" href="{{ url_for('messages.new_conversation', user_id=user.id) }}">
+                <i class="fas fa-envelope me-2"></i>Enviar Mensaje
+              </a></li>
+              {% if current_user.can_schedule_meeting_with(user) %}
+                <li><a class="dropdown-item" href="{{ url_for('meetings.schedule', with_user=user.id) }}">
+                  <i class="fas fa-calendar me-2"></i>Agendar Reunión
+                </a></li>
+              {% endif %}
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+    
+    {% if user.bio and size != 'small' %}
+      <p class="card-text text-muted mt-3">{{ user.bio[:150] }}{% if user.bio|length > 150 %}...{% endif %}</p>
+    {% endif %}
+  </div>
+</div>
+{% endmacro %}
+
+{# Macro: Tarjeta de Proyecto #}
+{% macro project_card(project, show_entrepreneur=True, show_actions=True, custom_class='') %}
+<div class="card project-card {{ custom_class }}">
+  {% if project.featured_image %}
+    <img src="{{ project.featured_image }}" class="card-img-top project-image" alt="{{ project.name }}">
+  {% endif %}
+  
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+      <h5 class="card-title">
+        <a href="{{ url_for('projects.detail', project_id=project.id) }}" class="text-decoration-none">
+          {{ project.name }}
+        </a>
+      </h5>
+      
+      <div class="project-status">
+        <span class="badge bg-{{ 'warning' if project.status == 'development' else 'success' if project.status == 'active' else 'secondary' }}">
+          {{ project.status.title() }}
+        </span>
+      </div>
+    </div>
+    
+    {% if show_entrepreneur and project.entrepreneur %}
+      <div class="entrepreneur-info mb-3">
+        <div class="d-flex align-items-center">
+          {% if project.entrepreneur.profile_picture %}
+            <img src="{{ project.entrepreneur.profile_picture }}" alt="{{ project.entrepreneur.full_name }}" class="avatar avatar-xs me-2">
+          {% else %}
+            <div class="avatar avatar-xs bg-primary me-2">
+              {{ project.entrepreneur.first_name[0] }}
+            </div>
+          {% endif %}
+          <small class="text-muted">por {{ project.entrepreneur.full_name }}</small>
+        </div>
+      </div>
+    {% endif %}
+    
+    <p class="card-text">{{ project.description[:200] }}{% if project.description|length > 200 %}...{% endif %}</p>
+    
+    {# Métricas del proyecto #}
+    <div class="project-metrics row g-2 mb-3">
+      {% if project.funding_goal %}
+        <div class="col-6">
+          <div class="metric-item">
+            <small class="text-muted">Meta de Financiación</small>
+            <div class="fw-bold text-success">${{ "{:,.0f}".format(project.funding_goal) }}</div>
+          </div>
+        </div>
+      {% endif %}
+      
+      {% if project.current_funding %}
+        <div class="col-6">
+          <div class="metric-item">
+            <small class="text-muted">Financiación Actual</small>
+            <div class="fw-bold">${{ "{:,.0f}".format(project.current_funding) }}</div>
+          </div>
+        </div>
+      {% endif %}
+      
+      {% if project.launch_date %}
+        <div class="col-6">
+          <div class="metric-item">
+            <small class="text-muted">Fecha de Lanzamiento</small>
+            <div class="fw-bold">{{ project.launch_date.strftime('%d/%m/%Y') }}</div>
+          </div>
+        </div>
+      {% endif %}
+      
+      <div class="col-6">
+        <div class="metric-item">
+          <small class="text-muted">Progreso</small>
+          <div class="progress mt-1" style="height: 6px;">
+            <div class="progress-bar bg-primary" style="width: {{ project.progress_percentage }}%"></div>
+          </div>
+          <small class="text-muted">{{ project.progress_percentage }}%</small>
+        </div>
+      </div>
+    </div>
+    
+    {# Tags/Categorías #}
+    {% if project.categories %}
+      <div class="project-tags mb-3">
+        {% for category in project.categories[:3] %}
+          <span class="badge bg-light text-dark me-1">{{ category.name }}</span>
+        {% endfor %}
+      </div>
+    {% endif %}
+    
+    {% if show_actions %}
+      <div class="card-actions d-flex justify-content-between">
+        <div class="action-buttons">
+          <a href="{{ url_for('projects.detail', project_id=project.id) }}" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-eye me-1"></i>Ver Detalles
+          </a>
+        </div>
+        
+        <div class="project-interactions">
+          <button class="btn btn-sm btn-outline-secondary me-1" title="Me gusta">
+            <i class="fas fa-heart{{ ' text-danger' if project.is_liked_by_user(current_user) else '' }}"></i>
+            <span class="ms-1">{{ project.likes_count }}</span>
+          </button>
+          
+          <button class="btn btn-sm btn-outline-secondary" title="Compartir">
+            <i class="fas fa-share"></i>
+          </button>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endmacro %}
+
+{# Macro: Tarjeta de Programa #}
+{% macro program_card(program, show_organization=True, show_actions=True, custom_class='') %}
+<div class="card program-card {{ custom_class }}">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <div class="program-header flex-grow-1">
+        <h5 class="card-title mb-1">
+          <a href="{{ url_for('programs.detail', program_id=program.id) }}" class="text-decoration-none">
+            {{ program.name }}
+          </a>
+        </h5>
+        
+        {% if show_organization and program.organization %}
+          <small class="text-muted">{{ program.organization.name }}</small>
+        {% endif %}
+      </div>
+      
+      <div class="program-status">
+        <span class="badge bg-{{ 'success' if program.is_active else 'secondary' }}">
+          {{ 'Activo' if program.is_active else 'Inactivo' }}
+        </span>
+      </div>
+    </div>
+    
+    <p class="card-text">{{ program.description[:150] }}{% if program.description|length > 150 %}...{% endif %}</p>
+    
+    {# Información del programa #}
+    <div class="program-info row g-2 mb-3">
+      <div class="col-6">
+        <div class="info-item">
+          <small class="text-muted">Duración</small>
+          <div class="fw-bold">{{ program.duration_weeks }} semanas</div>
+        </div>
+      </div>
+      
+      <div class="col-6">
+        <div class="info-item">
+          <small class="text-muted">Participantes</small>
+          <div class="fw-bold">{{ program.current_participants }}/{{ program.max_participants }}</div>
+        </div>
+      </div>
+      
+      {% if program.start_date %}
+        <div class="col-6">
+          <div class="info-item">
+            <small class="text-muted">Inicio</small>
+            <div class="fw-bold">{{ program.start_date.strftime('%d/%m/%Y') }}</div>
+          </div>
+        </div>
+      {% endif %}
+      
+      {% if program.application_deadline %}
+        <div class="col-6">
+          <div class="info-item">
+            <small class="text-muted">Fecha Límite</small>
+            <div class="fw-bold text-{{ 'danger' if program.is_deadline_soon else 'primary' }}">
+              {{ program.application_deadline.strftime('%d/%m/%Y') }}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+    
+    {# Barra de progreso de inscripciones #}
+    <div class="enrollment-progress mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <small class="text-muted">Cupos disponibles</small>
+        <small class="text-muted">{{ program.current_participants }}/{{ program.max_participants }}</small>
+      </div>
+      <div class="progress" style="height: 6px;">
+        <div class="progress-bar bg-success" style="width: {{ (program.current_participants / program.max_participants * 100) if program.max_participants > 0 else 0 }}%"></div>
+      </div>
+    </div>
+    
+    {% if show_actions %}
+      <div class="card-actions d-flex justify-content-between">
+        <a href="{{ url_for('programs.detail', program_id=program.id) }}" class="btn btn-outline-primary btn-sm">
+          <i class="fas fa-info-circle me-1"></i>Ver Detalles
+        </a>
+        
+        {% if program.can_apply(current_user) %}
+          <a href="{{ url_for('programs.apply', program_id=program.id) }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-paper-plane me-1"></i>Aplicar
+          </a>
+        {% elif program.is_user_enrolled(current_user) %}
+          <span class="badge bg-success">Inscrito</span>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endmacro %}
+
+{# Macro: Tarjeta de Estadística #}
+{% macro stats_card(title, value, icon, color='primary', change=None, change_period=None, custom_class='') %}
+<div class="card stats-card {{ custom_class }}">
+  <div class="card-body">
+    <div class="d-flex align-items-center">
+      <div class="stats-icon me-3">
+        <div class="icon-container bg-{{ color }}-subtle text-{{ color }}">
+          <i class="{{ icon }}"></i>
+        </div>
+      </div>
+      
+      <div class="stats-content flex-grow-1">
+        <h3 class="stats-value mb-0">{{ value }}</h3>
+        <p class="stats-title text-muted mb-0">{{ title }}</p>
+        
+        {% if change is not none %}
+          <div class="stats-change mt-1">
+            <span class="badge bg-{{ 'success' if change >= 0 else 'danger' }}-subtle text-{{ 'success' if change >= 0 else 'danger' }}">
+              <i class="fas fa-{{ 'arrow-up' if change >= 0 else 'arrow-down' }} me-1"></i>
+              {{ "{:+.1f}".format(change) }}%
+            </span>
+            {% if change_period %}
+              <small class="text-muted ms-1">{{ change_period }}</small>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{# Macro: Tarjeta de Reunión/Evento #}
+{% macro meeting_card(meeting, show_participants=True, show_actions=True, custom_class='') %}
+<div class="card meeting-card {{ custom_class }}">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <div class="meeting-header flex-grow-1">
+        <h6 class="card-title mb-1">{{ meeting.title }}</h6>
+        <div class="meeting-time">
+          <i class="fas fa-calendar-alt text-muted me-1"></i>
+          <small class="text-muted">
+            {{ meeting.start_time.strftime('%d/%m/%Y %H:%M') }}
+          </small>
+        </div>
+      </div>
+      
+      <div class="meeting-status">
+        <span class="badge bg-{{ 'warning' if meeting.status == 'scheduled' else 'success' if meeting.status == 'completed' else 'danger' }}">
+          {{ meeting.status.title() }}
+        </span>
+      </div>
+    </div>
+    
+    {% if meeting.description %}
+      <p class="card-text">{{ meeting.description[:100] }}{% if meeting.description|length > 100 %}...{% endif %}</p>
+    {% endif %}
+    
+    <div class="meeting-details">
+      <div class="row g-2">
+        <div class="col-6">
+          <small class="text-muted">Duración</small>
+          <div class="fw-bold">{{ meeting.duration_minutes }} min</div>
+        </div>
+        
+        {% if meeting.meeting_type %}
+          <div class="col-6">
+            <small class="text-muted">Tipo</small>
+            <div class="fw-bold">{{ meeting.meeting_type.title() }}</div>
+          </div>
+        {% endif %}
+        
+        {% if meeting.location %}
+          <div class="col-12 mt-2">
+            <small class="text-muted">
+              <i class="fas fa-map-marker-alt me-1"></i>{{ meeting.location }}
+            </small>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    
+    {% if show_participants and meeting.participants %}
+      <div class="meeting-participants mt-3">
+        <small class="text-muted">Participantes:</small>
+        <div class="participants-avatars mt-1">
+          {% for participant in meeting.participants[:4] %}
+            {% if participant.profile_picture %}
+              <img src="{{ participant.profile_picture }}" alt="{{ participant.full_name }}" class="avatar avatar-xs me-1" title="{{ participant.full_name }}">
+            {% else %}
+              <div class="avatar avatar-xs bg-secondary me-1" title="{{ participant.full_name }}">
+                {{ participant.first_name[0] }}
+              </div>
+            {% endif %}
+          {% endfor %}
+          
+          {% if meeting.participants|length > 4 %}
+            <span class="badge bg-light text-dark">+{{ meeting.participants|length - 4 }}</span>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+    
+    {% if show_actions %}
+      <div class="card-actions mt-3">
+        <div class="d-flex justify-content-between">
+          <a href="{{ url_for('meetings.detail', meeting_id=meeting.id) }}" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-eye me-1"></i>Ver Detalles
+          </a>
+          
+          {% if meeting.can_join(current_user) %}
+            <a href="{{ meeting.join_url }}" class="btn btn-success btn-sm" target="_blank">
+              <i class="fas fa-video me-1"></i>Unirse
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endmacro %}
+
+{# Macro: Tarjeta de Notificación #}
+{% macro notification_card(notification, show_actions=True, custom_class='') %}
+<div class="card notification-card {{ 'notification-unread' if not notification.is_read else '' }} {{ custom_class }}">
+  <div class="card-body">
+    <div class="d-flex align-items-start">
+      <div class="notification-icon me-3">
+        <div class="icon-container bg-{{ notification.type_color }}-subtle text-{{ notification.type_color }}">
+          <i class="{{ notification.type_icon }}"></i>
+        </div>
+      </div>
+      
+      <div class="notification-content flex-grow-1">
+        <h6 class="notification-title mb-1">{{ notification.title }}</h6>
+        <p class="notification-message mb-2">{{ notification.message }}</p>
+        
+        <div class="notification-meta">
+          <small class="text-muted">
+            <i class="fas fa-clock me-1"></i>
+            {{ notification.created_at.strftime('%d/%m/%Y %H:%M') }}
+          </small>
+          
+          {% if notification.action_url %}
+            <a href="{{ notification.action_url }}" class="btn btn-sm btn-outline-primary ms-2">
+              {{ notification.action_text or 'Ver' }}
+            </a>
+          {% endif %}
+        </div>
+      </div>
+      
+      {% if show_actions %}
+        <div class="notification-actions">
+          {% if not notification.is_read %}
+            <button class="btn btn-sm btn-outline-secondary" onclick="markAsRead({{ notification.id }})">
+              <i class="fas fa-check"></i>
+            </button>
+          {% endif %}
+          
+          <button class="btn btn-sm btn-outline-danger ms-1" onclick="dismissNotification({{ notification.id }})">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{# Macro: Tarjeta de Documento #}
+{% macro document_card(document, show_actions=True, custom_class='') %}
+<div class="card document-card {{ custom_class }}">
+  <div class="card-body">
+    <div class="d-flex align-items-start">
+      <div class="document-icon me-3">
+        <div class="icon-container bg-{{ document.type_color }}-subtle text-{{ document.type_color }}">
+          <i class="{{ document.type_icon }}"></i>
+        </div>
+      </div>
+      
+      <div class="document-content flex-grow-1">
+        <h6 class="document-title mb-1">
+          <a href="{{ url_for('documents.view', document_id=document.id) }}" class="text-decoration-none">
+            {{ document.name }}
+          </a>
+        </h6>
+        
+        <div class="document-meta">
+          <small class="text-muted">
+            {{ document.file_size_formatted }} • 
+            {{ document.created_at.strftime('%d/%m/%Y') }}
+          </small>
+          
+          {% if document.uploaded_by %}
+            <small class="text-muted d-block">
+              Subido por {{ document.uploaded_by.full_name }}
+            </small>
+          {% endif %}
+        </div>
+        
+        {% if document.description %}
+          <p class="document-description text-muted mt-2">
+            {{ document.description[:100] }}{% if document.description|length > 100 %}...{% endif %}
+          </p>
+        {% endif %}
+      </div>
+      
+      {% if show_actions %}
+        <div class="document-actions">
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{{ document.download_url }}">
+                <i class="fas fa-download me-2"></i>Descargar
+              </a></li>
+              <li><a class="dropdown-item" href="{{ url_for('documents.view', document_id=document.id) }}">
+                <i class="fas fa-eye me-2"></i>Ver
+              </a></li>
+              {% if document.can_edit(current_user) %}
+                <li><a class="dropdown-item" href="{{ url_for('documents.edit', document_id=document.id) }}">
+                  <i class="fas fa-edit me-2"></i>Editar
+                </a></li>
+              {% endif %}
+              <li><a class="dropdown-item" href="#" onclick="shareDocument({{ document.id }})">
+                <i class="fas fa-share me-2"></i>Compartir
+              </a></li>
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{# Macro: Tarjeta de Organización #}
+{% macro organization_card(organization, show_actions=True, custom_class='') %}
+<div class="card organization-card {{ custom_class }}">
+  <div class="card-body">
+    <div class="d-flex align-items-start">
+      {% if organization.logo %}
+        <img src="{{ organization.logo }}" alt="{{ organization.name }}" class="organization-logo me-3">
+      {% else %}
+        <div class="organization-logo-placeholder bg-primary text-white me-3">
+          {{ organization.name[0] }}
+        </div>
+      {% endif %}
+      
+      <div class="organization-content flex-grow-1">
+        <h5 class="organization-name mb-1">
+          <a href="{{ url_for('organizations.detail', org_id=organization.id) }}" class="text-decoration-none">
+            {{ organization.name }}
+          </a>
+        </h5>
+        
+        {% if organization.type %}
+          <span class="badge bg-info-subtle text-info mb-2">{{ organization.type.title() }}</span>
+        {% endif %}
+        
+        {% if organization.description %}
+          <p class="organization-description">
+            {{ organization.description[:150] }}{% if organization.description|length > 150 %}...{% endif %}
+          </p>
+        {% endif %}
+        
+        <div class="organization-stats row g-2 mt-3">
+          <div class="col-4">
+            <small class="text-muted">Miembros</small>
+            <div class="fw-bold">{{ organization.members_count }}</div>
+          </div>
+          
+          <div class="col-4">
+            <small class="text-muted">Programas</small>
+            <div class="fw-bold">{{ organization.programs_count }}</div>
+          </div>
+          
+          <div class="col-4">
+            <small class="text-muted">Proyectos</small>
+            <div class="fw-bold">{{ organization.projects_count }}</div>
+          </div>
+        </div>
+      </div>
+      
+      {% if show_actions %}
+        <div class="organization-actions">
+          <a href="{{ url_for('organizations.detail', org_id=organization.id) }}" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-eye me-1"></i>Ver
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{# ========================================================================= 
+   ESTILOS CSS ESPECÍFICOS PARA LAS TARJETAS
+   ========================================================================= #}
+
+<style>
+/* Estilos base para tarjetas */
+.card {
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Avatares */
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: white;
+  position: relative;
+}
+
+.avatar-xs { width: 24px; height: 24px; font-size: 0.75rem; }
+.avatar-sm { width: 32px; height: 32px; font-size: 0.875rem; }
+.avatar-md { width: 48px; height: 48px; font-size: 1rem; }
+
+.avatar-status {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+/* Tarjetas específicas */
+.user-profile-card .avatar-container {
+  position: relative;
+}
+
+.project-card .project-image {
+  height: 200px;
+  object-fit: cover;
+}
+
+.project-metrics .metric-item,
+.program-info .info-item {
+  text-align: center;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 0.375rem;
+}
+
+.stats-card .icon-container {
+  width: 48px;
+  height: 48px;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.stats-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #495057;
+}
+
+.notification-card.notification-unread {
+  border-left: 4px solid #007bff;
+  background-color: #f8f9ff;
+}
+
+.notification-icon .icon-container {
+  width: 36px;
+  height: 36px;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.document-icon .icon-container {
+  width: 40px;
+  height: 40px;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+}
+
+.organization-logo,
+.organization-logo-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 0.375rem;
+  object-fit: cover;
+}
+
+.organization-logo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .card-sm {
+    margin-bottom: 0.75rem;
+  }
+  
+  .project-metrics .metric-item,
+  .program-info .info-item {
+    padding: 0.375rem;
+    font-size: 0.875rem;
+  }
+  
+  .stats-value {
+    font-size: 1.5rem;
+  }
+}
+
+/* Utilidades de color para badges y elementos */
+.bg-primary-subtle { background-color: rgba(13, 110, 253, 0.1) !important; }
+.bg-success-subtle { background-color: rgba(25, 135, 84, 0.1) !important; }
+.bg-danger-subtle { background-color: rgba(220, 53, 69, 0.1) !important; }
+.bg-warning-subtle { background-color: rgba(255, 193, 7, 0.1) !important; }
+.bg-info-subtle { background-color: rgba(13, 202, 240, 0.1) !important; }
+
+.text-primary { color: #0d6efd !important; }
+.text-success { color: #198754 !important; }
+.text-danger { color: #dc3545 !important; }
+.text-warning { color: #ffc107 !important; }
+.text-info { color: #0dcaf0 !important; }
+</style>
+
+{# ========================================================================= 
+   JAVASCRIPT PARA FUNCIONALIDADES INTERACTIVAS
+   ========================================================================= #}
+
+<script>
+// Función para marcar notificación como leída
+function markAsRead(notificationId) {
+  fetch(`/api/v1/notifications/${notificationId}/mark-read`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      const card = document.querySelector(`[data-notification-id="${notificationId}"]`);
+      if (card) {
+        card.classList.remove('notification-unread');
+      }
+    }
+  })
+  .catch(error => console.error('Error:', error));
+}
+
+// Función para descartar notificación
+function dismissNotification(notificationId) {
+  if (confirm('¿Estás seguro de que quieres descartar esta notificación?')) {
+    fetch(`/api/v1/notifications/${notificationId}/dismiss`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        const card = document.querySelector(`[data-notification-id="${notificationId}"]`);
+        if (card) {
+          card.style.opacity = '0';
+          setTimeout(() => card.remove(), 300);
+        }
+      }
+    })
+    .catch(error => console.error('Error:', error));
+  }
+}
+
+// Función para compartir documento
+function shareDocument(documentId) {
+  // Implementar modal de compartir o funcionalidad específica
+  console.log('Compartir documento:', documentId);
+}
+
+// Inicialización de tooltips para Bootstrap
+document.addEventListener('DOMContentLoaded', function() {
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+});
+</script>

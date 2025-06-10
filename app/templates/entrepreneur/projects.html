@@ -1,0 +1,627 @@
+{% extends "layouts/dashboard.html" %}
+{% from "components/modals.html" import modal_dialog %}
+{% from "components/forms.html" import form_field, form_select, form_textarea, form_file %}
+{% from "components/cards.html" import project_card, task_card %}
+{% from "components/pagination.html" import render_pagination %}
+
+{% set page_title = "Mis Proyectos" %}
+{% set active_menu = "projects" %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='dist/css/projects.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='vendor/datepicker/datepicker.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='vendor/progress-bar/progress-bar.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="h3 text-dark mb-1">
+                        <i class="fas fa-project-diagram text-primary me-2"></i>
+                        Mis Proyectos
+                    </h2>
+                    <p class="text-muted mb-0">Gestiona y supervisa el progreso de tus emprendimientos</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#filterModal">
+                        <i class="fas fa-filter me-1"></i>
+                        Filtros
+                    </button>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+                        <i class="fas fa-plus me-1"></i>
+                        Nuevo Proyecto
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted mb-1 small">Total Proyectos</p>
+                            <h4 class="mb-0 text-dark">{{ projects_stats.total or 0 }}</h4>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                            <i class="fas fa-project-diagram text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted mb-1 small">En Progreso</p>
+                            <h4 class="mb-0 text-success">{{ projects_stats.active or 0 }}</h4>
+                        </div>
+                        <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                            <i class="fas fa-rocket text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted mb-1 small">Completados</p>
+                            <h4 class="mb-0 text-info">{{ projects_stats.completed or 0 }}</h4>
+                        </div>
+                        <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                            <i class="fas fa-check-circle text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted mb-1 small">Progreso Promedio</p>
+                            <h4 class="mb-0 text-warning">{{ "%.0f"|format(projects_stats.avg_progress or 0) }}%</h4>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                            <i class="fas fa-chart-line text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" name="search" 
+                                       placeholder="Buscar proyectos..." 
+                                       value="{{ request.args.get('search', '') }}">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" name="status">
+                                <option value="">Todos los estados</option>
+                                <option value="planning" {{ 'selected' if request.args.get('status') == 'planning' }}>Planificación</option>
+                                <option value="active" {{ 'selected' if request.args.get('status') == 'active' }}>Activo</option>
+                                <option value="on_hold" {{ 'selected' if request.args.get('status') == 'on_hold' }}>En Pausa</option>
+                                <option value="completed" {{ 'selected' if request.args.get('status') == 'completed' }}>Completado</option>
+                                <option value="cancelled" {{ 'selected' if request.args.get('status') == 'cancelled' }}>Cancelado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" name="category">
+                                <option value="">Todas las categorías</option>
+                                {% for category in project_categories %}
+                                <option value="{{ category.id }}" {{ 'selected' if request.args.get('category') == category.id|string }}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" name="sort">
+                                <option value="updated_desc" {{ 'selected' if request.args.get('sort') == 'updated_desc' }}>Más reciente</option>
+                                <option value="created_desc" {{ 'selected' if request.args.get('sort') == 'created_desc' }}>Más nuevo</option>
+                                <option value="progress_desc" {{ 'selected' if request.args.get('sort') == 'progress_desc' }}>Mayor progreso</option>
+                                <option value="deadline_asc" {{ 'selected' if request.args.get('sort') == 'deadline_asc' }}>Próximo deadline</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-filter me-1"></i>
+                                Filtrar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects Grid -->
+    <div class="row">
+        {% if projects %}
+            {% for project in projects %}
+            <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="card border-0 shadow-sm h-100 project-card" data-project-id="{{ project.id }}">
+                    <div class="card-header bg-transparent border-bottom-0 pb-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h5 class="card-title mb-1">
+                                    <a href="{{ url_for('entrepreneur.project_detail', id=project.id) }}" 
+                                       class="text-decoration-none text-dark">
+                                        {{ project.name }}
+                                    </a>
+                                </h5>
+                                <p class="text-muted small mb-2">{{ project.category.name if project.category else 'Sin categoría' }}</p>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="{{ url_for('entrepreneur.project_detail', id=project.id) }}">
+                                            <i class="fas fa-eye me-2"></i>Ver Detalles
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" onclick="editProject({{ project.id }})">
+                                            <i class="fas fa-edit me-2"></i>Editar
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" onclick="duplicateProject({{ project.id }})">
+                                            <i class="fas fa-copy me-2"></i>Duplicar
+                                        </button>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <button class="dropdown-item text-danger" onclick="deleteProject({{ project.id }})">
+                                            <i class="fas fa-trash me-2"></i>Eliminar
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body pt-2">
+                        <!-- Status Badge -->
+                        <div class="mb-3">
+                            {% set status_class = {
+                                'planning': 'bg-secondary',
+                                'active': 'bg-success',
+                                'on_hold': 'bg-warning',
+                                'completed': 'bg-info',
+                                'cancelled': 'bg-danger'
+                            } %}
+                            <span class="badge {{ status_class.get(project.status, 'bg-secondary') }} small">
+                                {{ project.get_status_display() }}
+                            </span>
+                            {% if project.is_urgent() %}
+                            <span class="badge bg-danger small ms-1">
+                                <i class="fas fa-exclamation-triangle me-1"></i>Urgente
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Description -->
+                        <p class="text-muted small mb-3" style="line-height: 1.4;">
+                            {{ project.description[:120] }}{% if project.description|length > 120 %}...{% endif %}
+                        </p>
+
+                        <!-- Progress Bar -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="small text-muted">Progreso</span>
+                                <span class="small fw-bold">{{ "%.0f"|format(project.progress) }}%</span>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-primary" role="progressbar" 
+                                     style="width: {{ project.progress }}%"
+                                     aria-valuenow="{{ project.progress }}" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Key Metrics -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-tasks text-muted me-2" style="width: 16px;"></i>
+                                    <span class="small text-muted">{{ project.tasks.count() }} tareas</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-users text-muted me-2" style="width: 16px;"></i>
+                                    <span class="small text-muted">{{ project.team_members.count() }} miembros</span>
+                                </div>
+                            </div>
+                            {% if project.budget %}
+                            <div class="col-6">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-dollar-sign text-muted me-2" style="width: 16px;"></i>
+                                    <span class="small text-muted">${{ "{:,.0f}".format(project.budget) }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if project.deadline %}
+                            <div class="col-6">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-calendar text-muted me-2" style="width: 16px;"></i>
+                                    <span class="small text-muted">{{ project.deadline.strftime('%d/%m/%Y') }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Recent Activity -->
+                        {% if project.recent_activities %}
+                        <div class="border-top pt-3">
+                            <h6 class="small text-muted mb-2">Actividad Reciente</h6>
+                            {% for activity in project.recent_activities[:2] %}
+                            <div class="d-flex align-items-center mb-1">
+                                <div class="bg-light rounded-circle me-2 d-flex align-items-center justify-content-center" 
+                                     style="width: 24px; height: 24px; min-width: 24px;">
+                                    <i class="fas fa-{{ activity.icon }} text-muted" style="font-size: 10px;"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p class="small mb-0 text-dark">{{ activity.description }}</p>
+                                    <p class="tiny text-muted mb-0">{{ activity.created_at|timeago }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="card-footer bg-transparent border-top-0 pt-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                {% if project.mentor %}
+                                <img src="{{ project.mentor.avatar_url or url_for('static', filename='img/default-avatar.png') }}" 
+                                     alt="{{ project.mentor.full_name }}" 
+                                     class="rounded-circle me-2"
+                                     style="width: 24px; height: 24px;"
+                                     title="Mentor: {{ project.mentor.full_name }}">
+                                {% endif %}
+                                <small class="text-muted">
+                                    Actualizado {{ project.updated_at|timeago }}
+                                </small>
+                            </div>
+                            <a href="{{ url_for('entrepreneur.project_detail', id=project.id) }}" 
+                               class="btn btn-sm btn-outline-primary">
+                                Ver más
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <!-- Empty State -->
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-project-diagram text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+                    </div>
+                    <h3 class="text-muted mb-3">No tienes proyectos aún</h3>
+                    <p class="text-muted mb-4">Comienza creando tu primer proyecto emprendedor</p>
+                    <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+                        <i class="fas fa-plus me-2"></i>
+                        Crear Primer Proyecto
+                    </button>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination and pagination.pages > 1 %}
+    <div class="row mt-4">
+        <div class="col-12">
+            {{ render_pagination(pagination, 'entrepreneur.projects') }}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Create/Edit Project Modal -->
+{{ modal_dialog('createProjectModal', 'Nuevo Proyecto', size='lg') }}
+<div class="modal fade" id="createProjectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="projectForm" method="POST" enctype="multipart/form-data">
+                {{ csrf_token() }}
+                <div class="modal-header">
+                    <h5 class="modal-title">Nuevo Proyecto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <!-- Basic Information -->
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">Información Básica</h6>
+                        </div>
+                        
+                        <div class="col-md-8">
+                            {{ form_field('name', 'Nombre del Proyecto', required=True, 
+                                         placeholder='Ej: Aplicación móvil de delivery') }}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            {{ form_select('category_id', 'Categoría', options=project_categories,
+                                          option_value='id', option_text='name', required=True) }}
+                        </div>
+                        
+                        <div class="col-12">
+                            {{ form_textarea('description', 'Descripción', rows=3,
+                                           placeholder='Describe brevemente tu proyecto emprendedor...') }}
+                        </div>
+
+                        <!-- Project Details -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-muted mb-3">Detalles del Proyecto</h6>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            {{ form_select('status', 'Estado', options=[
+                                ('planning', 'Planificación'),
+                                ('active', 'Activo'),
+                                ('on_hold', 'En Pausa')
+                            ]) }}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            {{ form_field('start_date', 'Fecha Inicio', type='date') }}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            {{ form_field('deadline', 'Fecha Límite', type='date') }}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form_field('budget', 'Presupuesto ($)', type='number', step='0.01',
+                                         placeholder='0.00') }}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form_select('priority', 'Prioridad', options=[
+                                ('low', 'Baja'),
+                                ('medium', 'Media'),
+                                ('high', 'Alta'),
+                                ('critical', 'Crítica')
+                            ]) }}
+                        </div>
+
+                        <!-- Goals and Objectives -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-muted mb-3">Objetivos</h6>
+                        </div>
+                        
+                        <div class="col-12">
+                            {{ form_textarea('objectives', 'Objetivos Principales', rows=3,
+                                           placeholder='Lista los objetivos principales de este proyecto...') }}
+                        </div>
+                        
+                        <div class="col-12">
+                            {{ form_textarea('success_criteria', 'Criterios de Éxito', rows=2,
+                                           placeholder='¿Cómo medirás el éxito de este proyecto?') }}
+                        </div>
+
+                        <!-- Tags and Files -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-muted mb-3">Recursos</h6>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form_field('tags', 'Etiquetas',
+                                         placeholder='tecnología, startup, mvp (separadas por comas)') }}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form_file('project_files', 'Documentos Iniciales', multiple=True,
+                                        accept='.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx') }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>
+                        Crear Proyecto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Filtros Avanzados</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="GET">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            {{ form_field('search', 'Buscar', 
+                                         value=request.args.get('search', ''),
+                                         placeholder='Nombre, descripción, etiquetas...') }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_select('status', 'Estado', options=[
+                                ('', 'Todos'),
+                                ('planning', 'Planificación'),
+                                ('active', 'Activo'),
+                                ('on_hold', 'En Pausa'),
+                                ('completed', 'Completado'),
+                                ('cancelled', 'Cancelado')
+                            ], selected=request.args.get('status', '')) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_select('priority', 'Prioridad', options=[
+                                ('', 'Todas'),
+                                ('low', 'Baja'),
+                                ('medium', 'Media'),
+                                ('high', 'Alta'),
+                                ('critical', 'Crítica')
+                            ], selected=request.args.get('priority', '')) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_field('budget_min', 'Presupuesto Mínimo', type='number',
+                                         value=request.args.get('budget_min', '')) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_field('budget_max', 'Presupuesto Máximo', type='number',
+                                         value=request.args.get('budget_max', '')) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_field('start_date_from', 'Inicio Desde', type='date',
+                                         value=request.args.get('start_date_from', '')) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_field('deadline_until', 'Límite Hasta', type='date',
+                                         value=request.args.get('deadline_until', '')) }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="{{ url_for('entrepreneur.projects') }}" class="btn btn-secondary">Limpiar</a>
+                    <button type="submit" class="btn btn-primary">Aplicar Filtros</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='vendor/datepicker/datepicker.js') }}"></script>
+<script src="{{ url_for('static', filename='dist/js/projects.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize project management functionality
+    const projectManager = new ProjectManager({
+        endpoints: {
+            create: "{{ url_for('api.v1.projects.create') }}",
+            update: "{{ url_for('api.v1.projects.update', id='PROJECT_ID') }}",
+            delete: "{{ url_for('api.v1.projects.delete', id='PROJECT_ID') }}",
+            duplicate: "{{ url_for('api.v1.projects.duplicate', id='PROJECT_ID') }}"
+        },
+        csrfToken: "{{ csrf_token() }}"
+    });
+
+    // Initialize date pickers
+    const datePickers = document.querySelectorAll('input[type="date"]');
+    datePickers.forEach(picker => {
+        new DatePicker(picker, {
+            format: 'yyyy-mm-dd',
+            language: 'es',
+            autoHide: true
+        });
+    });
+
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Auto-submit search form on enter
+    const searchInput = document.querySelector('input[name="search"]');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                this.closest('form').submit();
+            }
+        });
+    }
+
+    // Project card hover effects
+    const projectCards = document.querySelectorAll('.project-card');
+    projectCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.transition = 'transform 0.2s ease';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+
+// Global functions for project actions
+function editProject(projectId) {
+    window.projectManager.editProject(projectId);
+}
+
+function deleteProject(projectId) {
+    if (confirm('¿Estás seguro de que quieres eliminar este proyecto? Esta acción no se puede deshacer.')) {
+        window.projectManager.deleteProject(projectId);
+    }
+}
+
+function duplicateProject(projectId) {
+    window.projectManager.duplicateProject(projectId);
+}
+
+// Form validation
+document.getElementById('projectForm').addEventListener('submit', function(e) {
+    const name = this.querySelector('input[name="name"]').value.trim();
+    const category = this.querySelector('select[name="category_id"]').value;
+    
+    if (!name) {
+        e.preventDefault();
+        alert('El nombre del proyecto es obligatorio');
+        return;
+    }
+    
+    if (!category) {
+        e.preventDefault();
+        alert('Debes seleccionar una categoría');
+        return;
+    }
+    
+    // Validate dates
+    const startDate = this.querySelector('input[name="start_date"]').value;
+    const deadline = this.querySelector('input[name="deadline"]').value;
+    
+    if (startDate && deadline && new Date(startDate) > new Date(deadline)) {
+        e.preventDefault();
+        alert('La fecha de inicio no puede ser posterior a la fecha límite');
+        return;
+    }
+});
+</script>
+{% endblock %}

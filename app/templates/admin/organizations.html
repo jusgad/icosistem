@@ -1,0 +1,1069 @@
+{% extends "layouts/admin.html" %}
+
+{% block title %}Gestión de Organizaciones{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 15px;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .btn-action {
+        padding: 0.375rem 0.75rem;
+        margin: 0 0.125rem;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-action:hover {
+        transform: scale(1.05);
+    }
+    
+    .organization-logo {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        object-fit: cover;
+    }
+    
+    .status-badge {
+        padding: 0.375rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-active {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+    
+    .filter-section {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+    }
+    
+    .table th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.875rem;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        padding: 1rem 0.75rem;
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .pagination .page-link {
+        border-radius: 8px;
+        margin: 0 0.125rem;
+        border: 2px solid #e9ecef;
+        color: #667eea;
+        transition: all 0.2s ease;
+    }
+    
+    .pagination .page-link:hover {
+        background: #667eea;
+        border-color: #667eea;
+        transform: translateY(-1px);
+    }
+    
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-0">
+                        <i class="fas fa-building me-3"></i>
+                        Gestión de Organizaciones
+                    </h1>
+                    <nav aria-label="breadcrumb" class="mt-2">
+                        <ol class="breadcrumb text-white-50">
+                            <li class="breadcrumb-item">
+                                <a href="{{ url_for('admin.dashboard') }}" class="text-white-50">
+                                    <i class="fas fa-home"></i> Dashboard
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item active text-white" aria-current="page">
+                                Organizaciones
+                            </li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button type="button" class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#createOrganizationModal">
+                        <i class="fas fa-plus me-2"></i>
+                        Nueva Organización
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card text-center">
+                <div class="stats-icon mb-3">
+                    <i class="fas fa-building fa-2x"></i>
+                </div>
+                <h3 class="mb-1">{{ organizations.total if organizations else 0 }}</h3>
+                <p class="mb-0">Total Organizaciones</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card text-center">
+                <div class="stats-icon mb-3">
+                    <i class="fas fa-check-circle fa-2x"></i>
+                </div>
+                <h3 class="mb-1">{{ active_organizations if active_organizations else 0 }}</h3>
+                <p class="mb-0">Activas</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card text-center">
+                <div class="stats-icon mb-3">
+                    <i class="fas fa-clock fa-2x"></i>
+                </div>
+                <h3 class="mb-1">{{ pending_organizations if pending_organizations else 0 }}</h3>
+                <p class="mb-0">Pendientes</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card text-center">
+                <div class="stats-icon mb-3">
+                    <i class="fas fa-users fa-2x"></i>
+                </div>
+                <h3 class="mb-1">{{ total_members if total_members else 0 }}</h3>
+                <p class="mb-0">Total Miembros</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filter-section">
+        <form method="GET" id="filterForm">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="search" class="form-label fw-bold">
+                        <i class="fas fa-search me-1"></i>Buscar
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="search" 
+                           name="search" 
+                           placeholder="Nombre, email, teléfono..."
+                           value="{{ request.args.get('search', '') }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="status" class="form-label fw-bold">
+                        <i class="fas fa-filter me-1"></i>Estado
+                    </label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">Todos los estados</option>
+                        <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Activo</option>
+                        <option value="inactive" {% if request.args.get('status') == 'inactive' %}selected{% endif %}>Inactivo</option>
+                        <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>Pendiente</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="organization_type" class="form-label fw-bold">
+                        <i class="fas fa-tags me-1"></i>Tipo
+                    </label>
+                    <select class="form-select" id="organization_type" name="organization_type">
+                        <option value="">Todos los tipos</option>
+                        <option value="incubadora" {% if request.args.get('organization_type') == 'incubadora' %}selected{% endif %}>Incubadora</option>
+                        <option value="aceleradora" {% if request.args.get('organization_type') == 'aceleradora' %}selected{% endif %}>Aceleradora</option>
+                        <option value="corporacion" {% if request.args.get('organization_type') == 'corporacion' %}selected{% endif %}>Corporación</option>
+                        <option value="gobierno" {% if request.args.get('organization_type') == 'gobierno' %}selected{% endif %}>Gobierno</option>
+                        <option value="universidad" {% if request.args.get('organization_type') == 'universidad' %}selected{% endif %}>Universidad</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="country" class="form-label fw-bold">
+                        <i class="fas fa-globe me-1"></i>País
+                    </label>
+                    <select class="form-select" id="country" name="country">
+                        <option value="">Todos los países</option>
+                        {% for country in countries %}
+                        <option value="{{ country.code }}" {% if request.args.get('country') == country.code %}selected{% endif %}>
+                            {{ country.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold text-transparent">Acciones</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-fill">
+                            <i class="fas fa-search me-1"></i>Filtrar
+                        </button>
+                        <a href="{{ url_for('admin.organizations') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i>
+                        </a>
+                        <button type="button" class="btn btn-success" onclick="exportOrganizations()">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Organizations Table -->
+    <div class="card">
+        <div class="card-header border-0">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        Lista de Organizaciones
+                    </h5>
+                </div>
+                <div class="col-auto">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="refreshTable()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="toggleColumn('logo')">
+                                    <i class="fas fa-image me-2"></i>Logo
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="toggleColumn('type')">
+                                    <i class="fas fa-tags me-2"></i>Tipo
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="toggleColumn('members')">
+                                    <i class="fas fa-users me-2"></i>Miembros
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="toggleColumn('created_at')">
+                                    <i class="fas fa-calendar me-2"></i>Fecha Creación
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="organizationsTable">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" class="form-check-input" id="selectAll">
+                            </th>
+                            <th class="logo-column">Logo</th>
+                            <th>Organización</th>
+                            <th class="type-column">Tipo</th>
+                            <th>Contacto</th>
+                            <th>Estado</th>
+                            <th class="members-column">Miembros</th>
+                            <th class="created-column">Creado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for organization in organizations.items if organizations %}
+                        <tr data-organization-id="{{ organization.id }}">
+                            <td>
+                                <input type="checkbox" class="form-check-input row-checkbox" value="{{ organization.id }}">
+                            </td>
+                            <td class="logo-column">
+                                {% if organization.logo_url %}
+                                <img src="{{ organization.logo_url }}" alt="Logo" class="organization-logo">
+                                {% else %}
+                                <div class="organization-logo bg-secondary d-flex align-items-center justify-content-center text-white">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div>
+                                    <h6 class="mb-1 fw-bold">{{ organization.name }}</h6>
+                                    <small class="text-muted">{{ organization.description[:50] }}{% if organization.description|length > 50 %}...{% endif %}</small>
+                                </div>
+                            </td>
+                            <td class="type-column">
+                                <span class="badge bg-info">{{ organization.organization_type.title() if organization.organization_type else 'N/A' }}</span>
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="mb-1">
+                                        <i class="fas fa-envelope me-1 text-muted"></i>
+                                        <small>{{ organization.email }}</small>
+                                    </div>
+                                    {% if organization.phone %}
+                                    <div>
+                                        <i class="fas fa-phone me-1 text-muted"></i>
+                                        <small>{{ organization.phone }}</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ organization.status }}">
+                                    {% if organization.status == 'active' %}
+                                        <i class="fas fa-check-circle me-1"></i>Activo
+                                    {% elif organization.status == 'inactive' %}
+                                        <i class="fas fa-times-circle me-1"></i>Inactivo
+                                    {% else %}
+                                        <i class="fas fa-clock me-1"></i>Pendiente
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td class="members-column">
+                                <span class="badge bg-primary">
+                                    {{ organization.members_count if organization.members_count else 0 }}
+                                </span>
+                            </td>
+                            <td class="created-column">
+                                <small class="text-muted">
+                                    {{ organization.created_at.strftime('%d/%m/%Y') if organization.created_at else 'N/A' }}
+                                </small>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button type="button" 
+                                            class="btn btn-outline-info btn-sm btn-action" 
+                                            onclick="viewOrganization({{ organization.id }})"
+                                            title="Ver detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-outline-primary btn-sm btn-action" 
+                                            onclick="editOrganization({{ organization.id }})"
+                                            title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-outline-danger btn-sm btn-action" 
+                                            onclick="deleteOrganization({{ organization.id }})"
+                                            title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                                    <h5>No se encontraron organizaciones</h5>
+                                    <p>No hay organizaciones que coincidan con los filtros aplicados.</p>
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createOrganizationModal">
+                                        <i class="fas fa-plus me-2"></i>Crear Primera Organización
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        {% if organizations and organizations.pages > 1 %}
+        <div class="card-footer">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">
+                        Mostrando {{ organizations.per_page * (organizations.page - 1) + 1 }} - 
+                        {{ organizations.per_page * organizations.page if organizations.page < organizations.pages else organizations.total }} 
+                        de {{ organizations.total }} organizaciones
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <nav aria-label="Paginación">
+                        {{ render_pagination(organizations, 'admin.organizations') }}
+                    </nav>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Create Organization Modal -->
+<div class="modal fade" id="createOrganizationModal" tabindex="-1" aria-labelledby="createOrganizationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createOrganizationModalLabel">
+                    <i class="fas fa-plus me-2"></i>Nueva Organización
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createOrganizationForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label for="name" class="form-label fw-bold">
+                                <i class="fas fa-building me-1"></i>Nombre de la Organización *
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="organization_type" class="form-label fw-bold">
+                                <i class="fas fa-tags me-1"></i>Tipo *
+                            </label>
+                            <select class="form-select" id="organization_type" name="organization_type" required>
+                                <option value="">Seleccionar tipo</option>
+                                <option value="incubadora">Incubadora</option>
+                                <option value="aceleradora">Aceleradora</option>
+                                <option value="corporacion">Corporación</option>
+                                <option value="gobierno">Gobierno</option>
+                                <option value="universidad">Universidad</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label for="description" class="form-label fw-bold">
+                                <i class="fas fa-align-left me-1"></i>Descripción
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Descripción de la organización..."></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label fw-bold">
+                                <i class="fas fa-envelope me-1"></i>Email *
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label fw-bold">
+                                <i class="fas fa-phone me-1"></i>Teléfono
+                            </label>
+                            <input type="tel" class="form-control" id="phone" name="phone">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="website" class="form-label fw-bold">
+                                <i class="fas fa-globe me-1"></i>Sitio Web
+                            </label>
+                            <input type="url" class="form-control" id="website" name="website" placeholder="https://ejemplo.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="status" class="form-label fw-bold">
+                                <i class="fas fa-toggle-on me-1"></i>Estado *
+                            </label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="active">Activo</option>
+                                <option value="inactive">Inactivo</option>
+                                <option value="pending">Pendiente</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="country" class="form-label fw-bold">
+                                <i class="fas fa-flag me-1"></i>País
+                            </label>
+                            <select class="form-select" id="country" name="country">
+                                <option value="">Seleccionar país</option>
+                                {% for country in countries %}
+                                <option value="{{ country.code }}">{{ country.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="logo" class="form-label fw-bold">
+                                <i class="fas fa-image me-1"></i>Logo
+                            </label>
+                            <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
+                            <div class="form-text">Formatos permitidos: JPG, PNG, GIF. Máximo 2MB.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Crear Organización
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Organization Modal -->
+<div class="modal fade" id="editOrganizationModal" tabindex="-1" aria-labelledby="editOrganizationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editOrganizationModalLabel">
+                    <i class="fas fa-edit me-2"></i>Editar Organización
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editOrganizationForm" enctype="multipart/form-data">
+                <input type="hidden" id="edit_organization_id" name="organization_id">
+                <div class="modal-body">
+                    <!-- Same form fields as create modal -->
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label for="edit_name" class="form-label fw-bold">
+                                <i class="fas fa-building me-1"></i>Nombre de la Organización *
+                            </label>
+                            <input type="text" class="form-control" id="edit_name" name="name" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="edit_organization_type" class="form-label fw-bold">
+                                <i class="fas fa-tags me-1"></i>Tipo *
+                            </label>
+                            <select class="form-select" id="edit_organization_type" name="organization_type" required>
+                                <option value="">Seleccionar tipo</option>
+                                <option value="incubadora">Incubadora</option>
+                                <option value="aceleradora">Aceleradora</option>
+                                <option value="corporacion">Corporación</option>
+                                <option value="gobierno">Gobierno</option>
+                                <option value="universidad">Universidad</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label for="edit_description" class="form-label fw-bold">
+                                <i class="fas fa-align-left me-1"></i>Descripción
+                            </label>
+                            <textarea class="form-control" id="edit_description" name="description" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_email" class="form-label fw-bold">
+                                <i class="fas fa-envelope me-1"></i>Email *
+                            </label>
+                            <input type="email" class="form-control" id="edit_email" name="email" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_phone" class="form-label fw-bold">
+                                <i class="fas fa-phone me-1"></i>Teléfono
+                            </label>
+                            <input type="tel" class="form-control" id="edit_phone" name="phone">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_website" class="form-label fw-bold">
+                                <i class="fas fa-globe me-1"></i>Sitio Web
+                            </label>
+                            <input type="url" class="form-control" id="edit_website" name="website">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_status" class="form-label fw-bold">
+                                <i class="fas fa-toggle-on me-1"></i>Estado *
+                            </label>
+                            <select class="form-select" id="edit_status" name="status" required>
+                                <option value="active">Activo</option>
+                                <option value="inactive">Inactivo</option>
+                                <option value="pending">Pendiente</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_country" class="form-label fw-bold">
+                                <i class="fas fa-flag me-1"></i>País
+                            </label>
+                            <select class="form-select" id="edit_country" name="country">
+                                <option value="">Seleccionar país</option>
+                                {% for country in countries %}
+                                <option value="{{ country.code }}">{{ country.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_logo" class="form-label fw-bold">
+                                <i class="fas fa-image me-1"></i>Logo
+                            </label>
+                            <input type="file" class="form-control" id="edit_logo" name="logo" accept="image/*">
+                            <div class="form-text">Formatos permitidos: JPG, PNG, GIF. Máximo 2MB.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Organization Modal -->
+<div class="modal fade" id="viewOrganizationModal" tabindex="-1" aria-labelledby="viewOrganizationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewOrganizationModalLabel">
+                    <i class="fas fa-eye me-2"></i>Detalles de la Organización
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="organizationDetailsContent">
+                <!-- Content will be loaded dynamically -->
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cerrar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="editFromView()">
+                    <i class="fas fa-edit me-1"></i>Editar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Select2 for better dropdowns
+    $('.form-select').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
+    });
+
+    // Initialize DataTable if needed
+    // $('#organizationsTable').DataTable({
+    //     // DataTable configuration
+    // });
+
+    // Select All functionality
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.row-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateBulkActions();
+    });
+
+    // Individual checkbox functionality
+    document.querySelectorAll('.row-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkActions);
+    });
+
+    // Create Organization Form
+    document.getElementById('createOrganizationForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        createOrganization();
+    });
+
+    // Edit Organization Form
+    document.getElementById('editOrganizationForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        updateOrganization();
+    });
+});
+
+// Global variables
+let currentOrganizationId = null;
+
+// Create Organization
+function createOrganization() {
+    const form = document.getElementById('createOrganizationForm');
+    const formData = new FormData(form);
+
+    // Show loading state
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Creando...';
+    submitBtn.disabled = true;
+
+    fetch('{{ url_for("admin.create_organization") }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                title: '¡Éxito!',
+                text: 'Organización creada correctamente',
+                icon: 'success',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                window.location.reload();
+            });
+        } else {
+            Swal.fire({
+                title: 'Error',
+                text: data.message || 'Error al crear la organización',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            title: 'Error',
+            text: 'Error al procesar la solicitud',
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// Edit Organization
+function editOrganization(organizationId) {
+    currentOrganizationId = organizationId;
+    
+    // Fetch organization data
+    fetch(`{{ url_for("admin.get_organization", organization_id=0) }}`.replace('0', organizationId))
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const org = data.organization;
+            
+            // Populate form fields
+            document.getElementById('edit_organization_id').value = org.id;
+            document.getElementById('edit_name').value = org.name || '';
+            document.getElementById('edit_organization_type').value = org.organization_type || '';
+            document.getElementById('edit_description').value = org.description || '';
+            document.getElementById('edit_email').value = org.email || '';
+            document.getElementById('edit_phone').value = org.phone || '';
+            document.getElementById('edit_website').value = org.website || '';
+            document.getElementById('edit_status').value = org.status || '';
+            document.getElementById('edit_country').value = org.country || '';
+            
+            // Show modal
+            new bootstrap.Modal(document.getElementById('editOrganizationModal')).show();
+        } else {
+            Swal.fire({
+                title: 'Error',
+                text: 'No se pudieron cargar los datos de la organización',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            title: 'Error',
+            text: 'Error al cargar los datos',
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    });
+}
+
+// Update Organization
+function updateOrganization() {
+    const form = document.getElementById('editOrganizationForm');
+    const formData = new FormData(form);
+    const organizationId = document.getElementById('edit_organization_id').value;
+
+    // Show loading state
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Guardando...';
+    submitBtn.disabled = true;
+
+    fetch(`{{ url_for("admin.update_organization", organization_id=0) }}`.replace('0', organizationId), {
+        method: 'PUT',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                title: '¡Éxito!',
+                text: 'Organización actualizada correctamente',
+                icon: 'success',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                window.location.reload();
+            });
+        } else {
+            Swal.fire({
+                title: 'Error',
+                text: data.message || 'Error al actualizar la organización',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            title: 'Error',
+            text: 'Error al procesar la solicitud',
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// View Organization
+function viewOrganization(organizationId) {
+    currentOrganizationId = organizationId;
+    
+    // Show modal first
+    const modal = new bootstrap.Modal(document.getElementById('viewOrganizationModal'));
+    modal.show();
+    
+    // Fetch organization details
+    fetch(`{{ url_for("admin.get_organization_details", organization_id=0) }}`.replace('0', organizationId))
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('organizationDetailsContent').innerHTML = data.html;
+        } else {
+            document.getElementById('organizationDetailsContent').innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                    <h5>Error al cargar los detalles</h5>
+                    <p>${data.message || 'Error desconocido'}</p>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('organizationDetailsContent').innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                <h5>Error de conexión</h5>
+                <p>No se pudieron cargar los detalles de la organización</p>
+            </div>
+        `;
+    });
+}
+
+// Delete Organization
+function deleteOrganization(organizationId) {
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: 'Esta acción no se puede deshacer. Se eliminará la organización y todos sus datos asociados.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`{{ url_for("admin.delete_organization", organization_id=0) }}`.replace('0', organizationId), {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content'),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: '¡Eliminado!',
+                        text: 'La organización ha sido eliminada correctamente',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: data.message || 'Error al eliminar la organización',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Error al procesar la solicitud',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            });
+        }
+    });
+}
+
+// Edit from view modal
+function editFromView() {
+    const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewOrganizationModal'));
+    viewModal.hide();
+    
+    setTimeout(() => {
+        editOrganization(currentOrganizationId);
+    }, 300);
+}
+
+// Export Organizations
+function exportOrganizations() {
+    const params = new URLSearchParams(window.location.search);
+    window.open(`{{ url_for("admin.export_organizations") }}?${params.toString()}`, '_blank');
+}
+
+// Refresh table
+function refreshTable() {
+    window.location.reload();
+}
+
+// Toggle column visibility
+function toggleColumn(columnClass) {
+    const elements = document.querySelectorAll(`.${columnClass}-column`);
+    elements.forEach(element => {
+        element.style.display = element.style.display === 'none' ? '' : 'none';
+    });
+}
+
+// Update bulk actions
+function updateBulkActions() {
+    const selected = document.querySelectorAll('.row-checkbox:checked');
+    const selectAll = document.getElementById('selectAll');
+    
+    // Update select all checkbox state
+    if (selected.length === 0) {
+        selectAll.indeterminate = false;
+        selectAll.checked = false;
+    } else if (selected.length === document.querySelectorAll('.row-checkbox').length) {
+        selectAll.indeterminate = false;
+        selectAll.checked = true;
+    } else {
+        selectAll.indeterminate = true;
+    }
+    
+    // Show/hide bulk actions (implement as needed)
+    console.log(`${selected.length} organizations selected`);
+}
+
+// Auto-refresh data every 5 minutes
+setInterval(() => {
+    // Check if there are any active modals
+    const activeModals = document.querySelectorAll('.modal.show');
+    if (activeModals.length === 0) {
+        // Refresh statistics or other data without full page reload
+        // refreshStatistics();
+    }
+}, 300000); // 5 minutes
+
+// Initialize tooltips
+const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+});
+</script>
+{% endblock %}

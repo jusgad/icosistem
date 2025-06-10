@@ -1,100 +1,1410 @@
-{% extends "base.html" %}
+{% extends "layouts/public.html" %}
 
-{% block title %}Iniciar Sesión - Plataforma de Emprendimiento{% endblock %}
+{# =========================================================================
+   LOGIN PAGE - Página de inicio de sesión
+   Ecosistema de Emprendimiento
+   ========================================================================= #}
+
+{% block title %}Iniciar Sesión - EcoEmprendimiento{% endblock %}
+
+{% block description %}Accede a tu cuenta en EcoEmprendimiento. Conecta con mentores, desarrolla tu proyecto y forma parte de la mayor comunidad de emprendedores.{% endblock %}
+
+{% block keywords %}login, iniciar sesión, acceso, emprendimiento, cuenta, usuario{% endblock %}
+
+{% block og_title %}Iniciar Sesión - EcoEmprendimiento{% endblock %}
+{% block og_description %}Accede a tu cuenta para continuar tu viaje emprendedor con nosotros.{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{{ super() }}
+<style>
+  /* ========================================================================= 
+     LOGIN PAGE STYLES
+     ========================================================================= */
+  
+  /* Variables específicas para página de login */
+  :root {
+    --login-primary: #4f46e5;
+    --login-secondary: #7c3aed;
+    --login-accent: #06b6d4;
+    --login-success: #10b981;
+    --login-warning: #f59e0b;
+    --login-danger: #ef4444;
+    --login-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --login-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.1), 0 10px 10px -5px rgba(79, 70, 229, 0.04);
+    --login-form-bg: rgba(255, 255, 255, 0.95);
+  }
+  
+  /* Layout principal del login */
+  .login-page {
+    min-height: 100vh;
+    background: var(--login-bg);
+    display: flex;
+    align-items: center;
+    padding: 2rem 0;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .login-page::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 40%;
+    height: 120%;
+    background: radial-gradient(ellipse, rgba(79, 70, 229, 0.15) 0%, transparent 70%);
+    animation: float 15s ease-in-out infinite;
+  }
+  
+  .login-page::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -20%;
+    width: 40%;
+    height: 80%;
+    background: radial-gradient(ellipse, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
+    animation: float 20s ease-in-out infinite reverse;
+  }
+  
+  /* Container principal */
+  .login-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    position: relative;
+    z-index: 2;
+  }
+  
+  .login-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+    min-height: 600px;
+  }
+  
+  /* Lado izquierdo - Información */
+  .login-info {
+    color: white;
+    animation: fadeInLeft 1s ease-out;
+  }
+  
+  .login-info h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    line-height: 1.1;
+    color: white;
+  }
+  
+  .login-info .subtitle {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+    line-height: 1.6;
+  }
+  
+  .feature-list {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 2rem;
+  }
+  
+  .feature-list li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 1.125rem;
+  }
+  
+  .feature-list li i {
+    background: rgba(255, 255, 255, 0.2);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.125rem;
+  }
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+  
+  .stat-item {
+    text-align: center;
+  }
+  
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+  
+  .stat-label {
+    font-size: 0.875rem;
+    opacity: 0.8;
+  }
+  
+  /* Lado derecho - Formulario */
+  .login-form-container {
+    background: var(--login-form-bg);
+    backdrop-filter: blur(20px);
+    border-radius: 1.5rem;
+    padding: 3rem;
+    box-shadow: var(--login-shadow);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: fadeInRight 1s ease-out;
+  }
+  
+  .form-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .form-header h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 0.5rem;
+  }
+  
+  .form-header p {
+    color: var(--gray-600);
+    font-size: 1rem;
+  }
+  
+  /* OAuth Buttons */
+  .oauth-section {
+    margin-bottom: 2rem;
+  }
+  
+  .oauth-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .oauth-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.875rem 1rem;
+    border: 2px solid var(--gray-300);
+    border-radius: 0.75rem;
+    background: white;
+    color: var(--gray-700);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .oauth-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(79, 70, 229, 0.1), transparent);
+    transition: left 0.5s ease;
+  }
+  
+  .oauth-btn:hover::before {
+    left: 100%;
+  }
+  
+  .oauth-btn:hover {
+    border-color: var(--login-primary);
+    color: var(--login-primary);
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+  }
+  
+  .oauth-btn i {
+    margin-right: 0.5rem;
+    font-size: 1.125rem;
+  }
+  
+  .oauth-btn.google {
+    grid-column: span 2;
+  }
+  
+  .oauth-btn.google:hover {
+    border-color: #4285f4;
+    color: #4285f4;
+  }
+  
+  .oauth-btn.linkedin:hover {
+    border-color: #0077b5;
+    color: #0077b5;
+  }
+  
+  .oauth-btn.github:hover {
+    border-color: #333;
+    color: #333;
+  }
+  
+  /* Divider */
+  .divider {
+    position: relative;
+    text-align: center;
+    margin: 1.5rem 0;
+  }
+  
+  .divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--gray-300);
+  }
+  
+  .divider span {
+    background: var(--login-form-bg);
+    padding: 0 1rem;
+    color: var(--gray-500);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  
+  /* Formulario */
+  .login-form {
+    margin-bottom: 1.5rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  
+  .form-label {
+    display: block;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .form-input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid var(--gray-300);
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+  }
+  
+  .form-input:focus {
+    outline: none;
+    border-color: var(--login-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    transform: translateY(-1px);
+  }
+  
+  .form-input.error {
+    border-color: var(--login-danger);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  }
+  
+  .form-input.success {
+    border-color: var(--login-success);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  }
+  
+  /* Password input con toggle */
+  .password-group {
+    position: relative;
+  }
+  
+  .password-toggle {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--gray-500);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    transition: all 0.3s ease;
+  }
+  
+  .password-toggle:hover {
+    color: var(--login-primary);
+    background: rgba(79, 70, 229, 0.1);
+  }
+  
+  /* Checkbox personalizado */
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .custom-checkbox {
+    position: relative;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: var(--gray-600);
+  }
+  
+  .custom-checkbox input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+  }
+  
+  .custom-checkbox .checkmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--gray-300);
+    border-radius: 0.375rem;
+    margin-right: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+  }
+  
+  .custom-checkbox input:checked + .checkmark {
+    background: var(--login-primary);
+    border-color: var(--login-primary);
+  }
+  
+  .custom-checkbox input:checked + .checkmark::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: white;
+    font-size: 0.75rem;
+  }
+  
+  /* Submit button */
+  .submit-btn {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: linear-gradient(135deg, var(--login-primary) 0%, var(--login-secondary) 100%);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .submit-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+  }
+  
+  .submit-btn:hover::before {
+    left: 100%;
+  }
+  
+  .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+  }
+  
+  .submit-btn:active {
+    transform: translateY(0);
+  }
+  
+  .submit-btn.loading {
+    pointer-events: none;
+    opacity: 0.8;
+  }
+  
+  .submit-btn.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  /* Links */
+  .form-links {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .form-links a {
+    color: var(--login-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+  
+  .form-links a:hover {
+    color: var(--login-secondary);
+    text-decoration: underline;
+  }
+  
+  /* Error/Success messages */
+  .form-message {
+    padding: 0.875rem 1rem;
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+  }
+  
+  .form-message i {
+    margin-right: 0.5rem;
+  }
+  
+  .form-message.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--login-danger);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+  
+  .form-message.success {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--login-success);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+  }
+  
+  .form-message.warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--login-warning);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+  }
+  
+  /* Field validation */
+  .field-error {
+    color: var(--login-danger);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+  }
+  
+  .field-error i {
+    margin-right: 0.25rem;
+  }
+  
+  .field-success {
+    color: var(--login-success);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+  }
+  
+  .field-success i {
+    margin-right: 0.25rem;
+  }
+  
+  /* Register prompt */
+  .register-prompt {
+    text-align: center;
+    padding: 1.5rem;
+    background: rgba(79, 70, 229, 0.05);
+    border-radius: 0.75rem;
+    margin-top: 1.5rem;
+    border: 1px solid rgba(79, 70, 229, 0.1);
+  }
+  
+  .register-prompt p {
+    margin-bottom: 1rem;
+    color: var(--gray-600);
+  }
+  
+  .register-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    color: var(--login-primary);
+    border: 2px solid var(--login-primary);
+    border-radius: 0.75rem;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+  
+  .register-btn:hover {
+    background: var(--login-primary);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+  }
+  
+  .register-btn i {
+    margin-left: 0.5rem;
+  }
+  
+  /* Captcha */
+  .captcha-container {
+    margin: 1.5rem 0;
+    text-align: center;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .login-wrapper {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+    
+    .login-info {
+      text-align: center;
+      order: 2;
+    }
+    
+    .login-info h1 {
+      font-size: 2.5rem;
+    }
+    
+    .login-form-container {
+      padding: 2rem;
+      order: 1;
+    }
+    
+    .form-header h2 {
+      font-size: 1.75rem;
+    }
+    
+    .oauth-buttons {
+      grid-template-columns: 1fr;
+    }
+    
+    .oauth-btn.google {
+      grid-column: span 1;
+    }
+    
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .form-links {
+      flex-direction: column;
+      gap: 1rem;
+      text-align: center;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .login-page {
+      padding: 1rem 0;
+    }
+    
+    .login-form-container {
+      padding: 1.5rem;
+    }
+    
+    .login-info h1 {
+      font-size: 2rem;
+    }
+    
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  /* Animaciones */
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(5deg); }
+  }
+  
+  @keyframes fadeInLeft {
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  
+  @keyframes fadeInRight {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  
+  @keyframes spin {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+  
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  
+  .shake {
+    animation: shake 0.5s ease-in-out;
+  }
+  
+  /* Dark mode */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --login-form-bg: rgba(31, 41, 55, 0.95);
+    }
+    
+    .login-form-container {
+      color: #e5e7eb;
+    }
+    
+    .form-header h2 {
+      color: #e5e7eb;
+    }
+    
+    .form-label {
+      color: #d1d5db;
+    }
+    
+    .form-input {
+      background: #374151;
+      border-color: #4b5563;
+      color: #e5e7eb;
+    }
+    
+    .oauth-btn {
+      background: #374151;
+      border-color: #4b5563;
+      color: #e5e7eb;
+    }
+    
+    .divider span {
+      background: var(--login-form-bg);
+      color: #9ca3af;
+    }
+  }
+  
+  /* Print styles */
+  @media print {
+    .login-page::before,
+    .login-page::after {
+      display: none;
+    }
+    
+    .oauth-section,
+    .register-prompt {
+      display: none;
+    }
+    
+    .login-page {
+      background: white;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block hero %}
+<!-- No hero para página de login -->
 {% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-5">
-            <div class="card shadow-sm">
-                <div class="card-body p-4 p-md-5">
-                    <div class="text-center mb-4">
-                        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="mb-3" height="60">
-                        <h2 class="fw-bold">Iniciar Sesión</h2>
-                        <p class="text-muted">Ingresa tus credenciales para acceder</p>
-                    </div>
-                    
-                    <form method="POST" action="{{ url_for('auth.login') }}">
-                        {{ form.csrf_token }}
-                        
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Correo electrónico</label>
-                            {{ form.email(class="form-control", placeholder="correo@ejemplo.com") }}
-                            {% if form.email.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.email.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <label for="password" class="form-label">Contraseña</label>
-                                <a href="{{ url_for('auth.forgot_password') }}" class="small text-decoration-none">¿Olvidaste tu contraseña?</a>
-                            </div>
-                            {{ form.password(class="form-control", placeholder="••••••••") }}
-                            {% if form.password.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.password.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-4 form-check">
-                            {{ form.remember(class="form-check-input") }}
-                            <label class="form-check-label" for="remember">Mantener sesión iniciada</label>
-                        </div>
-                        
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">Iniciar Sesión</button>
-                        </div>
-                    </form>
-                    
-                    <div class="mt-4 text-center">
-                        <p class="mb-0">¿No tienes una cuenta? <a href="{{ url_for('auth.register') }}" class="text-decoration-none">Regístrate aquí</a></p>
-                    </div>
-                    
-                    {% if oauth_providers %}
-                    <div class="mt-4">
-                        <div class="separator text-muted mb-3">
-                            <span>O inicia sesión con</span>
-                        </div>
-                        
-                        <div class="d-grid gap-2">
-                            {% if 'google' in oauth_providers %}
-                            <a href="{{ url_for('auth.oauth_login', provider='google') }}" class="btn btn-outline-secondary">
-                                <img src="{{ url_for('static', filename='images/icons/google.svg') }}" alt="Google" width="20" height="20" class="me-2">
-                                Google
-                            </a>
-                            {% endif %}
-                            
-                            {% if 'microsoft' in oauth_providers %}
-                            <a href="{{ url_for('auth.oauth_login', provider='microsoft') }}" class="btn btn-outline-secondary">
-                                <img src="{{ url_for('static', filename='images/icons/microsoft.svg') }}" alt="Microsoft" width="20" height="20" class="me-2">
-                                Microsoft
-                            </a>
-                            {% endif %}
-                            
-                            {% if 'linkedin' in oauth_providers %}
-                            <a href="{{ url_for('auth.oauth_login', provider='linkedin') }}" class="btn btn-outline-secondary">
-                                <img src="{{ url_for('static', filename='images/icons/linkedin.svg') }}" alt="LinkedIn" width="20" height="20" class="me-2">
-                                LinkedIn
-                            </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
+<div class="login-page">
+  <div class="login-container">
+    <div class="login-wrapper">
+      <!-- Información del lado izquierdo -->
+      <div class="login-info">
+        <h1>Bienvenido de vuelta</h1>
+        <p class="subtitle">
+          Continúa tu viaje emprendedor con nosotros. Accede a tu cuenta y conecta 
+          con mentores, desarrolla tu proyecto y forma parte de nuestra comunidad.
+        </p>
+        
+        <ul class="feature-list">
+          <li>
+            <i class="fas fa-users"></i>
+            <span>Conecta con mentores expertos</span>
+          </li>
+          <li>
+            <i class="fas fa-rocket"></i>
+            <span>Acelera tu proyecto</span>
+          </li>
+          <li>
+            <i class="fas fa-chart-line"></i>
+            <span>Mide tu progreso</span>
+          </li>
+          <li>
+            <i class="fas fa-handshake"></i>
+            <span>Encuentra aliados estratégicos</span>
+          </li>
+        </ul>
+        
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-number">500+</span>
+            <span class="stat-label">Emprendedores</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">150+</span>
+            <span class="stat-label">Mentores</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">250+</span>
+            <span class="stat-label">Proyectos</span>
+          </div>
         </div>
+      </div>
+      
+      <!-- Formulario de login -->
+      <div class="login-form-container">
+        <div class="form-header">
+          <h2>Iniciar Sesión</h2>
+          <p>Accede a tu cuenta para continuar</p>
+        </div>
+        
+        <!-- Mensajes de error/éxito -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="form-message {{ 'error' if category == 'error' else category }}">
+                <i class="fas fa-{{ 'exclamation-circle' if category == 'error' else 'check-circle' if category == 'success' else 'exclamation-triangle' }}"></i>
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        
+        <!-- OAuth Login -->
+        <div class="oauth-section">
+          <div class="oauth-buttons">
+            <a href="{{ url_for('auth.oauth_login', provider='google') }}" class="oauth-btn google">
+              <i class="fab fa-google"></i>
+              <span>Continuar con Google</span>
+            </a>
+            <a href="{{ url_for('auth.oauth_login', provider='linkedin') }}" class="oauth-btn linkedin">
+              <i class="fab fa-linkedin-in"></i>
+              <span>LinkedIn</span>
+            </a>
+            <a href="{{ url_for('auth.oauth_login', provider='github') }}" class="oauth-btn github">
+              <i class="fab fa-github"></i>
+              <span>GitHub</span>
+            </a>
+          </div>
+          
+          <div class="divider">
+            <span>o continúa con tu email</span>
+          </div>
+        </div>
+        
+        <!-- Formulario de login -->
+        <form class="login-form" method="POST" action="{{ url_for('auth.login') }}" id="loginForm" novalidate>
+          {{ form.hidden_tag() }}
+          
+          <!-- Email -->
+          <div class="form-group">
+            <label for="email" class="form-label">Email</label>
+            <input 
+              type="email" 
+              id="email"
+              name="email"
+              class="form-input" 
+              placeholder="tu@ejemplo.com"
+              value="{{ form.email.data or '' }}"
+              required
+              autocomplete="username"
+              aria-describedby="email-error"
+            >
+            <div id="email-error" class="field-error" style="display: none;"></div>
+            {% if form.email.errors %}
+              <div class="field-error">
+                <i class="fas fa-exclamation-circle"></i>
+                {{ form.email.errors[0] }}
+              </div>
+            {% endif %}
+          </div>
+          
+          <!-- Password -->
+          <div class="form-group">
+            <label for="password" class="form-label">Contraseña</label>
+            <div class="password-group">
+              <input 
+                type="password" 
+                id="password"
+                name="password"
+                class="form-input" 
+                placeholder="••••••••"
+                required
+                autocomplete="current-password"
+                aria-describedby="password-error"
+              >
+              <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                <i class="fas fa-eye" id="password-icon"></i>
+              </button>
+            </div>
+            <div id="password-error" class="field-error" style="display: none;"></div>
+            {% if form.password.errors %}
+              <div class="field-error">
+                <i class="fas fa-exclamation-circle"></i>
+                {{ form.password.errors[0] }}
+              </div>
+            {% endif %}
+          </div>
+          
+          <!-- Remember me y Forgot password -->
+          <div class="checkbox-group">
+            <label class="custom-checkbox">
+              <input type="checkbox" name="remember_me" {{ 'checked' if form.remember_me.data }}>
+              <span class="checkmark"></span>
+              Recordarme
+            </label>
+          </div>
+          
+          <!-- reCAPTCHA (si está habilitado) -->
+          {% if config.RECAPTCHA_ENABLED %}
+          <div class="captcha-container">
+            <div class="g-recaptcha" data-sitekey="{{ config.RECAPTCHA_SITE_KEY }}"></div>
+          </div>
+          {% endif %}
+          
+          <!-- Submit button -->
+          <button type="submit" class="submit-btn" id="submitBtn">
+            <span id="submitText">Iniciar Sesión</span>
+          </button>
+          
+          <!-- Links adicionales -->
+          <div class="form-links">
+            <a href="{{ url_for('auth.forgot_password') }}">¿Olvidaste tu contraseña?</a>
+            <a href="{{ url_for('auth.resend_verification') }}">Reenviar verificación</a>
+          </div>
+        </form>
+        
+        <!-- Prompt de registro -->
+        <div class="register-prompt">
+          <p>¿Aún no tienes una cuenta?</p>
+          <a href="{{ url_for('auth.register') }}" class="register-btn">
+            Crear cuenta gratis
+            <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+
+<!-- reCAPTCHA (si está habilitado) -->
+{% if config.RECAPTCHA_ENABLED %}
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+{% endif %}
+
+<script>
+// =========================================================================
+// LOGIN PAGE JAVASCRIPT
+// =========================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Elementos del formulario
+  const loginForm = document.getElementById('loginForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const submitText = document.getElementById('submitText');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  
+  // Configuración
+  const config = {
+    minPasswordLength: 6,
+    maxAttempts: 5,
+    lockoutTime: 15 * 60 * 1000, // 15 minutos
+    debounceTime: 300
+  };
+  
+  // Verificar bloqueo por intentos fallidos
+  checkLoginLockout();
+  
+  // Validación en tiempo real
+  setupRealTimeValidation();
+  
+  // Envío del formulario
+  setupFormSubmission();
+  
+  // Tracking de analytics
+  setupAnalytics();
+  
+  // Auto-focus en email si está vacío
+  if (!emailInput.value.trim()) {
+    emailInput.focus();
+  }
+  
+  // Precargar datos del usuario si está disponible
+  prefillUserData();
+});
+
+// Verificar si el usuario está bloqueado
+function checkLoginLockout() {
+  const lockoutData = localStorage.getItem('loginLockout');
+  if (lockoutData) {
+    const { attempts, timestamp } = JSON.parse(lockoutData);
+    const now = Date.now();
+    
+    if (attempts >= config.maxAttempts && (now - timestamp) < config.lockoutTime) {
+      const remainingTime = Math.ceil((config.lockoutTime - (now - timestamp)) / 60000);
+      showFormMessage(
+        `Demasiados intentos fallidos. Intenta nuevamente en ${remainingTime} minutos.`,
+        'error'
+      );
+      disableForm(true);
+      return true;
+    } else if ((now - timestamp) >= config.lockoutTime) {
+      localStorage.removeItem('loginLockout');
+    }
+  }
+  return false;
+}
+
+// Configurar validación en tiempo real
+function setupRealTimeValidation() {
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  
+  let emailTimeout, passwordTimeout;
+  
+  // Validación de email
+  emailInput.addEventListener('input', function() {
+    clearTimeout(emailTimeout);
+    emailTimeout = setTimeout(() => {
+      validateEmail(this.value);
+    }, config.debounceTime);
+  });
+  
+  emailInput.addEventListener('blur', function() {
+    validateEmail(this.value);
+  });
+  
+  // Validación de contraseña
+  passwordInput.addEventListener('input', function() {
+    clearTimeout(passwordTimeout);
+    passwordTimeout = setTimeout(() => {
+      validatePassword(this.value);
+    }, config.debounceTime);
+  });
+  
+  passwordInput.addEventListener('blur', function() {
+    validatePassword(this.value);
+  });
+}
+
+// Validar email
+function validateEmail(email) {
+  const emailInput = document.getElementById('email');
+  const errorDiv = document.getElementById('email-error');
+  
+  if (!email) {
+    setFieldState(emailInput, errorDiv, 'error', 'El email es obligatorio');
+    return false;
+  }
+  
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    setFieldState(emailInput, errorDiv, 'error', 'Ingresa un email válido');
+    return false;
+  }
+  
+  setFieldState(emailInput, errorDiv, 'success', 'Email válido');
+  return true;
+}
+
+// Validar contraseña
+function validatePassword(password) {
+  const passwordInput = document.getElementById('password');
+  const errorDiv = document.getElementById('password-error');
+  
+  if (!password) {
+    setFieldState(passwordInput, errorDiv, 'error', 'La contraseña es obligatoria');
+    return false;
+  }
+  
+  if (password.length < config.minPasswordLength) {
+    setFieldState(passwordInput, errorDiv, 'error', `Mínimo ${config.minPasswordLength} caracteres`);
+    return false;
+  }
+  
+  setFieldState(passwordInput, errorDiv, 'success', 'Contraseña válida');
+  return true;
+}
+
+// Establecer estado del campo
+function setFieldState(input, errorDiv, state, message) {
+  input.classList.remove('error', 'success');
+  
+  if (state === 'error') {
+    input.classList.add('error');
+    errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+    errorDiv.style.display = 'flex';
+  } else if (state === 'success') {
+    input.classList.add('success');
+    errorDiv.style.display = 'none';
+  } else {
+    errorDiv.style.display = 'none';
+  }
+}
+
+// Configurar envío del formulario
+function setupFormSubmission() {
+  const loginForm = document.getElementById('loginForm');
+  
+  loginForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (checkLoginLockout()) {
+      return;
+    }
+    
+    // Validar formulario completo
+    const isValid = validateForm();
+    
+    if (!isValid) {
+      showFormMessage('Por favor corrige los errores antes de continuar', 'error');
+      shakeForm();
+      return;
+    }
+    
+    // Validar reCAPTCHA si está habilitado
+    {% if config.RECAPTCHA_ENABLED %}
+    const recaptchaResponse = grecaptcha.getResponse();
+    if (!recaptchaResponse) {
+      showFormMessage('Por favor completa la verificación reCAPTCHA', 'warning');
+      return;
+    }
+    {% endif %}
+    
+    // Enviar formulario
+    submitForm();
+  });
+}
+
+// Validar formulario completo
+function validateForm() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  
+  const emailValid = validateEmail(email);
+  const passwordValid = validatePassword(password);
+  
+  return emailValid && passwordValid;
+}
+
+// Enviar formulario
+function submitForm() {
+  const submitBtn = document.getElementById('submitBtn');
+  const submitText = document.getElementById('submitText');
+  const formData = new FormData(document.getElementById('loginForm'));
+  
+  // Estado de carga
+  submitBtn.classList.add('loading');
+  submitBtn.disabled = true;
+  submitText.textContent = 'Iniciando sesión...';
+  
+  // Enviar datos
+  fetch(loginForm.action, {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Login exitoso
+      submitText.textContent = '¡Bienvenido!';
+      showFormMessage('Inicio de sesión exitoso. Redirigiendo...', 'success');
+      
+      // Limpiar bloqueo si existe
+      localStorage.removeItem('loginLockout');
+      
+      // Redirigir
+      setTimeout(() => {
+        window.location.href = data.redirect_url || '{{ url_for("main.dashboard") }}';
+      }, 1500);
+    } else {
+      // Login fallido
+      handleLoginFailure(data.message || 'Email o contraseña incorrectos');
+    }
+  })
+  .catch(error => {
+    console.error('Login error:', error);
+    handleLoginFailure('Error de conexión. Intenta nuevamente.');
+  })
+  .finally(() => {
+    // Restaurar botón
+    submitBtn.classList.remove('loading');
+    submitBtn.disabled = false;
+    submitText.textContent = 'Iniciar Sesión';
+    
+    // Reset reCAPTCHA si está habilitado
+    {% if config.RECAPTCHA_ENABLED %}
+    if (typeof grecaptcha !== 'undefined') {
+      grecaptcha.reset();
+    }
+    {% endif %}
+  });
+}
+
+// Manejar fallo de login
+function handleLoginFailure(message) {
+  // Actualizar contador de intentos
+  updateLoginAttempts();
+  
+  // Mostrar mensaje de error
+  showFormMessage(message, 'error');
+  
+  // Shake animation
+  shakeForm();
+  
+  // Limpiar contraseña
+  document.getElementById('password').value = '';
+  document.getElementById('password').focus();
+}
+
+// Actualizar contador de intentos
+function updateLoginAttempts() {
+  const lockoutData = localStorage.getItem('loginLockout');
+  let attempts = 1;
+  
+  if (lockoutData) {
+    const data = JSON.parse(lockoutData);
+    attempts = data.attempts + 1;
+  }
+  
+  localStorage.setItem('loginLockout', JSON.stringify({
+    attempts: attempts,
+    timestamp: Date.now()
+  }));
+  
+  if (attempts >= config.maxAttempts) {
+    const lockoutMinutes = config.lockoutTime / 60000;
+    showFormMessage(
+      `Demasiados intentos fallidos. Tu cuenta está bloqueada por ${lockoutMinutes} minutos.`,
+      'error'
+    );
+    disableForm(true);
+  } else {
+    const remaining = config.maxAttempts - attempts;
+    showFormMessage(
+      `${message}. Te quedan ${remaining} intentos.`,
+      'warning'
+    );
+  }
+}
+
+// Mostrar mensaje en formulario
+function showFormMessage(message, type) {
+  // Remover mensajes existentes
+  const existingMessages = document.querySelectorAll('.form-message');
+  existingMessages.forEach(msg => msg.remove());
+  
+  // Crear nuevo mensaje
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `form-message ${type}`;
+  
+  const icon = type === 'error' ? 'exclamation-circle' : 
+               type === 'success' ? 'check-circle' : 
+               'exclamation-triangle';
+  
+  messageDiv.innerHTML = `
+    <i class="fas fa-${icon}"></i>
+    ${message}
+  `;
+  
+  // Insertar antes del formulario
+  const loginForm = document.getElementById('loginForm');
+  loginForm.parentNode.insertBefore(messageDiv, loginForm);
+  
+  // Auto-remover después de 5 segundos para mensajes de error
+  if (type === 'error' || type === 'warning') {
+    setTimeout(() => {
+      if (messageDiv.parentNode) {
+        messageDiv.remove();
+      }
+    }, 5000);
+  }
+}
+
+// Shake animation para el formulario
+function shakeForm() {
+  const formContainer = document.querySelector('.login-form-container');
+  formContainer.classList.add('shake');
+  setTimeout(() => {
+    formContainer.classList.remove('shake');
+  }, 500);
+}
+
+// Deshabilitar/habilitar formulario
+function disableForm(disabled) {
+  const inputs = document.querySelectorAll('#loginForm input, #loginForm button');
+  inputs.forEach(input => {
+    input.disabled = disabled;
+  });
+}
+
+// Toggle para mostrar/ocultar contraseña
+function togglePassword(fieldId) {
+  const field = document.getElementById(fieldId);
+  const icon = document.getElementById(fieldId + '-icon');
+  
+  if (field.type === 'password') {
+    field.type = 'text';
+    icon.classList.remove('fa-eye');
+    icon.classList.add('fa-eye-slash');
+  } else {
+    field.type = 'password';
+    icon.classList.remove('fa-eye-slash');
+    icon.classList.add('fa-eye');
+  }
+}
+
+// Precargar datos del usuario
+function prefillUserData() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const email = urlParams.get('email');
+  
+  if (email) {
+    document.getElementById('email').value = email;
+    document.getElementById('password').focus();
+  }
+}
+
+// Configurar analytics
+function setupAnalytics() {
+  // Track página visitada
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'page_view', {
+      'page_title': 'Login Page',
+      'page_location': window.location.href
+    });
+  }
+  
+  // Track clicks en OAuth
+  document.querySelectorAll('.oauth-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const provider = this.href.includes('google') ? 'google' : 
+                      this.href.includes('linkedin') ? 'linkedin' : 'github';
+      
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'login', {
+          'method': provider,
+          'event_category': 'authentication'
+        });
+      }
+    });
+  });
+  
+  // Track envío de formulario
+  document.getElementById('loginForm').addEventListener('submit', function() {
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'login', {
+        'method': 'email',
+        'event_category': 'authentication'
+      });
+    }
+  });
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+  // Enter en cualquier input envía el formulario
+  if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+    e.preventDefault();
+    document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+  }
+  
+  // Escape limpia los errores
+  if (e.key === 'Escape') {
+    const errorMessages = document.querySelectorAll('.form-message');
+    errorMessages.forEach(msg => msg.remove());
+  }
+});
+
+// Auto-save email (opcional)
+function saveEmail() {
+  const email = document.getElementById('email').value;
+  if (email && validateEmail(email)) {
+    localStorage.setItem('savedEmail', email);
+  }
+}
+
+// Cargar email guardado
+function loadSavedEmail() {
+  const savedEmail = localStorage.getItem('savedEmail');
+  if (savedEmail && !document.getElementById('email').value) {
+    document.getElementById('email').value = savedEmail;
+  }
+}
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+  loadSavedEmail();
+  
+  // Guardar email al cambiar
+  document.getElementById('email').addEventListener('blur', saveEmail);
+});
+
+// Accessibility improvements
+document.addEventListener('DOMContentLoaded', function() {
+  // Mejorar navegación con teclado
+  const inputs = document.querySelectorAll('input');
+  inputs.forEach((input, index) => {
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Tab' && e.shiftKey && index === 0) {
+        // Primer input, permitir navegación normal
+      } else if (e.key === 'Tab' && !e.shiftKey && index === inputs.length - 1) {
+        // Último input, permitir navegación normal
+      }
+    });
+  });
+  
+  // Anunciar errores a screen readers
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.type === 'childList') {
+        const addedNodes = Array.from(mutation.addedNodes);
+        addedNodes.forEach(node => {
+          if (node.classList && node.classList.contains('form-message')) {
+            // Anunciar mensaje a screen readers
+            node.setAttribute('role', 'alert');
+            node.setAttribute('aria-live', 'assertive');
+          }
+        });
+      }
+    });
+  });
+  
+  observer.observe(document.body, { childList: true, subtree: true });
+});
+</script>
 {% endblock %}

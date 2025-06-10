@@ -1,0 +1,1569 @@
+<!-- Sidebar Component -->
+<div class="sidebar-wrapper" id="sidebarWrapper">
+    <!-- Sidebar Toggle Button (Mobile) -->
+    <button class="sidebar-toggle d-lg-none" id="sidebarToggle" type="button">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Main Sidebar -->
+    <nav class="sidebar" id="mainSidebar">
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <img src="{{ current_user.avatar_url or '/static/dist/img/default-avatar.jpg' }}" 
+                         alt="{{ _('Avatar') }}" class="rounded-circle"
+                         onerror="this.src='/static/dist/img/default-avatar.jpg'">
+                    <div class="status-indicator"></div>
+                </div>
+                <div class="user-details">
+                    <h6 class="user-name mb-0">{{ current_user.full_name or current_user.username or _('Usuario') }}</h6>
+                    <small class="user-role text-muted">{{ _(current_user.role.title() if current_user.role else 'Usuario') }}</small>
+                    {% if current_user.organization %}
+                    <small class="user-org text-muted d-block">{{ current_user.organization.name }}</small>
+                    {% endif %}
+                </div>
+                <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="{{ _('Colapsar sidebar') }}">
+                    <i class="fas fa-angle-left"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Stats Widget -->
+        <div class="sidebar-widget stats-widget">
+            <div class="widget-header">
+                <h6 class="widget-title">{{ _('Resumen Rápido') }}</h6>
+                <button class="widget-refresh" onclick="refreshQuickStats()">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div class="widget-content">
+                <div id="quickStats" class="quick-stats">
+                    <!-- Stats will be loaded dynamically -->
+                    <div class="stat-item">
+                        <div class="stat-icon bg-primary">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-number" id="progressStat">-</span>
+                            <span class="stat-label">{{ _('Progreso') }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <div class="sidebar-nav">
+            <ul class="nav nav-sidebar">
+                
+                {% if current_user.role == 'admin' %}
+                    <!-- Admin Navigation -->
+                    <li class="nav-header">{{ _('ADMINISTRACIÓN') }}</li>
+                    
+                    <li class="nav-item">
+                        <a href="/admin/dashboard" class="nav-link {{ 'active' if request.endpoint == 'admin.dashboard' }}">
+                            <i class="nav-icon fas fa-tachometer-alt"></i>
+                            <span class="nav-text">{{ _('Dashboard') }}</span>
+                            <span class="nav-badge badge bg-info">{{ admin_stats.total_users if admin_stats else '0' }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item has-submenu {{ 'open' if request.endpoint and request.endpoint.startswith('admin.users') }}">
+                        <a href="#" class="nav-link submenu-toggle">
+                            <i class="nav-icon fas fa-users"></i>
+                            <span class="nav-text">{{ _('Gestión de Usuarios') }}</span>
+                            <i class="submenu-arrow fas fa-chevron-right"></i>
+                        </a>
+                        <ul class="submenu">
+                            <li><a href="/admin/users" class="nav-link {{ 'active' if request.endpoint == 'admin.users' }}">
+                                <i class="fas fa-list me-2"></i>{{ _('Todos los Usuarios') }}
+                            </a></li>
+                            <li><a href="/admin/entrepreneurs" class="nav-link">
+                                <i class="fas fa-lightbulb me-2"></i>{{ _('Emprendedores') }}
+                            </a></li>
+                            <li><a href="/admin/allies" class="nav-link">
+                                <i class="fas fa-handshake me-2"></i>{{ _('Aliados') }}
+                            </a></li>
+                            <li><a href="/admin/clients" class="nav-link">
+                                <i class="fas fa-briefcase me-2"></i>{{ _('Clientes') }}
+                            </a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item has-submenu">
+                        <a href="#" class="nav-link submenu-toggle">
+                            <i class="nav-icon fas fa-building"></i>
+                            <span class="nav-text">{{ _('Organizaciones') }}</span>
+                            <i class="submenu-arrow fas fa-chevron-right"></i>
+                        </a>
+                        <ul class="submenu">
+                            <li><a href="/admin/organizations" class="nav-link">
+                                <i class="fas fa-list me-2"></i>{{ _('Todas las Organizaciones') }}
+                            </a></li>
+                            <li><a href="/admin/organizations/new" class="nav-link">
+                                <i class="fas fa-plus me-2"></i>{{ _('Nueva Organización') }}
+                            </a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="/admin/programs" class="nav-link">
+                            <i class="nav-icon fas fa-graduation-cap"></i>
+                            <span class="nav-text">{{ _('Programas') }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="/admin/analytics" class="nav-link">
+                            <i class="nav-icon fas fa-chart-bar"></i>
+                            <span class="nav-text">{{ _('Analytics') }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-header">{{ _('CONFIGURACIÓN') }}</li>
+                    
+                    <li class="nav-item">
+                        <a href="/admin/settings" class="nav-link">
+                            <i class="nav-icon fas fa-cog"></i>
+                            <span class="nav-text">{{ _('Configuración') }}</span>
+                        </a>
+                    </li>
+
+                {% elif current_user.role == 'entrepreneur' %}
+                    <!-- Entrepreneur Navigation -->
+                    <li class="nav-header">{{ _('MI EMPRENDIMIENTO') }}</li>
+                    
+                    <li class="nav-item">
+                        <a href="/entrepreneur/dashboard" class="nav-link {{ 'active' if request.endpoint == 'entrepreneur.dashboard' }}">
+                            <i class="nav-icon fas fa-tachometer-alt"></i>
+                            <span class="nav-text">{{ _('Dashboard') }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item has-submenu {{ 'open' if request.endpoint and request.endpoint.startswith('entrepreneur.projects') }}">
+                        <a href="#" class="nav-link submenu-toggle">
+                            <i class="nav-icon fas fa-project-diagram"></i>
+                            <span class="nav-text">{{ _('Proyectos') }}</span>
+                            <i class="submenu-arrow fas fa-chevron-right"></i>
+                            <span class="nav-badge badge bg-primary">{{ current_user.projects_count or '0' }}</span>
+                        </a>
+                        <ul class="submenu">
+                            <li><a href="/entrepreneur/projects" class="nav-link {{ 'active' if request.endpoint == 'entrepreneur.projects' }}">
+                                <i class="fas fa-list me-2"></i>{{ _('Mis Proyectos') }}
+                            </a></li>
+                            <li><a href="/entrepreneur/projects/new" class="nav-link">
+                                <i class="fas fa-plus me-2"></i>{{ _('Nuevo Proyecto') }}
+                            </a></li>
+                            <li><a href="/entrepreneur/progress" class="nav-link">
+                                <i class="fas fa-chart-line me-2"></i>{{ _('Seguimiento') }}
+                            </a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="/entrepreneur/mentorship" class="nav-link">
+                            <i class="nav-icon fas fa-user-tie"></i>
+                            <span class="nav-text">{{ _('Mi Mentor') }}</span>
+                            {% if current_user.next_meeting %}
+                            <span class="nav-badge badge bg-warning">{{ _('Próxima') }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="/entrepreneur/tasks" class="nav-link">
+                            <i class="nav-icon fas fa-tasks"></i>
+                            <span class="nav-text">{{ _('Tareas') }}</span>
+                            {% if current_user.pending_tasks_count and current_user.pending_tasks_count > 0 %}
+                            <span class="nav-badge badge bg-danger">{{ current_user.pending_tasks_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="/entrepreneur/calendar" class="nav-link">
+                            <i class="nav-icon fas fa-calendar"></i>
+                            <span class="nav-text">{{ _('Calendario') }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-header">{{ _('RECURSOS') }}</li>
+                    
+                    <li class="nav-item">
+                        <a href="/entrepreneur/documents" class="nav-link">
+                            <i class="nav-icon fas fa-folder"></i>
+                            <span class="nav-text">{{ _('Documentos') }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="/entrepreneur/funding" class="nav-link">
+                            <i class="nav-icon fas fa-dollar-sign"></i>
+                            <span class="nav-text">{{ _('Financiamiento') }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="/entrepreneur/network" class="nav-link">
+                            <i class="nav-icon fas fa-network-wired"></i>
+                            <span class="nav-text">{{ _('Red de Contactos') }}</span>
+                        </a>
+                    </li>
+
+                {% elif current_user.role == 'ally' or current_user.role == 'mentor' %}
+                    <!-- Ally/Mentor Navigation -->
+                    <li class="nav-header">{{ _('MENTORÍA') }}</li>
+                    
+                    <li class="nav-item">
+                        <a href="/ally/dashboard" class="nav-link {{ 'active' if request.endpoint == 'ally.dashboard' }}">
+                            <i class="nav-icon fas fa-tachometer-alt"></i>
+                            <span class="nav-text">{{ _('Dashboard') }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="/ally/entrepreneurs" class="nav-link">
+                            <i class="nav-icon fas fa-users"></i>
+                            <span class="nav-text">{{ _('Mis Emprendedores') }}</span>
+                            <span class="nav-badge badge bg-info">{{ current_user.mentees_count or '0' }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item has-submenu">
+                        <a href="#" class="nav-link submenu-toggle">
+                            <i class="nav-icon fas fa-chalkboard-teacher"></i>
+                            <span class="nav-text">{{ _('Sesiones') }}</span>
+                            <i class="submenu-arrow fas fa-chevron-right"></i>
+                        </a>
+                        <ul class="submenu">
+                            <li><a href="/ally/sessions" class="nav-link">
+                                <i class="fas fa-list me-2"></i>{{ _('Todas las Sesiones') }}
+                            </a></li>
+                            <li><a href="/ally/sessions/new" class="nav-link">
+                                <i class="fas fa-plus me-2"></i>{{ _('Nueva Sesión') }}
+                            </a></li>
+                            <li><a href="/ally/sessions/today" class="nav-link">
+                                <i class="fas fa-today me-2"></i>{{ _('Sesiones de Hoy') }}
+                            </a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="/ally/calendar" class="nav-link">
+                            <i class="nav-icon fas fa-calendar"></i>
+                            <span class="nav-text">{{ _('Calendario') }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="/ally/hours" class="nav-link">
+                            <i class="nav-icon fas fa-clock"></i>
+                            <span class="nav-text">{{ _('Registro de Horas') }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-header">{{ _('GESTIÓN') }}</li>
+                    
+                    <li class="nav-item">
+                        <a href="/ally/reports" class="nav-link">
+                            <i class="nav-icon fas fa-file-alt"></i>
+                            <span class="nav-text">{{ _('Reportes') }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="/ally/resources" class="nav-link">
+                            <i class="nav-icon fas fa-book"></i>
+                            <span class="nav-text">{{ _('Recursos') }}</span>
+                        </a>
+                    </li>
+
+                {% elif current_user.role == 'client' %}
+                    <!-- Client/Stakeholder Navigation -->
+                    <li class="nav-header">{{ _('VISIÓN GENERAL') }}</li>
+                    
+                    <li class="nav-item">
+                        <a href="/client/dashboard" class="nav-link {{ 'active' if request.endpoint == 'client.dashboard' }}">
+                            <i class="nav-icon fas fa-tachometer-alt"></i>
+                            <span class="nav-text">{{ _('Dashboard') }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="/client/directory" class="nav-link">
+                            <i class="nav-icon fas fa-building"></i>
+                            <span class="nav-text">{{ _('Directorio') }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="/client/impact" class="nav-link">
+                            <i class="nav-icon fas fa-chart-pie"></i>
+                            <span class="nav-text">{{ _('Medición de Impacto') }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-header">{{ _('ANÁLISIS') }}</li>
+                    
+                    <li class="nav-item">
+                        <a href="/client/analytics" class="nav-link">
+                            <i class="nav-icon fas fa-chart-bar"></i>
+                            <span class="nav-text">{{ _('Analytics Avanzados') }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="/client/reports" class="nav-link">
+                            <i class="nav-icon fas fa-file-chart"></i>
+                            <span class="nav-text">{{ _('Reportes Detallados') }}</span>
+                        </a>
+                    </li>
+
+                {% else %}
+                    <!-- Default User Navigation -->
+                    <li class="nav-header">{{ _('GENERAL') }}</li>
+                    
+                    <li class="nav-item">
+                        <a href="/dashboard" class="nav-link {{ 'active' if request.endpoint == 'main.dashboard' }}">
+                            <i class="nav-icon fas fa-home"></i>
+                            <span class="nav-text">{{ _('Inicio') }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="/profile" class="nav-link">
+                            <i class="nav-icon fas fa-user"></i>
+                            <span class="nav-text">{{ _('Mi Perfil') }}</span>
+                        </a>
+                    </li>
+                {% endif %}
+
+                <!-- Common Navigation Items -->
+                <li class="nav-header">{{ _('COMUNICACIÓN') }}</li>
+                
+                <li class="nav-item">
+                    <a href="/messages" class="nav-link">
+                        <i class="nav-icon fas fa-envelope"></i>
+                        <span class="nav-text">{{ _('Mensajes') }}</span>
+                        {% if current_user.unread_messages_count and current_user.unread_messages_count > 0 %}
+                        <span class="nav-badge badge bg-danger">{{ current_user.unread_messages_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="/meetings" class="nav-link">
+                        <i class="nav-icon fas fa-video"></i>
+                        <span class="nav-text">{{ _('Reuniones') }}</span>
+                    </a>
+                </li>
+
+                <li class="nav-header">{{ _('SOPORTE') }}</li>
+                
+                <li class="nav-item">
+                    <a href="/help" class="nav-link">
+                        <i class="nav-icon fas fa-question-circle"></i>
+                        <span class="nav-text">{{ _('Centro de Ayuda') }}</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="/support" class="nav-link">
+                        <i class="nav-icon fas fa-headset"></i>
+                        <span class="nav-text">{{ _('Soporte Técnico') }}</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Today's Tasks Widget (for relevant roles) -->
+        {% if current_user.role in ['entrepreneur', 'ally', 'mentor'] %}
+        <div class="sidebar-widget tasks-widget">
+            <div class="widget-header">
+                <h6 class="widget-title">{{ _('Tareas de Hoy') }}</h6>
+                <a href="/tasks" class="widget-action">{{ _('Ver todas') }}</a>
+            </div>
+            <div class="widget-content">
+                <div id="todayTasks" class="today-tasks">
+                    <!-- Tasks will be loaded dynamically -->
+                    <div class="loading-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>{{ _('Cargando tareas...') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Mini Calendar Widget -->
+        <div class="sidebar-widget calendar-widget">
+            <div class="widget-header">
+                <h6 class="widget-title">{{ _('Calendario') }}</h6>
+                <a href="/calendar" class="widget-action">{{ _('Ver completo') }}</a>
+            </div>
+            <div class="widget-content">
+                <div id="miniCalendar" class="mini-calendar">
+                    <!-- Mini calendar will be generated here -->
+                </div>
+                <div id="todayEvents" class="today-events">
+                    <!-- Today's events will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Widget (for entrepreneurs) -->
+        {% if current_user.role == 'entrepreneur' %}
+        <div class="sidebar-widget progress-widget">
+            <div class="widget-header">
+                <h6 class="widget-title">{{ _('Progreso del Proyecto') }}</h6>
+            </div>
+            <div class="widget-content">
+                <div class="progress-item">
+                    <div class="progress-info">
+                        <span class="progress-label">{{ _('Progreso General') }}</span>
+                        <span class="progress-percentage">{{ current_user.progress_percentage or 0 }}%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-primary" role="progressbar" 
+                             style="width: {{ current_user.progress_percentage or 0 }}%"></div>
+                    </div>
+                </div>
+                
+                {% if current_user.current_milestone %}
+                <div class="current-milestone">
+                    <small class="text-muted">{{ _('Siguiente milestone:') }}</small>
+                    <div class="milestone-name">{{ current_user.current_milestone.name }}</div>
+                    <div class="milestone-date">{{ current_user.current_milestone.due_date.strftime('%d %b %Y') if current_user.current_milestone.due_date else _('Sin fecha') }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="sidebar-footer">
+            <div class="sidebar-version">
+                <small class="text-muted">
+                    v{{ config.get('APP_VERSION', '1.0.0') }}
+                    {% if config.get('DEBUG') %}
+                    <span class="badge badge-warning">DEV</span>
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar Overlay (Mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+</div>
+
+<!-- Sidebar Styles -->
+<style>
+.sidebar-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.sidebar-toggle {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1001;
+    background: var(--primary-color);
+    border: none;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+    background: var(--secondary-color);
+    transform: scale(1.05);
+}
+
+.sidebar {
+    width: 280px;
+    height: 100vh;
+    background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    overflow-y: auto;
+    overflow-x: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+}
+
+.sidebar.collapsed {
+    width: 80px;
+}
+
+.sidebar.collapsed .nav-text,
+.sidebar.collapsed .widget-title,
+.sidebar.collapsed .user-details,
+.sidebar.collapsed .nav-badge,
+.sidebar.collapsed .sidebar-widget,
+.sidebar.collapsed .nav-header {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.sidebar.collapsed .submenu {
+    display: none !important;
+}
+
+/* Sidebar Header */
+.sidebar-header {
+    padding: 1.5rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    background: rgba(0,0,0,0.1);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.user-avatar {
+    position: relative;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.user-avatar img {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255,255,255,0.2);
+    transition: all 0.3s ease;
+}
+
+.user-avatar:hover img {
+    border-color: var(--warning-color);
+}
+
+.status-indicator {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    background: #10b981;
+    border: 2px solid white;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.user-details {
+    flex: 1;
+    min-width: 0;
+    transition: all 0.3s ease;
+}
+
+.user-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-role, .user-org {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-collapse-btn {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.7);
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    margin-left: auto;
+}
+
+.sidebar-collapse-btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+
+.sidebar.collapsed .sidebar-collapse-btn i {
+    transform: rotate(180deg);
+}
+
+/* Navigation */
+.sidebar-nav {
+    padding: 1rem 0;
+}
+
+.nav-sidebar {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-header {
+    padding: 1rem 1rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.nav-item {
+    margin: 0.25rem 0;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    position: relative;
+    border-left: 3px solid transparent;
+}
+
+.nav-link:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border-left-color: var(--warning-color);
+    transform: translateX(3px);
+}
+
+.nav-link.active {
+    background: linear-gradient(90deg, rgba(255,193,7,0.2), transparent);
+    border-left-color: var(--warning-color);
+    color: white;
+}
+
+.nav-icon {
+    width: 20px;
+    text-align: center;
+    margin-right: 0.75rem;
+    font-size: 1rem;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.nav-text {
+    flex: 1;
+    transition: all 0.3s ease;
+}
+
+.nav-badge {
+    margin-left: auto;
+    font-size: 0.7rem;
+    transition: all 0.3s ease;
+}
+
+/* Submenus */
+.has-submenu > .nav-link .submenu-arrow {
+    margin-left: auto;
+    transition: all 0.3s ease;
+    font-size: 0.8rem;
+}
+
+.has-submenu.open > .nav-link .submenu-arrow {
+    transform: rotate(90deg);
+}
+
+.submenu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    background: rgba(0,0,0,0.2);
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.has-submenu.open .submenu {
+    max-height: 300px;
+    padding: 0.5rem 0;
+}
+
+.submenu .nav-link {
+    padding: 0.5rem 1rem 0.5rem 3rem;
+    font-size: 0.9rem;
+    border-left: none;
+}
+
+.submenu .nav-link:hover {
+    background: rgba(255,255,255,0.1);
+    transform: translateX(5px);
+}
+
+/* Widgets */
+.sidebar-widget {
+    margin: 1rem;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.3s ease;
+}
+
+.sidebar-widget:hover {
+    background: rgba(255,255,255,0.08);
+    transform: translateY(-2px);
+}
+
+.widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1rem 0.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.widget-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 0;
+    transition: all 0.3s ease;
+}
+
+.widget-action, .widget-refresh {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.widget-action:hover, .widget-refresh:hover {
+    color: var(--warning-color);
+}
+
+.widget-content {
+    padding: 1rem;
+}
+
+/* Quick Stats */
+.quick-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    flex: 1;
+    min-width: 100%;
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.75rem;
+    color: white;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-number {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: white;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.7);
+}
+
+/* Tasks Widget */
+.today-tasks {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.task-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.task-item:last-child {
+    border-bottom: none;
+}
+
+.task-checkbox {
+    margin-right: 0.5rem;
+}
+
+.task-content {
+    flex: 1;
+}
+
+.task-title {
+    font-size: 0.85rem;
+    color: white;
+    margin-bottom: 0.25rem;
+}
+
+.task-meta {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.6);
+}
+
+.loading-state {
+    text-align: center;
+    padding: 1rem;
+    color: rgba(255,255,255,0.6);
+}
+
+/* Calendar Widget */
+.mini-calendar {
+    margin-bottom: 1rem;
+}
+
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.calendar-nav {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.calendar-nav:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+
+.calendar-month {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    font-size: 0.75rem;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: rgba(255,255,255,0.7);
+}
+
+.calendar-day.today {
+    background: var(--primary-color);
+    color: white;
+    font-weight: 600;
+}
+
+.calendar-day.has-event {
+    background: rgba(255,193,7,0.3);
+    color: white;
+}
+
+.calendar-day:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+
+.today-events {
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.event-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.event-time {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.6);
+    margin-right: 0.5rem;
+    min-width: 50px;
+}
+
+.event-title {
+    font-size: 0.8rem;
+    color: white;
+}
+
+/* Progress Widget */
+.progress-item {
+    margin-bottom: 1rem;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.progress-label {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.progress-percentage {
+    font-size: 0.8rem;
+    color: white;
+    font-weight: 600;
+}
+
+.progress {
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    transition: width 0.6s ease;
+}
+
+.current-milestone {
+    background: rgba(255,255,255,0.05);
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.milestone-name {
+    font-size: 0.85rem;
+    color: white;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.milestone-date {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.7);
+}
+
+/* Footer */
+.sidebar-footer {
+    margin-top: auto;
+    padding: 1rem;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    text-align: center;
+}
+
+/* Mobile Styles */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+@media (max-width: 991px) {
+    .sidebar-wrapper {
+        transform: translateX(-100%);
+    }
+    
+    .sidebar-wrapper.open {
+        transform: translateX(0);
+    }
+    
+    .sidebar {
+        width: 280px;
+    }
+    
+    .sidebar.collapsed {
+        width: 280px;
+    }
+    
+    .sidebar.collapsed .nav-text,
+    .sidebar.collapsed .widget-title,
+    .sidebar.collapsed .user-details,
+    .sidebar.collapsed .nav-badge,
+    .sidebar.collapsed .sidebar-widget,
+    .sidebar.collapsed .nav-header {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+@media (min-width: 992px) {
+    .sidebar-toggle {
+        display: none;
+    }
+    
+    .sidebar-overlay {
+        display: none;
+    }
+    
+    body {
+        margin-left: 280px;
+        transition: margin-left 0.3s ease;
+    }
+    
+    body.sidebar-collapsed {
+        margin-left: 80px;
+    }
+}
+
+/* Custom Scrollbar */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.1);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.3);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.5);
+}
+
+/* Theme specific adjustments */
+[data-bs-theme="dark"] .sidebar {
+    background: linear-gradient(180deg, #1a1a1a 0%, #2d3748 100%);
+}
+
+[data-bs-theme="light"] .sidebar {
+    background: linear-gradient(180deg, #2c3e50 0%, #3498db 100%);
+}
+
+/* Loading animations */
+@keyframes shimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: calc(200px + 100%) 0; }
+}
+
+.loading-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    background-size: 200px 100%;
+    animation: shimmer 1.5s infinite;
+}
+</style>
+
+<!-- Sidebar JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSidebar();
+});
+
+function initializeSidebar() {
+    // Sidebar toggle functionality
+    initializeSidebarToggle();
+    
+    // Submenu functionality
+    initializeSubmenus();
+    
+    // Load dynamic content
+    loadQuickStats();
+    loadTodayTasks();
+    initializeMiniCalendar();
+    
+    // Auto-refresh functionality
+    setInterval(() => {
+        refreshQuickStats();
+        loadTodayTasks();
+    }, 60000); // Refresh every minute
+}
+
+function initializeSidebarToggle() {
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
+    const sidebarWrapper = document.getElementById('sidebarWrapper');
+    const sidebar = document.getElementById('mainSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    
+    // Mobile toggle
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function() {
+            sidebarWrapper.classList.toggle('open');
+            overlay.classList.toggle('active');
+            document.body.style.overflow = sidebarWrapper.classList.contains('open') ? 'hidden' : '';
+        });
+    }
+    
+    // Desktop collapse
+    if (sidebarCollapseBtn) {
+        sidebarCollapseBtn.addEventListener('click', function() {
+            sidebar.classList.toggle('collapsed');
+            document.body.classList.toggle('sidebar-collapsed');
+            
+            // Save state
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        });
+    }
+    
+    // Overlay click to close
+    if (overlay) {
+        overlay.addEventListener('click', function() {
+            sidebarWrapper.classList.remove('open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    }
+    
+    // Restore collapsed state
+    const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (isCollapsed && window.innerWidth >= 992) {
+        sidebar.classList.add('collapsed');
+        document.body.classList.add('sidebar-collapsed');
+    }
+    
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        if (window.innerWidth >= 992) {
+            sidebarWrapper.classList.remove('open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+}
+
+function initializeSubmenus() {
+    const submenuToggles = document.querySelectorAll('.submenu-toggle');
+    
+    submenuToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            const parentItem = this.parentElement;
+            const isOpen = parentItem.classList.contains('open');
+            
+            // Close all other submenus
+            document.querySelectorAll('.has-submenu.open').forEach(item => {
+                if (item !== parentItem) {
+                    item.classList.remove('open');
+                }
+            });
+            
+            // Toggle current submenu
+            parentItem.classList.toggle('open', !isOpen);
+        });
+    });
+    
+    // Auto-open current submenu
+    const activeLink = document.querySelector('.nav-link.active');
+    if (activeLink) {
+        const parentSubmenu = activeLink.closest('.has-submenu');
+        if (parentSubmenu) {
+            parentSubmenu.classList.add('open');
+        }
+    }
+}
+
+function loadQuickStats() {
+    const quickStats = document.getElementById('quickStats');
+    if (!quickStats) return;
+    
+    fetch('/api/v1/dashboard/quick-stats', {
+        headers: {
+            'X-CSRFToken': window.AppConfig.csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayQuickStats(data.stats);
+        }
+    })
+    .catch(error => {
+        console.error('Error loading quick stats:', error);
+    });
+}
+
+function displayQuickStats(stats) {
+    const quickStats = document.getElementById('quickStats');
+    const progressStat = document.getElementById('progressStat');
+    
+    if (progressStat && stats.progress !== undefined) {
+        progressStat.textContent = stats.progress + '%';
+    }
+    
+    // Add more stats based on user role
+    let additionalStats = '';
+    
+    if (window.AppConfig.user.role === 'entrepreneur') {
+        additionalStats = `
+            <div class="stat-item">
+                <div class="stat-icon bg-success">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-number">${stats.tasks_completed || 0}</span>
+                    <span class="stat-label">Tareas Completadas</span>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon bg-info">
+                    <i class="fas fa-calendar"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-number">${stats.meetings_this_week || 0}</span>
+                    <span class="stat-label">Reuniones Esta Semana</span>
+                </div>
+            </div>
+        `;
+    } else if (window.AppConfig.user.role === 'ally' || window.AppConfig.user.role === 'mentor') {
+        additionalStats = `
+            <div class="stat-item">
+                <div class="stat-icon bg-warning">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-number">${stats.active_mentees || 0}</span>
+                    <span class="stat-label">Emprendedores Activos</span>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon bg-success">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-number">${stats.hours_this_month || 0}</span>
+                    <span class="stat-label">Horas Este Mes</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (additionalStats) {
+        quickStats.innerHTML = quickStats.innerHTML + additionalStats;
+    }
+}
+
+function refreshQuickStats() {
+    const refreshBtn = document.querySelector('.widget-refresh');
+    if (refreshBtn) {
+        refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        
+        setTimeout(() => {
+            loadQuickStats();
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+        }, 1000);
+    }
+}
+
+function loadTodayTasks() {
+    const todayTasks = document.getElementById('todayTasks');
+    if (!todayTasks) return;
+    
+    fetch('/api/v1/tasks/today', {
+        headers: {
+            'X-CSRFToken': window.AppConfig.csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayTodayTasks(data.tasks);
+        }
+    })
+    .catch(error => {
+        console.error('Error loading today tasks:', error);
+        todayTasks.innerHTML = `
+            <div class="text-center text-muted">
+                <i class="fas fa-exclamation-triangle"></i>
+                <small>Error al cargar tareas</small>
+            </div>
+        `;
+    });
+}
+
+function displayTodayTasks(tasks) {
+    const todayTasks = document.getElementById('todayTasks');
+    
+    if (tasks.length === 0) {
+        todayTasks.innerHTML = `
+            <div class="text-center text-muted">
+                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                <p class="mb-0 small">¡No hay tareas pendientes!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    todayTasks.innerHTML = '';
+    
+    tasks.slice(0, 5).forEach(task => {
+        const taskItem = document.createElement('div');
+        taskItem.className = 'task-item';
+        taskItem.innerHTML = `
+            <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} 
+                   onchange="toggleTask(${task.id}, this.checked)">
+            <div class="task-content">
+                <div class="task-title ${task.completed ? 'text-decoration-line-through' : ''}">${task.title}</div>
+                <div class="task-meta">
+                    ${task.priority ? `<span class="badge badge-${getPriorityColor(task.priority)}">${task.priority}</span>` : ''}
+                    ${task.due_time ? task.due_time : ''}
+                </div>
+            </div>
+        `;
+        todayTasks.appendChild(taskItem);
+    });
+    
+    if (tasks.length > 5) {
+        const moreItem = document.createElement('div');
+        moreItem.className = 'text-center mt-2';
+        moreItem.innerHTML = `<a href="/tasks" class="text-warning small">+${tasks.length - 5} más</a>`;
+        todayTasks.appendChild(moreItem);
+    }
+}
+
+function toggleTask(taskId, completed) {
+    fetch(`/api/v1/tasks/${taskId}/toggle`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.AppConfig.csrfToken
+        },
+        body: JSON.stringify({ completed: completed })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Refresh task list
+            setTimeout(loadTodayTasks, 500);
+            // Refresh quick stats
+            refreshQuickStats();
+        } else {
+            // Revert checkbox state
+            event.target.checked = !completed;
+        }
+    })
+    .catch(error => {
+        console.error('Error toggling task:', error);
+        event.target.checked = !completed;
+    });
+}
+
+function getPriorityColor(priority) {
+    const colors = {
+        'high': 'danger',
+        'medium': 'warning',
+        'low': 'success'
+    };
+    return colors[priority.toLowerCase()] || 'secondary';
+}
+
+function initializeMiniCalendar() {
+    const miniCalendar = document.getElementById('miniCalendar');
+    if (!miniCalendar) return;
+    
+    const today = new Date();
+    generateMiniCalendar(today);
+    loadTodayEvents();
+}
+
+function generateMiniCalendar(date) {
+    const miniCalendar = document.getElementById('miniCalendar');
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const today = new Date();
+    
+    const monthNames = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    
+    const daysOfWeek = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    
+    let calendarHTML = `
+        <div class="calendar-header">
+            <button class="calendar-nav" onclick="changeMonth(-1)">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="calendar-month">${monthNames[month]} ${year}</div>
+            <button class="calendar-nav" onclick="changeMonth(1)">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+        <div class="calendar-grid">
+    `;
+    
+    // Add day headers
+    daysOfWeek.forEach(day => {
+        calendarHTML += `<div class="calendar-day-header">${day}</div>`;
+    });
+    
+    // Add calendar days
+    for (let i = 0; i < 42; i++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + i);
+        
+        const isToday = currentDate.toDateString() === today.toDateString();
+        const isCurrentMonth = currentDate.getMonth() === month;
+        const hasEvent = false; // Will be populated with actual data
+        
+        let classes = 'calendar-day';
+        if (isToday) classes += ' today';
+        if (hasEvent) classes += ' has-event';
+        if (!isCurrentMonth) classes += ' text-muted';
+        
+        calendarHTML += `
+            <div class="${classes}" onclick="selectDate('${currentDate.toISOString().split('T')[0]}')">
+                ${currentDate.getDate()}
+            </div>
+        `;
+    }
+    
+    calendarHTML += '</div>';
+    miniCalendar.innerHTML = calendarHTML;
+}
+
+function changeMonth(direction) {
+    const currentDate = new Date(); // You should track the current displayed month
+    currentDate.setMonth(currentDate.getMonth() + direction);
+    generateMiniCalendar(currentDate);
+}
+
+function selectDate(dateString) {
+    window.location.href = `/calendar?date=${dateString}`;
+}
+
+function loadTodayEvents() {
+    const todayEvents = document.getElementById('todayEvents');
+    if (!todayEvents) return;
+    
+    fetch('/api/v1/calendar/today', {
+        headers: {
+            'X-CSRFToken': window.AppConfig.csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayTodayEvents(data.events);
+        }
+    })
+    .catch(error => {
+        console.error('Error loading today events:', error);
+    });
+}
+
+function displayTodayEvents(events) {
+    const todayEvents = document.getElementById('todayEvents');
+    
+    if (events.length === 0) {
+        todayEvents.innerHTML = `
+            <div class="text-center text-muted">
+                <small>No hay eventos hoy</small>
+            </div>
+        `;
+        return;
+    }
+    
+    todayEvents.innerHTML = '';
+    
+    events.slice(0, 3).forEach(event => {
+        const eventItem = document.createElement('div');
+        eventItem.className = 'event-item';
+        eventItem.innerHTML = `
+            <div class="event-time">${event.time}</div>
+            <div class="event-title">${event.title}</div>
+        `;
+        eventItem.addEventListener('click', () => {
+            window.location.href = `/meetings/${event.id}`;
+        });
+        todayEvents.appendChild(eventItem);
+    });
+    
+    if (events.length > 3) {
+        const moreItem = document.createElement('div');
+        moreItem.className = 'text-center mt-2';
+        moreItem.innerHTML = `<a href="/calendar" class="text-warning small">+${events.length - 3} más</a>`;
+        todayEvents.appendChild(moreItem);
+    }
+}
+
+// Utility functions
+function showWidgetLoading(widgetId) {
+    const widget = document.getElementById(widgetId);
+    if (widget) {
+        widget.innerHTML = '<div class="loading-shimmer" style="height: 50px; border-radius: 8px;"></div>';
+    }
+}
+
+function hideWidgetLoading(widgetId) {
+    const widget = document.getElementById(widgetId);
+    if (widget) {
+        widget.classList.remove('loading-shimmer');
+    }
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+    // Alt + S to toggle sidebar
+    if (e.altKey && e.key === 's') {
+        e.preventDefault();
+        const collapseBtn = document.getElementById('sidebarCollapseBtn');
+        if (collapseBtn) {
+            collapseBtn.click();
+        }
+    }
+});
+</script>

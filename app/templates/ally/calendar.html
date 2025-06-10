@@ -1,309 +1,1848 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario Estratégico - Panel de Aliados</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- FullCalendar -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.global.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.global.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #1a237e;
+            --secondary-color: #3f51b5;
+            --accent-color: #00bcd4;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --info-color: #2196f3;
+            --light-bg: #f8f9fa;
+            --dark-text: #263238;
+            --border-radius: 15px;
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-success: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        }
 
-{% block title %}Calendario de Reuniones | Panel del Aliado{% endblock %}
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            color: var(--dark-text);
+        }
 
-{% block styles %}
-{{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/fullcalendar.min.css') }}">
-{% endblock %}
+        .calendar-header {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
 
-{% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar (si lo tienes en el diseño) -->
-        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
-            {% include "ally/sidebar.html" %}
-        </div>
-        
-        <!-- Contenido principal -->
-        <div class="col-md-9 col-lg-10 ms-sm-auto px-md-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Calendario de Actividades</h1>
-                <div class="btn-toolbar mb-2 mb-md-0">
-                    <div class="btn-group me-2">
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-add-event">
-                            <i class="bi bi-plus-circle"></i> Nueva Reunión
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-print-calendar">
-                            <i class="bi bi-printer"></i> Imprimir
-                        </button>
-                    </div>
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-filter"></i> Filtros
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            <li><a class="dropdown-item" href="#" data-filter="all">Todos</a></li>
-                            <li><a class="dropdown-item" href="#" data-filter="meeting">Reuniones</a></li>
-                            <li><a class="dropdown-item" href="#" data-filter="deadline">Plazos</a></li>
-                            <li><a class="dropdown-item" href="#" data-filter="other">Otros</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
+        .calendar-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="calendar-pattern" width="25" height="25" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="25" height="25" fill="none" stroke="white" stroke-width="0.5" opacity="0.1"/><circle cx="12.5" cy="12.5" r="2" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23calendar-pattern)"/></svg>');
+        }
 
-            <!-- Alerta para mensajes -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+        .calendar-header .container {
+            position: relative;
+            z-index: 1;
+        }
 
-            <!-- Calendario -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <!-- Añadimos los atributos de datos al div del calendario -->
-                    <div id="calendar" 
-                         data-events="{{ events|tojson|safe }}" 
-                         data-user-id="{{ current_user.id }}" 
-                         data-csrf-token="{{ csrf_token() }}">
-                    </div>
-                </div>
-            </div>
+        .calendar-stats {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            color: var(--dark-text);
+            box-shadow: var(--card-shadow);
+        }
 
-            <!-- Próximas reuniones -->
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="card-title mb-0">Próximas Reuniones</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Fecha</th>
-                                    <th>Hora</th>
-                                    <th>Emprendedor</th>
-                                    <th>Tipo</th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% if upcoming_meetings %}
-                                    {% for meeting in upcoming_meetings %}
-                                        <tr>
-                                            <td>{{ meeting.date.strftime('%d/%m/%Y') }}</td>
-                                            <td>{{ meeting.start_time.strftime('%H:%M') }}</td>
-                                            <td>{{ meeting.entrepreneur.user.name }}</td>
-                                            <td>{{ meeting.type }}</td>
-                                            <td>
-                                                <span class="badge bg-{{ meeting.status_color }}">{{ meeting.status }}</span>
-                                            </td>
-                                            <td>
-                                                <div class="btn-group btn-group-sm" role="group">
-                                                    <a href="{{ url_for('ally.calendar.view_meeting', meeting_id=meeting.id) }}" class="btn btn-outline-primary" title="Ver detalles">
-                                                        <i class="bi bi-eye"></i>
-                                                    </a>
-                                                    <a href="{{ url_for('ally.calendar.edit_meeting', meeting_id=meeting.id) }}" class="btn btn-outline-secondary" title="Editar">
-                                                        <i class="bi bi-pencil"></i>
-                                                    </a>
-                                                    {% if meeting.status != 'completed' %}
-                                                        <a href="{{ url_for('ally.calendar.cancel_meeting', meeting_id=meeting.id) }}" class="btn btn-outline-danger" title="Cancelar" onclick="return confirm('¿Estás seguro de cancelar esta reunión?');">
-                                                            <i class="bi bi-x-circle"></i>
-                                                        </a>
-                                                    {% endif %}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                {% else %}
-                                    <tr>
-                                        <td colspan="6" class="text-center">No hay reuniones próximas programadas</td>
-                                    </tr>
-                                {% endif %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+        }
 
-<!-- Modal para añadir/editar eventos -->
-<div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="eventModalLabel">Nueva Reunión</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="event-form" method="post" action="{{ url_for('ally.calendar.add_meeting') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="meeting_id" id="meeting_id">
-                    
-                    <div class="mb-3">
-                        <label for="entrepreneur_id" class="form-label">Emprendedor</label>
-                        <select class="form-select" id="entrepreneur_id" name="entrepreneur_id" required>
-                            <option value="">Seleccionar emprendedor...</option>
-                            {% for entrepreneur in assigned_entrepreneurs %}
-                                <option value="{{ entrepreneur.id }}">{{ entrepreneur.user.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Título</label>
-                        <input type="text" class="form-control" id="title" name="title" required>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col">
-                            <label for="date" class="form-label">Fecha</label>
-                            <input type="date" class="form-control" id="date" name="date" required>
-                        </div>
-                        <div class="col">
-                            <label for="time" class="form-label">Hora</label>
-                            <input type="time" class="form-control" id="time" name="time" required>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="duration" class="form-label">Duración (minutos)</label>
-                        <input type="number" class="form-control" id="duration" name="duration" min="15" step="15" value="60">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="location" class="form-label">Ubicación/Enlace</label>
-                        <input type="text" class="form-control" id="location" name="location">
-                        <div class="form-text">Puede ser una dirección física o un enlace para reunión virtual</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="type" class="form-label">Tipo</label>
-                        <select class="form-select" id="type" name="type">
-                            <option value="regular">Reunión Regular</option>
-                            <option value="assessment">Evaluación</option>
-                            <option value="emergency">Urgente</option>
-                            <option value="other">Otro</option>
-                        </select>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Descripción</label>
-                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-                    </div>
-                    
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="send_notification" name="send_notification" checked>
-                        <label class="form-check-label" for="send_notification">
-                            Enviar notificación al emprendedor
-                        </label>
-                    </div>
-                    
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="add_to_google" name="add_to_google">
-                        <label class="form-check-label" for="add_to_google">
-                            Añadir a Google Calendar
-                        </label>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="save-event">Guardar</button>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
+        .stat-number {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-{% block scripts %}
-{{ super() }}
-<script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/fullcalendar.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/locale/es.js') }}"></script>
-<script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        try {
-            // Obtener los datos de atributos de datos en el elemento del calendario
-            const calendarEl = document.getElementById('calendar');
-            const eventsData = JSON.parse(calendarEl.dataset.events || '[]');
-            const userId = parseInt(calendarEl.dataset.userId || '0');
-            const csrfToken = calendarEl.dataset.csrfToken || '';
-            
-            // Inicializar calendario
-            const calendar = initCalendar('#calendar', {
-                events: eventsData,
-                userId: userId,
-                userRole: 'ally',
-                csrf_token: csrfToken
-            });
-            
-            // Manejar botón para añadir evento
-            document.getElementById('btn-add-event').addEventListener('click', function() {
-                // Resetear formulario
-                document.getElementById('event-form').reset();
-                document.getElementById('meeting_id').value = '';
-                document.getElementById('eventModalLabel').textContent = 'Nueva Reunión';
-                
-                // Establecer fecha predeterminada (hoy)
-                const today = new Date();
-                document.getElementById('date').value = today.toISOString().split('T')[0];
-                
-                // Mostrar modal
-                const eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
-                eventModal.show();
-            });
-            
-            // Manejar guardado de evento
-            document.getElementById('save-event').addEventListener('click', function() {
-                if (validateForm()) {
-                    document.getElementById('event-form').submit();
-                }
-            });
-            
-            // Validar formulario
-            function validateForm() {
-                const form = document.getElementById('event-form');
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return false;
-                }
-                return true;
+        .stat-label {
+            color: #666;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 0.5rem;
+        }
+
+        .stat-change {
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.25rem;
+        }
+
+        .stat-change.positive {
+            color: var(--success-color);
+        }
+
+        .stat-change.negative {
+            color: var(--danger-color);
+        }
+
+        .calendar-container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .calendar-main {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .calendar-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .sidebar-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--dark-text);
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title i {
+            margin-right: 0.5rem;
+            color: var(--accent-color);
+        }
+
+        .calendar-filters {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-checkbox {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid #ddd;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .filter-checkbox.meeting { border-color: #4facfe; }
+        .filter-checkbox.due-diligence { border-color: #f093fb; }
+        .filter-checkbox.mentorship { border-color: #84fab0; }
+        .filter-checkbox.call { border-color: #ff9800; }
+        .filter-checkbox.pitch { border-color: #e74c3c; }
+
+        .filter-checkbox.active {
+            color: white;
+        }
+
+        .filter-checkbox.meeting.active { background: #4facfe; }
+        .filter-checkbox.due-diligence.active { background: #f093fb; }
+        .filter-checkbox.mentorship.active { background: #84fab0; }
+        .filter-checkbox.call.active { background: #ff9800; }
+        .filter-checkbox.pitch.active { background: #e74c3c; }
+
+        .event-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--accent-color);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .event-item:hover {
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .event-item.meeting { border-left-color: #4facfe; }
+        .event-item.due-diligence { border-left-color: #f093fb; }
+        .event-item.mentorship { border-left-color: #84fab0; }
+        .event-item.call { border-left-color: #ff9800; }
+        .event-item.pitch { border-left-color: #e74c3c; }
+
+        .event-time {
+            width: 60px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--accent-color);
+            font-size: 0.9rem;
+        }
+
+        .event-content {
+            flex: 1;
+            margin-left: 1rem;
+        }
+
+        .event-title {
+            font-weight: 600;
+            color: var(--dark-text);
+            margin-bottom: 0.25rem;
+        }
+
+        .event-company {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .event-status {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-weight: 600;
+        }
+
+        .status-confirmed {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--success-color);
+        }
+
+        .status-pending {
+            background: rgba(255, 152, 0, 0.1);
+            color: var(--warning-color);
+        }
+
+        .status-cancelled {
+            background: rgba(244, 67, 54, 0.1);
+            color: var(--danger-color);
+        }
+
+        .upcoming-event {
+            background: white;
+            border: 2px solid #f0f0f0;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .upcoming-event:hover {
+            border-color: var(--accent-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .upcoming-event.urgent {
+            border-color: var(--danger-color);
+            background: rgba(244, 67, 54, 0.02);
+        }
+
+        .btn-custom {
+            border-radius: 25px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary-custom {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-accent-custom {
+            background: var(--gradient-accent);
+            color: white;
+        }
+
+        .btn-accent-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-outline-custom {
+            border: 2px solid var(--secondary-color);
+            color: var(--secondary-color);
+            background: transparent;
+        }
+
+        .btn-outline-custom:hover {
+            background: var(--secondary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .quick-action {
+            background: var(--gradient-accent);
+            color: white;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+        }
+
+        .quick-action:hover {
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .quick-action i {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .calendar-views {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .view-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            background: white;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .view-btn.active {
+            border-color: var(--accent-color);
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .integration-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .integration-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .integration-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .google-calendar { background: #4285f4; }
+        .outlook-calendar { background: #0078d4; }
+        .apple-calendar { background: #333; }
+
+        .form-switch .form-check-input {
+            width: 3rem;
+            height: 1.5rem;
+        }
+
+        .form-switch .form-check-input:checked {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        /* FullCalendar Customizations */
+        .fc {
+            font-family: inherit;
+        }
+
+        .fc-event {
+            border: none !important;
+            border-radius: 6px !important;
+            padding: 2px 6px !important;
+            font-weight: 600 !important;
+            font-size: 0.85rem !important;
+        }
+
+        .fc-event.meeting {
+            background: #4facfe !important;
+        }
+
+        .fc-event.due-diligence {
+            background: #f093fb !important;
+        }
+
+        .fc-event.mentorship {
+            background: #84fab0 !important;
+        }
+
+        .fc-event.call {
+            background: #ff9800 !important;
+        }
+
+        .fc-event.pitch {
+            background: #e74c3c !important;
+        }
+
+        .fc-button-primary {
+            background: var(--accent-color) !important;
+            border-color: var(--accent-color) !important;
+        }
+
+        .fc-button-primary:hover {
+            background: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
+        }
+
+        .fc-today-button {
+            background: var(--gradient-primary) !important;
+        }
+
+        .fc-daygrid-day.fc-day-today {
+            background: rgba(79, 172, 254, 0.1) !important;
+        }
+
+        .fc-col-header-cell {
+            background: #f8f9fa;
+            font-weight: 700;
+        }
+
+        .reminder-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            background: rgba(255, 152, 0, 0.1);
+            border: 1px solid rgba(255, 152, 0, 0.3);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+        }
+
+        .reminder-icon {
+            color: var(--warning-color);
+            margin-right: 0.75rem;
+        }
+
+        .analytics-chart {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        @media (max-width: 1200px) {
+            .calendar-container {
+                grid-template-columns: 1fr;
             }
             
-            // Aplicar filtros
-            document.querySelectorAll('[data-filter]').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const filter = this.getAttribute('data-filter');
+            .calendar-sidebar {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .calendar-header {
+                padding: 1rem 0;
+            }
+            
+            .calendar-main {
+                padding: 1rem;
+            }
+            
+            .sidebar-section {
+                padding: 1rem;
+            }
+            
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .filter-group {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .priority-high {
+            position: relative;
+        }
+
+        .priority-high::after {
+            content: '!';
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .time-slot {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .time-slot:hover {
+            background: rgba(79, 172, 254, 0.1);
+        }
+
+        .time-slot.busy {
+            background: rgba(244, 67, 54, 0.1);
+            cursor: not-allowed;
+        }
+
+        .availability-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+
+        .available { background: var(--success-color); }
+        .busy { background: var(--danger-color); }
+        .tentative { background: var(--warning-color); }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay d-none" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Header -->
+    <div class="calendar-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="mb-3"><i class="fas fa-calendar-alt me-3"></i>Calendario Estratégico</h1>
+                    <p class="mb-0 lead">Gestiona reuniones, sesiones de mentoría y eventos empresariales</p>
+                </div>
+                <div class="col-lg-4">
+                    <div class="calendar-stats">
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <div class="stat-number" id="todayEvents">8</div>
+                                    <div class="stat-label">Hoy</div>
+                                    <div class="stat-change positive">+2 vs ayer</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <div class="stat-number" id="weekEvents">34</div>
+                                    <div class="stat-label">Esta Semana</div>
+                                    <div class="stat-change positive">+15% vs anterior</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <div class="stat-number" id="utilization">87%</div>
+                                    <div class="stat-label">Utilización</div>
+                                    <div class="stat-change positive">Óptimo</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="#" class="quick-action" onclick="scheduleNewEvent()">
+                <i class="fas fa-plus"></i>
+                <span>Nuevo Evento</span>
+            </a>
+            <a href="#" class="quick-action" onclick="scheduleMentorship()">
+                <i class="fas fa-graduation-cap"></i>
+                <span>Sesión Mentoría</span>
+            </a>
+            <a href="#" class="quick-action" onclick="scheduleMeeting()">
+                <i class="fas fa-handshake"></i>
+                <span>Reunión</span>
+            </a>
+            <a href="#" class="quick-action" onclick="scheduleDueDiligence()">
+                <i class="fas fa-search"></i>
+                <span>Due Diligence</span>
+            </a>
+            <a href="#" class="quick-action" onclick="viewAnalytics()">
+                <i class="fas fa-chart-bar"></i>
+                <span>Analíticas</span>
+            </a>
+            <a href="#" class="quick-action" onclick="exportCalendar()">
+                <i class="fas fa-download"></i>
+                <span>Exportar</span>
+            </a>
+        </div>
+
+        <!-- Filtros -->
+        <div class="calendar-filters">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h6 class="mb-3 mb-lg-0">Tipos de Eventos:</h6>
+                    <div class="filter-group">
+                        <div class="filter-item">
+                            <div class="filter-checkbox meeting active" data-type="meeting" onclick="toggleFilter(this)">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <span>Reuniones</span>
+                        </div>
+                        <div class="filter-item">
+                            <div class="filter-checkbox due-diligence active" data-type="due-diligence" onclick="toggleFilter(this)">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <span>Due Diligence</span>
+                        </div>
+                        <div class="filter-item">
+                            <div class="filter-checkbox mentorship active" data-type="mentorship" onclick="toggleFilter(this)">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <span>Mentoría</span>
+                        </div>
+                        <div class="filter-item">
+                            <div class="filter-checkbox call active" data-type="call" onclick="toggleFilter(this)">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <span>Llamadas</span>
+                        </div>
+                        <div class="filter-item">
+                            <div class="filter-checkbox pitch active" data-type="pitch" onclick="toggleFilter(this)">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <span>Pitch</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="d-flex gap-2">
+                        <select class="form-select form-select-sm" onchange="filterByCompany(this.value)">
+                            <option value="">Todas las empresas</option>
+                            <option value="techstart-ai">TechStart AI</option>
+                            <option value="finflow">FinFlow Solutions</option>
+                            <option value="ecomart">EcoMart</option>
+                            <option value="healthai">HealthAI</option>
+                        </select>
+                        <button class="btn btn-outline-custom btn-sm" onclick="clearFilters()">
+                            <i class="fas fa-times me-1"></i>Limpiar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendario Principal -->
+        <div class="calendar-container">
+            <div class="calendar-main">
+                <div class="calendar-views">
+                    <div class="view-btn active" onclick="changeView('dayGridMonth')">Mes</div>
+                    <div class="view-btn" onclick="changeView('timeGridWeek')">Semana</div>
+                    <div class="view-btn" onclick="changeView('timeGridDay')">Día</div>
+                    <div class="view-btn" onclick="changeView('listWeek')">Agenda</div>
+                </div>
+                
+                <div id="calendar"></div>
+            </div>
+
+            <div class="calendar-sidebar">
+                <!-- Eventos de Hoy -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h5 class="section-title">
+                            <i class="fas fa-clock"></i>Agenda de Hoy
+                        </h5>
+                        <span class="badge bg-primary" id="todayBadge">8</span>
+                    </div>
                     
-                    if (filter === 'all') {
-                        // Mostrar todos los eventos
-                        calendar.getCalendar().getEvents().forEach(event => {
-                            event.setProp('display', 'auto');
-                        });
-                    } else {
-                        // Filtrar por tipo
-                        calendar.getCalendar().getEvents().forEach(event => {
-                            const eventType = event.extendedProps.type || 'other';
-                            if (eventType === filter) {
-                                event.setProp('display', 'auto');
-                            } else {
-                                event.setProp('display', 'none');
-                            }
-                        });
-                    }
-                });
+                    <div id="todayAgenda">
+                        <!-- Los eventos de hoy se cargarán aquí -->
+                    </div>
+                </div>
+
+                <!-- Próximos Eventos Importantes -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h5 class="section-title">
+                            <i class="fas fa-star"></i>Próximos Importantes
+                        </h5>
+                    </div>
+                    
+                    <div id="upcomingImportant">
+                        <!-- Los eventos importantes se cargarán aquí -->
+                    </div>
+                </div>
+
+                <!-- Recordatorios -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h5 class="section-title">
+                            <i class="fas fa-bell"></i>Recordatorios
+                        </h5>
+                        <button class="btn btn-outline-custom btn-sm" onclick="addReminder()">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="reminders">
+                        <!-- Los recordatorios se cargarán aquí -->
+                    </div>
+                </div>
+
+                <!-- Disponibilidad -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h5 class="section-title">
+                            <i class="fas fa-calendar-check"></i>Mi Disponibilidad
+                        </h5>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-2">Estado actual:</small>
+                        <div>
+                            <span class="availability-indicator available"></span>
+                            <span>Disponible hasta 15:00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="time-slot" onclick="toggleAvailability('09:00')">
+                        <small>09:00 - 10:00</small>
+                        <span class="availability-indicator available float-end mt-1"></span>
+                    </div>
+                    <div class="time-slot busy">
+                        <small>10:00 - 11:00</small>
+                        <span class="availability-indicator busy float-end mt-1"></span>
+                    </div>
+                    <div class="time-slot" onclick="toggleAvailability('11:00')">
+                        <small>11:00 - 12:00</small>
+                        <span class="availability-indicator available float-end mt-1"></span>
+                    </div>
+                    <div class="time-slot" onclick="toggleAvailability('14:00')">
+                        <small>14:00 - 15:00</small>
+                        <span class="availability-indicator tentative float-end mt-1"></span>
+                    </div>
+                </div>
+
+                <!-- Integraciones -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h5 class="section-title">
+                            <i class="fas fa-sync-alt"></i>Sincronización
+                        </h5>
+                    </div>
+                    
+                    <div class="integration-item">
+                        <div class="integration-info">
+                            <div class="integration-icon google-calendar">
+                                <i class="fab fa-google"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Google Calendar</h6>
+                                <small class="text-muted">Última sync: hace 5 min</small>
+                            </div>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="googleSync" checked>
+                        </div>
+                    </div>
+                    
+                    <div class="integration-item">
+                        <div class="integration-info">
+                            <div class="integration-icon outlook-calendar">
+                                <i class="fab fa-microsoft"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Outlook</h6>
+                                <small class="text-muted">Desconectado</small>
+                            </div>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="outlookSync">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analíticas de Calendario -->
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="analytics-chart">
+                    <h5 class="mb-3"><i class="fas fa-chart-line me-2"></i>Distribución de Tiempo</h5>
+                    <canvas id="timeDistributionChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="analytics-chart">
+                    <h5 class="mb-3"><i class="fas fa-chart-bar me-2"></i>Productividad Semanal</h5>
+                    <canvas id="productivityChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nuevo Evento -->
+    <div class="modal fade" id="newEventModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="eventModalTitle">Nuevo Evento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="eventForm">
+                        <input type="hidden" id="eventId">
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="eventTitle" class="form-label">Título del Evento</label>
+                                <input type="text" class="form-control" id="eventTitle" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="eventType" class="form-label">Tipo</label>
+                                <select class="form-select" id="eventType" required>
+                                    <option value="">Seleccionar tipo...</option>
+                                    <option value="meeting">Reunión</option>
+                                    <option value="due-diligence">Due Diligence</option>
+                                    <option value="mentorship">Sesión Mentoría</option>
+                                    <option value="call">Llamada</option>
+                                    <option value="pitch">Pitch</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="eventDate" class="form-label">Fecha</label>
+                                <input type="date" class="form-control" id="eventDate" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="eventStartTime" class="form-label">Hora Inicio</label>
+                                <input type="time" class="form-control" id="eventStartTime" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="eventEndTime" class="form-label">Hora Fin</label>
+                                <input type="time" class="form-control" id="eventEndTime" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="eventCompany" class="form-label">Empresa</label>
+                                <select class="form-select" id="eventCompany">
+                                    <option value="">Seleccionar empresa...</option>
+                                    <option value="techstart-ai">TechStart AI</option>
+                                    <option value="finflow">FinFlow Solutions</option>
+                                    <option value="ecomart">EcoMart</option>
+                                    <option value="healthai">HealthAI Diagnostics</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="eventLocation" class="form-label">Ubicación/Link</label>
+                                <input type="text" class="form-control" id="eventLocation" placeholder="Oficina, Zoom, Google Meet...">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="eventPriority" class="form-label">Prioridad</label>
+                                <select class="form-select" id="eventPriority">
+                                    <option value="low">Baja</option>
+                                    <option value="medium" selected>Media</option>
+                                    <option value="high">Alta</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="eventReminder" class="form-label">Recordatorio</label>
+                                <select class="form-select" id="eventReminder">
+                                    <option value="0">Sin recordatorio</option>
+                                    <option value="15" selected>15 minutos antes</option>
+                                    <option value="30">30 minutos antes</option>
+                                    <option value="60">1 hora antes</option>
+                                    <option value="1440">1 día antes</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="eventStatus" class="form-label">Estado</label>
+                                <select class="form-select" id="eventStatus">
+                                    <option value="confirmed">Confirmado</option>
+                                    <option value="pending" selected>Pendiente</option>
+                                    <option value="cancelled">Cancelado</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="eventAttendees" class="form-label">Asistentes</label>
+                            <input type="text" class="form-control" id="eventAttendees" placeholder="email1@ejemplo.com, email2@ejemplo.com">
+                            <small class="text-muted">Separar emails con comas</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="eventDescription" class="form-label">Descripción/Agenda</label>
+                            <textarea class="form-control" id="eventDescription" rows="4" placeholder="Agenda de la reunión, temas a tratar..."></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="eventRecurring">
+                                <label class="form-check-label" for="eventRecurring">
+                                    Evento recurrente
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 d-none" id="recurringOptions">
+                            <label for="eventRecurrence" class="form-label">Frecuencia</label>
+                            <select class="form-select" id="eventRecurrence">
+                                <option value="daily">Diario</option>
+                                <option value="weekly">Semanal</option>
+                                <option value="monthly">Mensual</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-outline-custom" onclick="saveDraft()">
+                        <i class="fas fa-save me-2"></i>Guardar Borrador
+                    </button>
+                    <button type="button" class="btn btn-primary-custom" onclick="saveEvent()">
+                        <i class="fas fa-calendar-plus me-2"></i>Crear Evento
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detalles de Evento -->
+    <div class="modal fade" id="eventDetailsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailsEventTitle">Detalles del Evento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="eventDetailsContent">
+                    <!-- Los detalles se cargarán dinámicamente -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-outline-custom" onclick="editEvent()">
+                        <i class="fas fa-edit me-2"></i>Editar
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="deleteEvent()">
+                        <i class="fas fa-trash me-2"></i>Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Estado global de la aplicación
+        let calendar;
+        let events = [];
+        let filteredTypes = ['meeting', 'due-diligence', 'mentorship', 'call', 'pitch'];
+        let selectedEvent = null;
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEvents();
+            initializeCalendar();
+            initializeCharts();
+            setupEventListeners();
+            loadTodayAgenda();
+            loadUpcomingImportant();
+            loadReminders();
+        });
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Recurring checkbox
+            document.getElementById('eventRecurring').addEventListener('change', function() {
+                document.getElementById('recurringOptions').classList.toggle('d-none', !this.checked);
+            });
+        }
+
+        // Cargar eventos
+        function loadEvents() {
+            events = [
+                {
+                    id: 1,
+                    title: 'Pitch TechStart AI - Serie B',
+                    type: 'pitch',
+                    company: 'techstart-ai',
+                    companyName: 'TechStart AI',
+                    start: '2025-06-15T10:00:00',
+                    end: '2025-06-15T11:30:00',
+                    location: 'Sala de Juntas A',
+                    description: 'Presentación para ronda Serie B. Revisar métricas de crecimiento y roadmap.',
+                    attendees: ['sarah@techstart.ai', 'ceo@techstart.ai'],
+                    priority: 'high',
+                    status: 'confirmed',
+                    reminder: 30
+                },
+                {
+                    id: 2,
+                    title: 'Due Diligence - FinFlow',
+                    type: 'due-diligence',
+                    company: 'finflow',
+                    companyName: 'FinFlow Solutions',
+                    start: '2025-06-15T14:00:00',
+                    end: '2025-06-15T16:00:00',
+                    location: 'https://zoom.us/j/123456789',
+                    description: 'Revisión técnica y financiera. Análisis de código y architecture review.',
+                    attendees: ['marcus@finflow.com', 'cto@finflow.com'],
+                    priority: 'high',
+                    status: 'confirmed',
+                    reminder: 60
+                },
+                {
+                    id: 3,
+                    title: 'Sesión Mentoría - Emma',
+                    type: 'mentorship',
+                    company: 'ecomart',
+                    companyName: 'EcoMart',
+                    start: '2025-06-15T16:30:00',
+                    end: '2025-06-15T17:30:00',
+                    location: 'Google Meet',
+                    description: 'Estrategia de expansión internacional. Foco en mercados europeos.',
+                    attendees: ['emma@ecomart.com'],
+                    priority: 'medium',
+                    status: 'confirmed',
+                    reminder: 15
+                },
+                {
+                    id: 4,
+                    title: 'Reunión Semanal Portfolio',
+                    type: 'meeting',
+                    company: '',
+                    companyName: 'Interno',
+                    start: '2025-06-16T09:00:00',
+                    end: '2025-06-16T10:00:00',
+                    location: 'Oficina Principal',
+                    description: 'Review semanal del portfolio. Análisis de KPIs y updates de empresas.',
+                    attendees: ['team@venture.com'],
+                    priority: 'medium',
+                    status: 'confirmed',
+                    reminder: 15
+                },
+                {
+                    id: 5,
+                    title: 'Llamada - HealthAI Update',
+                    type: 'call',
+                    company: 'healthai',
+                    companyName: 'HealthAI Diagnostics',
+                    start: '2025-06-16T11:00:00',
+                    end: '2025-06-16T11:30:00',
+                    location: 'Teléfono',
+                    description: 'Update sobre avances en FDA approval. Discutir timeline y milestones.',
+                    attendees: ['david@healthai.com'],
+                    priority: 'low',
+                    status: 'pending',
+                    reminder: 15
+                },
+                {
+                    id: 6,
+                    title: 'Networking Event - TechCrunch',
+                    type: 'meeting',
+                    company: '',
+                    companyName: 'Evento',
+                    start: '2025-06-17T18:00:00',
+                    end: '2025-06-17T21:00:00',
+                    location: 'Centro de Convenciones',
+                    description: 'Evento de networking. Oportunidad para conocer nuevos emprendedores.',
+                    attendees: [],
+                    priority: 'low',
+                    status: 'confirmed',
+                    reminder: 1440
+                }
+            ];
+        }
+
+        // Inicializar calendario
+        function initializeCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'es',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+                },
+                height: 'auto',
+                events: getFilteredEvents(),
+                eventClick: function(info) {
+                    showEventDetails(info.event.id);
+                },
+                dateClick: function(info) {
+                    scheduleNewEventOn(info.dateStr);
+                },
+                eventDrop: function(info) {
+                    updateEventDate(info.event.id, info.event.start, info.event.end);
+                },
+                eventResize: function(info) {
+                    updateEventDate(info.event.id, info.event.start, info.event.end);
+                },
+                editable: true,
+                dayMaxEvents: true,
+                eventMouseEnter: function(info) {
+                    // Tooltip on hover
+                    info.el.title = info.event.extendedProps.description || '';
+                }
             });
             
-            // Manejar impresión
-            document.getElementById('btn-print-calendar').addEventListener('click', function() {
-                window.print();
-            });
-        } catch (error) {
-            console.error('Error al inicializar el calendario:', error);
-            document.getElementById('calendar').innerHTML = '<div class="alert alert-danger">Error al cargar el calendario. Por favor, recargue la página o contacte al soporte técnico.</div>';
+            calendar.render();
         }
-    });
-</script>
-{% endblock %}
+
+        // Obtener eventos filtrados
+        function getFilteredEvents() {
+            return events
+                .filter(event => filteredTypes.includes(event.type))
+                .map(event => ({
+                    id: event.id,
+                    title: event.title,
+                    start: event.start,
+                    end: event.end,
+                    className: event.type,
+                    extendedProps: {
+                        type: event.type,
+                        company: event.company,
+                        companyName: event.companyName,
+                        location: event.location,
+                        description: event.description,
+                        priority: event.priority,
+                        status: event.status
+                    }
+                }));
+        }
+
+        // Inicializar gráficos
+        function initializeCharts() {
+            initTimeDistributionChart();
+            initProductivityChart();
+        }
+
+        // Gráfico de distribución de tiempo
+        function initTimeDistributionChart() {
+            const ctx = document.getElementById('timeDistributionChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Reuniones', 'Due Diligence', 'Mentoría', 'Llamadas', 'Pitch'],
+                    datasets: [{
+                        data: [35, 25, 20, 15, 5],
+                        backgroundColor: [
+                            '#4facfe',
+                            '#f093fb',
+                            '#84fab0',
+                            '#ff9800',
+                            '#e74c3c'
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfico de productividad
+        function initProductivityChart() {
+            const ctx = document.getElementById('productivityChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+                    datasets: [{
+                        label: 'Horas Programadas',
+                        data: [8, 6, 7, 9, 5, 2, 1],
+                        backgroundColor: '#4facfe',
+                        borderRadius: 5
+                    }, {
+                        label: 'Horas Efectivas',
+                        data: [7, 5.5, 6.5, 8, 4.5, 2, 1],
+                        backgroundColor: '#84fab0',
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            ticks: {
+                                stepSize: 2
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Cargar agenda de hoy
+        function loadTodayAgenda() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayEvents = events.filter(event => event.start.startsWith(today));
+            
+            const container = document.getElementById('todayAgenda');
+            container.innerHTML = '';
+
+            if (todayEvents.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">No hay eventos programados para hoy</p>';
+                return;
+            }
+
+            todayEvents
+                .sort((a, b) => new Date(a.start) - new Date(b.start))
+                .forEach(event => {
+                    const eventItem = document.createElement('div');
+                    eventItem.className = `event-item ${event.type}`;
+                    eventItem.onclick = () => showEventDetails(event.id);
+
+                    eventItem.innerHTML = `
+                        <div class="event-time">${formatTime(event.start)}</div>
+                        <div class="event-content">
+                            <div class="event-title">${event.title}</div>
+                            <div class="event-company">${event.companyName}</div>
+                        </div>
+                        <span class="event-status status-${event.status}">
+                            ${getStatusText(event.status)}
+                        </span>
+                    `;
+
+                    container.appendChild(eventItem);
+                });
+
+            document.getElementById('todayBadge').textContent = todayEvents.length;
+        }
+
+        // Cargar próximos eventos importantes
+        function loadUpcomingImportant() {
+            const importantEvents = events
+                .filter(event => event.priority === 'high' && new Date(event.start) > new Date())
+                .sort((a, b) => new Date(a.start) - new Date(b.start))
+                .slice(0, 5);
+
+            const container = document.getElementById('upcomingImportant');
+            container.innerHTML = '';
+
+            if (importantEvents.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">No hay eventos importantes próximos</p>';
+                return;
+            }
+
+            importantEvents.forEach(event => {
+                const eventItem = document.createElement('div');
+                eventItem.className = 'upcoming-event priority-high';
+                eventItem.onclick = () => showEventDetails(event.id);
+
+                const daysUntil = Math.ceil((new Date(event.start) - new Date()) / (1000 * 60 * 60 * 24));
+
+                eventItem.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="mb-0">${event.title}</h6>
+                        <small class="text-muted">${daysUntil} día${daysUntil !== 1 ? 's' : ''}</small>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">${event.companyName}</small>
+                        <small class="text-primary">${formatDateTime(event.start)}</small>
+                    </div>
+                `;
+
+                container.appendChild(eventItem);
+            });
+        }
+
+        // Cargar recordatorios
+        function loadReminders() {
+            const reminders = [
+                {
+                    text: 'Preparar preguntas para due diligence de FinFlow',
+                    time: 'En 2 horas'
+                },
+                {
+                    text: 'Enviar feedback a Sarah sobre pitch deck',
+                    time: 'Mañana'
+                },
+                {
+                    text: 'Revisar documentación legal de EcoMart',
+                    time: 'Esta semana'
+                }
+            ];
+
+            const container = document.getElementById('reminders');
+            container.innerHTML = '';
+
+            reminders.forEach(reminder => {
+                const reminderItem = document.createElement('div');
+                reminderItem.className = 'reminder-item';
+                reminderItem.innerHTML = `
+                    <div class="reminder-icon">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="small">${reminder.text}</div>
+                        <small class="text-muted">${reminder.time}</small>
+                    </div>
+                `;
+                container.appendChild(reminderItem);
+            });
+        }
+
+        // Funciones de filtrado
+        function toggleFilter(element) {
+            const type = element.getAttribute('data-type');
+            const isActive = element.classList.contains('active');
+
+            if (isActive) {
+                element.classList.remove('active');
+                element.innerHTML = '';
+                filteredTypes = filteredTypes.filter(t => t !== type);
+            } else {
+                element.classList.add('active');
+                element.innerHTML = '<i class="fas fa-check"></i>';
+                filteredTypes.push(type);
+            }
+
+            updateCalendarEvents();
+        }
+
+        function filterByCompany(company) {
+            // Implementar filtrado por empresa si es necesario
+            console.log('Filtrar por empresa:', company);
+        }
+
+        function clearFilters() {
+            // Activar todos los filtros
+            document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+                checkbox.classList.add('active');
+                checkbox.innerHTML = '<i class="fas fa-check"></i>';
+            });
+            
+            filteredTypes = ['meeting', 'due-diligence', 'mentorship', 'call', 'pitch'];
+            updateCalendarEvents();
+        }
+
+        function updateCalendarEvents() {
+            calendar.removeAllEvents();
+            calendar.addEventSource(getFilteredEvents());
+        }
+
+        // Funciones de vista
+        function changeView(viewName) {
+            // Actualizar botones activos
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Cambiar vista del calendario
+            calendar.changeView(viewName);
+        }
+
+        // Funciones de creación de eventos
+        function scheduleNewEvent() {
+            resetEventForm();
+            document.getElementById('eventModalTitle').textContent = 'Nuevo Evento';
+            
+            // Establecer fecha por defecto
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('eventDate').value = today;
+            
+            const modal = new bootstrap.Modal(document.getElementById('newEventModal'));
+            modal.show();
+        }
+
+        function scheduleNewEventOn(dateStr) {
+            resetEventForm();
+            document.getElementById('eventModalTitle').textContent = 'Nuevo Evento';
+            document.getElementById('eventDate').value = dateStr;
+            
+            const modal = new bootstrap.Modal(document.getElementById('newEventModal'));
+            modal.show();
+        }
+
+        function scheduleMentorship() {
+            resetEventForm();
+            document.getElementById('eventModalTitle').textContent = 'Nueva Sesión de Mentoría';
+            document.getElementById('eventType').value = 'mentorship';
+            
+            const modal = new bootstrap.Modal(document.getElementById('newEventModal'));
+            modal.show();
+        }
+
+        function scheduleMeeting() {
+            resetEventForm();
+            document.getElementById('eventModalTitle').textContent = 'Nueva Reunión';
+            document.getElementById('eventType').value = 'meeting';
+            
+            const modal = new bootstrap.Modal(document.getElementById('newEventModal'));
+            modal.show();
+        }
+
+        function scheduleDueDiligence() {
+            resetEventForm();
+            document.getElementById('eventModalTitle').textContent = 'Nueva Sesión Due Diligence';
+            document.getElementById('eventType').value = 'due-diligence';
+            
+            const modal = new bootstrap.Modal(document.getElementById('newEventModal'));
+            modal.show();
+        }
+
+        function resetEventForm() {
+            document.getElementById('eventForm').reset();
+            document.getElementById('eventId').value = '';
+            document.getElementById('recurringOptions').classList.add('d-none');
+            
+            // Establecer valores por defecto
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const currentTime = now.toTimeString().slice(0, 5);
+            const endTime = new Date(now.getTime() + 60 * 60 * 1000).toTimeString().slice(0, 5);
+            
+            document.getElementById('eventDate').value = today;
+            document.getElementById('eventStartTime').value = currentTime;
+            document.getElementById('eventEndTime').value = endTime;
+        }
+
+        function saveEvent() {
+            const formData = new FormData(document.getElementById('eventForm'));
+            const eventData = {
+                id: formData.get('eventId') || Date.now(),
+                title: formData.get('eventTitle'),
+                type: formData.get('eventType'),
+                company: formData.get('eventCompany'),
+                companyName: getCompanyName(formData.get('eventCompany')),
+                start: formData.get('eventDate') + 'T' + formData.get('eventStartTime'),
+                end: formData.get('eventDate') + 'T' + formData.get('eventEndTime'),
+                location: formData.get('eventLocation'),
+                description: formData.get('eventDescription'),
+                attendees: formData.get('eventAttendees').split(',').map(email => email.trim()).filter(email => email),
+                priority: formData.get('eventPriority'),
+                status: formData.get('eventStatus'),
+                reminder: parseInt(formData.get('eventReminder'))
+            };
+
+            // Validación básica
+            if (!eventData.title || !eventData.type || !eventData.start || !eventData.end) {
+                alert('Por favor, completa todos los campos obligatorios.');
+                return;
+            }
+
+            // Agregar o actualizar evento
+            const existingIndex = events.findIndex(e => e.id == eventData.id);
+            if (existingIndex !== -1) {
+                events[existingIndex] = eventData;
+            } else {
+                events.push(eventData);
+            }
+
+            // Actualizar calendario y vistas
+            updateCalendarEvents();
+            loadTodayAgenda();
+            loadUpcomingImportant();
+
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('newEventModal'));
+            modal.hide();
+
+            showNotification('Evento guardado correctamente', 'success');
+        }
+
+        function saveDraft() {
+            showNotification('Borrador guardado', 'info');
+        }
+
+        // Funciones de visualización de eventos
+        function showEventDetails(eventId) {
+            selectedEvent = events.find(e => e.id == eventId);
+            if (!selectedEvent) return;
+
+            document.getElementById('detailsEventTitle').textContent = selectedEvent.title;
+            
+            const detailsContent = document.getElementById('eventDetailsContent');
+            detailsContent.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Información General</h6>
+                        <p><strong>Tipo:</strong> ${getTypeText(selectedEvent.type)}</p>
+                        <p><strong>Empresa:</strong> ${selectedEvent.companyName}</p>
+                        <p><strong>Estado:</strong> <span class="event-status status-${selectedEvent.status}">${getStatusText(selectedEvent.status)}</span></p>
+                        <p><strong>Prioridad:</strong> ${getPriorityText(selectedEvent.priority)}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Fecha y Hora</h6>
+                        <p><strong>Inicio:</strong> ${formatDateTime(selectedEvent.start)}</p>
+                        <p><strong>Fin:</strong> ${formatDateTime(selectedEvent.end)}</p>
+                        <p><strong>Duración:</strong> ${calculateDuration(selectedEvent.start, selectedEvent.end)}</p>
+                        <p><strong>Ubicación:</strong> ${selectedEvent.location || 'No especificada'}</p>
+                    </div>
+                </div>
+                
+                ${selectedEvent.description ? `
+                    <div class="mt-3">
+                        <h6>Descripción</h6>
+                        <p>${selectedEvent.description}</p>
+                    </div>
+                ` : ''}
+                
+                ${selectedEvent.attendees && selectedEvent.attendees.length > 0 ? `
+                    <div class="mt-3">
+                        <h6>Asistentes</h6>
+                        <ul>
+                            ${selectedEvent.attendees.map(email => `<li>${email}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+            `;
+
+            const modal = new bootstrap.Modal(document.getElementById('eventDetailsModal'));
+            modal.show();
+        }
+
+        function editEvent() {
+            if (!selectedEvent) return;
+
+            // Llenar formulario con datos del evento
+            document.getElementById('eventId').value = selectedEvent.id;
+            document.getElementById('eventTitle').value = selectedEvent.title;
+            document.getElementById('eventType').value = selectedEvent.type;
+            document.getElementById('eventCompany').value = selectedEvent.company;
+            document.getElementById('eventDate').value = selectedEvent.start.split('T')[0];
+            document.getElementById('eventStartTime').value = selectedEvent.start.split('T')[1].slice(0, 5);
+            document.getElementById('eventEndTime').value = selectedEvent.end.split('T')[1].slice(0, 5);
+            document.getElementById('eventLocation').value = selectedEvent.location || '';
+            document.getElementById('eventDescription').value = selectedEvent.description || '';
+            document.getElementById('eventAttendees').value = selectedEvent.attendees ? selectedEvent.attendees.join(', ') : '';
+            document.getElementById('eventPriority').value = selectedEvent.priority;
+            document.getElementById('eventStatus').value = selectedEvent.status;
+            document.getElementById('eventReminder').value = selectedEvent.reminder || 15;
+
+            // Cambiar título del modal
+            document.getElementById('eventModalTitle').textContent = 'Editar Evento';
+
+            // Cerrar modal de detalles y abrir modal de edición
+            const detailsModal = bootstrap.Modal.getInstance(document.getElementById('eventDetailsModal'));
+            detailsModal.hide();
+
+            const editModal = new bootstrap.Modal(document.getElementById('newEventModal'));
+            editModal.show();
+        }
+
+        function deleteEvent() {
+            if (!selectedEvent) return;
+
+            if (confirm('¿Estás seguro de que quieres eliminar este evento?')) {
+                events = events.filter(e => e.id !== selectedEvent.id);
+                
+                updateCalendarEvents();
+                loadTodayAgenda();
+                loadUpcomingImportant();
+
+                const modal = bootstrap.Modal.getInstance(document.getElementById('eventDetailsModal'));
+                modal.hide();
+
+                showNotification('Evento eliminado', 'warning');
+            }
+        }
+
+        function updateEventDate(eventId, newStart, newEnd) {
+            const event = events.find(e => e.id == eventId);
+            if (event) {
+                event.start = newStart.toISOString();
+                event.end = newEnd ? newEnd.toISOString() : event.end;
+                
+                showNotification('Evento actualizado', 'success');
+                loadTodayAgenda();
+                loadUpcomingImportant();
+            }
+        }
+
+        // Otras funciones
+        function addReminder() {
+            showNotification('Abriendo formulario de recordatorio...', 'info');
+        }
+
+        function toggleAvailability(time) {
+            showNotification(`Cambiando disponibilidad para ${time}...`, 'info');
+        }
+
+        function viewAnalytics() {
+            showNotification('Cargando analíticas detalladas...', 'info');
+        }
+
+        function exportCalendar() {
+            showNotification('Exportando calendario...', 'info');
+        }
+
+        // Funciones auxiliares
+        function getCompanyName(companyId) {
+            const companies = {
+                'techstart-ai': 'TechStart AI',
+                'finflow': 'FinFlow Solutions',
+                'ecomart': 'EcoMart',
+                'healthai': 'HealthAI Diagnostics'
+            };
+            return companies[companyId] || 'Sin especificar';
+        }
+
+        function getTypeText(type) {
+            const types = {
+                'meeting': 'Reunión',
+                'due-diligence': 'Due Diligence',
+                'mentorship': 'Sesión de Mentoría',
+                'call': 'Llamada',
+                'pitch': 'Pitch'
+            };
+            return types[type] || type;
+        }
+
+        function getStatusText(status) {
+            const statuses = {
+                'confirmed': 'Confirmado',
+                'pending': 'Pendiente',
+                'cancelled': 'Cancelado'
+            };
+            return statuses[status] || status;
+        }
+
+        function getPriorityText(priority) {
+            const priorities = {
+                'low': 'Baja',
+                'medium': 'Media',
+                'high': 'Alta'
+            };
+            return priorities[priority] || priority;
+        }
+
+        function formatTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleTimeString('es-ES', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('es-ES', {
+                day: '2-digit',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function calculateDuration(start, end) {
+            const startDate = new Date(start);
+            const endDate = new Date(end);
+            const diffMs = endDate - startDate;
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            
+            if (diffHours > 0) {
+                return `${diffHours}h ${diffMinutes}min`;
+            } else {
+                return `${diffMinutes}min`;
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+            
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type === 'info' ? 'primary' : type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+            });
+        }
+
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+            return container;
+        }
+    </script>
+</body>
+</html>

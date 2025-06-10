@@ -1,0 +1,1486 @@
+{% extends "layouts/public.html" %}
+
+{# =========================================================================
+   ERROR 404 PAGE - Página de error no encontrado
+   Ecosistema de Emprendimiento
+   ========================================================================= #}
+
+{% block title %}Página No Encontrada (404) - EcoEmprendimiento{% endblock %}
+
+{% block description %}La página que buscas no existe o ha sido movida. Te ayudamos a encontrar lo que necesitas en nuestro ecosistema de emprendimiento.{% endblock %}
+
+{% block keywords %}error 404, página no encontrada, emprendimiento, navegación, búsqueda{% endblock %}
+
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block og_title %}Página No Encontrada - EcoEmprendimiento{% endblock %}
+{% block og_description %}La página que buscas no existe. Explora nuestros programas de emprendimiento y encuentra lo que necesitas.{% endblock %}
+
+{% block extra_css %}
+{{ super() }}
+<style>
+  /* ========================================================================= 
+     ERROR 404 PAGE STYLES
+     ========================================================================= */
+  
+  /* Variables específicas para página 404 */
+  :root {
+    --error-404-primary: #3b82f6;
+    --error-404-secondary: #8b5cf6;
+    --error-404-accent: #06b6d4;
+    --error-404-warning: #f59e0b;
+    --error-404-bg: linear-gradient(135deg, #eff6ff 0%, #f3e8ff 50%, #ecfeff 100%);
+    --error-404-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.1), 0 10px 10px -5px rgba(59, 130, 246, 0.04);
+  }
+  
+  /* Layout principal del error */
+  .error-page {
+    min-height: 100vh;
+    background: var(--error-404-bg);
+    display: flex;
+    align-items: center;
+    padding: 2rem 0;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .error-page::before {
+    content: '';
+    position: absolute;
+    top: -30%;
+    left: -30%;
+    width: 60%;
+    height: 60%;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+    animation: float 15s ease-in-out infinite;
+  }
+  
+  .error-page::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    right: -30%;
+    width: 60%;
+    height: 60%;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 70%);
+    animation: float 20s ease-in-out infinite reverse;
+  }
+  
+  /* Contenedor principal */
+  .error-container {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  
+  /* Ilustración del error */
+  .error-illustration {
+    margin-bottom: 3rem;
+    position: relative;
+  }
+  
+  .error-code {
+    font-size: 8rem;
+    font-weight: 900;
+    font-family: var(--font-heading);
+    background: linear-gradient(135deg, var(--error-404-primary) 0%, var(--error-404-secondary) 50%, var(--error-404-accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 1rem;
+    animation: glow 4s ease-in-out infinite alternate;
+    text-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+    position: relative;
+  }
+  
+  .error-code::before {
+    content: '404';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent 0%, rgba(59, 130, 246, 0.1) 50%, transparent 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s ease-in-out infinite;
+  }
+  
+  .error-icon {
+    font-size: 4rem;
+    color: var(--error-404-primary);
+    margin-bottom: 2rem;
+    animation: bounce 2s infinite;
+  }
+  
+  .astronaut-illustration {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 2rem;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle cx="100" cy="100" r="80" fill="%233b82f6" opacity="0.1"/><circle cx="100" cy="80" r="30" fill="%233b82f6"/><circle cx="90" cy="75" r="3" fill="white"/><circle cx="110" cy="75" r="3" fill="white"/><rect x="85" y="110" width="30" height="50" rx="15" fill="%238b5cf6"/><circle cx="100" cy="160" r="25" fill="%2306b6d4" opacity="0.3"/></svg>') center/contain no-repeat;
+    animation: floatAstronaut 6s ease-in-out infinite;
+  }
+  
+  /* Contenido del error */
+  .error-content h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 1rem;
+    animation: fadeInUp 1s ease-out;
+  }
+  
+  .error-content .error-subtitle {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--error-404-primary);
+    margin-bottom: 1.5rem;
+    animation: fadeInUp 1s ease-out 0.2s both;
+  }
+  
+  .error-content .error-description {
+    font-size: 1.125rem;
+    color: var(--gray-600);
+    line-height: 1.6;
+    margin-bottom: 3rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    animation: fadeInUp 1s ease-out 0.4s both;
+  }
+  
+  /* Buscador integrado */
+  .search-section {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--gray-200);
+    animation: fadeInUp 1s ease-out 0.6s both;
+  }
+  
+  .search-title {
+    color: var(--gray-900);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .search-title i {
+    color: var(--error-404-primary);
+    margin-right: 0.75rem;
+    font-size: 1.75rem;
+  }
+  
+  .search-form {
+    position: relative;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  
+  .search-input {
+    width: 100%;
+    padding: 1rem 1.5rem 1rem 3rem;
+    border: 2px solid var(--gray-300);
+    border-radius: 0.75rem;
+    font-size: 1.125rem;
+    transition: all 0.3s ease;
+    background: white;
+  }
+  
+  .search-input:focus {
+    outline: none;
+    border-color: var(--error-404-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  .search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-400);
+    font-size: 1.25rem;
+  }
+  
+  .search-button {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--error-404-primary);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+  
+  .search-button:hover {
+    background: var(--primary-dark);
+    transform: translateY(-50%) scale(1.05);
+  }
+  
+  .search-suggestions {
+    margin-top: 1.5rem;
+    text-align: left;
+  }
+  
+  .suggestions-title {
+    font-size: 0.9rem;
+    color: var(--gray-600);
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+  }
+  
+  .suggestion-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+  
+  .suggestion-tag {
+    background: var(--gray-100);
+    color: var(--gray-700);
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+  }
+  
+  .suggestion-tag:hover {
+    background: var(--error-404-primary);
+    color: white;
+    transform: translateY(-2px);
+    text-decoration: none;
+  }
+  
+  /* Acciones disponibles */
+  .error-actions {
+    animation: fadeInUp 1s ease-out 0.8s both;
+  }
+  
+  .action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 3rem;
+  }
+  
+  .btn-404-primary {
+    background: linear-gradient(135deg, var(--error-404-primary) 0%, var(--error-404-secondary) 100%);
+    border: none;
+    color: white;
+    padding: 0.875rem 2rem;
+    font-weight: 600;
+    border-radius: 0.75rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  
+  .btn-404-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--error-404-shadow);
+    color: white;
+    text-decoration: none;
+  }
+  
+  .btn-404-secondary {
+    background: white;
+    border: 2px solid var(--error-404-primary);
+    color: var(--error-404-primary);
+    padding: 0.875rem 2rem;
+    font-weight: 600;
+    border-radius: 0.75rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  
+  .btn-404-secondary:hover {
+    background: var(--error-404-primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--error-404-shadow);
+    text-decoration: none;
+  }
+  
+  .btn i {
+    margin-right: 0.5rem;
+  }
+  
+  /* Sección de páginas populares */
+  .popular-pages {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 3rem;
+    animation: fadeInUp 1s ease-out 1s both;
+  }
+  
+  .popular-title {
+    color: var(--gray-900);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .popular-title i {
+    color: var(--error-404-accent);
+    margin-right: 0.75rem;
+    font-size: 1.75rem;
+  }
+  
+  .popular-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .popular-item {
+    background: var(--gray-50);
+    border: 2px solid var(--gray-200);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: var(--gray-700);
+    transition: all 0.3s ease;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .popular-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+    transition: all 0.6s ease;
+  }
+  
+  .popular-item:hover::before {
+    left: 100%;
+  }
+  
+  .popular-item:hover {
+    border-color: var(--error-404-primary);
+    color: var(--error-404-primary);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    text-decoration: none;
+    background: white;
+  }
+  
+  .popular-item i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: block;
+    transition: all 0.3s ease;
+  }
+  
+  .popular-item:hover i {
+    transform: scale(1.1);
+    color: var(--error-404-primary);
+  }
+  
+  .popular-item h4 {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    font-size: 1.125rem;
+  }
+  
+  .popular-item p {
+    font-size: 0.9rem;
+    color: var(--gray-600);
+    line-height: 1.5;
+    margin: 0;
+  }
+  
+  /* Sección de estadísticas */
+  .stats-section {
+    background: linear-gradient(135deg, var(--error-404-primary) 0%, var(--error-404-secondary) 100%);
+    color: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    text-align: center;
+    animation: fadeInUp 1s ease-out 1.2s both;
+  }
+  
+  .stats-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+  }
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 2rem;
+  }
+  
+  .stat-item {
+    text-align: center;
+  }
+  
+  .stat-number {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+  
+  .stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+  }
+  
+  /* Información de contacto */
+  .contact-section {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+    text-align: center;
+    animation: fadeInUp 1s ease-out 1.4s both;
+  }
+  
+  .contact-title {
+    color: var(--gray-900);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .contact-title i {
+    color: var(--error-404-warning);
+    margin-right: 0.75rem;
+    font-size: 1.75rem;
+  }
+  
+  .contact-description {
+    margin-bottom: 2rem;
+    color: var(--gray-600);
+  }
+  
+  .contact-methods {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .contact-method {
+    display: flex;
+    align-items: center;
+    color: var(--error-404-primary);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    border: 2px solid var(--gray-200);
+    background: white;
+  }
+  
+  .contact-method:hover {
+    background: var(--error-404-primary);
+    border-color: var(--error-404-primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    text-decoration: none;
+  }
+  
+  .contact-method i {
+    margin-right: 0.75rem;
+    font-size: 1.25rem;
+  }
+  
+  /* Animaciones */
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-15px) rotate(3deg);
+    }
+  }
+  
+  @keyframes floatAstronaut {
+    0%, 100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-10px) rotate(5deg);
+    }
+  }
+  
+  @keyframes glow {
+    0% {
+      text-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+    }
+    100% {
+      text-shadow: 0 4px 20px rgba(59, 130, 246, 0.6), 0 0 30px rgba(59, 130, 246, 0.3);
+    }
+  }
+  
+  @keyframes shimmer {
+    0% {
+      background-position: -200px 0;
+    }
+    100% {
+      background-position: 200px 0;
+    }
+  }
+  
+  @keyframes bounce {
+    0%, 20%, 53%, 80%, 100% {
+      transform: translate3d(0, 0, 0);
+    }
+    40%, 43% {
+      transform: translate3d(0, -8px, 0);
+    }
+    70% {
+      transform: translate3d(0, -4px, 0);
+    }
+    90% {
+      transform: translate3d(0, -2px, 0);
+    }
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .error-code {
+      font-size: 6rem;
+    }
+    
+    .error-content h1 {
+      font-size: 2rem;
+    }
+    
+    .error-content .error-subtitle {
+      font-size: 1.25rem;
+    }
+    
+    .search-section,
+    .popular-pages,
+    .stats-section,
+    .contact-section {
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .action-buttons {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .btn-404-primary,
+    .btn-404-secondary {
+      width: 100%;
+      max-width: 300px;
+      justify-content: center;
+    }
+    
+    .popular-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    
+    .contact-methods {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .suggestion-tags {
+      justify-content: center;
+    }
+    
+    .astronaut-illustration {
+      width: 150px;
+      height: 150px;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .error-code {
+      font-size: 4.5rem;
+    }
+    
+    .error-content h1 {
+      font-size: 1.75rem;
+    }
+    
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .error-page {
+      padding: 1rem 0;
+    }
+    
+    .search-input {
+      padding: 0.875rem 1.25rem 0.875rem 2.5rem;
+      font-size: 1rem;
+    }
+    
+    .search-button {
+      padding: 0.625rem 1.25rem;
+    }
+  }
+  
+  /* Modo oscuro */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --error-404-bg: linear-gradient(135deg, #1e293b 0%, #374151 50%, #4b5563 100%);
+    }
+    
+    .search-section,
+    .popular-pages,
+    .contact-section {
+      background: #1f2937;
+      color: #e5e7eb;
+    }
+    
+    .popular-item {
+      background: #374151;
+      border-color: #4b5563;
+      color: #e5e7eb;
+    }
+    
+    .popular-item:hover {
+      background: #4b5563;
+      border-color: var(--error-404-primary);
+      color: var(--error-404-primary);
+    }
+    
+    .search-input {
+      background: #374151;
+      border-color: #4b5563;
+      color: #e5e7eb;
+    }
+    
+    .search-input:focus {
+      border-color: var(--error-404-primary);
+    }
+    
+    .suggestion-tag {
+      background: #374151;
+      color: #e5e7eb;
+    }
+    
+    .contact-method {
+      background: #374151;
+      border-color: #4b5563;
+      color: #e5e7eb;
+    }
+  }
+  
+  /* Estados de carga */
+  .loading {
+    opacity: 0.7;
+    pointer-events: none;
+  }
+  
+  .search-loading {
+    position: relative;
+  }
+  
+  .search-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 4rem;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--gray-300);
+    border-top: 2px solid var(--error-404-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+  }
+  
+  /* Impresión */
+  @media print {
+    .error-page::before,
+    .error-page::after {
+      display: none;
+    }
+    
+    .action-buttons,
+    .search-section,
+    .contact-section {
+      display: none;
+    }
+    
+    .error-page {
+      background: white;
+    }
+    
+    .error-code {
+      color: #000;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block hero %}
+<!-- No hero para página de error -->
+{% endblock %}
+
+{% block content %}
+<div class="error-page">
+  <div class="error-container">
+    <!-- Ilustración del Error -->
+    <div class="error-illustration">
+      <div class="astronaut-illustration" aria-hidden="true"></div>
+      <div class="error-code" aria-label="Error 404">404</div>
+    </div>
+    
+    <!-- Contenido Principal del Error -->
+    <div class="error-content">
+      <h1>¡Ups! Página No Encontrada</h1>
+      <p class="error-subtitle">Parece que te has perdido en el espacio</p>
+      <p class="error-description">
+        La página que buscas no existe, puede haber sido movida o el enlace está roto. 
+        Pero no te preocupes, te ayudamos a encontrar lo que necesitas.
+      </p>
+    </div>
+    
+    <!-- Buscador Integrado -->
+    <div class="search-section">
+      <h2 class="search-title">
+        <i class="fas fa-search" aria-hidden="true"></i>
+        ¿Qué estabas buscando?
+      </h2>
+      
+      <form class="search-form" id="searchForm" onsubmit="performSearch(event)">
+        <div class="position-relative">
+          <i class="fas fa-search search-icon" aria-hidden="true"></i>
+          <input 
+            type="text" 
+            class="search-input" 
+            id="searchInput"
+            placeholder="Buscar emprendedores, programas, recursos..."
+            autocomplete="off"
+            aria-label="Buscar en el sitio"
+          >
+          <button type="submit" class="search-button">
+            Buscar
+          </button>
+        </div>
+      </form>
+      
+      <div class="search-suggestions">
+        <p class="suggestions-title">Búsquedas populares:</p>
+        <div class="suggestion-tags">
+          <a href="{{ url_for('public.programs') }}" class="suggestion-tag">Programas</a>
+          <a href="{{ url_for('public.entrepreneurs') }}" class="suggestion-tag">Emprendedores</a>
+          <a href="{{ url_for('public.mentorship') }}" class="suggestion-tag">Mentoría</a>
+          <a href="{{ url_for('public.incubation') }}" class="suggestion-tag">Incubación</a>
+          <a href="{{ url_for('public.resources') }}" class="suggestion-tag">Recursos</a>
+          <a href="{{ url_for('public.success_stories') }}" class="suggestion-tag">Casos de Éxito</a>
+          <a href="{{ url_for('auth.register') }}" class="suggestion-tag">Registro</a>
+          <a href="{{ url_for('public.contact') }}" class="suggestion-tag">Contacto</a>
+        </div>
+      </div>
+      
+      <!-- Resultados de búsqueda dinámicos -->
+      <div id="searchResults" class="mt-3" style="display: none;">
+        <div class="search-results-container">
+          <!-- Los resultados se cargarán aquí -->
+        </div>
+      </div>
+    </div>
+    
+    <!-- Acciones Disponibles -->
+    <div class="error-actions">
+      <div class="action-buttons">
+        <a href="{{ url_for('main.index') }}" class="btn-404-primary">
+          <i class="fas fa-home" aria-hidden="true"></i>
+          Ir al Inicio
+        </a>
+        <a href="javascript:history.back()" class="btn-404-secondary">
+          <i class="fas fa-arrow-left" aria-hidden="true"></i>
+          Volver Atrás
+        </a>
+        <a href="#" onclick="reportBrokenLink(); return false;" class="btn-404-secondary">
+          <i class="fas fa-bug" aria-hidden="true"></i>
+          Reportar Enlace Roto
+        </a>
+      </div>
+    </div>
+    
+    <!-- Páginas Populares -->
+    <div class="popular-pages">
+      <h2 class="popular-title">
+        <i class="fas fa-fire" aria-hidden="true"></i>
+        Páginas Más Visitadas
+      </h2>
+      
+      <div class="popular-grid">
+        <a href="{{ url_for('public.programs') }}" class="popular-item">
+          <i class="fas fa-graduation-cap" aria-hidden="true"></i>
+          <h4>Programas</h4>
+          <p>Explora nuestros programas de incubación y aceleración</p>
+        </a>
+        
+        <a href="{{ url_for('public.entrepreneurs') }}" class="popular-item">
+          <i class="fas fa-users" aria-hidden="true"></i>
+          <h4>Emprendedores</h4>
+          <p>Conoce a nuestra comunidad de emprendedores</p>
+        </a>
+        
+        <a href="{{ url_for('public.success_stories') }}" class="popular-item">
+          <i class="fas fa-trophy" aria-hidden="true"></i>
+          <h4>Casos de Éxito</h4>
+          <p>Inspírate con historias de emprendedores exitosos</p>
+        </a>
+        
+        <a href="{{ url_for('public.mentorship') }}" class="popular-item">
+          <i class="fas fa-chalkboard-teacher" aria-hidden="true"></i>
+          <h4>Mentoría</h4>
+          <p>Conecta con mentores expertos en tu industria</p>
+        </a>
+        
+        <a href="{{ url_for('public.resources') }}" class="popular-item">
+          <i class="fas fa-book" aria-hidden="true"></i>
+          <h4>Recursos</h4>
+          <p>Accede a herramientas y guías para emprendedores</p>
+        </a>
+        
+        <a href="{{ url_for('auth.register') }}" class="popular-item">
+          <i class="fas fa-user-plus" aria-hidden="true"></i>
+          <h4>Únete Ahora</h4>
+          <p>Regístrate y comienza tu viaje emprendedor</p>
+        </a>
+      </div>
+    </div>
+    
+    <!-- Estadísticas -->
+    <div class="stats-section">
+      <h3 class="stats-title">Nuestro Ecosistema en Números</h3>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-number" data-counter="500">0</span>
+          <span class="stat-label">Emprendedores</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" data-counter="150">0</span>
+          <span class="stat-label">Mentores</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" data-counter="250">0</span>
+          <span class="stat-label">Proyectos</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" data-counter="85">0</span>
+          <span class="stat-label">% Éxito</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Información de Contacto -->
+    <div class="contact-section">
+      <h3 class="contact-title">
+        <i class="fas fa-life-ring" aria-hidden="true"></i>
+        ¿Necesitas Ayuda?
+      </h3>
+      <p class="contact-description">
+        Si no encuentras lo que buscas, nuestro equipo está aquí para ayudarte.
+      </p>
+      <div class="contact-methods">
+        <a href="mailto:info@ecoemprendimiento.com" class="contact-method">
+          <i class="fas fa-envelope" aria-hidden="true"></i>
+          <span>Enviar Email</span>
+        </a>
+        <a href="{{ url_for('public.contact') }}" class="contact-method">
+          <i class="fas fa-comments" aria-hidden="true"></i>
+          <span>Chat en Vivo</span>
+        </a>
+        <a href="{{ url_for('public.help') }}" class="contact-method">
+          <i class="fas fa-question-circle" aria-hidden="true"></i>
+          <span>Centro de Ayuda</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script>
+// =========================================================================
+// ERROR 404 PAGE JAVASCRIPT
+// =========================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Log del error para analytics
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'page_view', {
+      'page_title': 'Error 404 - Página No Encontrada',
+      'page_location': window.location.href,
+      'custom_parameter': 'error_page'
+    });
+    
+    // Track 404 error específicamente
+    gtag('event', 'exception', {
+      'description': 'Page not found: ' + window.location.pathname,
+      'fatal': false
+    });
+  }
+  
+  // Reporte del error para monitoring
+  reportError404();
+  
+  // Inicializar funcionalidades
+  initializeSearch();
+  initializeCounters();
+  setupKeyboardShortcuts();
+  trackUserBehavior();
+  
+  // Auto-focus en el campo de búsqueda
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    setTimeout(() => searchInput.focus(), 500);
+  }
+  
+  // Sugerir contenido basado en la URL
+  suggestContentBasedOnURL();
+});
+
+// Reportar error 404
+function reportError404() {
+  const errorData = {
+    error_type: '404',
+    url: window.location.href,
+    referrer: document.referrer,
+    user_agent: navigator.userAgent,
+    timestamp: new Date().toISOString(),
+    path: window.location.pathname,
+    search: window.location.search
+  };
+  
+  fetch('/api/v1/errors/report', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(errorData)
+  }).catch(error => {
+    console.log('Error reporting failed:', error);
+  });
+}
+
+// Inicializar búsqueda
+function initializeSearch() {
+  const searchInput = document.getElementById('searchInput');
+  const searchResults = document.getElementById('searchResults');
+  let searchTimeout;
+  
+  if (searchInput) {
+    // Búsqueda en tiempo real
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      const query = this.value.trim();
+      
+      if (query.length >= 2) {
+        searchTimeout = setTimeout(() => {
+          performLiveSearch(query);
+        }, 300);
+      } else {
+        searchResults.style.display = 'none';
+      }
+    });
+    
+    // Limpiar resultados al perder foco
+    searchInput.addEventListener('blur', function() {
+      setTimeout(() => {
+        searchResults.style.display = 'none';
+      }, 200);
+    });
+  }
+}
+
+// Realizar búsqueda en vivo
+function performLiveSearch(query) {
+  const searchResults = document.getElementById('searchResults');
+  const searchForm = document.getElementById('searchForm');
+  
+  // Mostrar indicador de carga
+  searchForm.classList.add('search-loading');
+  
+  fetch(`/api/v1/search?q=${encodeURIComponent(query)}&limit=5`)
+    .then(response => response.json())
+    .then(data => {
+      displaySearchResults(data.results);
+      searchForm.classList.remove('search-loading');
+    })
+    .catch(error => {
+      console.error('Search error:', error);
+      searchForm.classList.remove('search-loading');
+      searchResults.innerHTML = '<div class="alert alert-warning">Error en la búsqueda. Intenta más tarde.</div>';
+      searchResults.style.display = 'block';
+    });
+}
+
+// Mostrar resultados de búsqueda
+function displaySearchResults(results) {
+  const searchResults = document.getElementById('searchResults');
+  const container = searchResults.querySelector('.search-results-container');
+  
+  if (results.length === 0) {
+    container.innerHTML = `
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        No se encontraron resultados. Prueba con términos diferentes.
+      </div>
+    `;
+    searchResults.style.display = 'block';
+    return;
+  }
+  
+  let html = '<div class="list-group">';
+  results.forEach(result => {
+    html += `
+      <a href="${result.url}" class="list-group-item list-group-item-action">
+        <div class="d-flex align-items-center">
+          <i class="${result.icon} text-primary me-3"></i>
+          <div class="flex-grow-1">
+            <h6 class="mb-1">${result.title}</h6>
+            <small class="text-muted">${result.description}</small>
+          </div>
+          <span class="badge bg-${result.type === 'page' ? 'primary' : 'secondary'}">${result.type}</span>
+        </div>
+      </a>
+    `;
+  });
+  html += '</div>';
+  
+  container.innerHTML = html;
+  searchResults.style.display = 'block';
+}
+
+// Realizar búsqueda desde el formulario
+function performSearch(event) {
+  event.preventDefault();
+  const searchInput = document.getElementById('searchInput');
+  const query = searchInput.value.trim();
+  
+  if (query) {
+    // Redirigir a página de resultados de búsqueda
+    window.location.href = `/buscar?q=${encodeURIComponent(query)}`;
+  }
+}
+
+// Inicializar contadores animados
+function initializeCounters() {
+  const counters = document.querySelectorAll('[data-counter]');
+  const observerOptions = {
+    threshold: 0.5
+  };
+  
+  const observer = new IntersectionObserver(function(entries) {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateCounter(entry.target);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, observerOptions);
+  
+  counters.forEach(counter => {
+    observer.observe(counter);
+  });
+}
+
+// Animar contador
+function animateCounter(element) {
+  const target = parseInt(element.getAttribute('data-counter'));
+  const duration = 2000;
+  const step = target / (duration / 16);
+  let current = 0;
+  
+  const timer = setInterval(() => {
+    current += step;
+    if (current >= target) {
+      current = target;
+      clearInterval(timer);
+    }
+    element.textContent = Math.floor(current);
+  }, 16);
+}
+
+// Configurar shortcuts de teclado
+function setupKeyboardShortcuts() {
+  document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + K = Focus en búsqueda
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      document.getElementById('searchInput').focus();
+    }
+    
+    // Alt + H = Ir al inicio
+    if (e.altKey && e.key === 'h') {
+      e.preventDefault();
+      window.location.href = '{{ url_for("main.index") }}';
+    }
+    
+    // Alt + P = Ver programas
+    if (e.altKey && e.key === 'p') {
+      e.preventDefault();
+      window.location.href = '{{ url_for("public.programs") }}';
+    }
+    
+    // Alt + C = Contacto
+    if (e.altKey && e.key === 'c') {
+      e.preventDefault();
+      window.location.href = '{{ url_for("public.contact") }}';
+    }
+    
+    // Escape = Limpiar búsqueda
+    if (e.key === 'Escape') {
+      const searchInput = document.getElementById('searchInput');
+      const searchResults = document.getElementById('searchResults');
+      searchInput.value = '';
+      searchResults.style.display = 'none';
+    }
+  });
+}
+
+// Rastrear comportamiento del usuario
+function trackUserBehavior() {
+  // Track clicks en elementos populares
+  document.querySelectorAll('.popular-item').forEach(item => {
+    item.addEventListener('click', function() {
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'click', {
+          'event_category': '404_page',
+          'event_label': 'popular_page_click',
+          'value': this.href
+        });
+      }
+    });
+  });
+  
+  // Track uso de búsqueda
+  const searchInput = document.getElementById('searchInput');
+  searchInput.addEventListener('input', function() {
+    if (this.value.length >= 3) {
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'search', {
+          'search_term': this.value,
+          'event_category': '404_page'
+        });
+      }
+    }
+  });
+  
+  // Track tiempo en página
+  const startTime = Date.now();
+  window.addEventListener('beforeunload', function() {
+    const timeSpent = Date.now() - startTime;
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'timing_complete', {
+        'name': '404_page_time',
+        'value': timeSpent
+      });
+    }
+  });
+}
+
+// Sugerir contenido basado en la URL
+function suggestContentBasedOnURL() {
+  const path = window.location.pathname.toLowerCase();
+  const suggestions = [];
+  
+  if (path.includes('programa') || path.includes('program')) {
+    suggestions.push({
+      text: '¿Buscabas información sobre programas?',
+      link: '{{ url_for("public.programs") }}',
+      action: 'Ver Programas'
+    });
+  }
+  
+  if (path.includes('emprendedor') || path.includes('entrepreneur')) {
+    suggestions.push({
+      text: '¿Te interesa conocer emprendedores?',
+      link: '{{ url_for("public.entrepreneurs") }}',
+      action: 'Ver Emprendedores'
+    });
+  }
+  
+  if (path.includes('mentor') || path.includes('mentoria')) {
+    suggestions.push({
+      text: '¿Buscas información sobre mentoría?',
+      link: '{{ url_for("public.mentorship") }}',
+      action: 'Conocer Mentoría'
+    });
+  }
+  
+  if (path.includes('login') || path.includes('signin')) {
+    suggestions.push({
+      text: '¿Quieres iniciar sesión?',
+      link: '{{ url_for("auth.login") }}',
+      action: 'Iniciar Sesión'
+    });
+  }
+  
+  if (path.includes('register') || path.includes('signup')) {
+    suggestions.push({
+      text: '¿Te quieres registrar?',
+      link: '{{ url_for("auth.register") }}',
+      action: 'Registrarse'
+    });
+  }
+  
+  // Mostrar sugerencias si hay alguna
+  if (suggestions.length > 0) {
+    setTimeout(() => {
+      showContextualSuggestions(suggestions);
+    }, 3000);
+  }
+}
+
+// Mostrar sugerencias contextuales
+function showContextualSuggestions(suggestions) {
+  const container = document.querySelector('.error-container');
+  const suggestionDiv = document.createElement('div');
+  suggestionDiv.className = 'alert alert-info mt-4 animate__animated animate__fadeInUp';
+  
+  let html = `
+    <div class="d-flex align-items-start">
+      <i class="fas fa-lightbulb text-warning me-3 fs-4 mt-1"></i>
+      <div class="flex-grow-1">
+        <h6 class="alert-heading">💡 Sugerencia Inteligente</h6>
+  `;
+  
+  suggestions.forEach(suggestion => {
+    html += `
+      <p class="mb-2">${suggestion.text}</p>
+      <a href="${suggestion.link}" class="btn btn-outline-primary btn-sm me-2 mb-2">
+        ${suggestion.action}
+      </a>
+    `;
+  });
+  
+  html += `
+      </div>
+      <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
+    </div>
+  `;
+  
+  suggestionDiv.innerHTML = html;
+  container.appendChild(suggestionDiv);
+}
+
+// Reportar enlace roto
+function reportBrokenLink() {
+  const modal = document.createElement('div');
+  modal.className = 'modal fade';
+  modal.innerHTML = `
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-bug text-warning me-2"></i>
+            Reportar Enlace Roto
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="brokenLinkForm">
+            <div class="mb-3">
+              <label for="brokenUrl" class="form-label">URL que no funciona:</label>
+              <input type="url" class="form-control" id="brokenUrl" value="${window.location.href}" readonly>
+            </div>
+            <div class="mb-3">
+              <label for="expectedContent" class="form-label">¿Qué esperabas encontrar?</label>
+              <textarea class="form-control" id="expectedContent" rows="3" 
+                        placeholder="Describe qué información o página esperabas encontrar..."></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="sourceLink" class="form-label">¿Desde dónde llegaste? (opcional)</label>
+              <input type="url" class="form-control" id="sourceLink" value="${document.referrer}" 
+                     placeholder="URL de la página anterior">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="submitBrokenLinkReport()">
+            <i class="fas fa-paper-plane me-1"></i>Enviar Reporte
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  const modalInstance = new bootstrap.Modal(modal);
+  modalInstance.show();
+  
+  modal.addEventListener('hidden.bs.modal', function() {
+    document.body.removeChild(modal);
+  });
+}
+
+// Enviar reporte de enlace roto
+function submitBrokenLinkReport() {
+  const form = document.getElementById('brokenLinkForm');
+  const brokenUrl = document.getElementById('brokenUrl').value;
+  const expectedContent = document.getElementById('expectedContent').value;
+  const sourceLink = document.getElementById('sourceLink').value;
+  
+  const reportData = {
+    type: 'broken_link',
+    broken_url: brokenUrl,
+    expected_content: expectedContent,
+    source_url: sourceLink,
+    user_agent: navigator.userAgent,
+    timestamp: new Date().toISOString(),
+    referrer: document.referrer
+  };
+  
+  fetch('/api/v1/errors/report-broken-link', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(reportData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('Reporte enviado exitosamente. ¡Gracias por ayudarnos a mejorar!');
+      bootstrap.Modal.getInstance(document.querySelector('.modal')).hide();
+    } else {
+      alert('Error al enviar el reporte. Por favor intenta más tarde.');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error al enviar el reporte. Por favor intenta más tarde.');
+  });
+}
+
+// Mostrar ayuda adicional después de un tiempo
+setTimeout(function() {
+  const helpTip = document.createElement('div');
+  helpTip.className = 'alert alert-light border-primary mt-4 animate__animated animate__fadeInUp';
+  helpTip.innerHTML = `
+    <div class="d-flex align-items-center">
+      <i class="fas fa-rocket text-primary me-3 fs-4"></i>
+      <div>
+        <strong>🚀 ¿Eres nuevo aquí?</strong> 
+        <a href="{{ url_for('public.about') }}" class="alert-link">Conoce más sobre nosotros</a> 
+        o <a href="{{ url_for('auth.register') }}" class="alert-link">únete a nuestra comunidad</a> 
+        de emprendedores innovadores.
+      </div>
+    </div>
+  `;
+  
+  const container = document.querySelector('.error-container');
+  if (container) {
+    container.appendChild(helpTip);
+  }
+}, 8000);
+
+// Accessibility improvements
+document.addEventListener('DOMContentLoaded', function() {
+  // Anunciar el error a screen readers
+  const announcement = document.createElement('div');
+  announcement.setAttribute('aria-live', 'polite');
+  announcement.setAttribute('aria-atomic', 'true');
+  announcement.className = 'sr-only';
+  announcement.textContent = 'Error 404: La página que buscas no fue encontrada. Usa el buscador o navega a una página válida.';
+  document.body.appendChild(announcement);
+  
+  // Mejorar navegación con Tab
+  const searchInput = document.getElementById('searchInput');
+  searchInput.setAttribute('aria-describedby', 'search-help');
+  
+  const searchHelp = document.createElement('div');
+  searchHelp.id = 'search-help';
+  searchHelp.className = 'sr-only';
+  searchHelp.textContent = 'Escribe para buscar contenido en el sitio. Los resultados aparecerán automáticamente.';
+  searchInput.parentNode.appendChild(searchHelp);
+});
+
+// Performance monitoring
+window.addEventListener('load', function() {
+  if ('performance' in window) {
+    const perfData = performance.getEntriesByType('navigation')[0];
+    const loadTime = perfData.loadEventEnd - perfData.loadEventStart;
+    
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'timing_complete', {
+        'name': '404_page_load',
+        'value': loadTime
+      });
+    }
+  }
+});
+</script>
+{% endblock %}

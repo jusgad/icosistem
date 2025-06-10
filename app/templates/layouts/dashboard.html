@@ -1,0 +1,1796 @@
+{% extends "base.html" %}
+
+{# =========================================================================
+   DASHBOARD LAYOUT - Layout para dashboard de usuarios
+   Ecosistema de Emprendimiento - Multi-role Dashboard
+   ========================================================================= #}
+
+{% block title %}Dashboard - {{ current_user.full_name }} - {{ super() }}{% endblock %}
+
+{% block extra_css %}
+{{ super() }}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+<style>
+  /* ========================================================================= 
+     DASHBOARD LAYOUT STYLES
+     ========================================================================= */
+  
+  /* Variables CSS */
+  :root {
+    --dashboard-sidebar-width: 300px;
+    --dashboard-sidebar-collapsed-width: 80px;
+    --dashboard-header-height: 75px;
+    --dashboard-primary: #007bff;
+    --dashboard-secondary: #6c757d;
+    --dashboard-success: #28a745;
+    --dashboard-info: #17a2b8;
+    --dashboard-warning: #ffc107;
+    --dashboard-danger: #dc3545;
+    --dashboard-light: #f8f9fa;
+    --dashboard-dark: #343a40;
+    --dashboard-sidebar-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --dashboard-card-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    --dashboard-card-shadow-hover: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    --dashboard-border-radius: 0.75rem;
+    --dashboard-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Layout Principal */
+  .dashboard-wrapper {
+    display: flex;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  }
+  
+  /* Sidebar */
+  .dashboard-sidebar {
+    width: var(--dashboard-sidebar-width);
+    background: var(--dashboard-sidebar-bg);
+    color: white;
+    transition: var(--dashboard-transition);
+    position: fixed;
+    height: 100vh;
+    z-index: 1000;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dashboard-sidebar.collapsed {
+    width: var(--dashboard-sidebar-collapsed-width);
+  }
+  
+  .dashboard-sidebar::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .dashboard-sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .dashboard-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+  }
+  
+  /* Profile Section en Sidebar */
+  .dashboard-sidebar-profile {
+    padding: 2rem 1.5rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .dashboard-profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    transition: var(--dashboard-transition);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .dashboard-sidebar.collapsed .dashboard-profile-avatar {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .dashboard-profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .dashboard-profile-avatar .avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 600;
+  }
+  
+  .dashboard-sidebar.collapsed .dashboard-profile-avatar .avatar-placeholder {
+    font-size: 1.5rem;
+  }
+  
+  .dashboard-profile-info {
+    transition: var(--dashboard-transition);
+  }
+  
+  .dashboard-sidebar.collapsed .dashboard-profile-info {
+    opacity: 0;
+    height: 0;
+    overflow: hidden;
+  }
+  
+  .dashboard-profile-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  
+  .dashboard-profile-role {
+    font-size: 0.875rem;
+    opacity: 0.8;
+    margin-bottom: 1rem;
+  }
+  
+  .dashboard-profile-badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: inline-block;
+  }
+  
+  /* Navegación del Sidebar */
+  .dashboard-sidebar-nav {
+    padding: 1.5rem 0;
+  }
+  
+  .dashboard-nav-section {
+    margin-bottom: 2rem;
+  }
+  
+  .dashboard-nav-section:last-child {
+    margin-bottom: 0;
+  }
+  
+  .dashboard-nav-section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 0 1.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    transition: var(--dashboard-transition);
+  }
+  
+  .dashboard-sidebar.collapsed .dashboard-nav-section-title {
+    opacity: 0;
+    height: 0;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .dashboard-nav-item {
+    position: relative;
+    margin-bottom: 0.25rem;
+  }
+  
+  .dashboard-nav-link {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    transition: var(--dashboard-transition);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .dashboard-nav-link::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0;
+    background: rgba(255, 255, 255, 0.1);
+    transition: var(--dashboard-transition);
+  }
+  
+  .dashboard-nav-link:hover {
+    color: white;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
+  }
+  
+  .dashboard-nav-link:hover::before {
+    width: 4px;
+  }
+  
+  .dashboard-nav-link.active {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    font-weight: 600;
+  }
+  
+  .dashboard-nav-link.active::before {
+    width: 4px;
+    background: white;
+  }
+  
+  .dashboard-nav-icon {
+    font-size: 1.25rem;
+    width: 24px;
+    margin-right: 1rem;
+    text-align: center;
+    transition: var(--dashboard-transition);
+  }
+  
+  .dashboard-nav-text {
+    flex: 1;
+    transition: var(--dashboard-transition);
+  }
+  
+  .dashboard-sidebar.collapsed .dashboard-nav-text {
+    opacity: 0;
+    width: 0;
+    margin: 0;
+  }
+  
+  .dashboard-sidebar.collapsed .dashboard-nav-icon {
+    margin-right: 0;
+  }
+  
+  /* Badge de notificaciones */
+  .dashboard-nav-badge {
+    background: var(--dashboard-danger);
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 50px;
+    min-width: 22px;
+    text-align: center;
+    transition: var(--dashboard-transition);
+    animation: pulse 2s infinite;
+  }
+  
+  .dashboard-sidebar.collapsed .dashboard-nav-badge {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    transform: scale(0.8);
+  }
+  
+  /* Área principal */
+  .dashboard-main {
+    flex: 1;
+    margin-left: var(--dashboard-sidebar-width);
+    transition: var(--dashboard-transition);
+    min-height: 100vh;
+    background: var(--dashboard-light);
+  }
+  
+  .dashboard-main.expanded {
+    margin-left: var(--dashboard-sidebar-collapsed-width);
+  }
+  
+  /* Header del dashboard */
+  .dashboard-header {
+    background: white;
+    height: var(--dashboard-header-height);
+    display: flex;
+    align-items: center;
+    padding: 0 2rem;
+    box-shadow: var(--dashboard-card-shadow);
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    backdrop-filter: blur(10px);
+  }
+  
+  .dashboard-header-toggle {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: var(--dashboard-dark);
+    margin-right: 1.5rem;
+    padding: 0.75rem;
+    border-radius: var(--dashboard-border-radius);
+    transition: var(--dashboard-transition);
+  }
+  
+  .dashboard-header-toggle:hover {
+    background: var(--dashboard-light);
+    transform: scale(1.1);
+  }
+  
+  .dashboard-header-welcome {
+    flex: 1;
+  }
+  
+  .dashboard-welcome-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--dashboard-dark);
+    margin: 0;
+  }
+  
+  .dashboard-welcome-subtitle {
+    font-size: 0.875rem;
+    color: var(--dashboard-secondary);
+    margin: 0;
+  }
+  
+  .dashboard-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .dashboard-action-btn {
+    position: relative;
+    background: none;
+    border: none;
+    padding: 0.75rem;
+    border-radius: var(--dashboard-border-radius);
+    color: var(--dashboard-secondary);
+    transition: var(--dashboard-transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .dashboard-action-btn:hover {
+    background: var(--dashboard-light);
+    color: var(--dashboard-primary);
+    transform: translateY(-2px);
+  }
+  
+  .dashboard-action-btn .badge {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.4rem;
+  }
+  
+  /* Breadcrumb personalizado */
+  .dashboard-breadcrumb {
+    background: white;
+    padding: 1.5rem 2rem;
+    margin: 0;
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  .dashboard-breadcrumb .breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .dashboard-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
+    content: '\f105';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: var(--dashboard-secondary);
+  }
+  
+  /* Contenido principal */
+  .dashboard-content {
+    padding: 2rem;
+  }
+  
+  /* Widget Grid */
+  .dashboard-widgets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .dashboard-widget {
+    background: white;
+    border-radius: var(--dashboard-border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--dashboard-card-shadow);
+    transition: var(--dashboard-transition);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .dashboard-widget::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--dashboard-primary), var(--dashboard-info));
+  }
+  
+  .dashboard-widget:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--dashboard-card-shadow-hover);
+  }
+  
+  .dashboard-widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: between;
+    margin-bottom: 1.5rem;
+  }
+  
+  .dashboard-widget-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--dashboard-dark);
+    margin: 0;
+    flex: 1;
+  }
+  
+  .dashboard-widget-action {
+    color: var(--dashboard-secondary);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: var(--dashboard-transition);
+  }
+  
+  .dashboard-widget-action:hover {
+    color: var(--dashboard-primary);
+  }
+  
+  /* Stats Cards */
+  .dashboard-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .dashboard-stat-card {
+    background: white;
+    border-radius: var(--dashboard-border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--dashboard-card-shadow);
+    transition: var(--dashboard-transition);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .dashboard-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+  }
+  
+  .dashboard-stat-card.primary::before {
+    background: var(--dashboard-primary);
+  }
+  
+  .dashboard-stat-card.success::before {
+    background: var(--dashboard-success);
+  }
+  
+  .dashboard-stat-card.info::before {
+    background: var(--dashboard-info);
+  }
+  
+  .dashboard-stat-card.warning::before {
+    background: var(--dashboard-warning);
+  }
+  
+  .dashboard-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--dashboard-card-shadow-hover);
+  }
+  
+  .dashboard-stat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  
+  .dashboard-stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--dashboard-border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+  }
+  
+  .dashboard-stat-value {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--dashboard-dark);
+    margin-bottom: 0.5rem;
+    line-height: 1;
+  }
+  
+  .dashboard-stat-label {
+    color: var(--dashboard-secondary);
+    font-weight: 500;
+    margin-bottom: 1rem;
+  }
+  
+  .dashboard-stat-trend {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  
+  .dashboard-stat-trend.positive {
+    color: var(--dashboard-success);
+  }
+  
+  .dashboard-stat-trend.negative {
+    color: var(--dashboard-danger);
+  }
+  
+  .dashboard-stat-trend .trend-icon {
+    margin-right: 0.5rem;
+  }
+  
+  /* Quick Actions */
+  .dashboard-quick-actions {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+  
+  .dashboard-quick-action {
+    background: white;
+    border: 2px solid var(--dashboard-light);
+    border-radius: var(--dashboard-border-radius);
+    padding: 1.5rem;
+    text-decoration: none;
+    color: var(--dashboard-dark);
+    transition: var(--dashboard-transition);
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .dashboard-quick-action:hover {
+    border-color: var(--dashboard-primary);
+    color: var(--dashboard-primary);
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: var(--dashboard-card-shadow);
+  }
+  
+  .dashboard-quick-action-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--dashboard-border-radius);
+    background: var(--dashboard-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.25rem;
+    transition: var(--dashboard-transition);
+  }
+  
+  .dashboard-quick-action:hover .dashboard-quick-action-icon {
+    background: var(--dashboard-primary);
+    color: white;
+  }
+  
+  /* Notifications Panel */
+  .dashboard-notifications {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 9999;
+    max-width: 400px;
+  }
+  
+  .dashboard-notification {
+    background: white;
+    border-radius: var(--dashboard-border-radius);
+    box-shadow: var(--dashboard-card-shadow-hover);
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-left: 4px solid var(--dashboard-info);
+    animation: slideInRight 0.5s ease;
+  }
+  
+  .dashboard-notification.success {
+    border-left-color: var(--dashboard-success);
+  }
+  
+  .dashboard-notification.warning {
+    border-left-color: var(--dashboard-warning);
+  }
+  
+  .dashboard-notification.error {
+    border-left-color: var(--dashboard-danger);
+  }
+  
+  /* Activity Feed */
+  .dashboard-activity-feed {
+    background: white;
+    border-radius: var(--dashboard-border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--dashboard-card-shadow);
+  }
+  
+  .dashboard-activity-item {
+    display: flex;
+    align-items: start;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f8f9fa;
+  }
+  
+  .dashboard-activity-item:last-child {
+    border-bottom: none;
+  }
+  
+  .dashboard-activity-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 1rem;
+    flex-shrink: 0;
+  }
+  
+  .dashboard-activity-content {
+    flex: 1;
+  }
+  
+  .dashboard-activity-text {
+    color: var(--dashboard-dark);
+    margin-bottom: 0.25rem;
+  }
+  
+  .dashboard-activity-time {
+    color: var(--dashboard-secondary);
+    font-size: 0.875rem;
+  }
+  
+  /* Calendar Widget */
+  .dashboard-calendar {
+    background: white;
+    border-radius: var(--dashboard-border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--dashboard-card-shadow);
+  }
+  
+  .dashboard-calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  
+  .dashboard-calendar-nav {
+    background: none;
+    border: none;
+    color: var(--dashboard-secondary);
+    font-size: 1.25rem;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: var(--dashboard-transition);
+  }
+  
+  .dashboard-calendar-nav:hover {
+    background: var(--dashboard-light);
+    color: var(--dashboard-primary);
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .dashboard-sidebar {
+      transform: translateX(-100%);
+    }
+    
+    .dashboard-sidebar.show {
+      transform: translateX(0);
+    }
+    
+    .dashboard-main {
+      margin-left: 0;
+    }
+    
+    .dashboard-content {
+      padding: 1rem;
+    }
+    
+    .dashboard-header {
+      padding: 0 1rem;
+    }
+    
+    .dashboard-widgets {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    
+    .dashboard-stats-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    
+    .dashboard-quick-actions {
+      flex-direction: column;
+    }
+    
+    .dashboard-quick-action {
+      min-width: auto;
+    }
+    
+    .dashboard-welcome-title {
+      font-size: 1.25rem;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .dashboard-header-welcome {
+      display: none;
+    }
+    
+    .dashboard-stat-value {
+      font-size: 1.75rem;
+    }
+    
+    .dashboard-widget {
+      padding: 1rem;
+    }
+  }
+  
+  /* Animaciones */
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      transform: translateY(30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  .dashboard-widget {
+    animation: fadeInUp 0.6s ease-out;
+  }
+  
+  /* Estados de carga */
+  .dashboard-loading {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .dashboard-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: loading 1.5s infinite;
+  }
+  
+  @keyframes loading {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+  
+  /* Tema oscuro */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --dashboard-light: #2d3748;
+      --dashboard-dark: #e2e8f0;
+    }
+    
+    .dashboard-main {
+      background: #1a202c;
+    }
+    
+    .dashboard-header {
+      background: #2d3748;
+      color: #e2e8f0;
+    }
+    
+    .dashboard-widget,
+    .dashboard-stat-card,
+    .dashboard-activity-feed,
+    .dashboard-calendar {
+      background: #2d3748;
+      color: #e2e8f0;
+    }
+    
+    .dashboard-notification {
+      background: #2d3748;
+      color: #e2e8f0;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block body_class %}dashboard-layout{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+  <!-- Sidebar -->
+  <aside class="dashboard-sidebar" id="dashboardSidebar">
+    <!-- Profile Section -->
+    <div class="dashboard-sidebar-profile">
+      <div class="dashboard-profile-avatar">
+        {% if current_user.profile_picture %}
+          <img src="{{ current_user.profile_picture }}" alt="{{ current_user.full_name }}">
+        {% else %}
+          <div class="avatar-placeholder">
+            {{ current_user.first_name[0] }}{{ current_user.last_name[0] if current_user.last_name else '' }}
+          </div>
+        {% endif %}
+      </div>
+      
+      <div class="dashboard-profile-info">
+        <div class="dashboard-profile-name">{{ current_user.full_name }}</div>
+        <div class="dashboard-profile-role">{{ current_user.role.title() }}</div>
+        <span class="dashboard-profile-badge">
+          {% if current_user.role == 'entrepreneur' %}
+            <i class="fas fa-lightbulb me-1"></i>Emprendedor
+          {% elif current_user.role == 'ally' %}
+            <i class="fas fa-handshake me-1"></i>Aliado
+          {% elif current_user.role == 'client' %}
+            <i class="fas fa-building me-1"></i>Cliente
+          {% elif current_user.role == 'admin' %}
+            <i class="fas fa-crown me-1"></i>Administrador
+          {% endif %}
+        </span>
+      </div>
+    </div>
+    
+    <!-- Navigation -->
+    <nav class="dashboard-sidebar-nav">
+      <!-- Main Section -->
+      <div class="dashboard-nav-section">
+        <h6 class="dashboard-nav-section-title">Principal</h6>
+        
+        <div class="dashboard-nav-item">
+          <a href="{{ url_for('main.dashboard') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'main.dashboard' }}">
+            <i class="fas fa-home dashboard-nav-icon"></i>
+            <span class="dashboard-nav-text">Dashboard</span>
+          </a>
+        </div>
+        
+        {% if current_user.role == 'entrepreneur' %}
+          <div class="dashboard-nav-item">
+            <a href="{{ url_for('entrepreneur.profile') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'entrepreneur.profile' }}">
+              <i class="fas fa-user dashboard-nav-icon"></i>
+              <span class="dashboard-nav-text">Mi Perfil</span>
+            </a>
+          </div>
+        {% elif current_user.role == 'ally' %}
+          <div class="dashboard-nav-item">
+            <a href="{{ url_for('ally.profile') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'ally.profile' }}">
+              <i class="fas fa-user dashboard-nav-icon"></i>
+              <span class="dashboard-nav-text">Mi Perfil</span>
+            </a>
+          </div>
+        {% elif current_user.role == 'client' %}
+          <div class="dashboard-nav-item">
+            <a href="{{ url_for('client.profile') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'client.profile' }}">
+              <i class="fas fa-user dashboard-nav-icon"></i>
+              <span class="dashboard-nav-text">Mi Perfil</span>
+            </a>
+          </div>
+        {% endif %}
+      </div>
+      
+      <!-- Role-specific sections -->
+      {% if current_user.role == 'entrepreneur' %}
+        <!-- Entrepreneur Navigation -->
+        <div class="dashboard-nav-section">
+          <h6 class="dashboard-nav-section-title">Mis Proyectos</h6>
+          
+          <div class="dashboard-nav-item">
+            <a href="{{ url_for('entrepreneur.projects') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'entrepreneur.projects' }}">
+              <i class="fas fa-project-diagram dashboard-nav-icon"></i>
+              <span class="dashboard-nav-text">Proyectos</span>
+            </a>
+          </div>
+          
+          <div class="dashboard-nav-item">
+            <a href="{{ url_for('entrepreneur.progress') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'entrepreneur.progress' }}">
+              <i class="fas fa-chart-line dashboard-nav-icon"></i>
+              <span class="dashboard-nav-text">Progreso</span>
+            </a>
+          </div>
+        </div>
+        
+        <div class="dashboard-nav-section">
+          <h6 class="dashboard-nav-section-title">Mentoría</h6>
+          
+          <div class="dashboard-nav-item">
+            <a href="{{ url_for('entrepreneur.mentorship') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'entrepreneur.mentorship' }}">
+              <i class="fas fa-graduation-cap dashboard-nav-icon"></i>
+              <span class="dashboard-nav-text">Mis Mentores</span>
+            </a>
+          </div>
+          
+          <div class="dashboard-nav-item">
+            <a href="{{ url_for('entrepreneur.calendar') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'entrepreneur.calendar' }}">
+              <i class="fas fa-calendar-alt dashboard-nav-icon"></i>
+              <span class="dashboard-nav-text">Calendario</span>
+            </a>
+          </div>
+        </div>
+        
+      {% elif current_user.role == 'ally' %}
+        <!-- Ally Navigation -->
+        <div class="dashboard-nav-section">
+          <h6 class="dashboard-nav-section-title">Mentoría</h6>
+          
+          <div class="dashboard-nav-item">
+            <a href="{{ url_for('ally.entrepreneurs') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'ally.entrepreneurs' }}">
+              <i class="fas fa-users dashboard-nav-icon"></i>
+              <span class="dashboard-nav-text">Mis Emprendedores</span>
+            </a>
+          </div>
+          
+          <div class="dashboard-nav-item">
+            <a href="{{ url_for('ally.mentorship') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'ally.mentorship' }}">
+              <i class="fas fa-chalkboard-teacher dashboard-nav-icon"></i>
+              <span class="dashboard-nav-text">Sesiones</span>
+            </a>
+          </div>
+          
+          <div class="dashboard-nav-item">
+            <a href="{{ url_for('ally.calendar') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'ally.calendar' }}">
+              <i class="fas fa-calendar-alt dashboard-nav-icon"></i>
+              <span class="dashboard-nav-text">Calendario</span>
+            </a>
+          </div>
+          
+          <div class="dashboard-nav-item">
+            <a href="{{ url_for('ally.hours') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'ally.hours' }}">
+              <i class="fas fa-clock dashboard-nav-icon"></i>
+              <span class="dashboard-nav-text">Registro de Horas</span>
+            </a>
+          </div>
+        </div>
+        
+        <div class="dashboard-nav-section">
+          <h6 class="dashboard-nav-section-title">Reportes</h6>
+          
+          <div class="dashboard-nav-item">
+            <a href="{{ url_for('ally.reports') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'ally.reports' }}">
+              <i class="fas fa-chart-bar dashboard-nav-icon"></i>
+              <span class="dashboard-nav-text">Mis Reportes</span>
+            </a>
+          </div>
+        </div>
+        
+      {% elif current_user.role == 'client' %}
+        <!-- Client Navigation -->
+        <div class="dashboard-nav-section">
+          <h6 class="dashboard-nav-section-title">Explorar</h6>
+          
+          <div class="dashboard-nav-item">
+            <a href="{{ url_for('client.directory') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'client.directory' }}">
+              <i class="fas fa-search dashboard-nav-icon"></i>
+              <span class="dashboard-nav-text">Directorio</span>
+            </a>
+          </div>
+          
+          <div class="dashboard-nav-item">
+            <a href="{{ url_for('client.impact') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'client.impact' }}">
+              <i class="fas fa-chart-pie dashboard-nav-icon"></i>
+              <span class="dashboard-nav-text">Medición de Impacto</span>
+            </a>
+          </div>
+        </div>
+        
+        <div class="dashboard-nav-section">
+          <h6 class="dashboard-nav-section-title">Reportes</h6>
+          
+          <div class="dashboard-nav-item">
+            <a href="{{ url_for('client.reports') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'client.reports' }}">
+              <i class="fas fa-file-alt dashboard-nav-icon"></i>
+              <span class="dashboard-nav-text">Reportes</span>
+            </a>
+          </div>
+          
+          <div class="dashboard-nav-item">
+            <a href="{{ url_for('client.analytics') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'client.analytics' }}">
+              <i class="fas fa-analytics dashboard-nav-icon"></i>
+              <span class="dashboard-nav-text">Analytics</span>
+            </a>
+          </div>
+        </div>
+      {% endif %}
+      
+      <!-- Common sections for all roles -->
+      <div class="dashboard-nav-section">
+        <h6 class="dashboard-nav-section-title">Comunicación</h6>
+        
+        <div class="dashboard-nav-item">
+          <a href="{{ url_for('messages.inbox') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'messages.inbox' }}">
+            <i class="fas fa-envelope dashboard-nav-icon"></i>
+            <span class="dashboard-nav-text">Mensajes</span>
+            {% set unread_count = get_unread_messages_count(current_user.id) %}
+            {% if unread_count > 0 %}
+              <span class="dashboard-nav-badge">{{ unread_count }}</span>
+            {% endif %}
+          </a>
+        </div>
+        
+        <div class="dashboard-nav-item">
+          <a href="{{ url_for('meetings.index') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'meetings.index' }}">
+            <i class="fas fa-video dashboard-nav-icon"></i>
+            <span class="dashboard-nav-text">Reuniones</span>
+          </a>
+        </div>
+        
+        <div class="dashboard-nav-item">
+          <a href="{{ url_for('documents.index') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'documents.index' }}">
+            <i class="fas fa-folder dashboard-nav-icon"></i>
+            <span class="dashboard-nav-text">Documentos</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="dashboard-nav-section">
+        <h6 class="dashboard-nav-section-title">Configuración</h6>
+        
+        <div class="dashboard-nav-item">
+          <a href="{{ url_for('main.settings') }}" class="dashboard-nav-link {{ 'active' if request.endpoint == 'main.settings' }}">
+            <i class="fas fa-cog dashboard-nav-icon"></i>
+            <span class="dashboard-nav-text">Configuración</span>
+          </a>
+        </div>
+        
+        {% if current_user.role == 'admin' %}
+          <div class="dashboard-nav-item">
+            <a href="{{ url_for('admin.dashboard') }}" class="dashboard-nav-link">
+              <i class="fas fa-tools dashboard-nav-icon"></i>
+              <span class="dashboard-nav-text">Panel Admin</span>
+            </a>
+          </div>
+        {% endif %}
+        
+        <div class="dashboard-nav-item">
+          <a href="{{ url_for('auth.logout') }}" class="dashboard-nav-link">
+            <i class="fas fa-sign-out-alt dashboard-nav-icon"></i>
+            <span class="dashboard-nav-text">Cerrar Sesión</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+  </aside>
+  
+  <!-- Main Content -->
+  <main class="dashboard-main" id="dashboardMain">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <button class="dashboard-header-toggle" id="sidebarToggle">
+        <i class="fas fa-bars"></i>
+      </button>
+      
+      <div class="dashboard-header-welcome">
+        <h1 class="dashboard-welcome-title">
+          {% block dashboard_title %}
+            ¡Hola, {{ current_user.first_name }}!
+          {% endblock %}
+        </h1>
+        <p class="dashboard-welcome-subtitle">
+          {% block dashboard_subtitle %}
+            {% set now = moment() %}
+            {% if now.hour < 12 %}
+              Buenos días, que tengas un excelente día.
+            {% elif now.hour < 18 %}
+              Buenas tardes, sigue adelante con tus metas.
+            {% else %}
+              Buenas noches, excelente trabajo hoy.
+            {% endif %}
+          {% endblock %}
+        </p>
+      </div>
+      
+      <div class="dashboard-header-actions">
+        <!-- Search -->
+        <button class="dashboard-action-btn" data-bs-toggle="modal" data-bs-target="#searchModal">
+          <i class="fas fa-search"></i>
+        </button>
+        
+        <!-- Notifications -->
+        <button class="dashboard-action-btn" data-bs-toggle="dropdown">
+          <i class="fas fa-bell"></i>
+          {% set notifications_count = get_user_notifications_count(current_user.id) %}
+          {% if notifications_count > 0 %}
+            <span class="badge bg-danger">{{ notifications_count }}</span>
+          {% endif %}
+        </button>
+        <div class="dropdown-menu dropdown-menu-end" style="min-width: 350px;">
+          <div class="dropdown-header d-flex justify-content-between align-items-center">
+            <span>Notificaciones</span>
+            <a href="{{ url_for('main.notifications') }}" class="btn btn-sm btn-outline-primary">Ver todas</a>
+          </div>
+          <div class="dropdown-divider"></div>
+          
+          {% set recent_notifications = get_recent_notifications(current_user.id, 5) %}
+          {% for notification in recent_notifications %}
+            <a class="dropdown-item d-flex align-items-start py-2" href="{{ notification.action_url or '#' }}">
+              <div class="me-2">
+                <i class="{{ notification.icon }} text-{{ notification.type }}"></i>
+              </div>
+              <div class="flex-grow-1">
+                <h6 class="mb-1 fs-6">{{ notification.title }}</h6>
+                <p class="mb-1 text-muted small">{{ notification.message[:80] }}{% if notification.message|length > 80 %}...{% endif %}</p>
+                <small class="text-muted">{{ notification.created_at|timeago }}</small>
+              </div>
+            </a>
+            {% if not loop.last %}<div class="dropdown-divider"></div>{% endif %}
+          {% else %}
+            <div class="dropdown-item text-center text-muted py-3">
+              <i class="fas fa-inbox fa-2x mb-2"></i>
+              <p class="mb-0">No hay notificaciones</p>
+            </div>
+          {% endfor %}
+        </div>
+        
+        <!-- Profile Menu -->
+        <div class="dropdown">
+          <button class="dashboard-action-btn" data-bs-toggle="dropdown">
+            {% if current_user.profile_picture %}
+              <img src="{{ current_user.profile_picture }}" alt="{{ current_user.full_name }}" class="rounded-circle" width="32" height="32">
+            {% else %}
+              <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.875rem;">
+                {{ current_user.first_name[0] }}{{ current_user.last_name[0] if current_user.last_name else '' }}
+              </div>
+            {% endif %}
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><h6 class="dropdown-header">{{ current_user.full_name }}</h6></li>
+            <li><span class="dropdown-item-text small text-muted">{{ current_user.email }}</span></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{{ url_for('main.profile') }}">
+              <i class="fas fa-user me-2"></i>Mi Perfil
+            </a></li>
+            <li><a class="dropdown-item" href="{{ url_for('main.settings') }}">
+              <i class="fas fa-cog me-2"></i>Configuración
+            </a></li>
+            <li><a class="dropdown-item" href="{{ url_for('main.help') }}">
+              <i class="fas fa-question-circle me-2"></i>Ayuda
+            </a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+              <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+            </a></li>
+          </ul>
+        </div>
+      </div>
+    </header>
+    
+    <!-- Breadcrumb -->
+    {% if breadcrumbs %}
+      <div class="dashboard-breadcrumb">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            {% for breadcrumb in breadcrumbs %}
+              {% if loop.last %}
+                <li class="breadcrumb-item active" aria-current="page">{{ breadcrumb.title }}</li>
+              {% else %}
+                <li class="breadcrumb-item">
+                  <a href="{{ breadcrumb.url }}">{{ breadcrumb.title }}</a>
+                </li>
+              {% endif %}
+            {% endfor %}
+          </ol>
+        </nav>
+      </div>
+    {% endif %}
+    
+    <!-- Content -->
+    <div class="dashboard-content">
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+              <i class="fas fa-{{ 'exclamation-triangle' if category == 'warning' else 'check-circle' if category == 'success' else 'info-circle' if category == 'info' else 'times-circle' }} me-2"></i>
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      
+      <!-- Dashboard specific content -->
+      {% if request.endpoint == 'main.dashboard' %}
+        {% block dashboard_stats %}
+          <!-- Stats cards específicas por rol -->
+          <div class="dashboard-stats-grid">
+            {% set user_stats = get_user_dashboard_stats(current_user) %}
+            
+            {% if current_user.role == 'entrepreneur' %}
+              <div class="dashboard-stat-card primary">
+                <div class="dashboard-stat-header">
+                  <div class="dashboard-stat-icon bg-primary">
+                    <i class="fas fa-project-diagram"></i>
+                  </div>
+                </div>
+                <div class="dashboard-stat-value">{{ user_stats.active_projects }}</div>
+                <div class="dashboard-stat-label">Proyectos Activos</div>
+                <div class="dashboard-stat-trend {{ 'positive' if user_stats.projects_change >= 0 else 'negative' }}">
+                  <i class="fas fa-{{ 'arrow-up' if user_stats.projects_change >= 0 else 'arrow-down' }} trend-icon"></i>
+                  {{ "{:+.1f}".format(user_stats.projects_change) }}% este mes
+                </div>
+              </div>
+              
+              <div class="dashboard-stat-card success">
+                <div class="dashboard-stat-header">
+                  <div class="dashboard-stat-icon bg-success">
+                    <i class="fas fa-graduation-cap"></i>
+                  </div>
+                </div>
+                <div class="dashboard-stat-value">{{ user_stats.mentoring_sessions }}</div>
+                <div class="dashboard-stat-label">Sesiones de Mentoría</div>
+                <div class="dashboard-stat-trend positive">
+                  <i class="fas fa-clock trend-icon"></i>
+                  {{ user_stats.avg_session_duration }}min promedio
+                </div>
+              </div>
+              
+            {% elif current_user.role == 'ally' %}
+              <div class="dashboard-stat-card primary">
+                <div class="dashboard-stat-header">
+                  <div class="dashboard-stat-icon bg-primary">
+                    <i class="fas fa-users"></i>
+                  </div>
+                </div>
+                <div class="dashboard-stat-value">{{ user_stats.assigned_entrepreneurs }}</div>
+                <div class="dashboard-stat-label">Emprendedores Asignados</div>
+              </div>
+              
+              <div class="dashboard-stat-card info">
+                <div class="dashboard-stat-header">
+                  <div class="dashboard-stat-icon bg-info">
+                    <i class="fas fa-clock"></i>
+                  </div>
+                </div>
+                <div class="dashboard-stat-value">{{ user_stats.hours_this_month }}</div>
+                <div class="dashboard-stat-label">Horas este Mes</div>
+                <div class="dashboard-stat-trend positive">
+                  <i class="fas fa-arrow-up trend-icon"></i>
+                  {{ user_stats.efficiency_rate }}% eficiencia
+                </div>
+              </div>
+              
+            {% elif current_user.role == 'client' %}
+              <div class="dashboard-stat-card primary">
+                <div class="dashboard-stat-header">
+                  <div class="dashboard-stat-icon bg-primary">
+                    <i class="fas fa-eye"></i>
+                  </div>
+                </div>
+                <div class="dashboard-stat-value">{{ user_stats.viewed_projects }}</div>
+                <div class="dashboard-stat-label">Proyectos Revisados</div>
+              </div>
+              
+              <div class="dashboard-stat-card warning">
+                <div class="dashboard-stat-header">
+                  <div class="dashboard-stat-icon bg-warning">
+                    <i class="fas fa-chart-line"></i>
+                  </div>
+                </div>
+                <div class="dashboard-stat-value">${{ user_stats.potential_impact }}</div>
+                <div class="dashboard-stat-label">Impacto Potencial</div>
+              </div>
+            {% endif %}
+            
+            <!-- Stats comunes -->
+            <div class="dashboard-stat-card info">
+              <div class="dashboard-stat-header">
+                <div class="dashboard-stat-icon bg-info">
+                  <i class="fas fa-calendar-check"></i>
+                </div>
+              </div>
+              <div class="dashboard-stat-value">{{ user_stats.meetings_this_week }}</div>
+              <div class="dashboard-stat-label">Reuniones esta Semana</div>
+            </div>
+            
+            <div class="dashboard-stat-card warning">
+              <div class="dashboard-stat-header">
+                <div class="dashboard-stat-icon bg-warning">
+                  <i class="fas fa-envelope"></i>
+                </div>
+              </div>
+              <div class="dashboard-stat-value">{{ user_stats.unread_messages }}</div>
+              <div class="dashboard-stat-label">Mensajes sin Leer</div>
+            </div>
+          </div>
+        {% endblock %}
+        
+        {% block dashboard_quick_actions %}
+          <!-- Quick Actions específicas por rol -->
+          <div class="dashboard-quick-actions">
+            {% if current_user.role == 'entrepreneur' %}
+              <a href="{{ url_for('entrepreneur.projects.new') }}" class="dashboard-quick-action">
+                <div class="dashboard-quick-action-icon">
+                  <i class="fas fa-plus"></i>
+                </div>
+                <div>
+                  <h6 class="mb-1">Nuevo Proyecto</h6>
+                  <small class="text-muted">Crea un nuevo proyecto</small>
+                </div>
+              </a>
+              
+              <a href="{{ url_for('meetings.schedule') }}" class="dashboard-quick-action">
+                <div class="dashboard-quick-action-icon">
+                  <i class="fas fa-calendar-plus"></i>
+                </div>
+                <div>
+                  <h6 class="mb-1">Agendar Reunión</h6>
+                  <small class="text-muted">Programa una cita</small>
+                </div>
+              </a>
+              
+            {% elif current_user.role == 'ally' %}
+              <a href="{{ url_for('ally.reports.new') }}" class="dashboard-quick-action">
+                <div class="dashboard-quick-action-icon">
+                  <i class="fas fa-file-alt"></i>
+                </div>
+                <div>
+                  <h6 class="mb-1">Nuevo Reporte</h6>
+                  <small class="text-muted">Crear reporte de progreso</small>
+                </div>
+              </a>
+              
+              <a href="{{ url_for('ally.hours.log') }}" class="dashboard-quick-action">
+                <div class="dashboard-quick-action-icon">
+                  <i class="fas fa-clock"></i>
+                </div>
+                <div>
+                  <h6 class="mb-1">Registrar Horas</h6>
+                  <small class="text-muted">Registra tu tiempo</small>
+                </div>
+              </a>
+              
+            {% elif current_user.role == 'client' %}
+              <a href="{{ url_for('client.directory') }}" class="dashboard-quick-action">
+                <div class="dashboard-quick-action-icon">
+                  <i class="fas fa-search"></i>
+                </div>
+                <div>
+                  <h6 class="mb-1">Explorar Proyectos</h6>
+                  <small class="text-muted">Buscar emprendimientos</small>
+                </div>
+              </a>
+              
+              <a href="{{ url_for('client.reports.generate') }}" class="dashboard-quick-action">
+                <div class="dashboard-quick-action-icon">
+                  <i class="fas fa-chart-bar"></i>
+                </div>
+                <div>
+                  <h6 class="mb-1">Generar Reporte</h6>
+                  <small class="text-muted">Análisis de impacto</small>
+                </div>
+              </a>
+            {% endif %}
+            
+            <!-- Acción común -->
+            <a href="{{ url_for('documents.upload') }}" class="dashboard-quick-action">
+              <div class="dashboard-quick-action-icon">
+                <i class="fas fa-upload"></i>
+              </div>
+              <div>
+                <h6 class="mb-1">Subir Documento</h6>
+                <small class="text-muted">Adjuntar archivos</small>
+              </div>
+            </a>
+          </div>
+        {% endblock %}
+        
+        {% block dashboard_widgets %}
+          <!-- Widgets específicos del dashboard -->
+        {% endblock %}
+      {% endif %}
+      
+      <!-- Page specific content -->
+      {% block dashboard_content %}
+        <!-- Contenido específico de cada página -->
+      {% endblock %}
+    </div>
+  </main>
+</div>
+
+<!-- Notifications Container -->
+<div class="dashboard-notifications" id="dashboardNotifications">
+  <!-- Las notificaciones se insertarán aquí dinámicamente -->
+</div>
+
+<!-- Search Modal -->
+<div class="modal fade" id="searchModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Búsqueda Global</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="input-group mb-3">
+          <input type="text" class="form-control" placeholder="Buscar proyectos, usuarios, documentos..." id="globalSearchInput">
+          <button class="btn btn-primary" type="button">
+            <i class="fas fa-search"></i>
+          </button>
+        </div>
+        <div id="searchResults">
+          <!-- Resultados de búsqueda -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
+
+<script>
+// =========================================================================
+// DASHBOARD LAYOUT JAVASCRIPT
+// =========================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Elementos del DOM
+  const sidebar = document.getElementById('dashboardSidebar');
+  const mainContent = document.getElementById('dashboardMain');
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const notificationsContainer = document.getElementById('dashboardNotifications');
+  const searchInput = document.getElementById('globalSearchInput');
+  
+  // Estado del sidebar
+  let sidebarCollapsed = localStorage.getItem('dashboard_sidebar_collapsed') === 'true';
+  
+  // Aplicar estado inicial del sidebar
+  if (sidebarCollapsed) {
+    sidebar.classList.add('collapsed');
+    mainContent.classList.add('expanded');
+  }
+  
+  // Toggle del sidebar
+  sidebarToggle.addEventListener('click', function() {
+    sidebarCollapsed = !sidebarCollapsed;
+    
+    sidebar.classList.toggle('collapsed', sidebarCollapsed);
+    mainContent.classList.toggle('expanded', sidebarCollapsed);
+    
+    // Guardar estado
+    localStorage.setItem('dashboard_sidebar_collapsed', sidebarCollapsed);
+    
+    // Trigger resize event para gráficos
+    window.dispatchEvent(new Event('resize'));
+  });
+  
+  // Responsive behavior
+  function handleResize() {
+    if (window.innerWidth <= 768) {
+      sidebar.classList.remove('collapsed');
+      mainContent.classList.remove('expanded');
+    } else {
+      sidebar.classList.remove('show');
+      if (sidebarCollapsed) {
+        sidebar.classList.add('collapsed');
+        mainContent.classList.add('expanded');
+      }
+    }
+  }
+  
+  window.addEventListener('resize', handleResize);
+  handleResize();
+  
+  // Mobile sidebar toggle
+  function toggleMobileSidebar() {
+    if (window.innerWidth <= 768) {
+      sidebar.classList.toggle('show');
+    }
+  }
+  
+  // Cerrar sidebar móvil al hacer clic en link
+  document.querySelectorAll('.dashboard-nav-link').forEach(link => {
+    link.addEventListener('click', function() {
+      if (window.innerWidth <= 768) {
+        sidebar.classList.remove('show');
+      }
+    });
+  });
+  
+  // Sistema de notificaciones
+  function showNotification(message, type = 'info', duration = 5000) {
+    const notification = document.createElement('div');
+    notification.className = `dashboard-notification ${type}`;
+    notification.innerHTML = `
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="flex-grow-1">
+          <div class="fw-bold">${getNotificationTitle(type)}</div>
+          <div class="mt-1">${message}</div>
+        </div>
+        <button type="button" class="btn-close btn-close-sm ms-2" onclick="this.parentElement.parentElement.remove()"></button>
+      </div>
+    `;
+    
+    notificationsContainer.appendChild(notification);
+    
+    // Auto-remove después del tiempo especificado
+    setTimeout(() => {
+      if (notification.parentElement) {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+      }
+    }, duration);
+  }
+  
+  function getNotificationTitle(type) {
+    const titles = {
+      'success': 'Éxito',
+      'error': 'Error',
+      'warning': 'Advertencia',
+      'info': 'Información'
+    };
+    return titles[type] || 'Notificación';
+  }
+  
+  // WebSocket para notificaciones en tiempo real
+  if (typeof io !== 'undefined') {
+    const socket = io('/dashboard');
+    
+    socket.on('user_notification', function(data) {
+      showNotification(data.message, data.type);
+      updateNotificationBadge();
+    });
+    
+    socket.on('real_time_update', function(data) {
+      // Actualizar stats en tiempo real
+      updateDashboardStats(data);
+    });
+  }
+  
+  // Búsqueda global
+  if (searchInput) {
+    let searchTimeout;
+    
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      const query = this.value.trim();
+      
+      if (query.length >= 2) {
+        searchTimeout = setTimeout(() => {
+          performGlobalSearch(query);
+        }, 300);
+      } else {
+        document.getElementById('searchResults').innerHTML = '';
+      }
+    });
+  }
+  
+  function performGlobalSearch(query) {
+    fetch(`/api/v1/search?q=${encodeURIComponent(query)}`)
+      .then(response => response.json())
+      .then(data => {
+        displaySearchResults(data.results);
+      })
+      .catch(error => {
+        console.error('Search error:', error);
+        document.getElementById('searchResults').innerHTML = 
+          '<div class="text-center text-muted py-3">Error en la búsqueda</div>';
+      });
+  }
+  
+  function displaySearchResults(results) {
+    const container = document.getElementById('searchResults');
+    
+    if (results.length === 0) {
+      container.innerHTML = '<div class="text-center text-muted py-3">No se encontraron resultados</div>';
+      return;
+    }
+    
+    let html = '';
+    results.forEach(result => {
+      html += `
+        <div class="search-result-item p-2 border-bottom">
+          <div class="d-flex align-items-center">
+            <i class="${result.icon} me-2 text-${result.type}"></i>
+            <div class="flex-grow-1">
+              <a href="${result.url}" class="text-decoration-none">
+                <div class="fw-bold">${result.title}</div>
+                <small class="text-muted">${result.description}</small>
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    
+    container.innerHTML = html;
+  }
+  
+  // Actualizar badge de notificaciones
+  function updateNotificationBadge() {
+    fetch('/api/v1/notifications/count')
+      .then(response => response.json())
+      .then(data => {
+        const badge = document.querySelector('.dashboard-action-btn .badge');
+        if (badge) {
+          if (data.count > 0) {
+            badge.textContent = data.count;
+            badge.style.display = 'block';
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+      })
+      .catch(error => console.error('Error updating notification badge:', error));
+  }
+  
+  // Actualizar stats del dashboard
+  function updateDashboardStats(data) {
+    if (data && data.stats) {
+      document.querySelectorAll('.dashboard-stat-card').forEach((card, index) => {
+        if (data.stats[index]) {
+          const valueElement = card.querySelector('.dashboard-stat-value');
+          const trendElement = card.querySelector('.dashboard-stat-trend');
+          
+          if (valueElement) {
+            valueElement.textContent = formatNumber(data.stats[index].value);
+          }
+          
+          if (trendElement && data.stats[index].change !== undefined) {
+            const change = data.stats[index].change;
+            trendElement.innerHTML = `
+              <i class="fas fa-${change >= 0 ? 'arrow-up' : 'arrow-down'} trend-icon"></i>
+              ${change >= 0 ? '+' : ''}${change.toFixed(1)}% este mes
+            `;
+            trendElement.className = `dashboard-stat-trend ${change >= 0 ? 'positive' : 'negative'}`;
+          }
+        }
+      });
+    }
+  }
+  
+  // Formatear números
+  function formatNumber(num) {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toLocaleString();
+  }
+  
+  // Auto-refresh de stats cada minuto
+  setInterval(function() {
+    if (window.location.pathname === '{{ url_for("main.dashboard") }}') {
+      fetch('/api/v1/dashboard/stats')
+        .then(response => response.json())
+        .then(data => updateDashboardStats(data))
+        .catch(error => console.error('Error updating stats:', error));
+    }
+  }, 60000);
+  
+  // Inicialización de componentes
+  initializeTooltips();
+  initializeCharts();
+  
+  function initializeTooltips() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  }
+  
+  function initializeCharts() {
+    // Inicializar gráficos específicos del dashboard
+    const chartElements = document.querySelectorAll('[data-chart]');
+    chartElements.forEach(element => {
+      const chartType = element.getAttribute('data-chart');
+      // Implementar inicialización específica de gráficos
+    });
+  }
+  
+  // Manejo de offline/online
+  window.addEventListener('online', function() {
+    showNotification('Conexión restaurada', 'success');
+  });
+  
+  window.addEventListener('offline', function() {
+    showNotification('Sin conexión a internet', 'warning');
+  });
+  
+  // Expose functions globally
+  window.Dashboard = {
+    showNotification,
+    updateNotificationBadge,
+    updateDashboardStats,
+    toggleMobileSidebar
+  };
+});
+
+// Función para animar contadores
+function animateValue(element, start, end, duration) {
+  const range = end - start;
+  const increment = end > start ? 1 : -1;
+  const stepTime = Math.abs(Math.floor(duration / range));
+  let current = start;
+  
+  const timer = setInterval(function() {
+    current += increment;
+    element.textContent = formatNumber(current);
+    
+    if (current === end) {
+      clearInterval(timer);
+    }
+  }, stepTime);
+}
+
+// Función para formatear números con separadores de miles
+function formatNumber(num) {
+  if (typeof num !== 'number') return num;
+  
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + 'M';
+  } else if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'K';
+  }
+  return num.toLocaleString();
+}
+
+// Función para mostrar loading state
+function showLoading(element) {
+  element.classList.add('dashboard-loading');
+  element.style.pointerEvents = 'none';
+}
+
+function hideLoading(element) {
+  element.classList.remove('dashboard-loading');
+  element.style.pointerEvents = 'auto';
+}
+</script>
+
+{% block dashboard_js %}
+<!-- JavaScript específico de cada página del dashboard -->
+{% endblock %}
+
+{% endblock %}

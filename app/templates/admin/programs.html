@@ -1,0 +1,1534 @@
+{% extends "layouts/admin.html" %}
+
+{% block title %}Gestión de Programas{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css" rel="stylesheet">
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 15px;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        transition: transform 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stats-card:hover::before {
+        top: -25%;
+        right: -25%;
+    }
+    
+    .program-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .program-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .program-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem;
+        position: relative;
+    }
+    
+    .program-type-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 0.25rem 0.5rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: rgba(255,255,255,0.2);
+        backdrop-filter: blur(10px);
+    }
+    
+    .status-badge {
+        padding: 0.375rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .status-active {
+        background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+        color: white;
+    }
+    
+    .status-planning {
+        background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+        color: white;
+    }
+    
+    .status-finished {
+        background: linear-gradient(135deg, #bdc3c7 0%, #2c3e50 100%);
+        color: white;
+    }
+    
+    .status-inactive {
+        background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+        color: white;
+    }
+    
+    .progress-container {
+        background: rgba(0,0,0,0.1);
+        border-radius: 10px;
+        padding: 0.5rem;
+        margin: 0.5rem 0;
+    }
+    
+    .progress-bar-custom {
+        background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+        border-radius: 8px;
+        height: 8px;
+        transition: width 0.6s ease;
+    }
+    
+    .filter-section {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        border: 2px solid #e9ecef;
+    }
+    
+    .table th {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        border: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.875rem;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        padding: 1rem 0.75rem;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .table tbody tr:hover {
+        background: rgba(79, 172, 254, 0.05);
+        transform: scale(1.01);
+        transition: all 0.2s ease;
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #4facfe;
+        box-shadow: 0 0 0 0.2rem rgba(79, 172, 254, 0.25);
+        transform: translateY(-1px);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+    }
+    
+    .btn-action {
+        padding: 0.375rem 0.75rem;
+        margin: 0 0.125rem;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        font-size: 0.875rem;
+    }
+    
+    .btn-action:hover {
+        transform: scale(1.05);
+    }
+    
+    .pagination .page-link {
+        border-radius: 8px;
+        margin: 0 0.125rem;
+        border: 2px solid #e9ecef;
+        color: #4facfe;
+        transition: all 0.2s ease;
+    }
+    
+    .pagination .page-link:hover {
+        background: #4facfe;
+        border-color: #4facfe;
+        transform: translateY(-1px);
+    }
+    
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        border-color: #4facfe;
+    }
+    
+    .participants-avatars {
+        display: flex;
+        margin-left: -0.5rem;
+    }
+    
+    .participant-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: 2px solid white;
+        margin-left: -0.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .timeline-item {
+        border-left: 3px solid #4facfe;
+        padding-left: 1rem;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -6px;
+        top: 0;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #4facfe;
+    }
+    
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .metric-item {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        text-align: center;
+    }
+    
+    .duration-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        background: rgba(79, 172, 254, 0.1);
+        border-radius: 15px;
+        font-size: 0.75rem;
+        color: #4facfe;
+        font-weight: 600;
+    }
+    
+    .organization-logo {
+        width: 35px;
+        height: 35px;
+        border-radius: 8px;
+        object-fit: cover;
+    }
+    
+    .quick-actions {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 1000;
+    }
+    
+    .quick-action-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+    }
+    
+    .quick-action-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-0">
+                        <i class="fas fa-rocket me-3"></i>
+                        Gestión de Programas
+                    </h1>
+                    <nav aria-label="breadcrumb" class="mt-2">
+                        <ol class="breadcrumb text-white-50">
+                            <li class="breadcrumb-item">
+                                <a href="{{ url_for('admin.dashboard') }}" class="text-white-50">
+                                    <i class="fas fa-home"></i> Dashboard
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item active text-white" aria-current="page">
+                                Programas
+                            </li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#createProgramModal">
+                            <i class="fas fa-plus me-2"></i>
+                            Nuevo Programa
+                        </button>
+                        <button type="button" class="btn btn-outline-light btn-lg" onclick="importPrograms()">
+                            <i class="fas fa-upload me-2"></i>
+                            Importar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card text-center">
+                <div class="position-relative">
+                    <div class="stats-icon mb-3">
+                        <i class="fas fa-rocket fa-2x"></i>
+                    </div>
+                    <h3 class="mb-1">{{ programs.total if programs else 0 }}</h3>
+                    <p class="mb-0">Total Programas</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card text-center">
+                <div class="position-relative">
+                    <div class="stats-icon mb-3">
+                        <i class="fas fa-play fa-2x"></i>
+                    </div>
+                    <h3 class="mb-1">{{ active_programs if active_programs else 0 }}</h3>
+                    <p class="mb-0">Activos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card text-center">
+                <div class="position-relative">
+                    <div class="stats-icon mb-3">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                    <h3 class="mb-1">{{ total_participants if total_participants else 0 }}</h3>
+                    <p class="mb-0">Participantes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card text-center">
+                <div class="position-relative">
+                    <div class="stats-icon mb-3">
+                        <i class="fas fa-trophy fa-2x"></i>
+                    </div>
+                    <h3 class="mb-1">{{ graduation_rate if graduation_rate else 0 }}%</h3>
+                    <p class="mb-0">Tasa Graduación</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Toggle and Filters -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="btn-group" role="group" aria-label="Vista">
+                <input type="radio" class="btn-check" name="viewType" id="tableView" autocomplete="off" checked>
+                <label class="btn btn-outline-primary" for="tableView">
+                    <i class="fas fa-table me-1"></i>Tabla
+                </label>
+                <input type="radio" class="btn-check" name="viewType" id="cardView" autocomplete="off">
+                <label class="btn btn-outline-primary" for="cardView">
+                    <i class="fas fa-th-large me-1"></i>Cards
+                </label>
+                <input type="radio" class="btn-check" name="viewType" id="calendarView" autocomplete="off">
+                <label class="btn btn-outline-primary" for="calendarView">
+                    <i class="fas fa-calendar me-1"></i>Calendario
+                </label>
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+            <button type="button" class="btn btn-outline-primary" onclick="toggleFilters()">
+                <i class="fas fa-filter me-1"></i>Filtros
+                <span class="badge bg-primary ms-1" id="filterCount">0</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filter-section" id="filtersSection" style="display: none;">
+        <form method="GET" id="filterForm">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="search" class="form-label fw-bold">
+                        <i class="fas fa-search me-1"></i>Buscar
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="search" 
+                           name="search" 
+                           placeholder="Nombre, descripción..."
+                           value="{{ request.args.get('search', '') }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="status" class="form-label fw-bold">
+                        <i class="fas fa-toggle-on me-1"></i>Estado
+                    </label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">Todos los estados</option>
+                        <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Activo</option>
+                        <option value="planning" {% if request.args.get('status') == 'planning' %}selected{% endif %}>En Planificación</option>
+                        <option value="finished" {% if request.args.get('status') == 'finished' %}selected{% endif %}>Finalizado</option>
+                        <option value="inactive" {% if request.args.get('status') == 'inactive' %}selected{% endif %}>Inactivo</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="program_type" class="form-label fw-bold">
+                        <i class="fas fa-tags me-1"></i>Tipo
+                    </label>
+                    <select class="form-select" id="program_type" name="program_type">
+                        <option value="">Todos los tipos</option>
+                        <option value="incubacion" {% if request.args.get('program_type') == 'incubacion' %}selected{% endif %}>Incubación</option>
+                        <option value="aceleracion" {% if request.args.get('program_type') == 'aceleracion' %}selected{% endif %}>Aceleración</option>
+                        <option value="preincubacion" {% if request.args.get('program_type') == 'preincubacion' %}selected{% endif %}>Pre-incubación</option>
+                        <option value="mentoria" {% if request.args.get('program_type') == 'mentoria' %}selected{% endif %}>Mentoría</option>
+                        <option value="capacitacion" {% if request.args.get('program_type') == 'capacitacion' %}selected{% endif %}>Capacitación</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="organization" class="form-label fw-bold">
+                        <i class="fas fa-building me-1"></i>Organización
+                    </label>
+                    <select class="form-select" id="organization" name="organization">
+                        <option value="">Todas las organizaciones</option>
+                        {% for org in organizations %}
+                        <option value="{{ org.id }}" {% if request.args.get('organization') == org.id|string %}selected{% endif %}>
+                            {{ org.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label for="year" class="form-label fw-bold">
+                        <i class="fas fa-calendar me-1"></i>Año
+                    </label>
+                    <select class="form-select" id="year" name="year">
+                        <option value="">Todos</option>
+                        {% for year in range(2020, 2030) %}
+                        <option value="{{ year }}" {% if request.args.get('year') == year|string %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold text-transparent">Acciones</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-fill">
+                            <i class="fas fa-search me-1"></i>Filtrar
+                        </button>
+                        <a href="{{ url_for('admin.programs') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i>
+                        </a>
+                        <button type="button" class="btn btn-success" onclick="exportPrograms()">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table View -->
+    <div id="tableViewContent">
+        <div class="program-card">
+            <div class="card-header border-0">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>
+                            Lista de Programas
+                        </h5>
+                    </div>
+                    <div class="col-auto">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="refreshTable()">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="toggleColumn('organization')">
+                                        <i class="fas fa-building me-2"></i>Organización
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="toggleColumn('duration')">
+                                        <i class="fas fa-clock me-2"></i>Duración
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="toggleColumn('participants')">
+                                        <i class="fas fa-users me-2"></i>Participantes
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="toggleColumn('dates')">
+                                        <i class="fas fa-calendar me-2"></i>Fechas
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="programsTable">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input type="checkbox" class="form-check-input" id="selectAll">
+                                </th>
+                                <th>Programa</th>
+                                <th class="organization-column">Organización</th>
+                                <th>Tipo</th>
+                                <th>Estado</th>
+                                <th class="participants-column">Participantes</th>
+                                <th class="duration-column">Duración</th>
+                                <th class="dates-column">Fechas</th>
+                                <th>Progreso</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for program in programs.items if programs %}
+                            <tr data-program-id="{{ program.id }}">
+                                <td>
+                                    <input type="checkbox" class="form-check-input row-checkbox" value="{{ program.id }}">
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            {% if program.image_url %}
+                                            <img src="{{ program.image_url }}" alt="Programa" class="organization-logo">
+                                            {% else %}
+                                            <div class="organization-logo bg-primary d-flex align-items-center justify-content-center text-white">
+                                                <i class="fas fa-rocket"></i>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1 fw-bold">{{ program.name }}</h6>
+                                            <small class="text-muted">{{ program.description[:50] }}{% if program.description|length > 50 %}...{% endif %}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="organization-column">
+                                    <div class="d-flex align-items-center">
+                                        {% if program.organization.logo_url %}
+                                        <img src="{{ program.organization.logo_url }}" alt="Org" class="organization-logo me-2">
+                                        {% endif %}
+                                        <small>{{ program.organization.name if program.organization else 'Sin organización' }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ program.program_type.title() if program.program_type else 'N/A' }}</span>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-{{ program.status }}">
+                                        {% if program.status == 'active' %}
+                                            <i class="fas fa-play"></i>Activo
+                                        {% elif program.status == 'planning' %}
+                                            <i class="fas fa-cog"></i>Planificación
+                                        {% elif program.status == 'finished' %}
+                                            <i class="fas fa-check"></i>Finalizado
+                                        {% else %}
+                                            <i class="fas fa-pause"></i>Inactivo
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td class="participants-column">
+                                    <div class="d-flex align-items-center">
+                                        <div class="participants-avatars me-2">
+                                            {% for participant in program.participants[:3] %}
+                                            <div class="participant-avatar">
+                                                {{ participant.first_name[0] if participant.first_name else 'U' }}
+                                            </div>
+                                            {% endfor %}
+                                            {% if program.participants_count > 3 %}
+                                            <div class="participant-avatar">
+                                                +{{ program.participants_count - 3 }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <small>
+                                            {{ program.participants_count if program.participants_count else 0 }}/{{ program.max_participants if program.max_participants else '∞' }}
+                                        </small>
+                                    </div>
+                                </td>
+                                <td class="duration-column">
+                                    <span class="duration-indicator">
+                                        <i class="fas fa-clock"></i>
+                                        {{ program.duration_weeks if program.duration_weeks else 'N/A' }} semanas
+                                    </span>
+                                </td>
+                                <td class="dates-column">
+                                    <div>
+                                        {% if program.start_date %}
+                                        <small class="d-block text-muted">
+                                            <i class="fas fa-calendar-plus me-1"></i>
+                                            {{ program.start_date.strftime('%d/%m/%Y') }}
+                                        </small>
+                                        {% endif %}
+                                        {% if program.end_date %}
+                                        <small class="d-block text-muted">
+                                            <i class="fas fa-calendar-minus me-1"></i>
+                                            {{ program.end_date.strftime('%d/%m/%Y') }}
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="progress-container">
+                                        <div class="progress-bar-custom" style="width: {{ program.progress_percentage if program.progress_percentage else 0 }}%"></div>
+                                    </div>
+                                    <small class="text-muted">{{ program.progress_percentage if program.progress_percentage else 0 }}%</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" 
+                                                class="btn btn-outline-info btn-sm btn-action" 
+                                                onclick="viewProgram({{ program.id }})"
+                                                title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button type="button" 
+                                                class="btn btn-outline-primary btn-sm btn-action" 
+                                                onclick="editProgram({{ program.id }})"
+                                                title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button type="button" 
+                                                class="btn btn-outline-success btn-sm btn-action" 
+                                                onclick="manageCurriculum({{ program.id }})"
+                                                title="Currículo">
+                                            <i class="fas fa-book"></i>
+                                        </button>
+                                        <button type="button" 
+                                                class="btn btn-outline-warning btn-sm btn-action" 
+                                                onclick="manageParticipants({{ program.id }})"
+                                                title="Participantes">
+                                            <i class="fas fa-users"></i>
+                                        </button>
+                                        <button type="button" 
+                                                class="btn btn-outline-danger btn-sm btn-action" 
+                                                onclick="deleteProgram({{ program.id }})"
+                                                title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="10" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="fas fa-rocket fa-3x mb-3"></i>
+                                        <h5>No se encontraron programas</h5>
+                                        <p>No hay programas que coincidan con los filtros aplicados.</p>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProgramModal">
+                                            <i class="fas fa-plus me-2"></i>Crear Primer Programa
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            {% if programs and programs.pages > 1 %}
+            <div class="card-footer">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <p class="mb-0 text-muted">
+                            Mostrando {{ programs.per_page * (programs.page - 1) + 1 }} - 
+                            {{ programs.per_page * programs.page if programs.page < programs.pages else programs.total }} 
+                            de {{ programs.total }} programas
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <nav aria-label="Paginación">
+                            {{ render_pagination(programs, 'admin.programs') }}
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Card View -->
+    <div id="cardViewContent" style="display: none;">
+        <div class="row">
+            {% for program in programs.items if programs %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="program-card">
+                    <div class="program-header">
+                        <span class="program-type-badge">{{ program.program_type.title() if program.program_type else 'Programa' }}</span>
+                        <h5 class="mb-1">{{ program.name }}</h5>
+                        <small class="text-white-50">{{ program.organization.name if program.organization else 'Sin organización' }}</small>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">{{ program.description[:100] }}{% if program.description|length > 100 %}...{% endif %}</p>
+                        
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted d-block">Estado</small>
+                                <span class="status-badge status-{{ program.status }}">
+                                    {% if program.status == 'active' %}
+                                        <i class="fas fa-play"></i>Activo
+                                    {% elif program.status == 'planning' %}
+                                        <i class="fas fa-cog"></i>Planificación
+                                    {% elif program.status == 'finished' %}
+                                        <i class="fas fa-check"></i>Finalizado
+                                    {% else %}
+                                        <i class="fas fa-pause"></i>Inactivo
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Participantes</small>
+                                <strong>{{ program.participants_count if program.participants_count else 0 }}/{{ program.max_participants if program.max_participants else '∞' }}</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-container mb-3">
+                            <div class="progress-bar-custom" style="width: {{ program.progress_percentage if program.progress_percentage else 0 }}%"></div>
+                        </div>
+                        <small class="text-muted">Progreso: {{ program.progress_percentage if program.progress_percentage else 0 }}%</small>
+                        
+                        <div class="mt-3 d-flex justify-content-between">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="viewProgram({{ program.id }})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-success btn-sm" onclick="editProgram({{ program.id }})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                            <div class="participants-avatars">
+                                {% for participant in program.participants[:3] %}
+                                <div class="participant-avatar">
+                                    {{ participant.first_name[0] if participant.first_name else 'U' }}
+                                </div>
+                                {% endfor %}
+                                {% if program.participants_count > 3 %}
+                                <div class="participant-avatar">
+                                    +{{ program.participants_count - 3 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Create Program Modal -->
+<div class="modal fade" id="createProgramModal" tabindex="-1" aria-labelledby="createProgramModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createProgramModalLabel">
+                    <i class="fas fa-plus me-2"></i>Nuevo Programa de Emprendimiento
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createProgramForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <!-- Información Básica -->
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="fas fa-info-circle me-2"></i>Información Básica
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-8">
+                            <label for="name" class="form-label fw-bold">
+                                <i class="fas fa-rocket me-1"></i>Nombre del Programa *
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="program_type" class="form-label fw-bold">
+                                <i class="fas fa-tags me-1"></i>Tipo *
+                            </label>
+                            <select class="form-select" id="program_type" name="program_type" required>
+                                <option value="">Seleccionar tipo</option>
+                                <option value="incubacion">Incubación</option>
+                                <option value="aceleracion">Aceleración</option>
+                                <option value="preincubacion">Pre-incubación</option>
+                                <option value="mentoria">Mentoría</option>
+                                <option value="capacitacion">Capacitación</option>
+                                <option value="bootcamp">Bootcamp</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="description" class="form-label fw-bold">
+                                <i class="fas fa-align-left me-1"></i>Descripción *
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="3" required placeholder="Descripción detallada del programa..."></textarea>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="organization_id" class="form-label fw-bold">
+                                <i class="fas fa-building me-1"></i>Organización *
+                            </label>
+                            <select class="form-select" id="organization_id" name="organization_id" required>
+                                <option value="">Seleccionar organización</option>
+                                {% for org in organizations %}
+                                <option value="{{ org.id }}">{{ org.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="coordinator_id" class="form-label fw-bold">
+                                <i class="fas fa-user-tie me-1"></i>Coordinador
+                            </label>
+                            <select class="form-select" id="coordinator_id" name="coordinator_id">
+                                <option value="">Seleccionar coordinador</option>
+                                {% for user in coordinators %}
+                                <option value="{{ user.id }}">{{ user.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Configuración del Programa -->
+                        <div class="col-12 mt-4">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="fas fa-cogs me-2"></i>Configuración del Programa
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="duration_weeks" class="form-label fw-bold">
+                                <i class="fas fa-clock me-1"></i>Duración (semanas) *
+                            </label>
+                            <input type="number" class="form-control" id="duration_weeks" name="duration_weeks" min="1" max="104" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="max_participants" class="form-label fw-bold">
+                                <i class="fas fa-users me-1"></i>Máx. Participantes
+                            </label>
+                            <input type="number" class="form-control" id="max_participants" name="max_participants" min="1" max="1000">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="modality" class="form-label fw-bold">
+                                <i class="fas fa-laptop me-1"></i>Modalidad *
+                            </label>
+                            <select class="form-select" id="modality" name="modality" required>
+                                <option value="">Seleccionar modalidad</option>
+                                <option value="presencial">Presencial</option>
+                                <option value="virtual">Virtual</option>
+                                <option value="hibrido">Híbrido</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="status" class="form-label fw-bold">
+                                <i class="fas fa-toggle-on me-1"></i>Estado *
+                            </label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="planning">En Planificación</option>
+                                <option value="active">Activo</option>
+                                <option value="inactive">Inactivo</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Fechas -->
+                        <div class="col-md-4">
+                            <label for="start_date" class="form-label fw-bold">
+                                <i class="fas fa-calendar-plus me-1"></i>Fecha de Inicio
+                            </label>
+                            <input type="date" class="form-control" id="start_date" name="start_date">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="end_date" class="form-label fw-bold">
+                                <i class="fas fa-calendar-minus me-1"></i>Fecha de Fin
+                            </label>
+                            <input type="date" class="form-control" id="end_date" name="end_date">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="registration_deadline" class="form-label fw-bold">
+                                <i class="fas fa-calendar-check me-1"></i>Límite Inscripción
+                            </label>
+                            <input type="date" class="form-control" id="registration_deadline" name="registration_deadline">
+                        </div>
+                        
+                        <!-- Costos y Ubicación -->
+                        <div class="col-12 mt-4">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="fas fa-map-marker-alt me-2"></i>Ubicación y Costos
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="cost" class="form-label fw-bold">
+                                <i class="fas fa-dollar-sign me-1"></i>Costo
+                            </label>
+                            <input type="number" class="form-control" id="cost" name="cost" min="0" step="0.01">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="currency" class="form-label fw-bold">
+                                <i class="fas fa-coins me-1"></i>Moneda
+                            </label>
+                            <select class="form-select" id="currency" name="currency">
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="COP">COP</option>
+                                <option value="MXN">MXN</option>
+                                <option value="ARS">ARS</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="country" class="form-label fw-bold">
+                                <i class="fas fa-flag me-1"></i>País
+                            </label>
+                            <select class="form-select" id="country" name="country">
+                                <option value="">Seleccionar país</option>
+                                {% for country in countries %}
+                                <option value="{{ country.code }}">{{ country.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="city" class="form-label fw-bold">
+                                <i class="fas fa-city me-1"></i>Ciudad
+                            </label>
+                            <input type="text" class="form-control" id="city" name="city">
+                        </div>
+                        
+                        <!-- Imagen y Documentos -->
+                        <div class="col-md-6">
+                            <label for="image" class="form-label fw-bold">
+                                <i class="fas fa-image me-1"></i>Imagen del Programa
+                            </label>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                            <div class="form-text">Formatos permitidos: JPG, PNG, GIF. Máximo 5MB.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="website" class="form-label fw-bold">
+                                <i class="fas fa-globe me-1"></i>Sitio Web
+                            </label>
+                            <input type="url" class="form-control" id="website" name="website" placeholder="https://ejemplo.com">
+                        </div>
+                        
+                        <!-- Requisitos y Beneficios -->
+                        <div class="col-md-6">
+                            <label for="requirements" class="form-label fw-bold">
+                                <i class="fas fa-list-check me-1"></i>Requisitos de Ingreso
+                            </label>
+                            <textarea class="form-control" id="requirements" name="requirements" rows="3" placeholder="Requisitos para participar..."></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="benefits" class="form-label fw-bold">
+                                <i class="fas fa-gift me-1"></i>Beneficios Ofrecidos
+                            </label>
+                            <textarea class="form-control" id="benefits" name="benefits" rows="3" placeholder="Beneficios que ofrece el programa..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Crear Programa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Program Modal -->
+<div class="modal fade" id="editProgramModal" tabindex="-1" aria-labelledby="editProgramModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProgramModalLabel">
+                    <i class="fas fa-edit me-2"></i>Editar Programa
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editProgramForm" enctype="multipart/form-data">
+                <input type="hidden" id="edit_program_id" name="program_id">
+                <div class="modal-body">
+                    <!-- Same form fields as create modal with edit_ prefixes -->
+                    <!-- This would be a copy of the create form with different IDs -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Program Modal -->
+<div class="modal fade" id="viewProgramModal" tabindex="-1" aria-labelledby="viewProgramModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewProgramModalLabel">
+                    <i class="fas fa-eye me-2"></i>Detalles del Programa
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="programDetailsContent">
+                <!-- Content will be loaded dynamically -->
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cerrar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="editFromView()">
+                    <i class="fas fa-edit me-1"></i>Editar
+                </button>
+                <button type="button" class="btn btn-success" onclick="manageParticipantsFromView()">
+                    <i class="fas fa-users me-1"></i>Participantes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions">
+    <button type="button" class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#createProgramModal" title="Nuevo Programa">
+        <i class="fas fa-plus"></i>
+    </button>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/es.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Select2
+    $('.form-select').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
+    });
+
+    // Initialize Flatpickr for date inputs
+    flatpickr('#start_date, #end_date, #registration_deadline', {
+        locale: 'es',
+        dateFormat: 'Y-m-d',
+        allowInput: true
+    });
+
+    // View toggle functionality
+    document.querySelectorAll('input[name="viewType"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            toggleView(this.id);
+        });
+    });
+
+    // Select All functionality
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.row-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateBulkActions();
+    });
+
+    // Individual checkbox functionality
+    document.querySelectorAll('.row-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkActions);
+    });
+
+    // Create Program Form
+    document.getElementById('createProgramForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        createProgram();
+    });
+
+    // Edit Program Form
+    document.getElementById('editProgramForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        updateProgram();
+    });
+
+    // Auto-calculate end date based on start date and duration
+    document.getElementById('start_date').addEventListener('change', calculateEndDate);
+    document.getElementById('duration_weeks').addEventListener('change', calculateEndDate);
+});
+
+// Global variables
+let currentProgramId = null;
+
+// Toggle between views
+function toggleView(viewType) {
+    const tableView = document.getElementById('tableViewContent');
+    const cardView = document.getElementById('cardViewContent');
+    
+    switch(viewType) {
+        case 'tableView':
+            tableView.style.display = 'block';
+            cardView.style.display = 'none';
+            break;
+        case 'cardView':
+            tableView.style.display = 'none';
+            cardView.style.display = 'block';
+            break;
+        case 'calendarView':
+            // Implement calendar view
+            tableView.style.display = 'none';
+            cardView.style.display = 'none';
+            loadCalendarView();
+            break;
+    }
+}
+
+// Toggle filters
+function toggleFilters() {
+    const filtersSection = document.getElementById('filtersSection');
+    if (filtersSection.style.display === 'none') {
+        filtersSection.style.display = 'block';
+    } else {
+        filtersSection.style.display = 'none';
+    }
+}
+
+// Calculate end date
+function calculateEndDate() {
+    const startDate = document.getElementById('start_date').value;
+    const durationWeeks = document.getElementById('duration_weeks').value;
+    
+    if (startDate && durationWeeks) {
+        const start = new Date(startDate);
+        const end = new Date(start.getTime() + (durationWeeks * 7 * 24 * 60 * 60 * 1000));
+        document.getElementById('end_date').value = end.toISOString().split('T')[0];
+    }
+}
+
+// Create Program
+function createProgram() {
+    const form = document.getElementById('createProgramForm');
+    const formData = new FormData(form);
+
+    // Show loading state
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Creando...';
+    submitBtn.disabled = true;
+
+    fetch('{{ url_for("admin.create_program") }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                title: '¡Éxito!',
+                text: 'Programa creado correctamente',
+                icon: 'success',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                window.location.reload();
+            });
+        } else {
+            Swal.fire({
+                title: 'Error',
+                text: data.message || 'Error al crear el programa',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            title: 'Error',
+            text: 'Error al procesar la solicitud',
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// Edit Program
+function editProgram(programId) {
+    currentProgramId = programId;
+    
+    // Fetch program data
+    fetch(`{{ url_for("admin.get_program", program_id=0) }}`.replace('0', programId))
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const program = data.program;
+            
+            // Populate form fields (implement based on your form structure)
+            document.getElementById('edit_program_id').value = program.id;
+            // ... populate other fields
+            
+            // Show modal
+            new bootstrap.Modal(document.getElementById('editProgramModal')).show();
+        } else {
+            Swal.fire({
+                title: 'Error',
+                text: 'No se pudieron cargar los datos del programa',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            title: 'Error',
+            text: 'Error al cargar los datos',
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    });
+}
+
+// Update Program
+function updateProgram() {
+    const form = document.getElementById('editProgramForm');
+    const formData = new FormData(form);
+    const programId = document.getElementById('edit_program_id').value;
+
+    // Show loading state
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Guardando...';
+    submitBtn.disabled = true;
+
+    fetch(`{{ url_for("admin.update_program", program_id=0) }}`.replace('0', programId), {
+        method: 'PUT',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                title: '¡Éxito!',
+                text: 'Programa actualizado correctamente',
+                icon: 'success',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                window.location.reload();
+            });
+        } else {
+            Swal.fire({
+                title: 'Error',
+                text: data.message || 'Error al actualizar el programa',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            title: 'Error',
+            text: 'Error al procesar la solicitud',
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// View Program
+function viewProgram(programId) {
+    currentProgramId = programId;
+    
+    // Show modal first
+    const modal = new bootstrap.Modal(document.getElementById('viewProgramModal'));
+    modal.show();
+    
+    // Fetch program details
+    fetch(`{{ url_for("admin.get_program_details", program_id=0) }}`.replace('0', programId))
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('programDetailsContent').innerHTML = data.html;
+        } else {
+            document.getElementById('programDetailsContent').innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                    <h5>Error al cargar los detalles</h5>
+                    <p>${data.message || 'Error desconocido'}</p>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('programDetailsContent').innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                <h5>Error de conexión</h5>
+                <p>No se pudieron cargar los detalles del programa</p>
+            </div>
+        `;
+    });
+}
+
+// Delete Program
+function deleteProgram(programId) {
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: 'Esta acción no se puede deshacer. Se eliminará el programa y todos sus datos asociados.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`{{ url_for("admin.delete_program", program_id=0) }}`.replace('0', programId), {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content'),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: '¡Eliminado!',
+                        text: 'El programa ha sido eliminado correctamente',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: data.message || 'Error al eliminar el programa',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Error al procesar la solicitud',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            });
+        }
+    });
+}
+
+// Manage Curriculum
+function manageCurriculum(programId) {
+    window.location.href = `{{ url_for("admin.program_curriculum", program_id=0) }}`.replace('0', programId);
+}
+
+// Manage Participants
+function manageParticipants(programId) {
+    window.location.href = `{{ url_for("admin.program_participants", program_id=0) }}`.replace('0', programId);
+}
+
+// Import Programs
+function importPrograms() {
+    // Implement import functionality
+    Swal.fire({
+        title: 'Importar Programas',
+        text: 'Esta funcionalidad estará disponible próximamente',
+        icon: 'info',
+        confirmButtonText: 'OK'
+    });
+}
+
+// Export Programs
+function exportPrograms() {
+    const params = new URLSearchParams(window.location.search);
+    window.open(`{{ url_for("admin.export_programs") }}?${params.toString()}`, '_blank');
+}
+
+// Refresh table
+function refreshTable() {
+    window.location.reload();
+}
+
+// Toggle column visibility
+function toggleColumn(columnClass) {
+    const elements = document.querySelectorAll(`.${columnClass}-column`);
+    elements.forEach(element => {
+        element.style.display = element.style.display === 'none' ? '' : 'none';
+    });
+}
+
+// Update bulk actions
+function updateBulkActions() {
+    const selected = document.querySelectorAll('.row-checkbox:checked');
+    const selectAll = document.getElementById('selectAll');
+    
+    // Update select all checkbox state
+    if (selected.length === 0) {
+        selectAll.indeterminate = false;
+        selectAll.checked = false;
+    } else if (selected.length === document.querySelectorAll('.row-checkbox').length) {
+        selectAll.indeterminate = false;
+        selectAll.checked = true;
+    } else {
+        selectAll.indeterminate = true;
+    }
+    
+    // Update filter count
+    document.getElementById('filterCount').textContent = selected.length;
+}
+
+// Edit from view modal
+function editFromView() {
+    const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewProgramModal'));
+    viewModal.hide();
+    
+    setTimeout(() => {
+        editProgram(currentProgramId);
+    }, 300);
+}
+
+// Manage participants from view
+function manageParticipantsFromView() {
+    manageParticipants(currentProgramId);
+}
+
+// Load calendar view
+function loadCalendarView() {
+    // Implement calendar view functionality
+    console.log('Loading calendar view...');
+}
+
+// Initialize tooltips
+const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+});
+</script>
+{% endblock %}

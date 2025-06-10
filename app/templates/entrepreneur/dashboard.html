@@ -1,314 +1,1680 @@
-{% extends "base.html" %}
+{% extends "layouts/dashboard.html" %}
 
-{% block title %}Dashboard del Emprendedor{% endblock %}
+{% block title %}Mi Dashboard{% endblock %}
 
-{% block styles %}
-{{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.11.0/main.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        --dark-gradient: linear-gradient(135deg, #434343 0%, #000000 100%);
+    }
+
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+    }
+
+    .dashboard-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 30px 30px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .dashboard-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill-opacity='0.1'%3E%3Cpath fill='%23ffffff' d='M50 30c11.046 0 20 8.954 20 20s-8.954 20-20 20-20-8.954-20-20 8.954-20 20-20zm0 5c-8.284 0-15 6.716-15 15s6.716 15 15 15 15-6.716 15-15-6.716-15-15-15z'/%3E%3C/g%3E%3C/svg%3E") repeat;
+        animation: float 20s linear infinite;
+    }
+
+    @keyframes float {
+        0% { transform: translateX(0) translateY(0); }
+        100% { transform: translateX(-100px) translateY(-100px); }
+    }
+
+    .welcome-section {
+        position: relative;
+        z-index: 2;
+    }
+
+    .user-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 4px solid rgba(255,255,255,0.3);
+        object-fit: cover;
+    }
+
+    .streak-counter {
+        background: rgba(255,255,255,0.2);
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        backdrop-filter: blur(10px);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .metric-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        border: none;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .metric-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-gradient);
+    }
+
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .metric-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        color: white;
+    }
+
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .metric-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .metric-change {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+
+    .change-positive {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+    }
+
+    .change-negative {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+
+    .progress-card {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        height: 100%;
+    }
+
+    .progress-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .progress-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .circular-progress {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 1rem;
+        position: relative;
+    }
+
+    .circular-progress svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+    }
+
+    .circular-progress-bg {
+        fill: none;
+        stroke: #e9ecef;
+        stroke-width: 8;
+    }
+
+    .circular-progress-fill {
+        fill: none;
+        stroke-width: 8;
+        stroke-linecap: round;
+        transition: stroke-dasharray 0.6s ease;
+    }
+
+    .progress-percentage {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+
+    .task-item {
+        background: white;
+        border-radius: 15px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #e9ecef;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .task-item:hover {
+        border-left-color: #667eea;
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .task-item.completed {
+        opacity: 0.7;
+        border-left-color: #28a745;
+    }
+
+    .task-item.high-priority {
+        border-left-color: #dc3545;
+    }
+
+    .task-item.medium-priority {
+        border-left-color: #ffc107;
+    }
+
+    .task-checkbox {
+        margin-right: 0.75rem;
+        transform: scale(1.2);
+    }
+
+    .task-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+    }
+
+    .task-meta {
+        font-size: 0.8rem;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .upcoming-event {
+        background: white;
+        border-radius: 15px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #4facfe;
+        transition: all 0.3s ease;
+    }
+
+    .upcoming-event:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .event-time {
+        font-size: 0.9rem;
+        color: #4facfe;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .event-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+    }
+
+    .event-location {
+        font-size: 0.8rem;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .quick-action-btn {
+        background: var(--primary-gradient);
+        border: none;
+        border-radius: 15px;
+        color: white;
+        padding: 1rem;
+        text-align: center;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: block;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+
+    .quick-action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+
+    .quick-action-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        background: #667eea;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 0 0 3px #667eea;
+    }
+
+    .timeline-item::after {
+        content: '';
+        position: absolute;
+        left: 5px;
+        top: 12px;
+        width: 2px;
+        height: calc(100% + 10px);
+        background: #e9ecef;
+    }
+
+    .timeline-item:last-child::after {
+        display: none;
+    }
+
+    .timeline-content {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .timeline-time {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+
+    .timeline-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+    }
+
+    .timeline-description {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .notification-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+    }
+
+    .mentor-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .mentor-card:hover {
+        border-color: #667eea;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .mentor-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        margin: 0 auto 1rem;
+        object-fit: cover;
+    }
+
+    .mentor-name {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+    }
+
+    .mentor-role {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+
+    .mentor-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 10px;
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+    }
+
+    .mentor-status.offline {
+        background: rgba(108, 117, 125, 0.1);
+        color: #6c757d;
+    }
+
+    .achievement-badge {
+        background: var(--warning-gradient);
+        color: white;
+        border-radius: 15px;
+        padding: 1rem;
+        text-align: center;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .achievement-badge:hover {
+        transform: scale(1.05);
+    }
+
+    .achievement-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .achievement-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .achievement-description {
+        font-size: 0.8rem;
+        opacity: 0.9;
+    }
+
+    .resource-link {
+        background: white;
+        border-radius: 10px;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        text-decoration: none;
+        color: #2c3e50;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .resource-link:hover {
+        background: #f8f9fa;
+        transform: translateX(5px);
+        color: #667eea;
+    }
+
+    .resource-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--info-gradient);
+        color: white;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    .weather-widget {
+        background: var(--info-gradient);
+        color: white;
+        border-radius: 15px;
+        padding: 1rem;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .weather-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .weather-temp {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .weather-description {
+        font-size: 0.8rem;
+        opacity: 0.9;
+    }
+
+    .floating-action {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 1000;
+    }
+
+    .fab-main {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 5px 25px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .fab-main:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+    }
+
+    .fab-menu {
+        position: absolute;
+        bottom: 70px;
+        right: 0;
+        opacity: 0;
+        transform: scale(0);
+        transition: all 0.3s ease;
+    }
+
+    .fab-menu.active {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .fab-item {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid #667eea;
+        color: #667eea;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .fab-item:hover {
+        background: #667eea;
+        color: white;
+        transform: scale(1.1);
+    }
+
+    .chat-widget {
+        position: fixed;
+        bottom: 2rem;
+        left: 2rem;
+        width: 300px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        transform: translateY(calc(100% - 60px));
+        transition: transform 0.3s ease;
+        z-index: 999;
+    }
+
+    .chat-widget.expanded {
+        transform: translateY(0);
+    }
+
+    .chat-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 1rem;
+        border-radius: 15px 15px 0 0;
+        cursor: pointer;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+
+    .chat-body {
+        height: 300px;
+        padding: 1rem;
+        overflow-y: auto;
+    }
+
+    .chat-message {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .chat-message.own {
+        background: var(--primary-gradient);
+        color: white;
+        margin-left: 2rem;
+    }
+
+    .motivational-quote {
+        background: var(--success-gradient);
+        color: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .motivational-quote::before {
+        content: '"';
+        position: absolute;
+        top: -10px;
+        left: 20px;
+        font-size: 4rem;
+        opacity: 0.3;
+        font-family: serif;
+    }
+
+    .quote-text {
+        font-size: 1.1rem;
+        font-style: italic;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .quote-author {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-header {
+            margin-bottom: 1rem;
+            padding: 1rem 0;
+        }
+        
+        .metric-card {
+            margin-bottom: 1rem;
+        }
+        
+        .floating-action {
+            bottom: 1rem;
+            right: 1rem;
+        }
+        
+        .chat-widget {
+            width: calc(100% - 2rem);
+            left: 1rem;
+        }
+    }
+
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-icon {
+        width: 35px;
+        height: 35px;
+        background: var(--primary-gradient);
+        color: white;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-  <div class="row">
-    <!-- Sidebar -->
-    <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
-      <div class="position-sticky pt-3">
-        <ul class="nav flex-column">
-          <li class="nav-item">
-            <a class="nav-link active" href="{{ url_for('entrepreneur.dashboard') }}">
-              <i class="bi bi-house-door"></i> Dashboard
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('entrepreneur.profile') }}">
-              <i class="bi bi-person"></i> Mi Perfil
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('entrepreneur.messages') }}">
-              <i class="bi bi-chat"></i> Mensajes
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('entrepreneur.calendar') }}">
-              <i class="bi bi-calendar"></i> Calendario
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('entrepreneur.desktop') }}">
-              <i class="bi bi-briefcase"></i> Escritorio de Trabajo
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('entrepreneur.documents') }}">
-              <i class="bi bi-file-earmark"></i> Documentos
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('entrepreneur.tasks') }}">
-              <i class="bi bi-check-square"></i> Tareas
-            </a>
-          </li>
-        </ul>
-      </div>
-    </nav>
-
-    <!-- Main content -->
-    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Dashboard de {{ current_user.entrepreneur.business_name }}</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-          <div class="btn-group me-2">
-            <button type="button" class="btn btn-sm btn-outline-secondary">Compartir</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary">Exportar</button>
-          </div>
-          <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
-            <i class="bi bi-calendar"></i> Esta semana
-          </button>
+<!-- Dashboard Header -->
+<div class="dashboard-header" data-aos="fade-down">
+    <div class="container">
+        <div class="welcome-section">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center">
+                        {% if current_user.profile_picture %}
+                        <img src="{{ current_user.profile_picture }}" alt="Avatar" class="user-avatar me-3">
+                        {% else %}
+                        <div class="user-avatar me-3 bg-white bg-opacity-25 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-user fa-2x text-white"></i>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <h1 class="mb-1">¡Hola, {{ current_user.first_name }}! 👋</h1>
+                            <p class="mb-0 opacity-75">Listo para hacer crecer tu emprendimiento hoy</p>
+                            <div class="streak-counter">
+                                <i class="fas fa-fire"></i>
+                                <span>{{ current_user.login_streak or 5 }} días consecutivos</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="text-white-50">
+                        <small>{{ now.strftime('%A, %d de %B') }}</small><br>
+                        <span class="h4">{{ now.strftime('%H:%M') }}</span>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-
-      <!-- Statistics Cards -->
-      <div class="row">
-        <div class="col-md-4 mb-4">
-          <div class="card border-left-primary shadow h-100 py-2">
-            <div class="card-body">
-              <div class="row no-gutters align-items-center">
-                <div class="col mr-2">
-                  <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                    Reuniones Pendientes</div>
-                  <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.pending_meetings }}</div>
-                </div>
-                <div class="col-auto">
-                  <i class="bi bi-calendar-check fs-2 text-gray-300"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-4 mb-4">
-          <div class="card border-left-success shadow h-100 py-2">
-            <div class="card-body">
-              <div class="row no-gutters align-items-center">
-                <div class="col mr-2">
-                  <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                    Tareas Completadas</div>
-                  <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.completed_tasks }}/{{ stats.total_tasks }}</div>
-                </div>
-                <div class="col-auto">
-                  <i class="bi bi-check-circle fs-2 text-gray-300"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-4 mb-4">
-          <div class="card border-left-info shadow h-100 py-2">
-            <div class="card-body">
-              <div class="row no-gutters align-items-center">
-                <div class="col mr-2">
-                  <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                    Horas con Aliado</div>
-                  <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.ally_hours }}</div>
-                </div>
-                <div class="col-auto">
-                  <i class="bi bi-clock fs-2 text-gray-300"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Progress Chart -->
-      <div class="row">
-        <div class="col-xl-8 col-lg-7">
-          <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-              <h6 class="m-0 font-weight-bold text-primary">Progreso del Emprendimiento</h6>
-              <div class="dropdown no-arrow">
-                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                  data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="bi bi-three-dots-vertical text-gray-400"></i>
-                </a>
-                <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
-                  aria-labelledby="dropdownMenuLink">
-                  <div class="dropdown-header">Opciones:</div>
-                  <a class="dropdown-item" href="#">Ver detalles</a>
-                  <a class="dropdown-item" href="#">Exportar datos</a>
-                  <div class="dropdown-divider"></div>
-                  <a class="dropdown-item" href="#">Configurar</a>
-                </div>
-              </div>
-            </div>
-            <div class="card-body">
-              <div class="chart-area">
-                <canvas id="progressChart"></canvas>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Ally Information -->
-        <div class="col-xl-4 col-lg-5">
-          <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-              <h6 class="m-0 font-weight-bold text-primary">Mi Aliado</h6>
-            </div>
-            <div class="card-body">
-              {% if current_user.entrepreneur.ally %}
-              <div class="text-center">
-                <img class="img-fluid px-3 px-sm-4 mt-3 mb-4" style="width: 15rem;"
-                  src="{{ url_for('static', filename='images/default-profile.png') }}" alt="Perfil del aliado">
-              </div>
-              <div class="text-center mb-2">
-                <h5>{{ current_user.entrepreneur.ally.user.name }}</h5>
-                <p>{{ current_user.entrepreneur.ally.specialty }}</p>
-              </div>
-              <div class="text-center mb-3">
-                <a href="{{ url_for('entrepreneur.messages') }}" class="btn btn-primary btn-sm">
-                  <i class="bi bi-chat"></i> Enviar mensaje
-                </a>
-                <a href="#" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#meetingModal">
-                  <i class="bi bi-calendar-plus"></i> Programar reunión
-                </a>
-              </div>
-              <p class="mb-0">Próxima reunión: <strong>{{ next_meeting.date|date('d/m/Y H:i') if next_meeting else 'Sin programar' }}</strong></p>
-              {% else %}
-              <div class="text-center py-4">
-                <p>Aún no tienes un aliado asignado.</p>
-                <p>Contacta al administrador para solicitar la asignación.</p>
-              </div>
-              {% endif %}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Upcoming Tasks -->
-      <h2>Tareas pendientes</h2>
-      <div class="table-responsive">
-        <table class="table table-bordered" id="tasksTable" width="100%" cellspacing="0">
-          <thead>
-            <tr>
-              <th>Tarea</th>
-              <th>Fecha límite</th>
-              <th>Prioridad</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for task in upcoming_tasks %}
-            <tr>
-              <td>{{ task.title }}</td>
-              <td>{{ task.due_date|date('d/m/Y') }}</td>
-              <td>
-                <span class="badge bg-{{ task.priority_color }}">{{ task.priority }}</span>
-              </td>
-              <td>
-                <div class="progress">
-                  <div class="progress-bar" role="progressbar" style="width: {{ task.progress }}%;" 
-                    aria-valuenow="{{ task.progress }}" aria-valuemin="0" aria-valuemax="100">{{ task.progress }}%</div>
-                </div>
-              </td>
-              <td>
-                <a href="{{ url_for('entrepreneur.tasks_detail', task_id=task.id) }}" class="btn btn-info btn-sm">
-                  <i class="bi bi-eye"></i>
-                </a>
-                <a href="{{ url_for('entrepreneur.tasks_edit', task_id=task.id) }}" class="btn btn-warning btn-sm">
-                  <i class="bi bi-pencil"></i>
-                </a>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </main>
-  </div>
+    </div>
 </div>
 
-<!-- Meeting Modal -->
-<div class="modal fade" id="meetingModal" tabindex="-1" aria-labelledby="meetingModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="meetingModalLabel">Programar Reunión</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form id="meetingForm" method="post" action="{{ url_for('entrepreneur.schedule_meeting') }}">
-          {{ meeting_form.csrf_token }}
-          <div class="mb-3">
-            {{ meeting_form.title.label(class="form-label") }}
-            {{ meeting_form.title(class="form-control") }}
-          </div>
-          <div class="mb-3">
-            {{ meeting_form.date.label(class="form-label") }}
-            {{ meeting_form.date(class="form-control", type="datetime-local") }}
-          </div>
-          <div class="mb-3">
-            {{ meeting_form.description.label(class="form-label") }}
-            {{ meeting_form.description(class="form-control", rows=3) }}
-          </div>
-          <div class="mb-3 form-check">
-            {{ meeting_form.virtual(class="form-check-input") }}
-            {{ meeting_form.virtual.label(class="form-check-label") }}
-          </div>
-          <div id="locationField" class="mb-3">
-            {{ meeting_form.location.label(class="form-label") }}
-            {{ meeting_form.location(class="form-control") }}
-          </div>
-          <button type="submit" class="btn btn-primary">Programar</button>
-        </form>
-      </div>
+<div class="container-fluid">
+    <!-- Motivational Quote -->
+    <div class="row mb-4" data-aos="fade-up">
+        <div class="col-12">
+            <div class="motivational-quote">
+                <div class="quote-text" id="dailyQuote">
+                    "El éxito es la suma de pequeños esfuerzos repetidos día tras día."
+                </div>
+                <div class="quote-author">— Robert Collier</div>
+            </div>
+        </div>
     </div>
-  </div>
+
+    <!-- Key Metrics Row -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3" data-aos="fade-up" data-aos-delay="100">
+            <div class="metric-card">
+                <div class="metric-icon" style="background: var(--primary-gradient);">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <div class="metric-value">{{ user_stats.active_programs or 2 }}</div>
+                <div class="metric-label">Programas Activos</div>
+                <div class="metric-change change-positive">
+                    <i class="fas fa-arrow-up me-1"></i>+1 este mes
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3" data-aos="fade-up" data-aos-delay="200">
+            <div class="metric-card">
+                <div class="metric-icon" style="background: var(--success-gradient);">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div class="metric-value">{{ user_stats.completed_tasks or 24 }}</div>
+                <div class="metric-label">Tareas Completadas</div>
+                <div class="metric-change change-positive">
+                    <i class="fas fa-arrow-up me-1"></i>+8 esta semana
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3" data-aos="fade-up" data-aos-delay="300">
+            <div class="metric-card">
+                <div class="metric-icon" style="background: var(--info-gradient);">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="metric-value">{{ user_stats.meetings_this_week or 5 }}</div>
+                <div class="metric-label">Reuniones esta Semana</div>
+                <div class="metric-change change-positive">
+                    <i class="fas fa-clock me-1"></i>3 próximas
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3" data-aos="fade-up" data-aos-delay="400">
+            <div class="metric-card">
+                <div class="metric-icon" style="background: var(--warning-gradient);">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="metric-value">{{ user_stats.progress_percentage or 78 }}%</div>
+                <div class="metric-label">Progreso General</div>
+                <div class="metric-change change-positive">
+                    <i class="fas fa-arrow-up me-1"></i>+12% este mes
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-lg-8">
+            <!-- Program Progress Section -->
+            <div class="row mb-4">
+                <div class="col-12" data-aos="fade-up">
+                    <h2 class="section-title">
+                        <div class="section-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        Progreso de Programas
+                    </h2>
+                </div>
+                
+                {% for program in current_programs %}
+                <div class="col-md-6 mb-3" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
+                    <div class="progress-card">
+                        <div class="progress-header">
+                            <h5 class="progress-title">{{ program.name }}</h5>
+                            <span class="badge bg-primary">{{ program.status.title() }}</span>
+                        </div>
+                        <div class="circular-progress">
+                            <svg viewBox="0 0 36 36">
+                                <circle class="circular-progress-bg" cx="18" cy="18" r="15.915"/>
+                                <circle class="circular-progress-fill" cx="18" cy="18" r="15.915" 
+                                        stroke="url(#gradient{{ loop.index }})"
+                                        stroke-dasharray="{{ program.progress_percentage or 0 }}, 100"/>
+                                <defs>
+                                    <linearGradient id="gradient{{ loop.index }}">
+                                        <stop offset="0%" stop-color="#667eea"/>
+                                        <stop offset="100%" stop-color="#764ba2"/>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <div class="progress-percentage">{{ program.progress_percentage or 0 }}%</div>
+                        </div>
+                        <div class="text-center">
+                            <small class="text-muted">
+                                {{ program.completed_modules or 0 }}/{{ program.total_modules or 0 }} módulos completados
+                            </small>
+                        </div>
+                        <div class="mt-3">
+                            <a href="{{ url_for('entrepreneur.program_details', program_id=program.id) }}" 
+                               class="btn btn-outline-primary btn-sm w-100">
+                                <i class="fas fa-eye me-1"></i>Ver Detalles
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-12" data-aos="fade-up">
+                    <div class="progress-card text-center py-4">
+                        <i class="fas fa-rocket fa-3x text-muted mb-3"></i>
+                        <h5>¡Comienza tu journey!</h5>
+                        <p class="text-muted">Aún no estás inscrito en ningún programa</p>
+                        <a href="{{ url_for('entrepreneur.programs') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Explorar Programas
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Tasks Section -->
+            <div class="row mb-4">
+                <div class="col-12" data-aos="fade-up">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="section-title mb-0">
+                            <div class="section-icon">
+                                <i class="fas fa-list-check"></i>
+                            </div>
+                            Mis Tareas
+                        </h2>
+                        <a href="{{ url_for('entrepreneur.tasks') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-external-link-alt me-1"></i>Ver Todas
+                        </a>
+                    </div>
+                    
+                    <div class="progress-card">
+                        {% for task in pending_tasks[:5] %}
+                        <div class="task-item {{ 'completed' if task.completed else '' }} {{ task.priority }}-priority" 
+                             onclick="toggleTask({{ task.id }})">
+                            <div class="d-flex align-items-start">
+                                <input type="checkbox" class="task-checkbox" 
+                                       {% if task.completed %}checked{% endif %}
+                                       onchange="updateTaskStatus({{ task.id }}, this.checked)">
+                                <div class="flex-grow-1">
+                                    <div class="task-title">{{ task.title }}</div>
+                                    <div class="task-meta">
+                                        <span><i class="fas fa-clock me-1"></i>{{ task.due_date.strftime('%d %b') if task.due_date else 'Sin fecha' }}</span>
+                                        <span><i class="fas fa-flag me-1"></i>{{ task.priority.title() }}</span>
+                                        {% if task.program %}
+                                        <span><i class="fas fa-rocket me-1"></i>{{ task.program.name }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <h5>¡Todas las tareas completadas!</h5>
+                            <p class="text-muted">Excelente trabajo, no tienes tareas pendientes</p>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if pending_tasks|length > 5 %}
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('entrepreneur.tasks') }}" class="btn btn-link">
+                                Ver {{ pending_tasks|length - 5 }} tareas más
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity Timeline -->
+            <div class="row mb-4">
+                <div class="col-12" data-aos="fade-up">
+                    <h2 class="section-title">
+                        <div class="section-icon">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        Actividad Reciente
+                    </h2>
+                    
+                    <div class="progress-card">
+                        {% for activity in recent_activities %}
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="timeline-time">{{ activity.created_at.strftime('%H:%M - %d %b') }}</div>
+                                <div class="timeline-title">{{ activity.title }}</div>
+                                <div class="timeline-description">{{ activity.description }}</div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="timeline-time">{{ now.strftime('%H:%M - %d %b') }}</div>
+                                <div class="timeline-title">¡Bienvenido a tu dashboard!</div>
+                                <div class="timeline-description">Comienza tu journey emprendedor explorando los programas disponibles</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-4">
+            <!-- Weather Widget -->
+            <div class="weather-widget" data-aos="fade-left">
+                <div class="weather-icon">
+                    <i class="fas fa-sun"></i>
+                </div>
+                <div class="weather-temp" id="currentTemp">24°C</div>
+                <div class="weather-description" id="weatherDesc">Soleado</div>
+                <small id="weatherLocation">{{ current_user.city or 'Tu ciudad' }}</small>
+            </div>
+
+            <!-- Upcoming Events -->
+            <div class="mb-4" data-aos="fade-left" data-aos-delay="100">
+                <h3 class="section-title">
+                    <div class="section-icon">
+                        <i class="fas fa-calendar"></i>
+                    </div>
+                    Próximos Eventos
+                </h3>
+                
+                {% for event in upcoming_events %}
+                <div class="upcoming-event" onclick="window.location.href='{{ url_for('entrepreneur.meeting_details', meeting_id=event.id) }}'">
+                    <div class="event-time">{{ event.start_time.strftime('%H:%M') }} - {{ event.start_time.strftime('%d %b') }}</div>
+                    <div class="event-title">{{ event.title }}</div>
+                    <div class="event-location">
+                        <i class="fas fa-{{ 'video' if event.is_virtual else 'map-marker-alt' }}"></i>
+                        {{ event.location or 'Reunión virtual' }}
+                    </div>
+                </div>
+                {% else %}
+                <div class="upcoming-event">
+                    <div class="event-time">No hay eventos próximos</div>
+                    <div class="event-title">Tu agenda está libre</div>
+                    <div class="event-location">
+                        <i class="fas fa-calendar-plus"></i>
+                        <a href="{{ url_for('entrepreneur.calendar') }}" class="text-decoration-none">Programar reunión</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Mentors Section -->
+            <div class="mb-4" data-aos="fade-left" data-aos-delay="200">
+                <h3 class="section-title">
+                    <div class="section-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    Tus Mentores
+                </h3>
+                
+                {% for mentor in assigned_mentors %}
+                <div class="mentor-card mb-3" onclick="window.location.href='{{ url_for('entrepreneur.mentor_profile', mentor_id=mentor.id) }}'">
+                    {% if mentor.profile_picture %}
+                    <img src="{{ mentor.profile_picture }}" alt="{{ mentor.full_name }}" class="mentor-avatar">
+                    {% else %}
+                    <div class="mentor-avatar bg-primary text-white d-flex align-items-center justify-content-center">
+                        {{ mentor.first_name[0] }}{{ mentor.last_name[0] if mentor.last_name else '' }}
+                    </div>
+                    {% endif %}
+                    <div class="mentor-name">{{ mentor.full_name }}</div>
+                    <div class="mentor-role">{{ mentor.expertise_area or 'Mentor' }}</div>
+                    <div class="mentor-status {{ 'offline' if not mentor.is_online else '' }}">
+                        <i class="fas fa-circle"></i>
+                        {{ 'Online' if mentor.is_online else 'Offline' }}
+                    </div>
+                </div>
+                {% else %}
+                <div class="mentor-card">
+                    <div class="mentor-avatar bg-secondary text-white d-flex align-items-center justify-content-center">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="mentor-name">Sin mentores asignados</div>
+                    <div class="mentor-role">Solicita mentoría en tus programas</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="mb-4" data-aos="fade-left" data-aos-delay="300">
+                <h3 class="section-title">
+                    <div class="section-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    Acciones Rápidas
+                </h3>
+                
+                <a href="{{ url_for('entrepreneur.meetings.schedule') }}" class="quick-action-btn">
+                    <span class="quick-action-icon">
+                        <i class="fas fa-calendar-plus"></i>
+                    </span>
+                    Programar Reunión
+                </a>
+                
+                <a href="{{ url_for('entrepreneur.tasks.create') }}" class="quick-action-btn" 
+                   style="background: var(--success-gradient);">
+                    <span class="quick-action-icon">
+                        <i class="fas fa-plus"></i>
+                    </span>
+                    Nueva Tarea
+                </a>
+                
+                <a href="{{ url_for('entrepreneur.progress.update') }}" class="quick-action-btn" 
+                   style="background: var(--info-gradient);">
+                    <span class="quick-action-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </span>
+                    Actualizar Progreso
+                </a>
+                
+                <a href="{{ url_for('entrepreneur.messages') }}" class="quick-action-btn" 
+                   style="background: var(--warning-gradient);">
+                    <span class="quick-action-icon position-relative">
+                        <i class="fas fa-envelope"></i>
+                        {% if unread_messages > 0 %}
+                        <span class="notification-badge">{{ unread_messages }}</span>
+                        {% endif %}
+                    </span>
+                    Mensajes
+                </a>
+            </div>
+
+            <!-- Achievements -->
+            <div class="mb-4" data-aos="fade-left" data-aos-delay="400">
+                <h3 class="section-title">
+                    <div class="section-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    Logros Recientes
+                </h3>
+                
+                {% for achievement in recent_achievements %}
+                <div class="achievement-badge">
+                    <div class="achievement-icon">
+                        <i class="{{ achievement.icon }}"></i>
+                    </div>
+                    <div class="achievement-title">{{ achievement.title }}</div>
+                    <div class="achievement-description">{{ achievement.description }}</div>
+                </div>
+                {% else %}
+                <div class="achievement-badge">
+                    <div class="achievement-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="achievement-title">¡Tu primer paso!</div>
+                    <div class="achievement-description">Has iniciado tu journey emprendedor</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Resources -->
+            <div class="mb-4" data-aos="fade-left" data-aos-delay="500">
+                <h3 class="section-title">
+                    <div class="section-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    Recursos Útiles
+                </h3>
+                
+                <a href="{{ url_for('entrepreneur.resources.business_plan') }}" class="resource-link">
+                    <div class="resource-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">Plantilla Business Plan</div>
+                        <small class="text-muted">Crea tu plan de negocio</small>
+                    </div>
+                </a>
+                
+                <a href="{{ url_for('entrepreneur.resources.pitch_deck') }}" class="resource-link">
+                    <div class="resource-icon">
+                        <i class="fas fa-presentation"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">Pitch Deck Template</div>
+                        <small class="text-muted">Presenta tu startup</small>
+                    </div>
+                </a>
+                
+                <a href="{{ url_for('entrepreneur.resources.financial_model') }}" class="resource-link">
+                    <div class="resource-icon">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">Modelo Financiero</div>
+                        <small class="text-muted">Proyecciones financieras</small>
+                    </div>
+                </a>
+                
+                <a href="{{ url_for('entrepreneur.resources.market_research') }}" class="resource-link">
+                    <div class="resource-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">Investigación de Mercado</div>
+                        <small class="text-muted">Analiza tu mercado</small>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Action Button -->
+<div class="floating-action">
+    <div class="fab-menu" id="fabMenu">
+        <div class="fab-item" onclick="window.location.href='{{ url_for('entrepreneur.help') }}'" title="Ayuda">
+            <i class="fas fa-question"></i>
+        </div>
+        <div class="fab-item" onclick="window.location.href='{{ url_for('entrepreneur.feedback') }}'" title="Feedback">
+            <i class="fas fa-comment"></i>
+        </div>
+        <div class="fab-item" onclick="toggleChatWidget()" title="Chat">
+            <i class="fas fa-comments"></i>
+        </div>
+    </div>
+    <button class="fab-main" onclick="toggleFabMenu()">
+        <i class="fas fa-plus" id="fabIcon"></i>
+    </button>
+</div>
+
+<!-- Chat Widget -->
+<div class="chat-widget" id="chatWidget">
+    <div class="chat-header" onclick="toggleChatWidget()">
+        <div>
+            <strong>Asistente Virtual</strong>
+            <br><small>¿En qué puedo ayudarte?</small>
+        </div>
+        <i class="fas fa-chevron-up" id="chatToggleIcon"></i>
+    </div>
+    <div class="chat-body" id="chatBody">
+        <div class="chat-message">
+            ¡Hola {{ current_user.first_name }}! 👋 Soy tu asistente virtual. ¿Cómo puedo ayudarte hoy?
+        </div>
+        <div class="chat-message">
+            Puedes preguntarme sobre:
+            <br>• Programas disponibles
+            <br>• Próximas reuniones
+            <br>• Estado de tareas
+            <br>• Recursos disponibles
+        </div>
+    </div>
+    <div class="p-2 border-top">
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="Escribe tu mensaje..." id="chatInput" onkeypress="handleChatInput(event)">
+            <button class="btn btn-primary" onclick="sendChatMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
-{% block scripts %}
-{{ super() }}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Initialize the progress chart
-    const ctx = document.getElementById('progressChart').getContext('2d');
-    const progressData = {
-      labels: {{ progress_labels|tojson }},
-      datasets: [{
-        label: 'Progreso',
-        data: {{ progress_data|tojson }},
-        backgroundColor: 'rgba(78, 115, 223, 0.2)',
-        borderColor: 'rgba(78, 115, 223, 1)',
-        pointBackgroundColor: 'rgba(78, 115, 223, 1)',
-        pointBorderColor: '#fff',
-        pointHoverBackgroundColor: '#fff',
-        pointHoverBorderColor: 'rgba(78, 115, 223, 1)',
-        lineTension: 0.3
-      }]
+// Initialize AOS
+AOS.init({
+    duration: 800,
+    once: true
+});
+
+// Global variables
+let fabMenuOpen = false;
+let chatExpanded = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize dashboard
+    initializeDashboard();
+    
+    // Load daily quote
+    loadDailyQuote();
+    
+    // Load weather
+    loadWeatherData();
+    
+    // Setup real-time updates
+    setupRealTimeUpdates();
+});
+
+// Initialize dashboard components
+function initializeDashboard() {
+    // Setup task interactions
+    setupTaskInteractions();
+    
+    // Setup notification handlers
+    setupNotifications();
+    
+    // Setup keyboard shortcuts
+    setupKeyboardShortcuts();
+}
+
+// Toggle FAB menu
+function toggleFabMenu() {
+    const fabMenu = document.getElementById('fabMenu');
+    const fabIcon = document.getElementById('fabIcon');
+    
+    fabMenuOpen = !fabMenuOpen;
+    
+    if (fabMenuOpen) {
+        fabMenu.classList.add('active');
+        fabIcon.classList.remove('fa-plus');
+        fabIcon.classList.add('fa-times');
+    } else {
+        fabMenu.classList.remove('active');
+        fabIcon.classList.remove('fa-times');
+        fabIcon.classList.add('fa-plus');
+    }
+}
+
+// Toggle chat widget
+function toggleChatWidget() {
+    const chatWidget = document.getElementById('chatWidget');
+    const chatIcon = document.getElementById('chatToggleIcon');
+    
+    chatExpanded = !chatExpanded;
+    
+    if (chatExpanded) {
+        chatWidget.classList.add('expanded');
+        chatIcon.classList.remove('fa-chevron-up');
+        chatIcon.classList.add('fa-chevron-down');
+    } else {
+        chatWidget.classList.remove('expanded');
+        chatIcon.classList.remove('fa-chevron-down');
+        chatIcon.classList.add('fa-chevron-up');
+    }
+}
+
+// Update task status
+function updateTaskStatus(taskId, completed) {
+    fetch(`{{ url_for("entrepreneur.update_task_status") }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            task_id: taskId,
+            completed: completed
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update UI
+            const taskItem = document.querySelector(`[onclick="toggleTask(${taskId})"]`);
+            if (completed) {
+                taskItem.classList.add('completed');
+                showSuccessMessage('¡Tarea completada! 🎉');
+            } else {
+                taskItem.classList.remove('completed');
+            }
+            
+            // Update metrics
+            updateTaskMetrics();
+        } else {
+            Swal.fire('Error', 'No se pudo actualizar la tarea', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire('Error', 'Error de conexión', 'error');
+    });
+}
+
+// Toggle task (for clicking on task item)
+function toggleTask(taskId) {
+    const checkbox = document.querySelector(`[onchange="updateTaskStatus(${taskId}, this.checked)"]`);
+    checkbox.checked = !checkbox.checked;
+    updateTaskStatus(taskId, checkbox.checked);
+}
+
+// Load daily quote
+function loadDailyQuote() {
+    const quotes = [
+        {
+            text: "El éxito es la suma de pequeños esfuerzos repetidos día tras día.",
+            author: "Robert Collier"
+        },
+        {
+            text: "No tengas miedo de renunciar a lo bueno para perseguir lo grandioso.",
+            author: "John D. Rockefeller"
+        },
+        {
+            text: "La innovación distingue entre un líder y un seguidor.",
+            author: "Steve Jobs"
+        },
+        {
+            text: "El emprendedor promedio falla 3 veces antes de tener éxito.",
+            author: "Richard Branson"
+        },
+        {
+            text: "Tu limitación, es solo tu imaginación.",
+            author: "Anónimo"
+        }
+    ];
+    
+    const today = new Date().getDate();
+    const quote = quotes[today % quotes.length];
+    
+    document.getElementById('dailyQuote').textContent = `"${quote.text}"`;
+    document.querySelector('.quote-author').textContent = `— ${quote.author}`;
+}
+
+// Load weather data
+function loadWeatherData() {
+    // Simulated weather data - in production, use real weather API
+    const weatherConditions = [
+        { icon: 'fas fa-sun', temp: '24°C', desc: 'Soleado' },
+        { icon: 'fas fa-cloud-sun', temp: '22°C', desc: 'Parcialmente nublado' },
+        { icon: 'fas fa-cloud-rain', temp: '18°C', desc: 'Lluvia ligera' },
+        { icon: 'fas fa-cloud', temp: '20°C', desc: 'Nublado' }
+    ];
+    
+    const randomWeather = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
+    
+    document.querySelector('.weather-icon i').className = randomWeather.icon;
+    document.getElementById('currentTemp').textContent = randomWeather.temp;
+    document.getElementById('weatherDesc').textContent = randomWeather.desc;
+}
+
+// Setup task interactions
+function setupTaskInteractions() {
+    // Add keyboard support for tasks
+    document.querySelectorAll('.task-item').forEach(task => {
+        task.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            }
+        });
+        
+        // Make tasks focusable
+        task.setAttribute('tabindex', '0');
+    });
+}
+
+// Setup notifications
+function setupNotifications() {
+    // Check for browser notification permissions
+    if (Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+    
+    // Setup notification click handlers
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('notification-badge')) {
+            // Handle notification click
+            markNotificationsAsRead();
+        }
+    });
+}
+
+// Setup keyboard shortcuts
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        // Alt + T: New task
+        if (e.altKey && e.key === 't') {
+            e.preventDefault();
+            window.location.href = "{{ url_for('entrepreneur.tasks.create') }}";
+        }
+        
+        // Alt + M: New meeting
+        if (e.altKey && e.key === 'm') {
+            e.preventDefault();
+            window.location.href = "{{ url_for('entrepreneur.meetings.schedule') }}";
+        }
+        
+        // Alt + C: Open chat
+        if (e.altKey && e.key === 'c') {
+            e.preventDefault();
+            toggleChatWidget();
+        }
+        
+        // Escape: Close modals/menus
+        if (e.key === 'Escape') {
+            if (fabMenuOpen) toggleFabMenu();
+            if (chatExpanded) toggleChatWidget();
+        }
+    });
+}
+
+// Chat functionality
+function handleChatInput(event) {
+    if (event.key === 'Enter') {
+        sendChatMessage();
+    }
+}
+
+function sendChatMessage() {
+    const chatInput = document.getElementById('chatInput');
+    const message = chatInput.value.trim();
+    
+    if (!message) return;
+    
+    // Add user message to chat
+    addChatMessage(message, true);
+    chatInput.value = '';
+    
+    // Simulate AI response
+    setTimeout(() => {
+        const response = generateChatResponse(message);
+        addChatMessage(response, false);
+    }, 1000);
+}
+
+function addChatMessage(message, isUser) {
+    const chatBody = document.getElementById('chatBody');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${isUser ? 'own' : ''}`;
+    messageDiv.textContent = message;
+    
+    chatBody.appendChild(messageDiv);
+    chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+function generateChatResponse(message) {
+    const responses = {
+        'tareas': 'Tienes {{ pending_tasks|length }} tareas pendientes. ¿Te gustaría ver los detalles?',
+        'reuniones': 'Tu próxima reunión es {{ upcoming_events[0].title if upcoming_events else "No tienes reuniones programadas" }}',
+        'progreso': 'Tu progreso general es del {{ user_stats.progress_percentage or 78 }}%. ¡Excelente trabajo!',
+        'programas': 'Estás participando en {{ user_stats.active_programs or 2 }} programas activos.',
+        'ayuda': 'Estoy aquí para ayudarte. Puedes preguntarme sobre tus tareas, reuniones, progreso o programas.',
+        'default': 'Interesante pregunta. ¿Podrías ser más específico? Puedo ayudarte con información sobre tus actividades.'
     };
     
-    initProgressChart(ctx, progressData);
+    const lowerMessage = message.toLowerCase();
     
-    // Meeting form toggle for virtual/in-person
-    const virtualCheckbox = document.getElementById('virtual');
-    const locationField = document.getElementById('locationField');
+    for (const [key, response] of Object.entries(responses)) {
+        if (lowerMessage.includes(key)) {
+            return response;
+        }
+    }
     
-    virtualCheckbox.addEventListener('change', function() {
-      if (this.checked) {
-        locationField.style.display = 'none';
-      } else {
-        locationField.style.display = 'block';
-      }
+    return responses.default;
+}
+
+// Update task metrics
+function updateTaskMetrics() {
+    fetch('{{ url_for("entrepreneur.get_task_metrics") }}')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update completed tasks counter
+            const completedTasksElement = document.querySelector('.metric-value');
+            if (completedTasksElement) {
+                completedTasksElement.textContent = data.completed_tasks;
+            }
+        }
     });
+}
+
+// Setup real-time updates
+function setupRealTimeUpdates() {
+    // Update every 5 minutes
+    setInterval(() => {
+        updateDashboardData();
+    }, 300000);
     
-    // Trigger the change event on load
-    virtualCheckbox.dispatchEvent(new Event('change'));
-  });
+    // Update time every minute
+    setInterval(() => {
+        updateCurrentTime();
+    }, 60000);
+}
+
+// Update dashboard data
+function updateDashboardData() {
+    fetch('{{ url_for("entrepreneur.get_dashboard_data") }}')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update metrics
+            updateMetrics(data.metrics);
+            
+            // Update upcoming events
+            updateUpcomingEvents(data.upcoming_events);
+            
+            // Update notifications
+            updateNotificationBadges(data.notifications);
+        }
+    })
+    .catch(error => {
+        console.error('Error updating dashboard:', error);
+    });
+}
+
+// Update current time
+function updateCurrentTime() {
+    const now = new Date();
+    const timeElement = document.querySelector('.h4');
+    if (timeElement) {
+        timeElement.textContent = now.toLocaleTimeString('es-ES', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+    }
+}
+
+// Show success message
+function showSuccessMessage(message) {
+    Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: message,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+    });
+}
+
+// Mark notifications as read
+function markNotificationsAsRead() {
+    fetch('{{ url_for("entrepreneur.mark_notifications_read") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove notification badges
+            document.querySelectorAll('.notification-badge').forEach(badge => {
+                badge.style.display = 'none';
+            });
+        }
+    });
+}
+
+// Handle click outside to close menus
+document.addEventListener('click', function(e) {
+    const fabContainer = document.querySelector('.floating-action');
+    const chatWidget = document.getElementById('chatWidget');
+    
+    // Close FAB menu if clicking outside
+    if (fabMenuOpen && !fabContainer.contains(e.target)) {
+        toggleFabMenu();
+    }
+});
+
+// Add smooth scrolling for internal links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    });
+});
+
+// Initialize tooltips for better UX
+document.querySelectorAll('[title]').forEach(element => {
+    element.addEventListener('mouseenter', function() {
+        // Simple tooltip implementation
+        const tooltip = document.createElement('div');
+        tooltip.className = 'tooltip-custom';
+        tooltip.textContent = this.getAttribute('title');
+        tooltip.style.cssText = `
+            position: absolute;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            pointer-events: none;
+        `;
+        
+        document.body.appendChild(tooltip);
+        
+        this.addEventListener('mouseleave', function() {
+            tooltip.remove();
+        });
+        
+        this.addEventListener('mousemove', function(e) {
+            tooltip.style.left = e.pageX + 10 + 'px';
+            tooltip.style.top = e.pageY - 30 + 'px';
+        });
+    });
+});
+
+// Performance optimization: Lazy load images
+const images = document.querySelectorAll('img[data-src]');
+const imageObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const img = entry.target;
+            img.src = img.dataset.src;
+            img.classList.remove('lazy');
+            imageObserver.unobserve(img);
+        }
+    });
+});
+
+images.forEach(img => imageObserver.observe(img));
+
+// Add PWA functionality
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js')
+        .then(function(registration) {
+            console.log('ServiceWorker registered successfully');
+        })
+        .catch(function(err) {
+            console.log('ServiceWorker registration failed');
+        });
+    });
+}
 </script>
 {% endblock %}

@@ -1,522 +1,1947 @@
-{% extends "base.html" %}
+{% extends "layouts/admin.html" %}
 
-{% block title %}Gestión de Usuarios - Plataforma de Emprendimiento{% endblock %}
+{% block title %}Gestión de Usuarios - Panel Administrativo{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+<link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css" rel="stylesheet">
+<link href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css" rel="stylesheet">
+<style>
+    :root {
+        --admin-primary: #1e40af;
+        --admin-secondary: #64748b;
+        --admin-success: #059669;
+        --admin-warning: #d97706;
+        --admin-danger: #dc2626;
+        --admin-info: #0284c7;
+        --admin-dark: #0f172a;
+        --admin-light: #f1f5f9;
+        --admin-border: #e2e8f0;
+        --admin-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        --admin-shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+        --admin-gradient: linear-gradient(135deg, var(--admin-primary) 0%, #3b82f6 100%);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .page-header {
+        background: var(--admin-gradient);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 24px 24px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+        opacity: 0.3;
+    }
+
+    .page-header .container {
+        position: relative;
+        z-index: 1;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .users-card {
+        background: white;
+        border-radius: 16px;
+        padding: 0;
+        box-shadow: var(--admin-shadow);
+        border: 1px solid var(--admin-border);
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: var(--admin-light);
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--admin-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--admin-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary {
+        background: var(--admin-gradient);
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        color: white;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--admin-shadow-lg);
+        color: white;
+    }
+
+    .btn-outline-primary {
+        border: 2px solid var(--admin-primary);
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        color: var(--admin-primary);
+        background: transparent;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-outline-primary:hover {
+        background: var(--admin-primary);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background: var(--admin-secondary);
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        color: white;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-secondary:hover {
+        background: #4a5568;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .filters-section {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--admin-shadow);
+        border: 1px solid var(--admin-border);
+    }
+
+    .filters-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        cursor: pointer;
+    }
+
+    .filters-title {
+        font-weight: 600;
+        color: var(--admin-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filters-content {
+        display: none;
+        animation: slideDown 0.3s ease-out;
+    }
+
+    .filters-content.show {
+        display: block;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        font-weight: 500;
+        color: var(--admin-dark);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid var(--admin-border);
+        border-radius: 12px;
+        padding: 0.75rem;
+        transition: var(--transition);
+        background: white;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--admin-primary);
+        box-shadow: 0 0 0 0.2rem rgba(30, 64, 175, 0.25);
+    }
+
+    .bulk-actions {
+        background: var(--admin-light);
+        padding: 1rem 2rem;
+        border-bottom: 1px solid var(--admin-border);
+        display: none;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .bulk-actions.show {
+        display: flex;
+    }
+
+    .bulk-info {
+        font-weight: 500;
+        color: var(--admin-dark);
+    }
+
+    .table-container {
+        padding: 2rem;
+    }
+
+    .users-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .users-table th {
+        background: var(--admin-light);
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--admin-dark);
+        border-bottom: 2px solid var(--admin-border);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .users-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--admin-border);
+        vertical-align: middle;
+    }
+
+    .users-table tbody tr {
+        transition: var(--transition);
+    }
+
+    .users-table tbody tr:hover {
+        background: var(--admin-light);
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .user-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: white;
+        flex-shrink: 0;
+        position: relative;
+    }
+
+    .user-avatar img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .avatar-entrepreneur { background: var(--admin-primary); }
+    .avatar-mentor { background: var(--admin-success); }
+    .avatar-client { background: var(--admin-info); }
+    .avatar-admin { background: var(--admin-danger); }
+
+    .user-details h6 {
+        margin: 0 0 0.25rem 0;
+        font-weight: 600;
+        color: var(--admin-dark);
+    }
+
+    .user-details p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: var(--admin-secondary);
+    }
+
+    .user-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        display: inline-block;
+    }
+
+    .badge-success {
+        background: rgba(5, 150, 105, 0.1);
+        color: var(--admin-success);
+    }
+
+    .badge-warning {
+        background: rgba(217, 119, 6, 0.1);
+        color: var(--admin-warning);
+    }
+
+    .badge-danger {
+        background: rgba(220, 38, 38, 0.1);
+        color: var(--admin-danger);
+    }
+
+    .badge-info {
+        background: rgba(2, 132, 199, 0.1);
+        color: var(--admin-info);
+    }
+
+    .badge-secondary {
+        background: rgba(100, 116, 139, 0.1);
+        color: var(--admin-secondary);
+    }
+
+    .badge-primary {
+        background: rgba(30, 64, 175, 0.1);
+        color: var(--admin-primary);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-action {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid var(--admin-border);
+        background: white;
+        color: var(--admin-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+
+    .btn-action:hover {
+        background: var(--admin-light);
+        transform: translateY(-2px);
+    }
+
+    .btn-action.btn-view:hover {
+        color: var(--admin-info);
+        border-color: var(--admin-info);
+    }
+
+    .btn-action.btn-edit:hover {
+        color: var(--admin-warning);
+        border-color: var(--admin-warning);
+    }
+
+    .btn-action.btn-delete:hover {
+        color: var(--admin-danger);
+        border-color: var(--admin-danger);
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid var(--admin-border);
+        text-align: center;
+        transition: var(--transition);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--admin-shadow);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--admin-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: var(--admin-secondary);
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    /* Modal Styles */
+    .modal-content {
+        border-radius: 16px;
+        border: none;
+        box-shadow: var(--admin-shadow-lg);
+    }
+
+    .modal-header {
+        background: var(--admin-gradient);
+        color: white;
+        border-radius: 16px 16px 0 0;
+        padding: 1.5rem 2rem;
+        border-bottom: none;
+    }
+
+    .modal-title {
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .btn-close {
+        filter: invert(1);
+        opacity: 0.8;
+    }
+
+    .modal-body {
+        padding: 2rem;
+    }
+
+    .modal-footer {
+        padding: 1.5rem 2rem;
+        border-top: 1px solid var(--admin-border);
+        border-radius: 0 0 16px 16px;
+    }
+
+    /* Loading States */
+    .loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--admin-border);
+        border-top: 4px solid var(--admin-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Custom Checkbox */
+    .custom-checkbox {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .custom-checkbox input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .checkmark {
+        width: 20px;
+        height: 20px;
+        background: white;
+        border: 2px solid var(--admin-border);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+    }
+
+    .custom-checkbox input:checked ~ .checkmark {
+        background: var(--admin-primary);
+        border-color: var(--admin-primary);
+        color: white;
+    }
+
+    .checkmark::after {
+        content: '\f00c';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        font-size: 0.75rem;
+        opacity: 0;
+        transition: var(--transition);
+    }
+
+    .custom-checkbox input:checked ~ .checkmark::after {
+        opacity: 1;
+    }
+
+    /* DataTables Custom Styling */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        margin-bottom: 1rem;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        border-radius: 8px;
+        margin: 0 2px;
+        border: 1px solid var(--admin-border);
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: var(--admin-primary);
+        color: white !important;
+        border-color: var(--admin-primary);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .card-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .card-actions {
+            justify-content: stretch;
+        }
+
+        .card-actions .btn {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .filter-row {
+            grid-template-columns: 1fr;
+        }
+
+        .bulk-actions {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .users-table {
+            font-size: 0.875rem;
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 0.75rem 0.5rem;
+        }
+    }
+
+    /* Activity Timeline */
+    .activity-timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+
+    .activity-timeline::before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--admin-border);
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -15px;
+        top: 6px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--admin-primary);
+        border: 3px solid white;
+        box-shadow: 0 0 0 2px var(--admin-border);
+    }
+
+    .timeline-content {
+        background: white;
+        border: 1px solid var(--admin-border);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .timeline-time {
+        font-size: 0.75rem;
+        color: var(--admin-secondary);
+        margin-bottom: 0.5rem;
+    }
+
+    .timeline-title {
+        font-weight: 600;
+        color: var(--admin-dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .timeline-description {
+        color: var(--admin-secondary);
+        font-size: 0.875rem;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar -->
-        <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
-            <div class="position-sticky pt-3">
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
-                            <i class="bi bi-speedometer2 me-2"></i>
-                            Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{{ url_for('admin.users') }}">
-                            <i class="bi bi-people me-2"></i>
-                            Usuarios
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.entrepreneurs') }}">
-                            <i class="bi bi-briefcase me-2"></i>
-                            Emprendedores
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.allies') }}">
-                            <i class="bi bi-person-check me-2"></i>
-                            Aliados
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.assign_ally') }}">
-                            <i class="bi bi-link-45deg me-2"></i>
-                            Asignar Aliados
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.settings') }}">
-                            <i class="bi bi-gear me-2"></i>
-                            Configuración
-                        </a>
-                    </li>
-                </ul>
-
-                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                    <span>Reportes</span>
-                </h6>
-                <ul class="nav flex-column mb-2">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.reports_activity') }}">
-                            <i class="bi bi-file-earmark-text me-2"></i>
-                            Actividad
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.reports_impact') }}">
-                            <i class="bi bi-graph-up me-2"></i>
-                            Impacto
-                        </a>
-                    </li>
-                </ul>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-users me-2"></i>
+                    Gestión de Usuarios
+                </h1>
+                <p class="page-subtitle">Administra todos los usuarios del ecosistema de emprendimiento</p>
             </div>
-        </nav>
-
-        <!-- Main content -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Gestión de Usuarios</h1>
-                <div class="btn-toolbar mb-2 mb-md-0">
-                    <div class="input-group me-2">
-                        <input type="text" class="form-control" placeholder="Buscar usuarios..." id="searchUsers">
-                        <button class="btn btn-outline-secondary" type="button" id="searchButton">
-                            <i class="bi bi-search"></i>
-                        </button>
-                    </div>
-                    <a href="{{ url_for('admin.user_new') }}" class="btn btn-primary">
-                        <i class="bi bi-person-plus me-1"></i> Nuevo Usuario
-                    </a>
+            <div class="col-md-4 text-end">
+                <div class="d-flex justify-content-end gap-2">
+                    <button class="btn btn-outline-primary" id="importUsers">
+                        <i class="fas fa-upload me-1"></i> Importar
+                    </button>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                        <i class="fas fa-plus me-1"></i> Nuevo Usuario
+                    </button>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
 
-            <!-- Filters -->
-            <div class="row mb-3">
-                <div class="col-md-12">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body">
-                            <form id="filterForm" class="row g-3 align-items-end">
-                                <div class="col-md-3">
-                                    <label for="roleFilter" class="form-label">Rol</label>
-                                    <select class="form-select" id="roleFilter" name="role">
-                                        <option value="">Todos los roles</option>
-                                        <option value="admin">Administrador</option>
-                                        <option value="entrepreneur">Emprendedor</option>
-                                        <option value="ally">Aliado</option>
-                                        <option value="client">Cliente</option>
-                                    </select>
+<div class="container">
+    <!-- Statistics Row -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.total_users | default(1247) }}</div>
+            <div class="stat-label">Total Usuarios</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.active_users | default(1089) }}</div>
+            <div class="stat-label">Usuarios Activos</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.pending_users | default(47) }}</div>
+            <div class="stat-label">Pendientes de Verificación</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.new_this_month | default(156) }}</div>
+            <div class="stat-label">Nuevos este Mes</div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+        <div class="filters-header" id="filtersToggle">
+            <h4 class="filters-title">
+                <i class="fas fa-filter me-2"></i>
+                Filtros Avanzados
+            </h4>
+            <i class="fas fa-chevron-down" id="filtersChevron"></i>
+        </div>
+        <div class="filters-content" id="filtersContent">
+            <form id="filtersForm">
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label for="filterType">Tipo de Usuario</label>
+                        <select class="form-select" id="filterType" name="user_type">
+                            <option value="">Todos los tipos</option>
+                            <option value="entrepreneur">Emprendedor</option>
+                            <option value="mentor">Mentor</option>
+                            <option value="client">Cliente</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filterStatus">Estado</label>
+                        <select class="form-select" id="filterStatus" name="status">
+                            <option value="">Todos los estados</option>
+                            <option value="active">Activo</option>
+                            <option value="inactive">Inactivo</option>
+                            <option value="pending">Pendiente</option>
+                            <option value="suspended">Suspendido</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filterVerified">Verificación</label>
+                        <select class="form-select" id="filterVerified" name="verified">
+                            <option value="">Todos</option>
+                            <option value="1">Verificado</option>
+                            <option value="0">No Verificado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filterCountry">País</label>
+                        <select class="form-select" id="filterCountry" name="country">
+                            <option value="">Todos los países</option>
+                            <option value="CO">Colombia</option>
+                            <option value="MX">México</option>
+                            <option value="AR">Argentina</option>
+                            <option value="CL">Chile</option>
+                            <option value="PE">Perú</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label for="filterDateFrom">Registrado desde</label>
+                        <input type="date" class="form-control" id="filterDateFrom" name="date_from">
+                    </div>
+                    <div class="form-group">
+                        <label for="filterDateTo">Hasta</label>
+                        <input type="date" class="form-control" id="filterDateTo" name="date_to">
+                    </div>
+                    <div class="form-group">
+                        <label for="filterSearch">Búsqueda Global</label>
+                        <input type="text" class="form-control" id="filterSearch" name="search" 
+                               placeholder="Nombre, email, organización...">
+                    </div>
+                    <div class="form-group d-flex align-items-end">
+                        <button type="button" class="btn btn-primary me-2" id="applyFilters">
+                            <i class="fas fa-search me-1"></i> Filtrar
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="clearFilters">
+                            <i class="fas fa-times me-1"></i> Limpiar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="users-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-table me-2"></i>
+                Lista de Usuarios
+            </h3>
+            <div class="card-actions">
+                <button class="btn btn-outline-primary" id="exportUsers">
+                    <i class="fas fa-download me-1"></i> Exportar
+                </button>
+                <button class="btn btn-secondary" id="refreshTable">
+                    <i class="fas fa-sync-alt me-1"></i> Actualizar
+                </button>
+            </div>
+        </div>
+
+        <!-- Bulk Actions Bar -->
+        <div class="bulk-actions" id="bulkActionsBar">
+            <div class="bulk-info">
+                <span id="selectedCount">0</span> usuarios seleccionados
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-success" id="bulkActivate">
+                    <i class="fas fa-check me-1"></i> Activar
+                </button>
+                <button class="btn btn-sm btn-warning" id="bulkSuspend">
+                    <i class="fas fa-pause me-1"></i> Suspender
+                </button>
+                <button class="btn btn-sm btn-danger" id="bulkDelete">
+                    <i class="fas fa-trash me-1"></i> Eliminar
+                </button>
+                <button class="btn btn-sm btn-info" id="bulkExport">
+                    <i class="fas fa-download me-1"></i> Exportar Seleccionados
+                </button>
+            </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="table users-table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>
+                                <label class="custom-checkbox">
+                                    <input type="checkbox" id="selectAll">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </th>
+                            <th>Usuario</th>
+                            <th>Tipo</th>
+                            <th>Estado</th>
+                            <th>Verificado</th>
+                            <th>País</th>
+                            <th>Registro</th>
+                            <th>Último Acceso</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users | default([
+                            {
+                                'id': 1,
+                                'name': 'María González Ruiz',
+                                'email': 'maria.gonzalez@startup.com',
+                                'type': 'entrepreneur',
+                                'status': 'active',
+                                'verified': True,
+                                'country': 'CO',
+                                'created_at': '2024-01-15',
+                                'last_login': '2024-06-05 09:30',
+                                'avatar': None,
+                                'organization': 'EcoTech Solutions'
+                            },
+                            {
+                                'id': 2,
+                                'name': 'Carlos Mendoza Silva',
+                                'email': 'carlos.mendoza@mentor.com',
+                                'type': 'mentor',
+                                'status': 'active',
+                                'verified': True,
+                                'country': 'MX',
+                                'created_at': '2024-02-20',
+                                'last_login': '2024-06-05 14:15',
+                                'avatar': None,
+                                'organization': 'Innovation Hub'
+                            },
+                            {
+                                'id': 3,
+                                'name': 'Ana Patricia Ruiz',
+                                'email': 'ana.ruiz@corporation.com',
+                                'type': 'client',
+                                'status': 'pending',
+                                'verified': False,
+                                'country': 'AR',
+                                'created_at': '2024-06-01',
+                                'last_login': None,
+                                'avatar': None,
+                                'organization': 'Corp XYZ'
+                            },
+                            {
+                                'id': 4,
+                                'name': 'Pedro Silva Torres',
+                                'email': 'pedro.silva@foodtech.com',
+                                'type': 'entrepreneur',
+                                'status': 'suspended',
+                                'verified': True,
+                                'country': 'CL',
+                                'created_at': '2024-03-10',
+                                'last_login': '2024-05-20 16:45',
+                                'avatar': None,
+                                'organization': 'FoodTech Innovation'
+                            },
+                            {
+                                'id': 5,
+                                'name': 'Laura Martínez Admin',
+                                'email': 'laura.martinez@admin.com',
+                                'type': 'admin',
+                                'status': 'active',
+                                'verified': True,
+                                'country': 'PE',
+                                'created_at': '2024-01-01',
+                                'last_login': '2024-06-05 08:00',
+                                'avatar': None,
+                                'organization': 'Ecosistema Admin'
+                            }
+                        ]) %}
+                        <tr data-user-id="{{ user.id }}">
+                            <td>
+                                <label class="custom-checkbox">
+                                    <input type="checkbox" class="user-checkbox" value="{{ user.id }}">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </td>
+                            <td>
+                                <div class="user-info">
+                                    <div class="user-avatar avatar-{{ user.type }}">
+                                        {% if user.avatar %}
+                                            <img src="{{ user.avatar }}" alt="{{ user.name }}">
+                                        {% else %}
+                                            {{ user.name[0] }}{{ user.name.split()[1][0] if user.name.split()|length > 1 else '' }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="user-details">
+                                        <h6>{{ user.name }}</h6>
+                                        <p>{{ user.email }}</p>
+                                        {% if user.organization %}
+                                            <small class="text-muted">{{ user.organization }}</small>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <label for="statusFilter" class="form-label">Estado</label>
-                                    <select class="form-select" id="statusFilter" name="status">
-                                        <option value="">Todos los estados</option>
-                                        <option value="active">Activo</option>
-                                        <option value="inactive">Inactivo</option>
-                                        <option value="pending">Pendiente</option>
-                                    </select>
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ 'primary' if user.type == 'entrepreneur' else 'success' if user.type == 'mentor' else 'info' if user.type == 'client' else 'danger' }}">
+                                    {% if user.type == 'entrepreneur' %}
+                                        <i class="fas fa-lightbulb me-1"></i> Emprendedor
+                                    {% elif user.type == 'mentor' %}
+                                        <i class="fas fa-handshake me-1"></i> Mentor
+                                    {% elif user.type == 'client' %}
+                                        <i class="fas fa-building me-1"></i> Cliente
+                                    {% elif user.type == 'admin' %}
+                                        <i class="fas fa-crown me-1"></i> Admin
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ 'success' if user.status == 'active' else 'warning' if user.status == 'pending' else 'danger' if user.status == 'suspended' else 'secondary' }}">
+                                    {% if user.status == 'active' %}
+                                        <i class="fas fa-check-circle me-1"></i> Activo
+                                    {% elif user.status == 'pending' %}
+                                        <i class="fas fa-clock me-1"></i> Pendiente
+                                    {% elif user.status == 'suspended' %}
+                                        <i class="fas fa-ban me-1"></i> Suspendido
+                                    {% else %}
+                                        <i class="fas fa-times-circle me-1"></i> Inactivo
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                {% if user.verified %}
+                                    <span class="badge badge-success">
+                                        <i class="fas fa-shield-check me-1"></i> Verificado
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-warning">
+                                        <i class="fas fa-shield-exclamation me-1"></i> No Verificado
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge badge-secondary">{{ user.country }}</span>
+                            </td>
+                            <td>
+                                <div class="user-meta">
+                                    <small>{{ user.created_at }}</small>
                                 </div>
-                                <div class="col-md-3">
-                                    <label for="dateFilter" class="form-label">Fecha de registro</label>
-                                    <select class="form-select" id="dateFilter" name="date_range">
-                                        <option value="">Cualquier fecha</option>
-                                        <option value="today">Hoy</option>
-                                        <option value="week">Esta semana</option>
-                                        <option value="month">Este mes</option>
-                                        <option value="year">Este año</option>
-                                    </select>
+                            </td>
+                            <td>
+                                {% if user.last_login %}
+                                    <div class="user-meta">
+                                        <small>{{ user.last_login }}</small>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">Nunca</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-action btn-view" data-bs-toggle="tooltip" 
+                                            title="Ver detalles" onclick="viewUser({{ user.id }})">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-action btn-edit" data-bs-toggle="tooltip" 
+                                            title="Editar usuario" onclick="editUser({{ user.id }})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn-action btn-delete" data-bs-toggle="tooltip" 
+                                            title="Eliminar usuario" onclick="deleteUser({{ user.id }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
                                 </div>
-                                <div class="col-md-3 d-flex">
-                                    <button type="submit" class="btn btn-primary me-2">Filtrar</button>
-                                    <button type="reset" class="btn btn-outline-secondary">Limpiar</button>
-                                </div>
-                            </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create User Modal -->
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Crear Nuevo Usuario
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createUserForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="firstName" class="form-label">Nombre *</label>
+                                <input type="text" class="form-control" id="firstName" name="first_name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="lastName" class="form-label">Apellido *</label>
+                                <input type="text" class="form-control" id="lastName" name="last_name" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="phone" class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" id="phone" name="phone">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="userType" class="form-label">Tipo de Usuario *</label>
+                                <select class="form-select" id="userType" name="user_type" required>
+                                    <option value="">Seleccionar tipo</option>
+                                    <option value="entrepreneur">Emprendedor</option>
+                                    <option value="mentor">Mentor</option>
+                                    <option value="client">Cliente</option>
+                                    <option value="admin">Administrador</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="country" class="form-label">País *</label>
+                                <select class="form-select" id="country" name="country" required>
+                                    <option value="">Seleccionar país</option>
+                                    <option value="CO">Colombia</option>
+                                    <option value="MX">México</option>
+                                    <option value="AR">Argentina</option>
+                                    <option value="CL">Chile</option>
+                                    <option value="PE">Perú</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="organization" class="form-label">Organización</label>
+                        <input type="text" class="form-control" id="organization" name="organization">
+                    </div>
+                    <div class="form-group mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="sendWelcomeEmail" name="send_welcome_email" checked>
+                            <label class="form-check-label" for="sendWelcomeEmail">
+                                Enviar email de bienvenida
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Crear Usuario
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div class="modal fade" id="userDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user me-2"></i>
+                    Detalles del Usuario
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div id="userDetailsContent">
+                            <!-- User details will be loaded here -->
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Actividad Reciente</h6>
+                        <div class="activity-timeline" id="userActivity">
+                            <!-- Activity timeline will be loaded here -->
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Users table -->
-            <div class="card border-0 shadow-sm">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead>
-                            <tr>
-                                <th scope="col">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="selectAllUsers">
-                                    </div>
-                                </th>
-                                <th scope="col">Usuario</th>
-                                <th scope="col">Email</th>
-                                <th scope="col">Rol</th>
-                                <th scope="col">Estado</th>
-                                <th scope="col">Fecha de registro</th>
-                                <th scope="col">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for user in users %}
-                            <tr>
-                                <td>
-                                    <div class="form-check">
-                                        <input class="form-check-input user-checkbox" type="checkbox" value="{{ user.id }}">
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <img src="{{ user.profile_image or url_for('static', filename='images/default-profile.png') }}" class="rounded-circle me-2" width="40" height="40" alt="{{ user.name }}">
-                                        <div>
-                                            <h6 class="mb-0">{{ user.name }}</h6>
-                                            <small class="text-muted">ID: {{ user.id }}</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>{{ user.email }}</td>
-                                <td>
-                                    <span class="badge bg-{{ user.role_color }}">{{ user.role|capitalize }}</span>
-                                </td>
-                                <td>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input status-toggle" type="checkbox" role="switch" 
-                                            data-user-id="{{ user.id }}" 
-                                            {% if user.status == 'active' %}checked{% endif %}>
-                                        <label class="form-check-label">{{ user.status|capitalize }}</label>
-                                    </div>
-                                </td>
-                                <td>{{ user.created_at|datetime }}</td>
-                                <td>
-                                    <div class="btn-group">
-                                        <a href="{{ url_for('admin.user_edit', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        <button type="button" class="btn btn-sm btn-outline-danger delete-user" data-user-id="{{ user.id }}" data-bs-toggle="modal" data-bs-target="#deleteUserModal">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-three-dots"></i>
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="{{ url_for('admin.user_detail', user_id=user.id) }}">Ver detalles</a></li>
-                                            <li><a class="dropdown-item" href="{{ url_for('admin.user_reset_password', user_id=user.id) }}">Resetear contraseña</a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteUserModal" data-user-id="{{ user.id }}">Eliminar</a></li>
-                                        </ul>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Pagination -->
-            <nav class="d-flex justify-content-between align-items-center mt-4">
-                <div>
-                    <span class="text-muted">Mostrando {{ pagination.start }} - {{ pagination.end }} de {{ pagination.total }} usuarios</span>
-                </div>
-                <ul class="pagination mb-0">
-                    <li class="page-item {% if pagination.current_page == 1 %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('admin.users', page=pagination.current_page-1) }}" aria-label="Previous">
-                            <span aria-hidden="true">&laquo;</span>
-                        </a>
-                    </li>
-                    {% for page in pagination.pages %}
-                    <li class="page-item {% if page == pagination.current_page %}active{% endif %}">
-                        <a class="page-link" href="{{ url_for('admin.users', page=page) }}">{{ page }}</a>
-                    </li>
-                    {% endfor %}
-                    <li class="page-item {% if pagination.current_page == pagination.total_pages %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('admin.users', page=pagination.current_page+1) }}" aria-label="Next">
-                            <span aria-hidden="true">&raquo;</span>
-                        </a>
-                    </li>
-                </ul>
-                <div>
-                    <select class="form-select form-select-sm" id="perPageSelect">
-                        <option value="10" {% if pagination.per_page == 10 %}selected{% endif %}>10 por página</option>
-                        <option value="25" {% if pagination.per_page == 25 %}selected{% endif %}>25 por página</option>
-                        <option value="50" {% if pagination.per_page == 50 %}selected{% endif %}>50 por página</option>
-                        <option value="100" {% if pagination.per_page == 100 %}selected{% endif %}>100 por página</option>
-                    </select>
-                </div>
-            </nav>
-
-            <!-- Bulk actions -->
-            <div class="bulk-actions bg-light p-3 rounded mt-3 d-none">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="me-2"><span id="selectedCount">0</span> usuarios seleccionados</span>
-                    </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="bulkActivate">Activar</button>
-                        <button type="button" class="btn btn-sm btn-outline-warning" id="bulkDeactivate">Desactivar</button>
-                        <button type="button" class="btn btn-sm btn-outline-danger" id="bulkDelete" data-bs-toggle="modal" data-bs-target="#bulkDeleteModal">Eliminar</button>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-</div>
-
-<!-- Delete User Modal -->
-<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteUserModalLabel">Confirmar eliminación</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.</p>
-            </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <form id="deleteUserForm" method="POST" action="{{ url_for('admin.user_delete') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="user_id" id="deleteUserId">
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
-                </form>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="editUserFromDetails()">
+                    <i class="fas fa-edit me-1"></i> Editar Usuario
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Bulk Delete Modal -->
-<div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-labelledby="bulkDeleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="bulkDeleteModalLabel">Confirmar eliminación masiva</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">
+                    <i class="fas fa-user-edit me-2"></i>
+                    Editar Usuario
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <p>¿Estás seguro de que deseas eliminar los <span id="bulkDeleteCount">0</span> usuarios seleccionados? Esta acción no se puede deshacer.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <form id="bulkDeleteForm" method="POST" action="{{ url_for('admin.users_bulk_delete') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="user_ids" id="bulkDeleteUserIds">
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
-                </form>
-            </div>
+            <form id="editUserForm">
+                <div class="modal-body">
+                    <div id="editUserContent">
+                        <!-- Edit form will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay d-none" id="loadingOverlay">
+    <div class="spinner"></div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Search functionality
-        const searchInput = document.getElementById('searchUsers');
-        const searchButton = document.getElementById('searchButton');
-        
-        searchButton.addEventListener('click', function() {
-            const searchTerm = searchInput.value.trim();
-            if (searchTerm) {
-                window.location.href = "{{ url_for('admin.users') }}?search=" + encodeURIComponent(searchTerm);
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Users Management
+    const usersManager = new UsersManager();
+    usersManager.init();
+});
+
+class UsersManager {
+    constructor() {
+        this.dataTable = null;
+        this.selectedUsers = new Set();
+    }
+
+    init() {
+        this.initializeDataTable();
+        this.bindEvents();
+        this.initializeTooltips();
+    }
+
+    initializeDataTable() {
+        this.dataTable = $('#usersTable').DataTable({
+            responsive: true,
+            pageLength: 25,
+            order: [[6, 'desc']], // Order by registration date
+            columnDefs: [
+                { orderable: false, targets: [0, 8] }, // Checkbox and actions columns
+                { searchable: false, targets: [0, 8] }
+            ],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+            },
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                 '<"row"<"col-sm-12"tr>>' +
+                 '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            drawCallback: () => {
+                this.initializeTooltips();
+                this.updateSelectedCount();
             }
         });
-        
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                searchButton.click();
+    }
+
+    bindEvents() {
+        // Filters toggle
+        document.getElementById('filtersToggle').addEventListener('click', () => {
+            this.toggleFilters();
+        });
+
+        // Apply filters
+        document.getElementById('applyFilters').addEventListener('click', () => {
+            this.applyFilters();
+        });
+
+        // Clear filters
+        document.getElementById('clearFilters').addEventListener('click', () => {
+            this.clearFilters();
+        });
+
+        // Select all checkbox
+        document.getElementById('selectAll').addEventListener('change', (e) => {
+            this.toggleSelectAll(e.target.checked);
+        });
+
+        // Individual checkboxes
+        document.addEventListener('change', (e) => {
+            if (e.target.classList.contains('user-checkbox')) {
+                this.handleUserSelection(e.target);
             }
         });
-        
-        // Filter form submission
-        const filterForm = document.getElementById('filterForm');
-        filterForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(filterForm);
-            const params = new URLSearchParams();
-            
-            for (const [key, value] of formData.entries()) {
-                if (value) {
-                    params.append(key, value);
-                }
-            }
-            
-            window.location.href = "{{ url_for('admin.users') }}?" + params.toString();
-        });
-        
-        filterForm.addEventListener('reset', function() {
-            setTimeout(() => {
-                window.location.href = "{{ url_for('admin.users') }}";
-            }, 10);
-        });
-        
-        // Per page select
-        const perPageSelect = document.getElementById('perPageSelect');
-        perPageSelect.addEventListener('change', function() {
-            const currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.set('per_page', this.value);
-            window.location.href = currentUrl.toString();
-        });
-        
-        // Status toggle switches
-        const statusToggles = document.querySelectorAll('.status-toggle');
-        statusToggles.forEach(toggle => {
-            toggle.addEventListener('change', function() {
-                const userId = this.dataset.userId;
-                const status = this.checked ? 'active' : 'inactive';
-                
-                fetch("{{ url_for('admin.user_toggle_status') }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': "{{ csrf_token() }}"
-                    },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        status: status
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Update label
-                        this.nextElementSibling.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-                        
-                        // Show success message
-                        const toast = `
-                            <div class="toast align-items-center text-white bg-success border-0 position-fixed bottom-0 end-0 m-3" role="alert" aria-live="assertive" aria-atomic="true">
-                                <div class="d-flex">
-                                    <div class="toast-body">
-                                        Estado actualizado correctamente.
-                                    </div>
-                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                                </div>
-                            </div>
-                        `;
-                        document.body.insertAdjacentHTML('beforeend', toast);
-                        const toastEl = document.body.lastElementChild;
-                        const bsToast = new bootstrap.Toast(toastEl);
-                        bsToast.show();
-                        
-                        // Remove toast after it's hidden
-                        toastEl.addEventListener('hidden.bs.toast', function() {
-                            toastEl.remove();
-                        });
-                    } else {
-                        // Revert toggle if there was an error
-                        this.checked = !this.checked;
-                        alert('Error al cambiar el estado: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    this.checked = !this.checked;
-                    alert('Error al cambiar el estado. Por favor, inténtalo de nuevo.');
-                });
-            });
-        });
-        
-        // Delete user functionality
-        const deleteUserButtons = document.querySelectorAll('.delete-user, .dropdown-item.text-danger');
-        const deleteUserForm = document.getElementById('deleteUserForm');
-        const deleteUserIdInput = document.getElementById('deleteUserId');
-        
-        deleteUserButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const userId = this.dataset.userId;
-                deleteUserIdInput.value = userId;
-            });
-        });
-        
-        // Select all users checkbox
-        const selectAllCheckbox = document.getElementById('selectAllUsers');
-        const userCheckboxes = document.querySelectorAll('.user-checkbox');
-        const bulkActionsDiv = document.querySelector('.bulk-actions');
-        const selectedCountSpan = document.getElementById('selectedCount');
-        
-        selectAllCheckbox.addEventListener('change', function() {
-            const isChecked = this.checked;
-            userCheckboxes.forEach(checkbox => {
-                checkbox.checked = isChecked;
-            });
-            
-            updateBulkActionsVisibility();
-        });
-        
-        userCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                updateBulkActionsVisibility();
-                
-                // Update "select all" checkbox state
-                const allChecked = Array.from(userCheckboxes).every(cb => cb.checked);
-                const someChecked = Array.from(userCheckboxes).some(cb => cb.checked);
-                
-                selectAllCheckbox.checked = allChecked;
-                selectAllCheckbox.indeterminate = someChecked && !allChecked;
-            });
-        });
-        
-        function updateBulkActionsVisibility() {
-            const checkedCount = document.querySelectorAll('.user-checkbox:checked').length;
-            
-            if (checkedCount > 0) {
-                bulkActionsDiv.classList.remove('d-none');
-                selectedCountSpan.textContent = checkedCount;
-                document.getElementById('bulkDeleteCount').textContent = checkedCount;
-            } else {
-                bulkActionsDiv.classList.add('d-none');
-            }
-        }
-        
+
         // Bulk actions
-        const bulkActivateButton = document.getElementById('bulkActivate');
-        const bulkDeactivateButton = document.getElementById('bulkDeactivate');
-        const bulkDeleteButton = document.getElementById('bulkDelete');
-        const bulkDeleteUserIdsInput = document.getElementById('bulkDeleteUserIds');
+        document.getElementById('bulkActivate').addEventListener('click', () => {
+            this.bulkAction('activate');
+        });
+
+        document.getElementById('bulkSuspend').addEventListener('click', () => {
+            this.bulkAction('suspend');
+        });
+
+        document.getElementById('bulkDelete').addEventListener('click', () => {
+            this.bulkAction('delete');
+        });
+
+        document.getElementById('bulkExport').addEventListener('click', () => {
+            this.bulkExport();
+        });
+
+        // Create user form
+        document.getElementById('createUserForm').addEventListener('submit', (e) => {
+            this.handleCreateUser(e);
+        });
+
+        // Edit user form
+        document.getElementById('editUserForm').addEventListener('submit', (e) => {
+            this.handleEditUser(e);
+        });
+
+        // Refresh table
+        document.getElementById('refreshTable').addEventListener('click', () => {
+            this.refreshTable();
+        });
+
+        // Export users
+        document.getElementById('exportUsers').addEventListener('click', () => {
+            this.exportUsers();
+        });
+
+        // Import users
+        document.getElementById('importUsers').addEventListener('click', () => {
+            this.importUsers();
+        });
+    }
+
+    toggleFilters() {
+        const content = document.getElementById('filtersContent');
+        const chevron = document.getElementById('filtersChevron');
         
-        function getSelectedUserIds() {
-            return Array.from(document.querySelectorAll('.user-checkbox:checked'))
-                .map(checkbox => checkbox.value);
+        if (content.classList.contains('show')) {
+            content.classList.remove('show');
+            chevron.style.transform = 'rotate(0deg)';
+        } else {
+            content.classList.add('show');
+            chevron.style.transform = 'rotate(180deg)';
+        }
+    }
+
+    applyFilters() {
+        const formData = new FormData(document.getElementById('filtersForm'));
+        const filters = Object.fromEntries(formData.entries());
+        
+        // Apply filters to DataTable
+        Object.keys(filters).forEach(key => {
+            if (filters[key]) {
+                // Apply column-specific search
+                this.applyColumnFilter(key, filters[key]);
+            }
+        });
+
+        this.dataTable.draw();
+        this.showNotification('Filtros aplicados exitosamente', 'success');
+    }
+
+    applyColumnFilter(column, value) {
+        // Map filter names to column indices
+        const columnMap = {
+            'user_type': 2,
+            'status': 3,
+            'verified': 4,
+            'country': 5,
+            'search': -1 // Global search
+        };
+
+        if (column === 'search') {
+            this.dataTable.search(value);
+        } else if (columnMap[column] !== undefined) {
+            this.dataTable.column(columnMap[column]).search(value);
+        }
+    }
+
+    clearFilters() {
+        document.getElementById('filtersForm').reset();
+        this.dataTable.search('').columns().search('').draw();
+        this.showNotification('Filtros limpiados', 'info');
+    }
+
+    toggleSelectAll(checked) {
+        const checkboxes = document.querySelectorAll('.user-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = checked;
+            this.handleUserSelection(checkbox);
+        });
+    }
+
+    handleUserSelection(checkbox) {
+        const userId = parseInt(checkbox.value);
+        
+        if (checkbox.checked) {
+            this.selectedUsers.add(userId);
+        } else {
+            this.selectedUsers.delete(userId);
+            document.getElementById('selectAll').checked = false;
         }
         
-        bulkActivateButton.addEventListener('click', function() {
-            const userIds = getSelectedUserIds();
-            updateBulkStatus(userIds, 'active');
-        });
+        this.updateSelectedCount();
+        this.toggleBulkActions();
+    }
+
+    updateSelectedCount() {
+        const count = this.selectedUsers.size;
+        document.getElementById('selectedCount').textContent = count;
         
-        bulkDeactivateButton.addEventListener('click', function() {
-            const userIds = getSelectedUserIds();
-            updateBulkStatus(userIds, 'inactive');
-        });
+        // Update select all checkbox state
+        const totalCheckboxes = document.querySelectorAll('.user-checkbox').length;
+        const selectAllCheckbox = document.getElementById('selectAll');
         
-        bulkDeleteButton.addEventListener('click', function() {
-            const userIds = getSelectedUserIds();
-            bulkDeleteUserIdsInput.value = userIds.join(',');
-        });
-        
-        function updateBulkStatus(userIds, status) {
-            fetch("{{ url_for('admin.users_bulk_status') }}", {
+        if (count === 0) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = false;
+        } else if (count === totalCheckboxes) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = true;
+        } else {
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+
+    toggleBulkActions() {
+        const bulkActionsBar = document.getElementById('bulkActionsBar');
+        if (this.selectedUsers.size > 0) {
+            bulkActionsBar.classList.add('show');
+        } else {
+            bulkActionsBar.classList.remove('show');
+        }
+    }
+
+    async bulkAction(action) {
+        if (this.selectedUsers.size === 0) {
+            this.showNotification('No hay usuarios seleccionados', 'warning');
+            return;
+        }
+
+        const actionNames = {
+            'activate': 'activar',
+            'suspend': 'suspender',
+            'delete': 'eliminar'
+        };
+
+        const confirmed = await this.confirmAction(
+            `¿Estás seguro de que quieres ${actionNames[action]} ${this.selectedUsers.size} usuario(s)?`
+        );
+
+        if (!confirmed) return;
+
+        this.showLoading();
+
+        try {
+            const response = await fetch(`{{ url_for('admin.bulk_users_action') }}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': "{{ csrf_token() }}"
+                    'X-CSRFToken': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({
-                    user_ids: userIds,
-                    status: status
+                    action: action,
+                    user_ids: Array.from(this.selectedUsers)
                 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Reload page to reflect changes
-                    window.location.reload();
-                } else {
-                    alert('Error al actualizar usuarios: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error al actualizar usuarios. Por favor, inténtalo de nuevo.');
             });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showNotification(`${result.affected_count} usuarios ${actionNames[action]}dos exitosamente`, 'success');
+                this.refreshTable();
+                this.clearSelection();
+            } else {
+                this.showNotification(result.message || 'Error en la operación', 'error');
+            }
+        } catch (error) {
+            console.error('Bulk action error:', error);
+            this.showNotification('Error de conexión', 'error');
+        } finally {
+            this.hideLoading();
         }
-    });
+    }
+
+    async bulkExport() {
+        if (this.selectedUsers.size === 0) {
+            this.showNotification('No hay usuarios seleccionados', 'warning');
+            return;
+        }
+
+        this.showLoading();
+
+        try {
+            const response = await fetch(`{{ url_for('admin.export_users') }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    user_ids: Array.from(this.selectedUsers)
+                })
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `usuarios_seleccionados_${new Date().toISOString().split('T')[0]}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                this.showNotification('Exportación completada', 'success');
+            } else {
+                throw new Error('Error en la exportación');
+            }
+        } catch (error) {
+            console.error('Export error:', error);
+            this.showNotification('Error en la exportación', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    clearSelection() {
+        this.selectedUsers.clear();
+        document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('selectAll').checked = false;
+        this.updateSelectedCount();
+        this.toggleBulkActions();
+    }
+
+    async handleCreateUser(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const userData = Object.fromEntries(formData.entries());
+        
+        this.showLoading();
+
+        try {
+            const response = await fetch(`{{ url_for('admin.create_user') }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify(userData)
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showNotification('Usuario creado exitosamente', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('createUserModal')).hide();
+                this.refreshTable();
+                e.target.reset();
+            } else {
+                this.showNotification(result.message || 'Error al crear usuario', 'error');
+            }
+        } catch (error) {
+            console.error('Create user error:', error);
+            this.showNotification('Error de conexión', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async handleEditUser(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const userData = Object.fromEntries(formData.entries());
+        const userId = userData.user_id;
+        
+        this.showLoading();
+
+        try {
+            const response = await fetch(`{{ url_for('admin.update_user', user_id='USER_ID') }}`.replace('USER_ID', userId), {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify(userData)
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showNotification('Usuario actualizado exitosamente', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+                this.refreshTable();
+            } else {
+                this.showNotification(result.message || 'Error al actualizar usuario', 'error');
+            }
+        } catch (error) {
+            console.error('Update user error:', error);
+            this.showNotification('Error de conexión', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    refreshTable() {
+        this.dataTable.ajax.reload(null, false);
+        this.clearSelection();
+        this.showNotification('Tabla actualizada', 'success');
+    }
+
+    async exportUsers() {
+        this.showLoading();
+
+        try {
+            const response = await fetch(`{{ url_for('admin.export_all_users') }}`);
+            
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `todos_usuarios_${new Date().toISOString().split('T')[0]}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                this.showNotification('Exportación completada', 'success');
+            } else {
+                throw new Error('Error en la exportación');
+            }
+        } catch (error) {
+            console.error('Export error:', error);
+            this.showNotification('Error en la exportación', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    importUsers() {
+        // Create file input
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.xlsx,.xls,.csv';
+        
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            this.showLoading();
+            
+            try {
+                const response = await fetch(`{{ url_for('admin.import_users') }}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.showNotification(`${result.imported_count} usuarios importados exitosamente`, 'success');
+                    this.refreshTable();
+                } else {
+                    this.showNotification(result.message || 'Error en la importación', 'error');
+                }
+            } catch (error) {
+                console.error('Import error:', error);
+                this.showNotification('Error en la importación', 'error');
+            } finally {
+                this.hideLoading();
+            }
+        };
+        
+        input.click();
+    }
+
+    initializeTooltips() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+
+    showLoading() {
+        document.getElementById('loadingOverlay').classList.remove('d-none');
+    }
+
+    hideLoading() {
+        document.getElementById('loadingOverlay').classList.add('d-none');
+    }
+
+    async confirmAction(message) {
+        return new Promise((resolve) => {
+            if (confirm(message)) {
+                resolve(true);
+            } else {
+                resolve(false);
+            }
+        });
+    }
+
+    showNotification(message, type = 'info') {
+        // Create notification
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} position-fixed`;
+        notification.style.cssText = `
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            animation: slideInRight 0.3s ease-out;
+        `;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close ms-2" aria-label="Close"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+        
+        // Manual close
+        notification.querySelector('.btn-close').addEventListener('click', () => {
+            notification.remove();
+        });
+    }
+}
+
+// Global functions for inline actions
+window.viewUser = async function(userId) {
+    try {
+        const response = await fetch(`{{ url_for('admin.get_user_details', user_id='USER_ID') }}`.replace('USER_ID', userId));
+        const user = await response.json();
+        
+        if (user.success) {
+            document.getElementById('userDetailsContent').innerHTML = generateUserDetailsHTML(user.data);
+            document.getElementById('userActivity').innerHTML = generateUserActivityHTML(user.data.activity);
+            
+            const modal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
+            modal.show();
+        } else {
+            throw new Error(user.message || 'Error al cargar detalles');
+        }
+    } catch (error) {
+        console.error('View user error:', error);
+        alert('Error al cargar los detalles del usuario');
+    }
+};
+
+window.editUser = async function(userId) {
+    try {
+        const response = await fetch(`{{ url_for('admin.get_user_edit', user_id='USER_ID') }}`.replace('USER_ID', userId));
+        const user = await response.json();
+        
+        if (user.success) {
+            document.getElementById('editUserContent').innerHTML = generateEditUserHTML(user.data);
+            
+            const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+            modal.show();
+        } else {
+            throw new Error(user.message || 'Error al cargar datos');
+        }
+    } catch (error) {
+        console.error('Edit user error:', error);
+        alert('Error al cargar los datos del usuario');
+    }
+};
+
+window.deleteUser = async function(userId) {
+    if (!confirm('¿Estás seguro de que quieres eliminar este usuario? Esta acción no se puede deshacer.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`{{ url_for('admin.delete_user', user_id='USER_ID') }}`.replace('USER_ID', userId), {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            location.reload(); // Simple refresh for now
+        } else {
+            alert(result.message || 'Error al eliminar usuario');
+        }
+    } catch (error) {
+        console.error('Delete user error:', error);
+        alert('Error de conexión');
+    }
+};
+
+window.editUserFromDetails = function() {
+    // Get user ID from details modal and open edit modal
+    const userDetailsModal = bootstrap.Modal.getInstance(document.getElementById('userDetailsModal'));
+    userDetailsModal.hide();
+    
+    // This should be implemented based on current user in details view
+    console.log('Edit user from details');
+};
+
+function generateUserDetailsHTML(user) {
+    return `
+        <div class="user-profile">
+            <div class="d-flex align-items-center mb-4">
+                <div class="user-avatar avatar-${user.type} me-3" style="width: 80px; height: 80px; font-size: 1.5rem;">
+                    ${user.avatar ? `<img src="${user.avatar}" alt="${user.name}">` : user.name[0] + (user.name.split()[1] ? user.name.split()[1][0] : '')}
+                </div>
+                <div>
+                    <h4>${user.name}</h4>
+                    <p class="text-muted">${user.email}</p>
+                    <div class="d-flex gap-2">
+                        <span class="badge badge-${user.type === 'entrepreneur' ? 'primary' : user.type === 'mentor' ? 'success' : user.type === 'client' ? 'info' : 'danger'}">
+                            ${user.type}
+                        </span>
+                        <span class="badge badge-${user.status === 'active' ? 'success' : user.status === 'pending' ? 'warning' : 'danger'}">
+                            ${user.status}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Información Personal</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Teléfono:</strong> ${user.phone || 'No proporcionado'}</li>
+                        <li><strong>País:</strong> ${user.country}</li>
+                        <li><strong>Organización:</strong> ${user.organization || 'No especificada'}</li>
+                        <li><strong>Verificado:</strong> ${user.verified ? 'Sí' : 'No'}</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>Estadísticas</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Registro:</strong> ${user.created_at}</li>
+                        <li><strong>Último acceso:</strong> ${user.last_login || 'Nunca'}</li>
+                        <li><strong>Proyectos:</strong> ${user.projects_count || 0}</li>
+                        <li><strong>Sesiones:</strong> ${user.sessions_count || 0}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function generateUserActivityHTML(activities) {
+    if (!activities || activities.length === 0) {
+        return '<p class="text-muted">No hay actividad reciente</p>';
+    }
+    
+    return activities.map(activity => `
+        <div class="timeline-item">
+            <div class="timeline-content">
+                <div class="timeline-time">${activity.timestamp}</div>
+                <div class="timeline-title">${activity.title}</div>
+                <div class="timeline-description">${activity.description}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function generateEditUserHTML(user) {
+    return `
+        <input type="hidden" name="user_id" value="${user.id}">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">Nombre *</label>
+                    <input type="text" class="form-control" name="first_name" value="${user.first_name}" required>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">Apellido *</label>
+                    <input type="text" class="form-control" name="last_name" value="${user.last_name}" required>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">Email *</label>
+                    <input type="email" class="form-control" name="email" value="${user.email}" required>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">Teléfono</label>
+                    <input type="tel" class="form-control" name="phone" value="${user.phone || ''}">
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">Estado *</label>
+                    <select class="form-select" name="status" required>
+                        <option value="active" ${user.status === 'active' ? 'selected' : ''}>Activo</option>
+                        <option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>Inactivo</option>
+                        <option value="pending" ${user.status === 'pending' ? 'selected' : ''}>Pendiente</option>
+                        <option value="suspended" ${user.status === 'suspended' ? 'selected' : ''}>Suspendido</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">País *</label>
+                    <select class="form-select" name="country" required>
+                        <option value="CO" ${user.country === 'CO' ? 'selected' : ''}>Colombia</option>
+                        <option value="MX" ${user.country === 'MX' ? 'selected' : ''}>México</option>
+                        <option value="AR" ${user.country === 'AR' ? 'selected' : ''}>Argentina</option>
+                        <option value="CL" ${user.country === 'CL' ? 'selected' : ''}>Chile</option>
+                        <option value="PE" ${user.country === 'PE' ? 'selected' : ''}>Perú</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="form-group mb-3">
+            <label class="form-label">Organización</label>
+            <input type="text" class="form-control" name="organization" value="${user.organization || ''}">
+        </div>
+        <div class="form-group mb-3">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="verified" ${user.verified ? 'checked' : ''}>
+                <label class="form-check-label">
+                    Usuario verificado
+                </label>
+            </div>
+        </div>
+    `;
+}
+
+// Add animation styles
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(100%); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes slideOutRight {
+        from { opacity: 1; transform: translateX(0); }
+        to { opacity: 0; transform: translateX(100%); }
+    }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %}

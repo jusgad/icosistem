@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Reportes y Análisis - Ally Dashboard{% endblock %}</title>
+    
+    <!-- CSS Framework y Librerías -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.29.3/index.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #06b6d4;
+            --dark-color: #1e293b;
+            --light-color: #f8fafc;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--light-color);
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .reports-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* HEADER DEL DASHBOARD */
+        .dashboard-header {
+            background: white;
+            padding: 25px 30px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-info h1 {
+            color: var(--dark-color);
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-info p {
+            color: var(--secondary-color);
+            font-size: 1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .date-range-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--light-color);
+            padding: 10px 15px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .date-input {
+            border: none;
+            background: transparent;
+            padding: 5px;
+            font-size: 14px;
+            color: var(--dark-color);
+        }
+
+        .export-btn {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .refresh-btn {
+            background: white;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .refresh-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* NAVEGACIÓN POR TABS */
+        .reports-nav {
+            background: white;
+            border-radius: 16px;
+            padding: 8px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow);
+            overflow-x: auto;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            min-width: fit-content;
+        }
+
+        .nav-tab {
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: var(--secondary-color);
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-tab.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-tab:hover:not(.active) {
+            background: var(--light-color);
+            color: var(--dark-color);
+        }
+
+        /* KPI CARDS */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .kpi-card.success::before { background: var(--gradient-success); }
+        .kpi-card.warning::before { background: var(--gradient-warning); }
+        .kpi-card.danger::before { background: var(--gradient-danger); }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .kpi-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+        }
+
+        .kpi-icon.primary { background: var(--gradient-primary); }
+        .kpi-icon.success { background: var(--gradient-success); }
+        .kpi-icon.warning { background: var(--gradient-warning); }
+        .kpi-icon.danger { background: var(--gradient-danger); }
+
+        .kpi-trend {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .kpi-trend.up {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+
+        .kpi-trend.down {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 5px;
+        }
+
+        .kpi-label {
+            color: var(--secondary-color);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .kpi-description {
+            color: var(--secondary-color);
+            font-size: 13px;
+            margin-top: 10px;
+            opacity: 0.8;
+        }
+
+        /* CONTENT SECTIONS */
+        .report-section {
+            display: none;
+            animation: fadeInUp 0.4s ease;
+        }
+
+        .report-section.active {
+            display: block;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chart-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            background: white;
+            color: var(--secondary-color);
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .chart-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .chart-canvas {
+            width: 100%;
+            height: 350px;
+        }
+
+        /* TABLAS DE DATOS */
+        .data-table-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .table-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+
+        .table-search {
+            position: relative;
+        }
+
+        .table-search input {
+            padding: 8px 15px 8px 40px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            width: 250px;
+        }
+
+        .table-search i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary-color);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background: var(--light-color);
+            font-weight: 600;
+            color: var(--dark-color);
+            font-size: 14px;
+        }
+
+        .data-table td {
+            font-size: 14px;
+            color: var(--secondary-color);
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+
+        .status-badge.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+        }
+
+        .status-badge.danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+
+        .pagination {
+            padding: 20px 25px;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .pagination-info {
+            color: var(--secondary-color);
+            font-size: 14px;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 5px;
+            margin-left: auto;
+        }
+
+        .page-btn {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            background: white;
+            color: var(--secondary-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .page-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .page-btn:hover:not(.active) {
+            background: var(--light-color);
+        }
+
+        /* LOADING STATES */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .kpi-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .reports-container {
+                padding: 15px;
+            }
+            
+            .dashboard-header {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+            
+            .header-actions {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-tabs {
+                justify-content: center;
+            }
+            
+            .table-search input {
+                width: 100%;
+            }
+            
+            .chart-canvas {
+                height: 250px;
+            }
+        }
+
+        /* ANIMACIONES */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.6s ease;
+        }
+
+        /* EXPORT MODAL */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--secondary-color);
+            cursor: pointer;
+        }
+
+        .export-options {
+            display: grid;
+            gap: 15px;
+        }
+
+        .export-option {
+            padding: 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .export-option:hover {
+            border-color: var(--primary-color);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .export-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+        }
+
+        .export-icon.pdf { background: var(--gradient-danger); }
+        .export-icon.excel { background: var(--gradient-success); }
+        .export-icon.csv { background: var(--gradient-warning); }
+
+        /* EMPTY STATES */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--secondary-color);
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--dark-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="reports-container">
+        <!-- HEADER DEL DASHBOARD -->
+        <div class="dashboard-header fade-in">
+            <div class="header-info">
+                <h1>
+                    <i class="fas fa-chart-line"></i>
+                    Reportes y Análisis
+                </h1>
+                <p>Dashboard integral de métricas y estadísticas empresariales</p>
+            </div>
+            
+            <div class="header-actions">
+                <div class="date-range-selector">
+                    <i class="fas fa-calendar-alt"></i>
+                    <input type="date" class="date-input" id="startDate">
+                    <span>-</span>
+                    <input type="date" class="date-input" id="endDate">
+                </div>
+                
+                <button class="export-btn" id="exportBtn">
+                    <i class="fas fa-download"></i>
+                    Exportar
+                </button>
+                
+                <button class="refresh-btn" id="refreshBtn" title="Actualizar datos">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- NAVEGACIÓN POR TABS -->
+        <div class="reports-nav fade-in">
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-tab="overview">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Resumen General
+                </button>
+                <button class="nav-tab" data-tab="users">
+                    <i class="fas fa-users"></i>
+                    Usuarios
+                </button>
+                <button class="nav-tab" data-tab="files">
+                    <i class="fas fa-file-alt"></i>
+                    Archivos
+                </button>
+                <button class="nav-tab" data-tab="badges">
+                    <i class="fas fa-medal"></i>
+                    Badges
+                </button>
+                <button class="nav-tab" data-tab="performance">
+                    <i class="fas fa-rocket"></i>
+                    Rendimiento
+                </button>
+                <button class="nav-tab" data-tab="financial">
+                    <i class="fas fa-dollar-sign"></i>
+                    Financiero
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI CARDS -->
+        <div class="kpi-grid fade-in" id="kpiGrid">
+            <!-- Los KPIs se generarán dinámicamente -->
+        </div>
+
+        <!-- SECCIÓN: RESUMEN GENERAL -->
+        <div class="report-section active" id="overview-section">
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Actividad Mensual</h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn active" data-period="month">Mes</button>
+                            <button class="chart-btn" data-period="quarter">Trimestre</button>
+                            <button class="chart-btn" data-period="year">Año</button>
+                        </div>
+                    </div>
+                    <canvas id="activityChart" class="chart-canvas"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Distribución por Categoría</h3>
+                    </div>
+                    <canvas id="categoryChart" class="chart-canvas"></canvas>
+                </div>
+            </div>
+            
+            <div class="data-table-container">
+                <div class="table-header">
+                    <h3 class="table-title">Actividad Reciente</h3>
+                    <div class="table-search">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Buscar actividad..." id="activitySearch">
+                    </div>
+                </div>
+                <table class="data-table" id="activityTable">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Acción</th>
+                            <th>Recurso</th>
+                            <th>Estado</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Los datos se cargarán dinámicamente -->
+                    </tbody>
+                </table>
+                <div class="pagination">
+                    <div class="pagination-info">
+                        Mostrando 1-10 de 156 resultados
+                    </div>
+                    <div class="pagination-controls">
+                        <button class="page-btn">&lt;</button>
+                        <button class="page-btn active">1</button>
+                        <button class="page-btn">2</button>
+                        <button class="page-btn">3</button>
+                        <button class="page-btn">&gt;</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN: USUARIOS -->
+        <div class="report-section" id="users-section">
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Crecimiento de Usuarios</h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn active" data-metric="registrations">Registros</button>
+                            <button class="chart-btn" data-metric="active">Activos</button>
+                            <button class="chart-btn" data-metric="retention">Retención</button>
+                        </div>
+                    </div>
+                    <canvas id="usersChart" class="chart-canvas"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Demografía de Usuarios</h3>
+                    </div>
+                    <canvas id="demographicsChart" class="chart-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN: ARCHIVOS -->
+        <div class="report-section" id="files-section">
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Uploads por Tipo</h3>
+                    </div>
+                    <canvas id="filesChart" class="chart-canvas"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Uso de Almacenamiento</h3>
+                    </div>
+                    <canvas id="storageChart" class="chart-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN: BADGES -->
+        <div class="report-section" id="badges-section">
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Badges Otorgados</h3>
+                    </div>
+                    <canvas id="badgesChart" class="chart-canvas"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Top Badges</h3>
+                    </div>
+                    <canvas id="topBadgesChart" class="chart-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN: RENDIMIENTO -->
+        <div class="report-section" id="performance-section">
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Métricas de Rendimiento</h3>
+                    </div>
+                    <canvas id="performanceChart" class="chart-canvas"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Tiempo de Respuesta</h3>
+                    </div>
+                    <canvas id="responseTimeChart" class="chart-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN: FINANCIERO -->
+        <div class="report-section" id="financial-section">
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Ingresos Mensuales</h3>
+                    </div>
+                    <canvas id="revenueChart" class="chart-canvas"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Distribución de Costos</h3>
+                    </div>
+                    <canvas id="costsChart" class="chart-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE EXPORTACIÓN -->
+    <div class="modal-overlay" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Exportar Reporte</h3>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            
+            <div class="export-options">
+                <div class="export-option" data-format="pdf">
+                    <div class="export-icon pdf">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <div>
+                        <h4>Exportar como PDF</h4>
+                        <p>Documento completo con gráficos y tablas</p>
+                    </div>
+                </div>
+                
+                <div class="export-option" data-format="excel">
+                    <div class="export-icon excel">
+                        <i class="fas fa-file-excel"></i>
+                    </div>
+                    <div>
+                        <h4>Exportar como Excel</h4>
+                        <p>Datos tabulares para análisis avanzado</p>
+                    </div>
+                </div>
+                
+                <div class="export-option" data-format="csv">
+                    <div class="export-icon csv">
+                        <i class="fas fa-file-csv"></i>
+                    </div>
+                    <div>
+                        <h4>Exportar como CSV</h4>
+                        <p>Datos en formato comma-separated values</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        class AllyReports {
+            constructor() {
+                this.currentTab = 'overview';
+                this.charts = {};
+                this.data = {};
+                this.isLoading = false;
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.loadInitialData();
+                this.setupDateRange();
+                this.loadKPIs();
+                this.initializeCharts();
+                this.loadTableData();
+            }
+            
+            setupEventListeners() {
+                // Navigation tabs
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        this.switchTab(e.target.dataset.tab);
+                    });
+                });
+                
+                // Export functionality
+                document.getElementById('exportBtn').addEventListener('click', () => {
+                    this.showExportModal();
+                });
+                
+                document.getElementById('closeModal').addEventListener('click', () => {
+                    this.hideExportModal();
+                });
+                
+                document.querySelectorAll('.export-option').forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        this.exportData(e.currentTarget.dataset.format);
+                    });
+                });
+                
+                // Refresh data
+                document.getElementById('refreshBtn').addEventListener('click', () => {
+                    this.refreshData();
+                });
+                
+                // Date range change
+                document.getElementById('startDate').addEventListener('change', () => {
+                    this.updateDateRange();
+                });
+                
+                document.getElementById('endDate').addEventListener('change', () => {
+                    this.updateDateRange();
+                });
+                
+                // Chart controls
+                document.querySelectorAll('.chart-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.updateChartPeriod(e.target);
+                    });
+                });
+                
+                // Search functionality
+                document.getElementById('activitySearch').addEventListener('input', (e) => {
+                    this.filterTableData(e.target.value);
+                });
+                
+                // Click outside modal to close
+                document.getElementById('exportModal').addEventListener('click', (e) => {
+                    if (e.target === e.currentTarget) {
+                        this.hideExportModal();
+                    }
+                });
+            }
+            
+            setupDateRange() {
+                const today = new Date();
+                const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+                
+                document.getElementById('endDate').value = today.toISOString().split('T')[0];
+                document.getElementById('startDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+            }
+            
+            loadKPIs() {
+                const kpis = [
+                    {
+                        title: 'Usuarios Totales',
+                        value: '12,547',
+                        trend: { direction: 'up', value: '+12.5%' },
+                        icon: 'users',
+                        type: 'primary',
+                        description: 'Usuarios registrados este mes'
+                    },
+                    {
+                        title: 'Archivos Subidos',
+                        value: '8,392',
+                        trend: { direction: 'up', value: '+8.2%' },
+                        icon: 'file-upload',
+                        type: 'success',
+                        description: 'Uploads en los últimos 30 días'
+                    },
+                    {
+                        title: 'Badges Otorgados',
+                        value: '1,284',
+                        trend: { direction: 'up', value: '+15.7%' },
+                        icon: 'medal',
+                        type: 'warning',
+                        description: 'Logros desbloqueados este mes'
+                    },
+                    {
+                        title: 'Tiempo Respuesta',
+                        value: '245ms',
+                        trend: { direction: 'down', value: '-5.3%' },
+                        icon: 'tachometer-alt',
+                        type: 'danger',
+                        description: 'Promedio de tiempo de respuesta'
+                    }
+                ];
+                
+                this.renderKPIs(kpis);
+            }
+            
+            renderKPIs(kpis) {
+                const kpiGrid = document.getElementById('kpiGrid');
+                kpiGrid.innerHTML = kpis.map(kpi => `
+                    <div class="kpi-card ${kpi.type} fade-in">
+                        <div class="kpi-header">
+                            <div class="kpi-icon ${kpi.type}">
+                                <i class="fas fa-${kpi.icon}"></i>
+                            </div>
+                            <div class="kpi-trend ${kpi.trend.direction}">
+                                <i class="fas fa-arrow-${kpi.trend.direction}"></i>
+                                ${kpi.trend.value}
+                            </div>
+                        </div>
+                        <div class="kpi-value">${kpi.value}</div>
+                        <div class="kpi-label">${kpi.title}</div>
+                        <div class="kpi-description">${kpi.description}</div>
+                    </div>
+                `).join('');
+            }
+            
+            initializeCharts() {
+                // Activity Chart
+                this.createActivityChart();
+                
+                // Category Chart
+                this.createCategoryChart();
+                
+                // Users Chart
+                this.createUsersChart();
+                
+                // Demographics Chart
+                this.createDemographicsChart();
+                
+                // Files Chart
+                this.createFilesChart();
+                
+                // Storage Chart
+                this.createStorageChart();
+                
+                // Badges Chart
+                this.createBadgesChart();
+                
+                // Performance Chart
+                this.createPerformanceChart();
+                
+                // Revenue Chart
+                this.createRevenueChart();
+            }
+            
+            createActivityChart() {
+                const ctx = document.getElementById('activityChart').getContext('2d');
+                this.charts.activity = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                        datasets: [{
+                            label: 'Usuarios Activos',
+                            data: [1200, 1350, 1100, 1400, 1300, 1600, 1450, 1700, 1550, 1800, 1650, 1900],
+                            borderColor: 'rgb(37, 99, 235)',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }, {
+                            label: 'Nuevos Registros',
+                            data: [300, 280, 320, 350, 290, 400, 380, 420, 390, 450, 410, 480],
+                            borderColor: 'rgb(16, 185, 129)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            createCategoryChart() {
+                const ctx = document.getElementById('categoryChart').getContext('2d');
+                this.charts.category = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Documentos', 'Imágenes', 'Videos', 'Audio', 'Otros'],
+                        datasets: [{
+                            data: [35, 25, 20, 12, 8],
+                            backgroundColor: [
+                                'rgb(37, 99, 235)',
+                                'rgb(16, 185, 129)',
+                                'rgb(245, 158, 11)',
+                                'rgb(239, 68, 68)',
+                                'rgb(139, 92, 246)'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            createUsersChart() {
+                const ctx = document.getElementById('usersChart').getContext('2d');
+                this.charts.users = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'Nuevos Usuarios',
+                            data: [250, 300, 280, 350, 320, 380],
+                            backgroundColor: 'rgba(37, 99, 235, 0.8)',
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+            
+            createDemographicsChart() {
+                const ctx = document.getElementById('demographicsChart').getContext('2d');
+                this.charts.demographics = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['18-25', '26-35', '36-45', '46-55', '55+'],
+                        datasets: [{
+                            data: [20, 35, 25, 15, 5],
+                            backgroundColor: [
+                                'rgb(37, 99, 235)',
+                                'rgb(16, 185, 129)',
+                                'rgb(245, 158, 11)',
+                                'rgb(239, 68, 68)',
+                                'rgb(139, 92, 246)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+            
+            createFilesChart() {
+                const ctx = document.getElementById('filesChart').getContext('2d');
+                this.charts.files = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+                        datasets: [{
+                            label: 'Archivos Subidos',
+                            data: [150, 180, 160, 200],
+                            borderColor: 'rgb(16, 185, 129)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+            
+            createStorageChart() {
+                const ctx = document.getElementById('storageChart').getContext('2d');
+                this.charts.storage = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Usado', 'Disponible'],
+                        datasets: [{
+                            data: [75, 25],
+                            backgroundColor: ['rgb(239, 68, 68)', 'rgb(229, 231, 235)'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+            
+            createBadgesChart() {
+                const ctx = document.getElementById('badgesChart').getContext('2d');
+                this.charts.badges = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Principiante', 'Intermedio', 'Avanzado', 'Experto', 'Maestro'],
+                        datasets: [{
+                            label: 'Badges Otorgados',
+                            data: [450, 320, 180, 95, 25],
+                            backgroundColor: [
+                                'rgba(139, 92, 246, 0.8)',
+                                'rgba(37, 99, 235, 0.8)',
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(245, 158, 11, 0.8)',
+                                'rgba(239, 68, 68, 0.8)'
+                            ],
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+            
+            createPerformanceChart() {
+                const ctx = document.getElementById('performanceChart').getContext('2d');
+                this.charts.performance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                        datasets: [{
+                            label: 'CPU Usage (%)',
+                            data: [20, 15, 45, 60, 55, 30],
+                            borderColor: 'rgb(37, 99, 235)',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            tension: 0.4
+                        }, {
+                            label: 'Memory Usage (%)',
+                            data: [30, 25, 55, 70, 65, 40],
+                            borderColor: 'rgb(239, 68, 68)',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+            }
+            
+            createRevenueChart() {
+                const ctx = document.getElementById('revenueChart').getContext('2d');
+                this.charts.revenue = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'Ingresos ($)',
+                            data: [12000, 15000, 13500, 18000, 16500, 20000],
+                            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                            borderRadius: 8
+                        }, {
+                            label: 'Gastos ($)',
+                            data: [8000, 9500, 8800, 11000, 10200, 12000],
+                            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+            
+            loadTableData() {
+                const mockData = [
+                    { user: 'Ana García', action: 'Subió archivo', resource: 'documento.pdf', status: 'success', date: '2024-12-10 14:30' },
+                    { user: 'Carlos Ruiz', action: 'Completó badge', resource: 'Experto en Datos', status: 'success', date: '2024-12-10 13:45' },
+                    { user: 'María López', action: 'Inició sesión', resource: 'Dashboard', status: 'success', date: '2024-12-10 12:20' },
+                    { user: 'Pedro Sánchez', action: 'Error upload', resource: 'imagen.jpg', status: 'danger', date: '2024-12-10 11:15' },
+                    { user: 'Sofia Torres', action: 'Actualizó perfil', resource: 'Configuración', status: 'warning', date: '2024-12-10 10:30' }
+                ];
+                
+                this.renderTableData(mockData);
+            }
+            
+            renderTableData(data) {
+                const tbody = document.querySelector('#activityTable tbody');
+                tbody.innerHTML = data.map(row => `
+                    <tr>
+                        <td>${row.user}</td>
+                        <td>${row.action}</td>
+                        <td>${row.resource}</td>
+                        <td><span class="status-badge ${row.status}">${this.getStatusText(row.status)}</span></td>
+                        <td>${row.date}</td>
+                    </tr>
+                `).join('');
+            }
+            
+            getStatusText(status) {
+                const statusMap = {
+                    'success': 'Exitoso',
+                    'warning': 'Advertencia',
+                    'danger': 'Error'
+                };
+                return statusMap[status] || status;
+            }
+            
+            switchTab(tabName) {
+                // Update active tab
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+                
+                // Update active section
+                document.querySelectorAll('.report-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(`${tabName}-section`).classList.add('active');
+                
+                this.currentTab = tabName;
+                
+                // Load tab-specific data if needed
+                this.loadTabData(tabName);
+            }
+            
+            loadTabData(tabName) {
+                // Simular carga de datos específicos por tab
+                this.showLoading();
+                
+                setTimeout(() => {
+                    this.hideLoading();
+                    // Aquí cargarías datos específicos del tab
+                }, 500);
+            }
+            
+            showLoading() {
+                this.isLoading = true;
+                // Mostrar indicadores de carga en las secciones relevantes
+            }
+            
+            hideLoading() {
+                this.isLoading = false;
+                // Ocultar indicadores de carga
+            }
+            
+            refreshData() {
+                const refreshBtn = document.getElementById('refreshBtn');
+                const icon = refreshBtn.querySelector('i');
+                
+                icon.style.animation = 'spin 1s linear infinite';
+                
+                setTimeout(() => {
+                    icon.style.animation = '';
+                    this.loadInitialData();
+                    this.loadKPIs();
+                }, 1000);
+            }
+            
+            updateDateRange() {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                
+                if (startDate && endDate) {
+                    // Actualizar datos basados en el rango de fechas
+                    this.loadDataForDateRange(startDate, endDate);
+                }
+            }
+            
+            loadDataForDateRange(start, end) {
+                console.log(`Cargando datos desde ${start} hasta ${end}`);
+                // Implementar lógica de filtrado por fechas
+            }
+            
+            updateChartPeriod(button) {
+                const container = button.closest('.chart-container');
+                container.querySelectorAll('.chart-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                button.classList.add('active');
+                
+                const period = button.dataset.period;
+                // Actualizar chart basado en el período seleccionado
+                console.log(`Actualizando chart para período: ${period}`);
+            }
+            
+            filterTableData(query) {
+                const rows = document.querySelectorAll('#activityTable tbody tr');
+                
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    const matches = text.includes(query.toLowerCase());
+                    row.style.display = matches ? '' : 'none';
+                });
+            }
+            
+            showExportModal() {
+                document.getElementById('exportModal').style.display = 'flex';
+            }
+            
+            hideExportModal() {
+                document.getElementById('exportModal').style.display = 'none';
+            }
+            
+            exportData(format) {
+                this.hideExportModal();
+                
+                // Simular proceso de exportación
+                const notifications = {
+                    pdf: '📄 Generando reporte PDF...',
+                    excel: '📊 Creando archivo Excel...',
+                    csv: '📋 Exportando datos CSV...'
+                };
+                
+                // Mostrar notificación temporal
+                this.showNotification(notifications[format]);
+                
+                setTimeout(() => {
+                    this.showNotification(`✅ Archivo ${format.toUpperCase()} descargado exitosamente`);
+                    // Aquí implementarías la descarga real
+                }, 2000);
+            }
+            
+            showNotification(message) {
+                // Crear y mostrar notificación temporal
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: white;
+                    padding: 15px 20px;
+                    border-radius: 12px;
+                    box-shadow: var(--shadow-lg);
+                    z-index: 10000;
+                    animation: fadeInUp 0.3s ease;
+                `;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.style.animation = 'fadeOut 0.3s ease';
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 300);
+                }, 3000);
+            }
+            
+            loadInitialData() {
+                // Cargar datos iniciales del dashboard
+                console.log('Cargando datos iniciales...');
+            }
+        }
+        
+        // Inicializar aplicación
+        const reportsApp = new AllyReports();
+        
+        // Exponer instancia global para debug
+        window.reportsApp = reportsApp;
+        
+        // CSS adicional para animaciones
+        const additionalStyles = `
+            @keyframes fadeOut {
+                from { opacity: 1; transform: translateY(0); }
+                to { opacity: 0; transform: translateY(-10px); }
+            }
+        `;
+        
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = additionalStyles;
+        document.head.appendChild(styleSheet);
+    </script>
+</body>
+</html>

@@ -1,157 +1,1108 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Registro - Ecosistema de Emprendimiento{% endblock %}</title>
+    
+    <!-- Meta tags SEO -->
+    <meta name="description" content="Únete al ecosistema de emprendimiento más grande de Colombia. Conecta, aprende y haz crecer tu negocio.">
+    <meta name="keywords" content="emprendimiento, startup, mentor, Colombia, innovación">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='dist/img/favicon.ico') }}">
+    
+    <!-- CSS Framework -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --dark-color: #1e293b;
+            --light-color: #f8fafc;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --gradient-primary: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-{% block title %}Registro - Plataforma de Emprendimiento{% endblock %}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
-{% endblock %}
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
 
-{% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card shadow-sm">
-                <div class="card-body p-4 p-md-5">
-                    <div class="text-center mb-4">
-                        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="mb-3" height="60">
-                        <h2 class="fw-bold">Crear una cuenta</h2>
-                        <p class="text-muted">Completa el formulario para registrarte</p>
+        /* Background Animation */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            z-index: -1;
+        }
+
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .register-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: var(--shadow-lg);
+            padding: 0;
+            overflow: hidden;
+            max-width: 1000px;
+            width: 100%;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .register-header {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .register-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><polygon fill="rgba(255,255,255,0.1)" points="100,0 200,50 200,150 100,200 0,150 0,50"/></svg>') no-repeat center;
+            background-size: cover;
+        }
+
+        .register-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .register-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .register-body {
+            padding: 2.5rem;
+        }
+
+        .user-type-selector {
+            margin-bottom: 2rem;
+        }
+
+        .user-type-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .user-type-card {
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            background: white;
+        }
+
+        .user-type-card:hover {
+            border-color: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .user-type-card.active {
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            color: white;
+        }
+
+        .user-type-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .user-type-card h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .user-type-card p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin: 0;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .form-floating {
+            margin-bottom: 1rem;
+        }
+
+        .form-floating > .form-control {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 0.75rem 0.25rem 0.75rem;
+            height: auto;
+            transition: var(--transition);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .form-floating > .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+            background: white;
+        }
+
+        .form-floating > label {
+            padding: 0.5rem 0.75rem;
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+
+        .form-select {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.75rem;
+            transition: var(--transition);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+            background: white;
+        }
+
+        .password-strength {
+            margin-top: 0.5rem;
+        }
+
+        .strength-bar {
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .strength-fill {
+            height: 100%;
+            transition: var(--transition);
+            border-radius: 2px;
+        }
+
+        .strength-text {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .strength-weak { background: var(--danger-color); }
+        .strength-medium { background: var(--warning-color); }
+        .strength-strong { background: var(--success-color); }
+
+        .form-check {
+            margin-bottom: 1rem;
+        }
+
+        .form-check-input {
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .form-check-label {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            margin-left: 0.5rem;
+        }
+
+        .btn-register {
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: 12px;
+            padding: 0.875rem 2rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: white;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            color: white;
+        }
+
+        .btn-register:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-register .spinner {
+            display: none;
+        }
+
+        .btn-register.loading .spinner {
+            display: inline-block;
+        }
+
+        .btn-register.loading .btn-text {
+            display: none;
+        }
+
+        .auth-links {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .auth-links a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .auth-links a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        .alert {
+            border-radius: 12px;
+            border: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .validation-feedback {
+            display: block;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            padding-left: 0.75rem;
+        }
+
+        .is-valid {
+            border-color: var(--success-color) !important;
+        }
+
+        .is-invalid {
+            border-color: var(--danger-color) !important;
+        }
+
+        .valid-feedback {
+            color: var(--success-color);
+        }
+
+        .invalid-feedback {
+            color: var(--danger-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .auth-container {
+                padding: 1rem;
+            }
+
+            .register-card {
+                border-radius: 16px;
+            }
+
+            .register-header {
+                padding: 1.5rem;
+            }
+
+            .register-header h1 {
+                font-size: 2rem;
+            }
+
+            .register-body {
+                padding: 1.5rem;
+            }
+
+            .user-type-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .user-type-card {
+                padding: 1rem;
+            }
+        }
+
+        /* Loading Animation */
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        /* Custom Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .slide-in-right {
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="register-card">
+            <!-- Header -->
+            <div class="register-header">
+                <h1><i class="fas fa-rocket me-2"></i>Únete al Ecosistema</h1>
+                <p>Conecta, aprende y haz crecer tu emprendimiento</p>
+            </div>
+
+            <!-- Body -->
+            <div class="register-body">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} fade-in" role="alert">
+                                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form id="registerForm" method="POST" action="{{ url_for('auth.register') }}" novalidate>
+                    {{ form.hidden_tag() }}
+
+                    <!-- User Type Selection -->
+                    <div class="form-section fade-in">
+                        <h3 class="section-title">
+                            <i class="fas fa-users me-2"></i>¿Qué tipo de usuario eres?
+                        </h3>
+                        <div class="user-type-grid">
+                            <div class="user-type-card" data-type="entrepreneur">
+                                <i class="fas fa-lightbulb icon"></i>
+                                <h4>Emprendedor</h4>
+                                <p>Tengo una idea de negocio o startup que quiero desarrollar</p>
+                            </div>
+                            <div class="user-type-card" data-type="ally">
+                                <i class="fas fa-handshake icon"></i>
+                                <h4>Aliado/Mentor</h4>
+                                <p>Quiero apoyar y mentorear a emprendedores</p>
+                            </div>
+                            <div class="user-type-card" data-type="client">
+                                <i class="fas fa-building icon"></i>
+                                <h4>Cliente/Stakeholder</h4>
+                                <p>Represento una organización interesada en el ecosistema</p>
+                            </div>
+                        </div>
+                        <input type="hidden" id="user_type" name="user_type" required>
+                        <div class="invalid-feedback" id="user-type-error">
+                            Por favor selecciona tu tipo de usuario
+                        </div>
                     </div>
-                    
-                    <form method="POST" action="{{ url_for('auth.register') }}">
-                        {{ form.csrf_token }}
+
+                    <!-- Personal Information -->
+                    <div class="form-section slide-in-right" id="personal-info" style="display: none;">
+                        <h3 class="section-title">
+                            <i class="fas fa-user me-2"></i>Información Personal
+                        </h3>
                         
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="first_name" class="form-label">Nombre</label>
-                                {{ form.first_name(class="form-control", placeholder="Tu nombre") }}
-                                {% if form.first_name.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.first_name.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.first_name(class="form-control", placeholder="Nombre") }}
+                                    {{ form.first_name.label(class="form-label") }}
+                                    <div class="invalid-feedback"></div>
+                                </div>
                             </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="last_name" class="form-label">Apellido</label>
-                                {{ form.last_name(class="form-control", placeholder="Tu apellido") }}
-                                {% if form.last_name.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.last_name.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.last_name(class="form-control", placeholder="Apellido") }}
+                                    {{ form.last_name.label(class="form-label") }}
+                                    <div class="invalid-feedback"></div>
+                                </div>
                             </div>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Correo electrónico</label>
-                            {{ form.email(class="form-control", placeholder="correo@ejemplo.com") }}
-                            {% if form.email.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.email.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
+
+                        <div class="form-floating">
+                            {{ form.email(class="form-control", placeholder="Email") }}
+                            {{ form.email.label(class="form-label") }}
+                            <div class="invalid-feedback"></div>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Contraseña</label>
-                            {{ form.password(class="form-control", placeholder="••••••••") }}
-                            <div class="form-text">La contraseña debe tener al menos 8 caracteres, incluir letras mayúsculas, minúsculas y números.</div>
-                            {% if form.password.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.password.errors %}
-                                        {{ error }}
-                                    {% endfor %}
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.phone(class="form-control", placeholder="Teléfono") }}
+                                    {{ form.phone.label(class="form-label") }}
+                                    <div class="invalid-feedback"></div>
                                 </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="confirm_password" class="form-label">Confirmar contraseña</label>
-                            {{ form.confirm_password(class="form-control", placeholder="••••••••") }}
-                            {% if form.confirm_password.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.confirm_password.errors %}
-                                        {{ error }}
-                                    {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select" id="country" name="country" required>
+                                        <option value="">Seleccionar país</option>
+                                        <option value="CO">Colombia</option>
+                                        <option value="MX">México</option>
+                                        <option value="AR">Argentina</option>
+                                        <option value="CL">Chile</option>
+                                        <option value="PE">Perú</option>
+                                        <option value="EC">Ecuador</option>
+                                        <option value="UY">Uruguay</option>
+                                        <option value="BO">Bolivia</option>
+                                        <option value="PY">Paraguay</option>
+                                        <option value="VE">Venezuela</option>
+                                    </select>
+                                    <label for="country">País</label>
+                                    <div class="invalid-feedback"></div>
                                 </div>
-                            {% endif %}
+                            </div>
                         </div>
-                        
-                        <div class="mb-4">
-                            <label for="role" class="form-label">Tipo de cuenta</label>
-                            {{ form.role(class="form-select") }}
-                            {% if form.role.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.role.errors %}
-                                        {{ error }}
-                                    {% endfor %}
+
+                        <div class="form-floating" id="city-field" style="display: none;">
+                            <select class="form-select" id="city" name="city">
+                                <option value="">Seleccionar ciudad</option>
+                            </select>
+                            <label for="city">Ciudad</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+
+                    <!-- Security -->
+                    <div class="form-section slide-in-right" id="security-info" style="display: none;">
+                        <h3 class="section-title">
+                            <i class="fas fa-shield-alt me-2"></i>Seguridad
+                        </h3>
+
+                        <div class="form-floating">
+                            {{ form.password(class="form-control", placeholder="Contraseña", id="password") }}
+                            {{ form.password.label(class="form-label") }}
+                            <div class="invalid-feedback"></div>
+                            <div class="password-strength" id="password-strength" style="display: none;">
+                                <div class="strength-bar">
+                                    <div class="strength-fill" id="strength-fill"></div>
                                 </div>
-                            {% endif %}
+                                <div class="strength-text" id="strength-text"></div>
+                            </div>
                         </div>
-                        
-                        <div class="mb-4 form-check">
-                            {{ form.terms(class="form-check-input") }}
+
+                        <div class="form-floating">
+                            {{ form.confirm_password(class="form-control", placeholder="Confirmar contraseña") }}
+                            {{ form.confirm_password.label(class="form-label") }}
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+
+                    <!-- Professional Information (Dynamic based on user type) -->
+                    <div class="form-section slide-in-right" id="professional-info" style="display: none;">
+                        <h3 class="section-title" id="professional-title">
+                            <i class="fas fa-briefcase me-2"></i>Información Profesional
+                        </h3>
+
+                        <!-- Common fields -->
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="organization" name="organization" placeholder="Organización">
+                            <label for="organization">Organización/Empresa</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="position" name="position" placeholder="Cargo">
+                            <label for="position">Cargo/Posición</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <!-- Entrepreneur specific -->
+                        <div id="entrepreneur-fields" style="display: none;">
+                            <div class="form-floating">
+                                <select class="form-select" id="sector" name="sector">
+                                    <option value="">Seleccionar sector</option>
+                                    <option value="tecnologia">Tecnología</option>
+                                    <option value="salud">Salud</option>
+                                    <option value="educacion">Educación</option>
+                                    <option value="fintech">Fintech</option>
+                                    <option value="ecommerce">E-commerce</option>
+                                    <option value="agricultura">Agricultura</option>
+                                    <option value="turismo">Turismo</option>
+                                    <option value="manufactura">Manufactura</option>
+                                    <option value="servicios">Servicios</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                                <label for="sector">Sector de tu emprendimiento</label>
+                            </div>
+
+                            <div class="form-floating">
+                                <select class="form-select" id="stage" name="stage">
+                                    <option value="">Seleccionar etapa</option>
+                                    <option value="idea">Idea/Concepto</option>
+                                    <option value="mvp">MVP/Prototipo</option>
+                                    <option value="early">Producto inicial</option>
+                                    <option value="growth">Crecimiento</option>
+                                    <option value="scale">Escalamiento</option>
+                                </select>
+                                <label for="stage">Etapa del emprendimiento</label>
+                            </div>
+                        </div>
+
+                        <!-- Ally specific -->
+                        <div id="ally-fields" style="display: none;">
+                            <div class="form-floating">
+                                <select class="form-select" id="expertise" name="expertise">
+                                    <option value="">Seleccionar área de expertise</option>
+                                    <option value="marketing">Marketing y Ventas</option>
+                                    <option value="finance">Finanzas</option>
+                                    <option value="legal">Legal</option>
+                                    <option value="technology">Tecnología</option>
+                                    <option value="operations">Operaciones</option>
+                                    <option value="hr">Recursos Humanos</option>
+                                    <option value="strategy">Estrategia</option>
+                                    <option value="product">Desarrollo de Producto</option>
+                                </select>
+                                <label for="expertise">Área de expertise</label>
+                            </div>
+
+                            <div class="form-floating">
+                                <input type="number" class="form-control" id="experience_years" name="experience_years" min="0" max="50" placeholder="Años de experiencia">
+                                <label for="experience_years">Años de experiencia</label>
+                            </div>
+                        </div>
+
+                        <div class="form-floating">
+                            <textarea class="form-control" id="bio" name="bio" style="height: 100px" placeholder="Biografía"></textarea>
+                            <label for="bio">Cuéntanos sobre ti (opcional)</label>
+                        </div>
+                    </div>
+
+                    <!-- Terms and Conditions -->
+                    <div class="form-section slide-in-right" id="terms-section" style="display: none;">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="terms" name="terms" required>
                             <label class="form-check-label" for="terms">
-                                Acepto los <a href="{{ url_for('main.terms') }}" target="_blank">Términos y Condiciones</a> y la <a href="{{ url_for('main.privacy') }}" target="_blank">Política de Privacidad</a>
+                                Acepto los <a href="{{ url_for('main.terms') }}" target="_blank">términos y condiciones</a> 
+                                y la <a href="{{ url_for('main.privacy') }}" target="_blank">política de privacidad</a>
                             </label>
-                            {% if form.terms.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.terms.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
+                            <div class="invalid-feedback">
+                                Debes aceptar los términos y condiciones
+                            </div>
                         </div>
-                        
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">Registrarse</button>
-                        </div>
-                    </form>
-                    
-                    <div class="mt-4 text-center">
-                        <p class="mb-0">¿Ya tienes una cuenta? <a href="{{ url_for('auth.login') }}" class="text-decoration-none">Inicia sesión aquí</a></p>
-                    </div>
-                    
-                    {% if oauth_providers %}
-                    <div class="mt-4">
-                        <div class="separator text-muted mb-3">
-                            <span>O regístrate con</span>
-                        </div>
-                        
-                        <div class="d-grid gap-2">
-                            {% if 'google' in oauth_providers %}
-                            <a href="{{ url_for('auth.oauth_register', provider='google') }}" class="btn btn-outline-secondary">
-                                <img src="{{ url_for('static', filename='images/icons/google.svg') }}" alt="Google" width="20" height="20" class="me-2">
-                                Google
-                            </a>
-                            {% endif %}
-                            
-                            {% if 'microsoft' in oauth_providers %}
-                            <a href="{{ url_for('auth.oauth_register', provider='microsoft') }}" class="btn btn-outline-secondary">
-                                <img src="{{ url_for('static', filename='images/icons/microsoft.svg') }}" alt="Microsoft" width="20" height="20" class="me-2">
-                                Microsoft
-                            </a>
-                            {% endif %}
-                            
-                            {% if 'linkedin' in oauth_providers %}
-                            <a href="{{ url_for('auth.oauth_register', provider='linkedin') }}" class="btn btn-outline-secondary">
-                                <img src="{{ url_for('static', filename='images/icons/linkedin.svg') }}" alt="LinkedIn" width="20" height="20" class="me-2">
-                                LinkedIn
-                            </a>
-                            {% endif %}
+
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="newsletter" name="newsletter">
+                            <label class="form-check-label" for="newsletter">
+                                Quiero recibir noticias y actualizaciones del ecosistema (opcional)
+                            </label>
                         </div>
                     </div>
-                    {% endif %}
+
+                    <!-- Submit Button -->
+                    <div class="form-section slide-in-right" id="submit-section" style="display: none;">
+                        <button type="submit" class="btn btn-register" id="submitBtn" disabled>
+                            <span class="spinner spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <span class="btn-text">
+                                <i class="fas fa-user-plus me-2"></i>Crear cuenta
+                            </span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Login Link -->
+                <div class="auth-links">
+                    <p>¿Ya tienes cuenta? <a href="{{ url_for('auth.login') }}">Inicia sesión aquí</a></p>
                 </div>
             </div>
         </div>
     </div>
-</div>
-{% endblock %}
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Registration Form Handler
+        class RegistrationForm {
+            constructor() {
+                this.currentStep = 0;
+                this.totalSteps = 5;
+                this.userType = null;
+                this.cities = {
+                    'CO': ['Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Cartagena', 'Bucaramanga', 'Pereira', 'Manizales', 'Pasto', 'Ibagué'],
+                    'MX': ['Ciudad de México', 'Guadalajara', 'Monterrey', 'Puebla', 'Tijuana', 'León', 'Ciudad Juárez', 'Zapopan', 'Mérida', 'San Luis Potosí'],
+                    'AR': ['Buenos Aires', 'Córdoba', 'Rosario', 'Mendoza', 'Tucumán', 'La Plata', 'Mar del Plata', 'Salta', 'Santa Fe', 'San Juan'],
+                    'CL': ['Santiago', 'Valparaíso', 'Concepción', 'La Serena', 'Antofagasta', 'Temuco', 'Rancagua', 'Talca', 'Arica', 'Chillán'],
+                    'PE': ['Lima', 'Arequipa', 'Trujillo', 'Chiclayo', 'Huancayo', 'Piura', 'Iquitos', 'Cusco', 'Chimbote', 'Tacna']
+                };
+                
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.setupValidation();
+            }
+
+            bindEvents() {
+                // User type selection
+                document.querySelectorAll('.user-type-card').forEach(card => {
+                    card.addEventListener('click', (e) => this.selectUserType(e));
+                });
+
+                // Country change
+                document.getElementById('country').addEventListener('change', (e) => this.handleCountryChange(e));
+
+                // Password strength
+                document.getElementById('password').addEventListener('input', (e) => this.checkPasswordStrength(e));
+
+                // Form submission
+                document.getElementById('registerForm').addEventListener('submit', (e) => this.handleSubmit(e));
+
+                // Real-time validation
+                this.setupRealTimeValidation();
+            }
+
+            selectUserType(e) {
+                const card = e.currentTarget;
+                const type = card.dataset.type;
+                
+                // Remove active class from all cards
+                document.querySelectorAll('.user-type-card').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to selected card
+                card.classList.add('active');
+                
+                // Set user type
+                this.userType = type;
+                document.getElementById('user_type').value = type;
+                
+                // Show next sections
+                this.showNextSections();
+                
+                // Update professional info based on user type
+                this.updateProfessionalInfo(type);
+            }
+
+            showNextSections() {
+                const sections = ['personal-info', 'security-info', 'professional-info', 'terms-section', 'submit-section'];
+                
+                sections.forEach((sectionId, index) => {
+                    setTimeout(() => {
+                        const section = document.getElementById(sectionId);
+                        section.style.display = 'block';
+                        section.classList.add('slide-in-right');
+                    }, index * 200);
+                });
+                
+                this.updateSubmitButton();
+            }
+
+            updateProfessionalInfo(type) {
+                // Hide all specific fields
+                document.getElementById('entrepreneur-fields').style.display = 'none';
+                document.getElementById('ally-fields').style.display = 'none';
+                
+                // Update title and show relevant fields
+                const title = document.getElementById('professional-title');
+                const titleIcon = title.querySelector('i');
+                
+                switch(type) {
+                    case 'entrepreneur':
+                        titleIcon.className = 'fas fa-lightbulb me-2';
+                        title.innerHTML = '<i class="fas fa-lightbulb me-2"></i>Información del Emprendimiento';
+                        document.getElementById('entrepreneur-fields').style.display = 'block';
+                        break;
+                    case 'ally':
+                        titleIcon.className = 'fas fa-handshake me-2';
+                        title.innerHTML = '<i class="fas fa-handshake me-2"></i>Información de Mentoría';
+                        document.getElementById('ally-fields').style.display = 'block';
+                        break;
+                    case 'client':
+                        titleIcon.className = 'fas fa-building me-2';
+                        title.innerHTML = '<i class="fas fa-building me-2"></i>Información Organizacional';
+                        break;
+                }
+            }
+
+            handleCountryChange(e) {
+                const country = e.target.value;
+                const cityField = document.getElementById('city-field');
+                const citySelect = document.getElementById('city');
+                
+                if (country && this.cities[country]) {
+                    // Clear previous options
+                    citySelect.innerHTML = '<option value="">Seleccionar ciudad</option>';
+                    
+                    // Add cities for selected country
+                    this.cities[country].forEach(city => {
+                        const option = document.createElement('option');
+                        option.value = city;
+                        option.textContent = city;
+                        citySelect.appendChild(option);
+                    });
+                    
+                    cityField.style.display = 'block';
+                } else {
+                    cityField.style.display = 'none';
+                }
+            }
+
+            checkPasswordStrength(e) {
+                const password = e.target.value;
+                const strengthContainer = document.getElementById('password-strength');
+                const strengthFill = document.getElementById('strength-fill');
+                const strengthText = document.getElementById('strength-text');
+                
+                if (password.length === 0) {
+                    strengthContainer.style.display = 'none';
+                    return;
+                }
+                
+                strengthContainer.style.display = 'block';
+                
+                let score = 0;
+                let feedback = [];
+                
+                // Length check
+                if (password.length >= 8) score += 25;
+                else feedback.push('mínimo 8 caracteres');
+                
+                // Uppercase check
+                if (/[A-Z]/.test(password)) score += 25;
+                else feedback.push('una mayúscula');
+                
+                // Lowercase check
+                if (/[a-z]/.test(password)) score += 25;
+                else feedback.push('una minúscula');
+                
+                // Number or symbol check
+                if (/[0-9]/.test(password) || /[^A-Za-z0-9]/.test(password)) score += 25;
+                else feedback.push('un número o símbolo');
+                
+                // Update strength bar
+                strengthFill.style.width = score + '%';
+                
+                if (score < 50) {
+                    strengthFill.className = 'strength-fill strength-weak';
+                    strengthText.innerHTML = `<span class="text-danger">Débil</span> - Falta: ${feedback.join(', ')}`;
+                } else if (score < 100) {
+                    strengthFill.className = 'strength-fill strength-medium';
+                    strengthText.innerHTML = `<span class="text-warning">Media</span> - Falta: ${feedback.join(', ')}`;
+                } else {
+                    strengthFill.className = 'strength-fill strength-strong';
+                    strengthText.innerHTML = '<span class="text-success">Fuerte</span> - ¡Excelente!';
+                }
+            }
+
+            setupRealTimeValidation() {
+                const form = document.getElementById('registerForm');
+                const inputs = form.querySelectorAll('input, select, textarea');
+                
+                inputs.forEach(input => {
+                    input.addEventListener('blur', () => this.validateField(input));
+                    input.addEventListener('input', () => {
+                        if (input.classList.contains('is-invalid')) {
+                            this.validateField(input);
+                        }
+                        this.updateSubmitButton();
+                    });
+                });
+            }
+
+            validateField(field) {
+                const value = field.value.trim();
+                const fieldName = field.name || field.id;
+                let isValid = true;
+                let message = '';
+                
+                // Required field validation
+                if (field.hasAttribute('required') && !value) {
+                    isValid = false;
+                    message = 'Este campo es obligatorio';
+                }
+                
+                // Specific validations
+                if (value) {
+                    switch (fieldName) {
+                        case 'email':
+                            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                            if (!emailRegex.test(value)) {
+                                isValid = false;
+                                message = 'Ingresa un email válido';
+                            }
+                            break;
+                        
+                        case 'phone':
+                            const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/;
+                            if (!phoneRegex.test(value)) {
+                                isValid = false;
+                                message = 'Ingresa un teléfono válido';
+                            }
+                            break;
+                        
+                        case 'password':
+                            if (value.length < 8) {
+                                isValid = false;
+                                message = 'La contraseña debe tener al menos 8 caracteres';
+                            }
+                            break;
+                        
+                        case 'confirm_password':
+                            const password = document.getElementById('password').value;
+                            if (value !== password) {
+                                isValid = false;
+                                message = 'Las contraseñas no coinciden';
+                            }
+                            break;
+                    }
+                }
+                
+                // Update field appearance
+                this.updateFieldValidation(field, isValid, message);
+                
+                return isValid;
+            }
+
+            updateFieldValidation(field, isValid, message) {
+                const feedback = field.parentNode.querySelector('.invalid-feedback') || 
+                                field.parentNode.parentNode.querySelector('.invalid-feedback');
+                
+                if (isValid) {
+                    field.classList.remove('is-invalid');
+                    field.classList.add('is-valid');
+                    if (feedback) feedback.textContent = '';
+                } else {
+                    field.classList.remove('is-valid');
+                    field.classList.add('is-invalid');
+                    if (feedback) feedback.textContent = message;
+                }
+            }
+
+            updateSubmitButton() {
+                const submitBtn = document.getElementById('submitBtn');
+                const userTypeSelected = document.getElementById('user_type').value;
+                const requiredFields = document.querySelectorAll('input[required], select[required]');
+                const termsChecked = document.getElementById('terms').checked;
+                
+                let allValid = userTypeSelected && termsChecked;
+                
+                if (allValid) {
+                    requiredFields.forEach(field => {
+                        if (!field.value.trim() || field.classList.contains('is-invalid')) {
+                            allValid = false;
+                        }
+                    });
+                }
+                
+                submitBtn.disabled = !allValid;
+            }
+
+            async handleSubmit(e) {
+                e.preventDefault();
+                
+                const submitBtn = document.getElementById('submitBtn');
+                const form = e.target;
+                
+                // Validate all fields
+                let isFormValid = true;
+                const inputs = form.querySelectorAll('input, select, textarea');
+                
+                inputs.forEach(input => {
+                    if (!this.validateField(input)) {
+                        isFormValid = false;
+                    }
+                });
+                
+                // Check user type
+                if (!this.userType) {
+                    document.getElementById('user-type-error').style.display = 'block';
+                    isFormValid = false;
+                } else {
+                    document.getElementById('user-type-error').style.display = 'none';
+                }
+                
+                if (!isFormValid) {
+                    this.showAlert('error', 'Por favor corrige los errores en el formulario');
+                    return;
+                }
+                
+                // Show loading state
+                submitBtn.classList.add('loading');
+                submitBtn.disabled = true;
+                
+                try {
+                    // Submit form
+                    const formData = new FormData(form);
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.showAlert('success', '¡Cuenta creada exitosamente! Revisa tu email para verificar tu cuenta.');
+                        setTimeout(() => {
+                            window.location.href = result.redirect || "{{ url_for('auth.login') }}";
+                        }, 2000);
+                    } else {
+                        this.showAlert('error', result.message || 'Error al crear la cuenta');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.showAlert('error', 'Error de conexión. Inténtalo de nuevo.');
+                } finally {
+                    submitBtn.classList.remove('loading');
+                    submitBtn.disabled = false;
+                }
+            }
+
+            showAlert(type, message) {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type === 'error' ? 'danger' : 'success'} fade-in`;
+                alertDiv.innerHTML = `
+                    <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'check-circle'} me-2"></i>
+                    ${message}
+                `;
+                
+                const form = document.getElementById('registerForm');
+                form.insertBefore(alertDiv, form.firstChild);
+                
+                // Auto-remove after 5 seconds
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 5000);
+            }
+
+            setupValidation() {
+                this.updateSubmitButton();
+            }
+        }
+
+        // Initialize form when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            new RegistrationForm();
+        });
+
+        // Add smooth scrolling for better UX
+        function smoothScrollTo(element) {
+            element.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        // Handle form section animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in');
+                }
+            });
+        });
+
+        document.querySelectorAll('.form-section').forEach(section => {
+            observer.observe(section);
+        });
+    </script>
+</body>
+</html>

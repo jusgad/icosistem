@@ -1,464 +1,2392 @@
-{% extends "base.html" %}
+{% extends "layouts/admin.html" %}
 
-{% block title %}Aliados - Plataforma de Emprendimiento{% endblock %}
+{% block title %}Gestión de Aliados/Mentores - Panel Administrativo{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+<link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css" rel="stylesheet">
+<link href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css" rel="stylesheet">
+<style>
+    :root {
+        --admin-primary: #1e40af;
+        --admin-secondary: #64748b;
+        --admin-success: #059669;
+        --admin-warning: #d97706;
+        --admin-danger: #dc2626;
+        --admin-info: #0284c7;
+        --admin-dark: #0f172a;
+        --admin-light: #f1f5f9;
+        --admin-border: #e2e8f0;
+        --admin-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        --admin-shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+        --admin-gradient: linear-gradient(135deg, var(--admin-primary) 0%, #3b82f6 100%);
+        --mentor-primary: #059669;
+        --mentor-secondary: #10b981;
+        --mentor-gradient: linear-gradient(135deg, var(--mentor-primary) 0%, var(--mentor-secondary) 100%);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .page-header {
+        background: var(--mentor-gradient);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 24px 24px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="handshake" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23handshake)"/></svg>');
+        opacity: 0.3;
+    }
+
+    .page-header .container {
+        position: relative;
+        z-index: 1;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: var(--admin-shadow);
+        border: 1px solid var(--admin-border);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--admin-shadow-lg);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--card-color, var(--mentor-primary));
+    }
+
+    .stat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        background: var(--card-color, var(--mentor-primary));
+    }
+
+    .stat-trend {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .trend-up { color: var(--admin-success); }
+    .trend-down { color: var(--admin-danger); }
+    .trend-neutral { color: var(--admin-secondary); }
+
+    .stat-value {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: var(--admin-dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        color: var(--admin-secondary);
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .allies-card {
+        background: white;
+        border-radius: 16px;
+        padding: 0;
+        box-shadow: var(--admin-shadow);
+        border: 1px solid var(--admin-border);
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: var(--admin-light);
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--admin-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--admin-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary {
+        background: var(--mentor-gradient);
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        color: white;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--admin-shadow-lg);
+        color: white;
+    }
+
+    .filters-section {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--admin-shadow);
+        border: 1px solid var(--admin-border);
+    }
+
+    .filters-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        cursor: pointer;
+    }
+
+    .filters-title {
+        font-weight: 600;
+        color: var(--admin-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filters-content {
+        display: none;
+        animation: slideDown 0.3s ease-out;
+    }
+
+    .filters-content.show {
+        display: block;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        font-weight: 500;
+        color: var(--admin-dark);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid var(--admin-border);
+        border-radius: 12px;
+        padding: 0.75rem;
+        transition: var(--transition);
+        background: white;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--mentor-primary);
+        box-shadow: 0 0 0 0.2rem rgba(5, 150, 105, 0.25);
+    }
+
+    .allies-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .allies-table th {
+        background: var(--admin-light);
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--admin-dark);
+        border-bottom: 2px solid var(--admin-border);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .allies-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--admin-border);
+        vertical-align: middle;
+    }
+
+    .allies-table tbody tr {
+        transition: var(--transition);
+    }
+
+    .allies-table tbody tr:hover {
+        background: var(--admin-light);
+    }
+
+    .mentor-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .mentor-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--mentor-gradient);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        flex-shrink: 0;
+        position: relative;
+    }
+
+    .mentor-avatar img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .mentor-details h6 {
+        margin: 0 0 0.25rem 0;
+        font-weight: 600;
+        color: var(--admin-dark);
+    }
+
+    .mentor-details p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: var(--admin-secondary);
+    }
+
+    .mentor-company {
+        font-size: 0.75rem;
+        color: var(--admin-info);
+        font-weight: 500;
+    }
+
+    .expertise-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    .expertise-tag {
+        padding: 0.125rem 0.5rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        background: rgba(5, 150, 105, 0.1);
+        color: var(--mentor-primary);
+        border: 1px solid rgba(5, 150, 105, 0.2);
+    }
+
+    .badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .badge-marketing { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    .badge-finance { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+    .badge-legal { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+    .badge-technology { background: rgba(168, 85, 247, 0.1); color: #a855f7; }
+    .badge-operations { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+    .badge-hr { background: rgba(236, 72, 153, 0.1); color: #ec4899; }
+    .badge-strategy { background: rgba(6, 182, 212, 0.1); color: #06b6d4; }
+    .badge-product { background: rgba(139, 69, 19, 0.1); color: #8b4513; }
+
+    .availability-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .availability-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .available { background: var(--admin-success); }
+    .busy { background: var(--admin-warning); }
+    .unavailable { background: var(--admin-danger); }
+
+    .availability-text {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .entrepreneurs-assigned {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .entrepreneur-count {
+        font-weight: 600;
+        color: var(--admin-dark);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .entrepreneur-list {
+        font-size: 0.75rem;
+        color: var(--admin-secondary);
+        line-height: 1.3;
+    }
+
+    .rating-display {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .stars {
+        display: flex;
+        gap: 0.125rem;
+    }
+
+    .star {
+        color: #fbbf24;
+        font-size: 0.875rem;
+    }
+
+    .star.empty {
+        color: var(--admin-border);
+    }
+
+    .rating-value {
+        font-weight: 600;
+        color: var(--admin-dark);
+        font-size: 0.875rem;
+    }
+
+    .sessions-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        text-align: center;
+    }
+
+    .sessions-count {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--mentor-primary);
+    }
+
+    .sessions-label {
+        font-size: 0.75rem;
+        color: var(--admin-secondary);
+    }
+
+    .hours-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        text-align: center;
+    }
+
+    .hours-count {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--admin-info);
+    }
+
+    .hours-label {
+        font-size: 0.75rem;
+        color: var(--admin-secondary);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-action {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid var(--admin-border);
+        background: white;
+        color: var(--admin-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+
+    .btn-action:hover {
+        background: var(--admin-light);
+        transform: translateY(-2px);
+    }
+
+    .btn-action.btn-view:hover {
+        color: var(--admin-info);
+        border-color: var(--admin-info);
+    }
+
+    .btn-action.btn-edit:hover {
+        color: var(--admin-warning);
+        border-color: var(--admin-warning);
+    }
+
+    .btn-action.btn-assign:hover {
+        color: var(--mentor-primary);
+        border-color: var(--mentor-primary);
+    }
+
+    .btn-action.btn-schedule:hover {
+        color: var(--admin-info);
+        border-color: var(--admin-info);
+    }
+
+    .btn-action.btn-delete:hover {
+        color: var(--admin-danger);
+        border-color: var(--admin-danger);
+    }
+
+    /* Dashboard Charts */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .chart-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: var(--admin-shadow);
+        border: 1px solid var(--admin-border);
+    }
+
+    .chart-header {
+        display: flex;
+        align-items: center;
+        justify-content: between;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--admin-border);
+    }
+
+    .chart-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--admin-dark);
+        margin: 0;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 1rem;
+    }
+
+    /* Modal Styles */
+    .modal-content {
+        border-radius: 16px;
+        border: none;
+        box-shadow: var(--admin-shadow-lg);
+    }
+
+    .modal-header {
+        background: var(--mentor-gradient);
+        color: white;
+        border-radius: 16px 16px 0 0;
+        padding: 1.5rem 2rem;
+        border-bottom: none;
+    }
+
+    .modal-title {
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .btn-close {
+        filter: invert(1);
+        opacity: 0.8;
+    }
+
+    .modal-body {
+        padding: 2rem;
+    }
+
+    .modal-footer {
+        padding: 1.5rem 2rem;
+        border-top: 1px solid var(--admin-border);
+        border-radius: 0 0 16px 16px;
+    }
+
+    /* Loading States */
+    .loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--admin-border);
+        border-top: 4px solid var(--mentor-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Custom Checkbox */
+    .custom-checkbox {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .custom-checkbox input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .checkmark {
+        width: 20px;
+        height: 20px;
+        background: white;
+        border: 2px solid var(--admin-border);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+    }
+
+    .custom-checkbox input:checked ~ .checkmark {
+        background: var(--mentor-primary);
+        border-color: var(--mentor-primary);
+        color: white;
+    }
+
+    .checkmark::after {
+        content: '\f00c';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        font-size: 0.75rem;
+        opacity: 0;
+        transition: var(--transition);
+    }
+
+    .custom-checkbox input:checked ~ .checkmark::after {
+        opacity: 1;
+    }
+
+    /* Experience indicator */
+    .experience-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .experience-bars {
+        display: flex;
+        gap: 2px;
+    }
+
+    .experience-bar {
+        width: 4px;
+        height: 16px;
+        background: var(--admin-border);
+        border-radius: 2px;
+    }
+
+    .experience-bar.filled {
+        background: var(--mentor-primary);
+    }
+
+    .experience-text {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--admin-dark);
+    }
+
+    /* Availability schedule */
+    .availability-schedule {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        margin-top: 0.25rem;
+    }
+
+    .schedule-slot {
+        background: rgba(5, 150, 105, 0.1);
+        color: var(--mentor-primary);
+        padding: 0.125rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .card-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .card-actions {
+            justify-content: stretch;
+        }
+
+        .card-actions .btn {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .filter-row {
+            grid-template-columns: 1fr;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .allies-table {
+            font-size: 0.875rem;
+        }
+
+        .allies-table th,
+        .allies-table td {
+            padding: 0.75rem 0.5rem;
+        }
+    }
+
+    /* Activity timeline in modals */
+    .activity-timeline {
+        max-height: 400px;
+        overflow-y: auto;
+        padding-right: 1rem;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 0;
+        bottom: -1.5rem;
+        width: 2px;
+        background: var(--admin-border);
+    }
+
+    .timeline-item:last-child::before {
+        bottom: 0;
+    }
+
+    .timeline-icon {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--mentor-primary);
+        border: 3px solid white;
+        box-shadow: 0 0 0 1px var(--admin-border);
+    }
+
+    .timeline-content {
+        background: white;
+        border: 1px solid var(--admin-border);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .timeline-time {
+        font-size: 0.75rem;
+        color: var(--admin-secondary);
+        margin-bottom: 0.5rem;
+    }
+
+    .timeline-title {
+        font-weight: 600;
+        color: var(--admin-dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .timeline-description {
+        color: var(--admin-secondary);
+        font-size: 0.875rem;
+        line-height: 1.4;
+    }
+
+    /* Expertise level indicators */
+    .expertise-level {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+    }
+
+    .level-dots {
+        display: flex;
+        gap: 2px;
+    }
+
+    .level-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--admin-border);
+    }
+
+    .level-dot.filled {
+        background: var(--mentor-primary);
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar -->
-        <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
-            <div class="position-sticky pt-3">
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
-                            <i class="bi bi-speedometer2 me-2"></i>
-                            Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.users') }}">
-                            <i class="bi bi-people me-2"></i>
-                            Usuarios
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.entrepreneurs') }}">
-                            <i class="bi bi-briefcase me-2"></i>
-                            Emprendedores
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{{ url_for('admin.allies') }}">
-                            <i class="bi bi-person-check me-2"></i>
-                            Aliados
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.assign_ally') }}">
-                            <i class="bi bi-link-45deg me-2"></i>
-                            Asignar Aliados
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.settings') }}">
-                            <i class="bi bi-gear me-2"></i>
-                            Configuración
-                        </a>
-                    </li>
-                </ul>
-
-                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                    <span>Reportes</span>
-                </h6>
-                <ul class="nav flex-column mb-2">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.reports_activity') }}">
-                            <i class="bi bi-file-earmark-text me-2"></i>
-                            Actividad
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.reports_impact') }}">
-                            <i class="bi bi-graph-up me-2"></i>
-                            Impacto
-                        </a>
-                    </li>
-                </ul>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-handshake me-2"></i>
+                    Gestión de Aliados/Mentores
+                </h1>
+                <p class="page-subtitle">Administra mentores, especialidades y asignaciones de emprendedores</p>
             </div>
-        </nav>
+            <div class="col-md-4 text-end">
+                <div class="d-flex justify-content-end gap-2">
+                    <button class="btn btn-outline-light" id="importMentors">
+                        <i class="fas fa-upload me-1"></i> Importar
+                    </button>
+                    <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#createMentorModal">
+                        <i class="fas fa-plus me-1"></i> Nuevo Mentor
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        <!-- Main content -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Aliados</h1>
-                <div class="btn-toolbar mb-2 mb-md-0">
-                    <div class="input-group me-2">
-                        <input type="text" class="form-control" placeholder="Buscar aliados..." id="searchAllies">
-                        <button class="btn btn-outline-secondary" type="button" id="searchButton">
-                            <i class="bi bi-search"></i>
+<div class="container">
+    <!-- Statistics Row -->
+    <div class="stats-grid">
+        <div class="stat-card" style="--card-color: var(--mentor-primary)">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>12%</span>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.total_mentors | default(89) }}</div>
+            <div class="stat-label">Total Mentores</div>
+        </div>
+
+        <div class="stat-card" style="--card-color: var(--admin-success)">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>8%</span>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.active_mentors | default(76) }}</div>
+            <div class="stat-label">Mentores Activos</div>
+        </div>
+
+        <div class="stat-card" style="--card-color: var(--admin-info)">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>18%</span>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.total_sessions | default(432) }}</div>
+            <div class="stat-label">Sesiones Realizadas</div>
+        </div>
+
+        <div class="stat-card" style="--card-color: var(--admin-warning)">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>15%</span>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.total_hours | default(1247) }}</div>
+            <div class="stat-label">Horas de Mentoría</div>
+        </div>
+
+        <div class="stat-card" style="--card-color: var(--admin-danger)">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stat-trend trend-neutral">
+                    <i class="fas fa-minus"></i>
+                    <span>0%</span>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.average_rating | default(4.7) }}</div>
+            <div class="stat-label">Rating Promedio</div>
+        </div>
+    </div>
+
+    <!-- Dashboard Charts -->
+    <div class="dashboard-grid">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">Distribución por Expertise</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="expertiseChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">Horas de Mentoría (Últimos 6 meses)</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="hoursChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+        <div class="filters-header" id="filtersToggle">
+            <h4 class="filters-title">
+                <i class="fas fa-filter me-2"></i>
+                Filtros Avanzados
+            </h4>
+            <i class="fas fa-chevron-down" id="filtersChevron"></i>
+        </div>
+        <div class="filters-content" id="filtersContent">
+            <form id="filtersForm">
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label for="filterExpertise">Área de Expertise</label>
+                        <select class="form-select" id="filterExpertise" name="expertise">
+                            <option value="">Todas las áreas</option>
+                            <option value="marketing">Marketing y Ventas</option>
+                            <option value="finance">Finanzas</option>
+                            <option value="legal">Legal</option>
+                            <option value="technology">Tecnología</option>
+                            <option value="operations">Operaciones</option>
+                            <option value="hr">Recursos Humanos</option>
+                            <option value="strategy">Estrategia</option>
+                            <option value="product">Desarrollo de Producto</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filterExperience">Años de Experiencia</label>
+                        <select class="form-select" id="filterExperience" name="experience">
+                            <option value="">Todos los niveles</option>
+                            <option value="1-5">1-5 años</option>
+                            <option value="6-10">6-10 años</option>
+                            <option value="11-15">11-15 años</option>
+                            <option value="16+">16+ años</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filterAvailability">Disponibilidad</label>
+                        <select class="form-select" id="filterAvailability" name="availability">
+                            <option value="">Todos</option>
+                            <option value="available">Disponible</option>
+                            <option value="busy">Ocupado</option>
+                            <option value="unavailable">No disponible</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filterRating">Rating Mínimo</label>
+                        <select class="form-select" id="filterRating" name="min_rating">
+                            <option value="">Cualquier rating</option>
+                            <option value="4.5">4.5+ estrellas</option>
+                            <option value="4.0">4.0+ estrellas</option>
+                            <option value="3.5">3.5+ estrellas</option>
+                            <option value="3.0">3.0+ estrellas</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label for="filterAssignments">Emprendedores Asignados</label>
+                        <select class="form-select" id="filterAssignments" name="assignments">
+                            <option value="">Todos</option>
+                            <option value="0">Sin asignaciones</option>
+                            <option value="1-3">1-3 asignados</option>
+                            <option value="4-6">4-6 asignados</option>
+                            <option value="7+">7+ asignados</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filterCountry">País</label>
+                        <select class="form-select" id="filterCountry" name="country">
+                            <option value="">Todos los países</option>
+                            <option value="CO">Colombia</option>
+                            <option value="MX">México</option>
+                            <option value="AR">Argentina</option>
+                            <option value="CL">Chile</option>
+                            <option value="PE">Perú</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filterSearch">Búsqueda</label>
+                        <input type="text" class="form-control" id="filterSearch" name="search" 
+                               placeholder="Nombre, empresa, expertise...">
+                    </div>
+                    <div class="form-group d-flex align-items-end">
+                        <button type="button" class="btn btn-primary me-2" id="applyFilters">
+                            <i class="fas fa-search me-1"></i> Filtrar
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="clearFilters">
+                            <i class="fas fa-times me-1"></i> Limpiar
                         </button>
                     </div>
-                    <a href="{{ url_for('admin.user_new', role='ally') }}" class="btn btn-primary">
-                        <i class="bi bi-plus-lg me-1"></i> Nuevo Aliado
-                    </a>
                 </div>
-            </div>
+            </form>
+        </div>
+    </div>
 
-            <!-- Stats cards -->
-            <div class="row mb-4">
-                <div class="col-md-3 mb-4 mb-md-0">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="text-muted fw-normal mb-0">Total Aliados</h6>
-                                    <h2 class="fw-bold mb-0">{{ stats.total }}</h2>
-                                </div>
-                                <div class="icon-shape bg-light text-primary rounded-circle">
-                                    <i class="bi bi-person-check"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3 mb-4 mb-md-0">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="text-muted fw-normal mb-0">Aliados Activos</h6>
-                                    <h2 class="fw-bold mb-0">{{ stats.active }}</h2>
-                                </div>
-                                <div class="icon-shape bg-light text-success rounded-circle">
-                                    <i class="bi bi-check-circle"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3 mb-4 mb-md-0">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="text-muted fw-normal mb-0">Horas de Mentoría</h6>
-                                    <h2 class="fw-bold mb-0">{{ stats.total_hours }}</h2>
-                                </div>
-                                <div class="icon-shape bg-light text-info rounded-circle">
-                                    <i class="bi bi-clock"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="text-muted fw-normal mb-0">Emprendedores Asignados</h6>
-                                    <h2 class="fw-bold mb-0">{{ stats.assigned_entrepreneurs }}</h2>
-                                </div>
-                                <div class="icon-shape bg-light text-warning rounded-circle">
-                                    <i class="bi bi-people"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <!-- Mentors Table -->
+    <div class="allies-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-table me-2"></i>
+                Lista de Mentores/Aliados
+            </h3>
+            <div class="card-actions">
+                <button class="btn btn-outline-primary" id="exportMentors">
+                    <i class="fas fa-download me-1"></i> Exportar
+                </button>
+                <button class="btn btn-secondary" id="refreshTable">
+                    <i class="fas fa-sync-alt me-1"></i> Actualizar
+                </button>
             </div>
+        </div>
 
-            <!-- Filters -->
-            <div class="row mb-3">
-                <div class="col-md-12">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body">
-                            <form id="filterForm" class="row g-3 align-items-end">
-                                <div class="col-md-3">
-                                    <label for="expertiseFilter" class="form-label">Área de experiencia</label>
-                                    <select class="form-select" id="expertiseFilter" name="expertise">
-                                        <option value="">Todas las áreas</option>
-                                        {% for expertise in expertise_areas %}
-                                        <option value="{{ expertise.id }}" {% if request.args.get('expertise') == expertise.id|string %}selected{% endif %}>{{ expertise.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="experienceFilter" class="form-label">Años de experiencia</label>
-                                    <select class="form-select" id="experienceFilter" name="experience">
-                                        <option value="">Cualquier experiencia</option>
-                                        <option value="0-2" {% if request.args.get('experience') == '0-2' %}selected{% endif %}>0-2 años</option>
-                                        <option value="3-5" {% if request.args.get('experience') == '3-5' %}selected{% endif %}>3-5 años</option>
-                                        <option value="6-10" {% if request.args.get('experience') == '6-10' %}selected{% endif %}>6-10 años</option>
-                                        <option value="10+" {% if request.args.get('experience') == '10+' %}selected{% endif %}>Más de 10 años</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="availabilityFilter" class="form-label">Disponibilidad</label>
-                                    <select class="form-select" id="availabilityFilter" name="availability">
-                                        <option value="">Cualquier disponibilidad</option>
-                                        <option value="high" {% if request.args.get('availability') == 'high' %}selected{% endif %}>Alta (10+ horas/semana)</option>
-                                        <option value="medium" {% if request.args.get('availability') == 'medium' %}selected{% endif %}>Media (5-10 horas/semana)</option>
-                                        <option value="low" {% if request.args.get('availability') == 'low' %}selected{% endif %}>Baja (< 5 horas/semana)</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3 d-flex">
-                                    <button type="submit" class="btn btn-primary me-2">Filtrar</button>
-                                    <button type="reset" class="btn btn-outline-secondary">Limpiar</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-                <!-- Allies cards -->
-                <div class="row">
-                    {% for ally in allies %}
-                    <div class="col-md-6 col-lg-4 mb-4">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center mb-3">
-                                    <img src="{{ ally.profile_image or url_for('static', filename='images/default-profile.png') }}" class="rounded-circle me-3" width="60" height="60" alt="{{ ally.name }}">
-                                    <div>
-                                        <h5 class="card-title mb-0">{{ ally.name }}</h5>
-                                        <p class="text-muted mb-0">{{ ally.years_experience }} años de experiencia</p>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    {% for expertise in ally.expertise_list %}
-                                    <span class="badge bg-primary">{{ expertise }}</span>
-                                    {% endfor %}
-                                    <span class="badge bg-info">{{ ally.availability }} hrs/semana</span>
-                                    {% if ally.is_active %}
-                                    <span class="badge bg-success">Activo</span>
-                                    {% else %}
-                                    <span class="badge bg-secondary">Inactivo</span>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <small class="text-muted d-block mb-1">
-                                        <i class="bi bi-envelope me-1"></i> {{ ally.email }}
-                                    </small>
-                                    {% if ally.phone %}
-                                    <small class="text-muted d-block mb-1">
-                                        <i class="bi bi-telephone me-1"></i> {{ ally.phone }}
-                                    </small>
-                                    {% endif %}
-                                    <small class="text-muted d-block">
-                                        <i class="bi bi-calendar me-1"></i> Registrado: {{ ally.created_at|datetime }}
-                                    </small>
-                                </div>
-                                
-                                <div class="mb-3 p-2 bg-light rounded">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <small class="text-muted">Emprendedores asignados:</small>
-                                        <span class="badge bg-secondary">{{ ally.entrepreneurs|length }}</span>
-                                    </div>
-                                    {% if ally.entrepreneurs %}
-                                    <div class="d-flex flex-wrap">
-                                        {% for entrepreneur in ally.entrepreneurs[:3] %}
-                                        <div class="me-2 mb-1" data-bs-toggle="tooltip" title="{{ entrepreneur.name }}">
-                                            <img src="{{ entrepreneur.profile_image or url_for('static', filename='images/default-profile.png') }}" class="rounded-circle" width="30" height="30" alt="{{ entrepreneur.name }}">
-                                        </div>
-                                        {% endfor %}
-                                        {% if ally.entrepreneurs|length > 3 %}
-                                        <div class="me-2 mb-1 bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;" data-bs-toggle="tooltip" title="Ver todos">
-                                            <small class="text-white">+{{ ally.entrepreneurs|length - 3 }}</small>
-                                        </div>
+        <!-- Table Container -->
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="table allies-table" id="alliesTable">
+                    <thead>
+                        <tr>
+                            <th>
+                                <label class="custom-checkbox">
+                                    <input type="checkbox" id="selectAll">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </th>
+                            <th>Mentor/Aliado</th>
+                            <th>Expertise</th>
+                            <th>Experiencia</th>
+                            <th>Disponibilidad</th>
+                            <th>Emprendedores</th>
+                            <th>Sesiones</th>
+                            <th>Horas</th>
+                            <th>Rating</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mentor in mentors | default([
+                            {
+                                'id': 1,
+                                'name': 'Carlos Mendoza Silva',
+                                'email': 'carlos@innovationhub.com',
+                                'company': 'Innovation Hub',
+                                'position': 'Director de Estrategia',
+                                'expertise': ['marketing', 'strategy'],
+                                'experience_years': 15,
+                                'availability': 'available',
+                                'entrepreneurs_assigned': [
+                                    {'name': 'María González', 'project': 'EcoTech'},
+                                    {'name': 'Pedro Silva', 'project': 'FoodTech'}
+                                ],
+                                'total_sessions': 67,
+                                'total_hours': 134,
+                                'rating': 4.8,
+                                'country': 'CO',
+                                'avatar': None,
+                                'schedule': ['Lun 9-12', 'Mié 14-17']
+                            },
+                            {
+                                'id': 2,
+                                'name': 'Ana Patricia Ruiz',
+                                'email': 'ana@techventures.com',
+                                'company': 'Tech Ventures',
+                                'position': 'CTO',
+                                'expertise': ['technology', 'product'],
+                                'experience_years': 12,
+                                'availability': 'busy',
+                                'entrepreneurs_assigned': [
+                                    {'name': 'José Torres', 'project': 'EduTech'},
+                                    {'name': 'Laura Martínez', 'project': 'AgriTech'},
+                                    {'name': 'Roberto Campos', 'project': 'FinTech'}
+                                ],
+                                'total_sessions': 89,
+                                'total_hours': 178,
+                                'rating': 4.9,
+                                'country': 'MX',
+                                'avatar': None,
+                                'schedule': ['Mar 10-13', 'Jue 15-18']
+                            },
+                            {
+                                'id': 3,
+                                'name': 'Dr. Luis Ramírez',
+                                'email': 'luis@healthcorp.com',
+                                'company': 'Health Corp',
+                                'position': 'Director Médico',
+                                'expertise': ['finance', 'legal'],
+                                'experience_years': 20,
+                                'availability': 'available',
+                                'entrepreneurs_assigned': [
+                                    {'name': 'Carmen Vega', 'project': 'HealthPlus'}
+                                ],
+                                'total_sessions': 45,
+                                'total_hours': 90,
+                                'rating': 4.7,
+                                'country': 'AR',
+                                'avatar': None,
+                                'schedule': ['Vie 9-12']
+                            },
+                            {
+                                'id': 4,
+                                'name': 'Carmen Vega Morales',
+                                'email': 'carmen@digitalconsulting.com',
+                                'company': 'Digital Consulting',
+                                'position': 'Consultora Senior',
+                                'expertise': ['operations', 'hr'],
+                                'experience_years': 8,
+                                'availability': 'unavailable',
+                                'entrepreneurs_assigned': [],
+                                'total_sessions': 23,
+                                'total_hours': 46,
+                                'rating': 4.5,
+                                'country': 'CL',
+                                'avatar': None,
+                                'schedule': []
+                            },
+                            {
+                                'id': 5,
+                                'name': 'Roberto Campos',
+                                'email': 'roberto@entrepreneurship.pe',
+                                'company': 'Entrepreneurship Peru',
+                                'position': 'Fundador',
+                                'expertise': ['marketing', 'finance', 'strategy'],
+                                'experience_years': 18,
+                                'availability': 'available',
+                                'entrepreneurs_assigned': [
+                                    {'name': 'Diana López', 'project': 'EcoCommerce'},
+                                    {'name': 'Miguel Serrano', 'project': 'TourTech'}
+                                ],
+                                'total_sessions': 156,
+                                'total_hours': 312,
+                                'rating': 4.9,
+                                'country': 'PE',
+                                'avatar': None,
+                                'schedule': ['Lun 14-17', 'Mié 9-12', 'Vie 14-17']
+                            }
+                        ]) %}
+                        <tr data-mentor-id="{{ mentor.id }}">
+                            <td>
+                                <label class="custom-checkbox">
+                                    <input type="checkbox" class="mentor-checkbox" value="{{ mentor.id }}">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </td>
+                            <td>
+                                <div class="mentor-info">
+                                    <div class="mentor-avatar">
+                                        {% if mentor.avatar %}
+                                            <img src="{{ mentor.avatar }}" alt="{{ mentor.name }}">
+                                        {% else %}
+                                            {{ mentor.name[0] }}{{ mentor.name.split()[1][0] if mentor.name.split()|length > 1 else '' }}
                                         {% endif %}
                                     </div>
-                                    {% else %}
-                                    <small class="text-muted">No tiene emprendedores asignados</small>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="d-flex justify-content-between mt-3">
-                                    <a href="{{ url_for('admin.ally_detail', ally_id=ally.id) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-eye me-1"></i> Ver detalles
-                                    </a>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ ally.id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton{{ ally.id }}">
-                                            <li><a class="dropdown-item" href="{{ url_for('admin.user_edit', user_id=ally.user_id) }}">
-                                                <i class="bi bi-pencil me-2"></i> Editar
-                                            </a></li>
-                                            <li><a class="dropdown-item" href="{{ url_for('admin.assign_entrepreneurs_to', ally_id=ally.id) }}">
-                                                <i class="bi bi-people me-2"></i> Asignar emprendedores
-                                            </a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li>
-                                                <a class="dropdown-item text-danger toggle-status-btn" href="#" 
-                                                   data-ally-id="{{ ally.id }}" 
-                                                   data-current-status="{{ 'active' if ally.is_active else 'inactive' }}">
-                                                    {% if ally.is_active %}
-                                                    <i class="bi bi-slash-circle me-2"></i> Desactivar
-                                                    {% else %}
-                                                    <i class="bi bi-check-circle me-2"></i> Activar
-                                                    {% endif %}
-                                                </a>
-                                            </li>
-                                        </ul>
+                                    <div class="mentor-details">
+                                        <h6>{{ mentor.name }}</h6>
+                                        <p>{{ mentor.email }}</p>
+                                        <div class="mentor-company">
+                                            <i class="fas fa-building me-1"></i>{{ mentor.company }} - {{ mentor.position }}
+                                        </div>
                                     </div>
                                 </div>
+                            </td>
+                            <td>
+                                <div class="expertise-tags">
+                                    {% for expertise in mentor.expertise %}
+                                        <span class="badge badge-{{ expertise }}">
+                                            {% if expertise == 'marketing' %}
+                                                <i class="fas fa-bullhorn me-1"></i>Marketing
+                                            {% elif expertise == 'finance' %}
+                                                <i class="fas fa-chart-pie me-1"></i>Finanzas
+                                            {% elif expertise == 'legal' %}
+                                                <i class="fas fa-balance-scale me-1"></i>Legal
+                                            {% elif expertise == 'technology' %}
+                                                <i class="fas fa-code me-1"></i>Tech
+                                            {% elif expertise == 'operations' %}
+                                                <i class="fas fa-cogs me-1"></i>Ops
+                                            {% elif expertise == 'hr' %}
+                                                <i class="fas fa-users me-1"></i>RRHH
+                                            {% elif expertise == 'strategy' %}
+                                                <i class="fas fa-chess me-1"></i>Estrategia
+                                            {% elif expertise == 'product' %}
+                                                <i class="fas fa-cube me-1"></i>Producto
+                                            {% endif %}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="experience-indicator">
+                                    <div class="experience-bars">
+                                        {% for i in range(5) %}
+                                            <div class="experience-bar {{ 'filled' if (mentor.experience_years / 4) > i else '' }}"></div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="experience-text">{{ mentor.experience_years }} años</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="availability-indicator">
+                                    <div class="availability-dot {{ mentor.availability }}"></div>
+                                    <div class="availability-text">
+                                        {% if mentor.availability == 'available' %}
+                                            Disponible
+                                        {% elif mentor.availability == 'busy' %}
+                                            Ocupado
+                                        {% else %}
+                                            No disponible
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% if mentor.schedule %}
+                                    <div class="availability-schedule">
+                                        {% for slot in mentor.schedule %}
+                                            <span class="schedule-slot">{{ slot }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="entrepreneurs-assigned">
+                                    <div class="entrepreneur-count">
+                                        <i class="fas fa-users me-1"></i>
+                                        {{ mentor.entrepreneurs_assigned|length }} asignados
+                                    </div>
+                                    {% if mentor.entrepreneurs_assigned %}
+                                        <div class="entrepreneur-list">
+                                            {% for entrepreneur in mentor.entrepreneurs_assigned[:2] %}
+                                                • {{ entrepreneur.name }} ({{ entrepreneur.project }})<br>
+                                            {% endfor %}
+                                            {% if mentor.entrepreneurs_assigned|length > 2 %}
+                                                y {{ mentor.entrepreneurs_assigned|length - 2 }} más...
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="sessions-info">
+                                    <div class="sessions-count">{{ mentor.total_sessions }}</div>
+                                    <div class="sessions-label">sesiones</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="hours-info">
+                                    <div class="hours-count">{{ mentor.total_hours }}h</div>
+                                    <div class="hours-label">mentoría</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="rating-display">
+                                    <div class="stars">
+                                        {% for i in range(5) %}
+                                            <i class="fas fa-star star {{ 'empty' if i >= mentor.rating else '' }}"></i>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="rating-value">{{ mentor.rating }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-action btn-view" data-bs-toggle="tooltip" 
+                                            title="Ver perfil completo" onclick="viewMentor({{ mentor.id }})">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-action btn-edit" data-bs-toggle="tooltip" 
+                                            title="Editar información" onclick="editMentor({{ mentor.id }})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn-action btn-assign" data-bs-toggle="tooltip" 
+                                            title="Asignar emprendedores" onclick="assignEntrepreneurs({{ mentor.id }})">
+                                        <i class="fas fa-user-plus"></i>
+                                    </button>
+                                    <button class="btn-action btn-schedule" data-bs-toggle="tooltip" 
+                                            title="Gestionar horarios" onclick="manageSchedule({{ mentor.id }})">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </button>
+                                    <button class="btn-action btn-delete" data-bs-toggle="tooltip" 
+                                            title="Eliminar mentor" onclick="deleteMentor({{ mentor.id }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Mentor Modal -->
+<div class="modal fade" id="createMentorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Registrar Nuevo Mentor/Aliado
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createMentorForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Información Personal</h6>
+                            <div class="form-group mb-3">
+                                <label for="firstName" class="form-label">Nombre *</label>
+                                <input type="text" class="form-control" id="firstName" name="first_name" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="lastName" class="form-label">Apellido *</label>
+                                <input type="text" class="form-control" id="lastName" name="last_name" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="phone" class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" id="phone" name="phone">
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="country" class="form-label">País *</label>
+                                <select class="form-select" id="country" name="country" required>
+                                    <option value="">Seleccionar país</option>
+                                    <option value="CO">Colombia</option>
+                                    <option value="MX">México</option>
+                                    <option value="AR">Argentina</option>
+                                    <option value="CL">Chile</option>
+                                    <option value="PE">Perú</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Información Profesional</h6>
+                            <div class="form-group mb-3">
+                                <label for="company" class="form-label">Empresa/Organización *</label>
+                                <input type="text" class="form-control" id="company" name="company" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="position" class="form-label">Cargo/Posición *</label>
+                                <input type="text" class="form-control" id="position" name="position" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="experienceYears" class="form-label">Años de Experiencia *</label>
+                                <input type="number" class="form-control" id="experienceYears" name="experience_years" 
+                                       min="0" max="50" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="expertise" class="form-label">Áreas de Expertise *</label>
+                                <select class="form-select" id="expertise" name="expertise" multiple required>
+                                    <option value="marketing">Marketing y Ventas</option>
+                                    <option value="finance">Finanzas</option>
+                                    <option value="legal">Legal</option>
+                                    <option value="technology">Tecnología</option>
+                                    <option value="operations">Operaciones</option>
+                                    <option value="hr">Recursos Humanos</option>
+                                    <option value="strategy">Estrategia</option>
+                                    <option value="product">Desarrollo de Producto</option>
+                                </select>
+                                <small class="form-text text-muted">Mantén presionado Ctrl para seleccionar múltiples opciones</small>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="linkedin" class="form-label">LinkedIn</label>
+                                <input type="url" class="form-control" id="linkedin" name="linkedin" 
+                                       placeholder="https://linkedin.com/in/...">
                             </div>
                         </div>
                     </div>
-                    {% endfor %}
-                    
-                    {% if not allies %}
-                    <div class="col-12">
-                        <div class="alert alert-info text-center">
-                            <i class="bi bi-info-circle me-2"></i> No hay aliados registrados en el sistema.
-                            <a href="{{ url_for('admin.user_new', role='ally') }}" class="alert-link">Registrar un nuevo aliado</a>.
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group mb-3">
+                                <label for="bio" class="form-label">Biografía Profesional</label>
+                                <textarea class="form-control" id="bio" name="bio" rows="3" 
+                                          placeholder="Describe tu experiencia, logros y áreas de especialización..."></textarea>
+                            </div>
                         </div>
                     </div>
-                    {% endif %}
+                    <div class="form-group mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="sendWelcomeEmail" name="send_welcome_email" checked>
+                            <label class="form-check-label" for="sendWelcomeEmail">
+                                Enviar email de bienvenida con credenciales de acceso
+                            </label>
+                        </div>
+                    </div>
                 </div>
-                
-                <!-- Pagination -->
-                {% if pagination and pagination.pages > 1 %}
-                <nav aria-label="Paginación de aliados">
-                    <ul class="pagination justify-content-center">
-                        {% if pagination.has_prev %}
-                        <li class="page-item">
-                            <a class="page-link" href="{{ url_for('admin.allies', page=pagination.prev_num, **request.args) }}" aria-label="Anterior">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>
-                        {% else %}
-                        <li class="page-item disabled">
-                            <a class="page-link" href="#" aria-label="Anterior">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>
-                        {% endif %}
-                        
-                        {% for page in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                            {% if page %}
-                                {% if page == pagination.page %}
-                                <li class="page-item active">
-                                    <a class="page-link" href="#">{{ page }}</a>
-                                </li>
-                                {% else %}
-                                <li class="page-item">
-                                    <a class="page-link" href="{{ url_for('admin.allies', page=page, **request.args) }}">{{ page }}</a>
-                                </li>
-                                {% endif %}
-                            {% else %}
-                                <li class="page-item disabled">
-                                    <a class="page-link" href="#">...</a>
-                                </li>
-                            {% endif %}
-                        {% endfor %}
-                        
-                        {% if pagination.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="{{ url_for('admin.allies', page=pagination.next_num, **request.args) }}" aria-label="Siguiente">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>
-                        {% else %}
-                        <li class="page-item disabled">
-                            <a class="page-link" href="#" aria-label="Siguiente">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-                {% endif %}
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Registrar Mentor
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
-<!-- Modal para confirmar cambio de estado -->
-<div class="modal fade" id="statusChangeModal" tabindex="-1" aria-labelledby="statusChangeModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<!-- Mentor Details Modal -->
+<div class="modal fade" id="mentorDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="statusChangeModalLabel">Confirmar cambio de estado</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <h5 class="modal-title">
+                    <i class="fas fa-user me-2"></i>
+                    Perfil del Mentor
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p id="statusChangeMessage">¿Estás seguro que deseas cambiar el estado de este aliado?</p>
-                <p class="text-muted small">
-                    <i class="bi bi-info-circle me-1"></i> 
-                    <span id="statusChangeInfo">
-                        Al desactivar un aliado, este no podrá acceder al sistema y no se le asignarán nuevos emprendedores.
-                        Los emprendedores ya asignados seguirán vinculados.
-                    </span>
-                </p>
+                <div class="row">
+                    <div class="col-md-8">
+                        <div id="mentorDetailsContent">
+                            <!-- Mentor details will be loaded here -->
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Timeline de Mentorías</h6>
+                        <div class="activity-timeline" id="mentorActivity">
+                            <!-- Activity timeline will be loaded here -->
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <form id="statusChangeForm" method="POST" action="">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn" id="confirmStatusChangeBtn">Confirmar</button>
-                </form>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="editMentorFromDetails()">
+                    <i class="fas fa-edit me-1"></i> Editar Información
+                </button>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Assign Entrepreneurs Modal -->
+<div class="modal fade" id="assignEntrepreneursModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Asignar Emprendedores
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="assignEntrepreneursForm">
+                <div class="modal-body">
+                    <div id="assignEntrepreneursContent">
+                        <!-- Entrepreneurs assignment form will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-user-plus me-1"></i> Asignar Emprendedores
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Management Modal -->
+<div class="modal fade" id="scheduleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    Gestionar Horarios de Disponibilidad
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="scheduleForm">
+                <div class="modal-body">
+                    <div id="scheduleContent">
+                        <!-- Schedule management form will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Guardar Horarios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay d-none" id="loadingOverlay">
+    <div class="spinner"></div>
+</div>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Inicializar tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Allies Management
+    const alliesManager = new AlliesManager();
+    alliesManager.init();
+});
+
+class AlliesManager {
+    constructor() {
+        this.dataTable = null;
+        this.selectedMentors = new Set();
+        this.charts = {};
+    }
+
+    init() {
+        this.initializeCharts();
+        this.initializeDataTable();
+        this.bindEvents();
+        this.initializeTooltips();
+    }
+
+    initializeCharts() {
+        // Expertise Chart
+        const expertiseCtx = document.getElementById('expertiseChart').getContext('2d');
+        this.charts.expertise = new Chart(expertiseCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Marketing', 'Tecnología', 'Finanzas', 'Estrategia', 'Legal', 'Operaciones'],
+                datasets: [{
+                    data: [25, 20, 18, 15, 12, 10],
+                    backgroundColor: [
+                        '#ef4444',
+                        '#a855f7',
+                        '#22c55e',
+                        '#06b6d4',
+                        '#3b82f6',
+                        '#f59e0b'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+
+        // Hours Chart
+        const hoursCtx = document.getElementById('hoursChart').getContext('2d');
+        this.charts.hours = new Chart(hoursCtx, {
+            type: 'line',
+            data: {
+                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Horas de Mentoría',
+                    data: [180, 220, 195, 250, 280, 310],
+                    borderColor: '#059669',
+                    backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#e2e8f0'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    initializeDataTable() {
+        this.dataTable = $('#alliesTable').DataTable({
+            responsive: true,
+            pageLength: 25,
+            order: [[8, 'desc']], // Order by rating
+            columnDefs: [
+                { orderable: false, targets: [0, 9] }, // Checkbox and actions columns
+                { searchable: false, targets: [0, 9] }
+            ],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+            },
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                 '<"row"<"col-sm-12"tr>>' +
+                 '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            drawCallback: () => {
+                this.initializeTooltips();
+                this.updateSelectedCount();
+            }
+        });
+    }
+
+    bindEvents() {
+        // Filters toggle
+        document.getElementById('filtersToggle').addEventListener('click', () => {
+            this.toggleFilters();
+        });
+
+        // Apply filters
+        document.getElementById('applyFilters').addEventListener('click', () => {
+            this.applyFilters();
+        });
+
+        // Clear filters
+        document.getElementById('clearFilters').addEventListener('click', () => {
+            this.clearFilters();
+        });
+
+        // Select all checkbox
+        document.getElementById('selectAll').addEventListener('change', (e) => {
+            this.toggleSelectAll(e.target.checked);
+        });
+
+        // Individual checkboxes
+        document.addEventListener('change', (e) => {
+            if (e.target.classList.contains('mentor-checkbox')) {
+                this.handleMentorSelection(e.target);
+            }
+        });
+
+        // Create mentor form
+        document.getElementById('createMentorForm').addEventListener('submit', (e) => {
+            this.handleCreateMentor(e);
+        });
+
+        // Assign entrepreneurs form
+        document.getElementById('assignEntrepreneursForm').addEventListener('submit', (e) => {
+            this.handleAssignEntrepreneurs(e);
+        });
+
+        // Schedule form
+        document.getElementById('scheduleForm').addEventListener('submit', (e) => {
+            this.handleScheduleUpdate(e);
+        });
+
+        // Refresh table
+        document.getElementById('refreshTable').addEventListener('click', () => {
+            this.refreshTable();
+        });
+
+        // Export mentors
+        document.getElementById('exportMentors').addEventListener('click', () => {
+            this.exportMentors();
+        });
+
+        // Import mentors
+        document.getElementById('importMentors').addEventListener('click', () => {
+            this.importMentors();
+        });
+    }
+
+    toggleFilters() {
+        const content = document.getElementById('filtersContent');
+        const chevron = document.getElementById('filtersChevron');
+        
+        if (content.classList.contains('show')) {
+            content.classList.remove('show');
+            chevron.style.transform = 'rotate(0deg)';
+        } else {
+            content.classList.add('show');
+            chevron.style.transform = 'rotate(180deg)';
+        }
+    }
+
+    applyFilters() {
+        const formData = new FormData(document.getElementById('filtersForm'));
+        const filters = Object.fromEntries(formData.entries());
+        
+        // Apply filters to DataTable
+        Object.keys(filters).forEach(key => {
+            if (filters[key]) {
+                this.applyColumnFilter(key, filters[key]);
+            }
+        });
+
+        this.dataTable.draw();
+        this.showNotification('Filtros aplicados exitosamente', 'success');
+    }
+
+    applyColumnFilter(column, value) {
+        // Map filter names to column indices
+        const columnMap = {
+            'expertise': 2,
+            'experience': 3,
+            'availability': 4,
+            'assignments': 5,
+            'search': -1 // Global search
+        };
+
+        if (column === 'search') {
+            this.dataTable.search(value);
+        } else if (columnMap[column] !== undefined) {
+            this.dataTable.column(columnMap[column]).search(value);
+        }
+    }
+
+    clearFilters() {
+        document.getElementById('filtersForm').reset();
+        this.dataTable.search('').columns().search('').draw();
+        this.showNotification('Filtros limpiados', 'info');
+    }
+
+    toggleSelectAll(checked) {
+        const checkboxes = document.querySelectorAll('.mentor-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = checked;
+            this.handleMentorSelection(checkbox);
+        });
+    }
+
+    handleMentorSelection(checkbox) {
+        const mentorId = parseInt(checkbox.value);
+        
+        if (checkbox.checked) {
+            this.selectedMentors.add(mentorId);
+        } else {
+            this.selectedMentors.delete(mentorId);
+            document.getElementById('selectAll').checked = false;
+        }
+        
+        this.updateSelectedCount();
+    }
+
+    updateSelectedCount() {
+        const count = this.selectedMentors.size;
+        
+        // Update select all checkbox state
+        const totalCheckboxes = document.querySelectorAll('.mentor-checkbox').length;
+        const selectAllCheckbox = document.getElementById('selectAll');
+        
+        if (count === 0) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = false;
+        } else if (count === totalCheckboxes) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = true;
+        } else {
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+
+    async handleCreateMentor(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const mentorData = Object.fromEntries(formData.entries());
+        
+        // Handle multiple expertise selection
+        const expertiseSelect = document.getElementById('expertise');
+        mentorData.expertise = Array.from(expertiseSelect.selectedOptions).map(option => option.value);
+        
+        this.showLoading();
+
+        try {
+            const response = await fetch(`{{ url_for('admin.create_mentor') }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify(mentorData)
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showNotification('Mentor registrado exitosamente', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('createMentorModal')).hide();
+                this.refreshTable();
+                e.target.reset();
+            } else {
+                this.showNotification(result.message || 'Error al registrar mentor', 'error');
+            }
+        } catch (error) {
+            console.error('Create mentor error:', error);
+            this.showNotification('Error de conexión', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async handleAssignEntrepreneurs(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const assignmentData = Object.fromEntries(formData.entries());
+        
+        this.showLoading();
+
+        try {
+            const response = await fetch(`{{ url_for('admin.assign_entrepreneurs_to_mentor') }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify(assignmentData)
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showNotification('Emprendedores asignados exitosamente', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('assignEntrepreneursModal')).hide();
+                this.refreshTable();
+            } else {
+                this.showNotification(result.message || 'Error al asignar emprendedores', 'error');
+            }
+        } catch (error) {
+            console.error('Assign entrepreneurs error:', error);
+            this.showNotification('Error de conexión', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async handleScheduleUpdate(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const scheduleData = Object.fromEntries(formData.entries());
+        
+        this.showLoading();
+
+        try {
+            const response = await fetch(`{{ url_for('admin.update_mentor_schedule') }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify(scheduleData)
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showNotification('Horarios actualizados exitosamente', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('scheduleModal')).hide();
+                this.refreshTable();
+            } else {
+                this.showNotification(result.message || 'Error al actualizar horarios', 'error');
+            }
+        } catch (error) {
+            console.error('Update schedule error:', error);
+            this.showNotification('Error de conexión', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    refreshTable() {
+        this.dataTable.ajax.reload(null, false);
+        this.selectedMentors.clear();
+        this.updateSelectedCount();
+        this.showNotification('Tabla actualizada', 'success');
+    }
+
+    async exportMentors() {
+        this.showLoading();
+
+        try {
+            const response = await fetch(`{{ url_for('admin.export_mentors') }}`);
+            
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `mentores_${new Date().toISOString().split('T')[0]}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                this.showNotification('Exportación completada', 'success');
+            } else {
+                throw new Error('Error en la exportación');
+            }
+        } catch (error) {
+            console.error('Export error:', error);
+            this.showNotification('Error en la exportación', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    importMentors() {
+        // Create file input
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.xlsx,.xls,.csv';
+        
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            this.showLoading();
+            
+            try {
+                const response = await fetch(`{{ url_for('admin.import_mentors') }}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.showNotification(`${result.imported_count} mentores importados exitosamente`, 'success');
+                    this.refreshTable();
+                } else {
+                    this.showNotification(result.message || 'Error en la importación', 'error');
+                }
+            } catch (error) {
+                console.error('Import error:', error);
+                this.showNotification('Error en la importación', 'error');
+            } finally {
+                this.hideLoading();
+            }
+        };
+        
+        input.click();
+    }
+
+    initializeTooltips() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
+    }
+
+    showLoading() {
+        document.getElementById('loadingOverlay').classList.remove('d-none');
+    }
+
+    hideLoading() {
+        document.getElementById('loadingOverlay').classList.add('d-none');
+    }
+
+    showNotification(message, type = 'info') {
+        // Create notification
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} position-fixed`;
+        notification.style.cssText = `
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            animation: slideInRight 0.3s ease-out;
+        `;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close ms-2" aria-label="Close"></button>
+        `;
         
-        // Manejar cambio de estado de aliados
-        const statusBtns = document.querySelectorAll('.toggle-status-btn');
-        const statusModal = new bootstrap.Modal(document.getElementById('statusChangeModal'));
-        const statusForm = document.getElementById('statusChangeForm');
-        const statusMessage = document.getElementById('statusChangeMessage');
-        const statusInfo = document.getElementById('statusChangeInfo');
-        const confirmBtn = document.getElementById('confirmStatusChangeBtn');
+        document.body.appendChild(notification);
         
-        statusBtns.forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const allyId = this.dataset.allyId;
-                const currentStatus = this.dataset.currentStatus;
-                
-                // Configurar el formulario y mensajes
-                statusForm.action = "{{ url_for('admin.ally_toggle_status', ally_id=0) }}".replace('0', allyId);
-                
-                if (currentStatus === 'active') {
-                    statusMessage.textContent = '¿Estás seguro que deseas desactivar este aliado?';
-                    statusInfo.textContent = 'Al desactivar un aliado, este no podrá acceder al sistema y no se le asignarán nuevos emprendedores. Los emprendedores ya asignados seguirán vinculados.';
-                    confirmBtn.textContent = 'Desactivar';
-                    confirmBtn.className = 'btn btn-danger';
-                } else {
-                    statusMessage.textContent = '¿Estás seguro que deseas activar este aliado?';
-                    statusInfo.textContent = 'Al activar un aliado, este podrá acceder al sistema y se le podrán asignar emprendedores.';
-                    confirmBtn.textContent = 'Activar';
-                    confirmBtn.className = 'btn btn-success';
-                }
-                
-                statusModal.show();
-            });
+        // Auto-remove
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+        
+        // Manual close
+        notification.querySelector('.btn-close').addEventListener('click', () => {
+            notification.remove();
+        });
+    }
+}
+
+// Global functions for inline actions
+window.viewMentor = async function(mentorId) {
+    try {
+        const response = await fetch(`{{ url_for('admin.get_mentor_details', mentor_id='MENTOR_ID') }}`.replace('MENTOR_ID', mentorId));
+        const mentor = await response.json();
+        
+        if (mentor.success) {
+            document.getElementById('mentorDetailsContent').innerHTML = generateMentorDetailsHTML(mentor.data);
+            document.getElementById('mentorActivity').innerHTML = generateMentorActivityHTML(mentor.data.activity);
+            
+            const modal = new bootstrap.Modal(document.getElementById('mentorDetailsModal'));
+            modal.show();
+        } else {
+            throw new Error(mentor.message || 'Error al cargar detalles');
+        }
+    } catch (error) {
+        console.error('View mentor error:', error);
+        alert('Error al cargar los detalles del mentor');
+    }
+};
+
+window.editMentor = async function(mentorId) {
+    try {
+        const response = await fetch(`{{ url_for('admin.get_mentor_edit', mentor_id='MENTOR_ID') }}`.replace('MENTOR_ID', mentorId));
+        const mentor = await response.json();
+        
+        if (mentor.success) {
+            // Open edit modal with pre-filled data
+            console.log('Edit mentor:', mentor.data);
+        } else {
+            throw new Error(mentor.message || 'Error al cargar datos');
+        }
+    } catch (error) {
+        console.error('Edit mentor error:', error);
+        alert('Error al cargar los datos del mentor');
+    }
+};
+
+window.assignEntrepreneurs = async function(mentorId) {
+    try {
+        const response = await fetch(`{{ url_for('admin.get_available_entrepreneurs') }}`);
+        const entrepreneurs = await response.json();
+        
+        if (entrepreneurs.success) {
+            document.getElementById('assignEntrepreneursContent').innerHTML = generateAssignEntrepreneursHTML(mentorId, entrepreneurs.data);
+            
+            const modal = new bootstrap.Modal(document.getElementById('assignEntrepreneursModal'));
+            modal.show();
+        } else {
+            throw new Error(entrepreneurs.message || 'Error al cargar emprendedores');
+        }
+    } catch (error) {
+        console.error('Assign entrepreneurs error:', error);
+        alert('Error al cargar la lista de emprendedores');
+    }
+};
+
+window.manageSchedule = async function(mentorId) {
+    try {
+        const response = await fetch(`{{ url_for('admin.get_mentor_schedule', mentor_id='MENTOR_ID') }}`.replace('MENTOR_ID', mentorId));
+        const schedule = await response.json();
+        
+        if (schedule.success) {
+            document.getElementById('scheduleContent').innerHTML = generateScheduleHTML(mentorId, schedule.data);
+            
+            const modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+            modal.show();
+        } else {
+            throw new Error(schedule.message || 'Error al cargar horarios');
+        }
+    } catch (error) {
+        console.error('Manage schedule error:', error);
+        alert('Error al cargar los horarios del mentor');
+    }
+};
+
+window.deleteMentor = async function(mentorId) {
+    if (!confirm('¿Estás seguro de que quieres eliminar este mentor? Esta acción no se puede deshacer.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`{{ url_for('admin.delete_mentor', mentor_id='MENTOR_ID') }}`.replace('MENTOR_ID', mentorId), {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
         });
         
-        // Filtros avanzados toggle
-        const toggleFiltersBtn = document.getElementById('toggleFiltersBtn');
-        const advancedFilters = document.getElementById('advancedFilters');
+        const result = await response.json();
         
-        if (toggleFiltersBtn && advancedFilters) {
-            toggleFiltersBtn.addEventListener('click', function() {
-                if (advancedFilters.classList.contains('d-none')) {
-                    advancedFilters.classList.remove('d-none');
-                    this.innerHTML = '<i class="bi bi-funnel-fill me-1"></i> Ocultar filtros avanzados';
-                } else {
-                    advancedFilters.classList.add('d-none');
-                    this.innerHTML = '<i class="bi bi-funnel me-1"></i> Mostrar filtros avanzados';
-                }
-            });
+        if (result.success) {
+            location.reload();
+        } else {
+            alert(result.message || 'Error al eliminar mentor');
         }
+    } catch (error) {
+        console.error('Delete mentor error:', error);
+        alert('Error de conexión');
+    }
+};
+
+window.editMentorFromDetails = function() {
+    const detailsModal = bootstrap.Modal.getInstance(document.getElementById('mentorDetailsModal'));
+    detailsModal.hide();
+    
+    // Implementation for editing from details view
+    console.log('Edit mentor from details');
+};
+
+function generateMentorDetailsHTML(mentor) {
+    return `
+        <div class="mentor-profile">
+            <div class="d-flex align-items-center mb-4">
+                <div class="mentor-avatar me-3" style="width: 80px; height: 80px; font-size: 1.5rem;">
+                    ${mentor.avatar ? `<img src="${mentor.avatar}" alt="${mentor.name}">` : mentor.name[0] + (mentor.name.split()[1] ? mentor.name.split()[1][0] : '')}
+                </div>
+                <div>
+                    <h4>${mentor.name}</h4>
+                    <p class="text-muted">${mentor.email}</p>
+                    <div class="d-flex gap-2">
+                        ${mentor.expertise.map(exp => `<span class="badge badge-${exp}">${exp}</span>`).join('')}
+                        <div class="rating-display">
+                            <div class="stars">
+                                ${Array.from({length: 5}, (_, i) => `<i class="fas fa-star star ${i >= mentor.rating ? 'empty' : ''}"></i>`).join('')}
+                            </div>
+                            <div class="rating-value">${mentor.rating}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Información Profesional</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Empresa:</strong> ${mentor.company}</li>
+                        <li><strong>Cargo:</strong> ${mentor.position}</li>
+                        <li><strong>Experiencia:</strong> ${mentor.experience_years} años</li>
+                        <li><strong>País:</strong> ${mentor.country}</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>Estadísticas de Mentoría</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Sesiones:</strong> ${mentor.total_sessions}</li>
+                        <li><strong>Horas totales:</strong> ${mentor.total_hours}h</li>
+                        <li><strong>Emprendedores asignados:</strong> ${mentor.entrepreneurs_assigned ? mentor.entrepreneurs_assigned.length : 0}</li>
+                        <li><strong>Disponibilidad:</strong> ${mentor.availability}</li>
+                    </ul>
+                </div>
+            </div>
+            
+            ${mentor.bio ? `
+                <div class="mt-3">
+                    <h6>Biografía</h6>
+                    <p>${mentor.bio}</p>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+function generateMentorActivityHTML(activities) {
+    if (!activities || activities.length === 0) {
+        return '<p class="text-muted">No hay actividad reciente</p>';
+    }
+    
+    return activities.map(activity => `
+        <div class="timeline-item">
+            <div class="timeline-icon"></div>
+            <div class="timeline-content">
+                <div class="timeline-time">${activity.timestamp}</div>
+                <div class="timeline-title">${activity.title}</div>
+                <div class="timeline-description">${activity.description}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function generateAssignEntrepreneursHTML(mentorId, entrepreneurs) {
+    return `
+        <input type="hidden" name="mentor_id" value="${mentorId}">
+        <div class="form-group mb-3">
+            <label class="form-label">Seleccionar Emprendedores para Asignar</label>
+            <div class="row">
+                ${entrepreneurs.map(entrepreneur => `
+                    <div class="col-md-6 mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="entrepreneur_ids" value="${entrepreneur.id}">
+                            <label class="form-check-label">
+                                <strong>${entrepreneur.name}</strong><br>
+                                <small class="text-muted">${entrepreneur.project_name} - ${entrepreneur.sector}</small>
+                            </label>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+        <div class="form-group mb-3">
+            <label class="form-label">Tipo de Mentoría</label>
+            <select class="form-select" name="mentorship_type">
+                <option value="general">Mentoría General</option>
+                <option value="business">Modelo de Negocio</option>
+                <option value="marketing">Marketing y Ventas</option>
+                <option value="finance">Finanzas</option>
+                <option value="legal">Legal</option>
+                <option value="technical">Técnica</option>
+            </select>
+        </div>
+        <div class="form-group mb-3">
+            <label class="form-label">Notas de Asignación</label>
+            <textarea class="form-control" name="notes" rows="3" placeholder="Información adicional sobre la asignación..."></textarea>
+        </div>
+    `;
+}
+
+function generateScheduleHTML(mentorId, currentSchedule) {
+    const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    const timeSlots = [
+        '09:00-12:00', '10:00-13:00', '11:00-14:00', '12:00-15:00',
+        '13:00-16:00', '14:00-17:00', '15:00-18:00', '16:00-19:00'
+    ];
+    
+    return `
+        <input type="hidden" name="mentor_id" value="${mentorId}">
+        <div class="form-group mb-3">
+            <label class="form-label">Estado de Disponibilidad</label>
+            <select class="form-select" name="availability_status">
+                <option value="available" ${currentSchedule.status === 'available' ? 'selected' : ''}>Disponible</option>
+                <option value="busy" ${currentSchedule.status === 'busy' ? 'selected' : ''}>Ocupado</option>
+                <option value="unavailable" ${currentSchedule.status === 'unavailable' ? 'selected' : ''}>No disponible</option>
+            </select>
+        </div>
         
-        // Limpiar filtros
-        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
-        if (clearFiltersBtn) {
-            clearFiltersBtn.addEventListener('click', function() {
-                window.location.href = "{{ url_for('admin.allies') }}";
-            });
-        }
-    });
+        <div class="form-group mb-3">
+            <label class="form-label">Horarios de Disponibilidad</label>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Día</th>
+                            <th>Horarios Disponibles</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${days.map(day => `
+                            <tr>
+                                <td><strong>${day}</strong></td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        ${timeSlots.map(slot => `
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       name="schedule_${day.toLowerCase()}" value="${slot}"
+                                                       ${currentSchedule.slots && currentSchedule.slots[day.toLowerCase()]?.includes(slot) ? 'checked' : ''}>
+                                                <label class="form-check-label" style="font-size: 0.875rem;">
+                                                    ${slot}
+                                                </label>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="form-group mb-3">
+            <label class="form-label">Notas Adicionales</label>
+            <textarea class="form-control" name="schedule_notes" rows="3" 
+                      placeholder="Información adicional sobre disponibilidad...">${currentSchedule.notes || ''}</textarea>
+        </div>
+    `;
+}
+
+// Add animation styles
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(100%); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes slideOutRight {
+        from { opacity: 1; transform: translateX(0); }
+        to { opacity: 0; transform: translateX(100%); }
+    }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %}

@@ -1,0 +1,1038 @@
+<!-- Navigation Bar Component -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm" id="mainNavbar">
+    <div class="container-fluid">
+        <!-- Brand Logo -->
+        <a class="navbar-brand d-flex align-items-center" href="/">
+            <div class="brand-logo me-2">
+                <i class="fas fa-rocket text-warning"></i>
+            </div>
+            <span class="fw-bold">{{ config.get('APP_NAME', 'Ecosistema Emprendimiento') }}</span>
+        </a>
+
+        <!-- Mobile Toggle Button -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" 
+                aria-controls="navbarContent" aria-expanded="false" aria-label="{{ _('Toggle navigation') }}">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar Content -->
+        <div class="collapse navbar-collapse" id="navbarContent">
+            {% if current_user and current_user.is_authenticated %}
+                <!-- Authenticated User Navigation -->
+                
+                <!-- Left Navigation - Role Based -->
+                <ul class="navbar-nav me-auto">
+                    {% if current_user.role == 'admin' %}
+                        <!-- Admin Navigation -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/dashboard">
+                                <i class="fas fa-tachometer-alt me-1"></i>{{ _('Dashboard') }}
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="adminManageDropdown" role="button" 
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-users-cog me-1"></i>{{ _('Gestión') }}
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/admin/users">
+                                    <i class="fas fa-users me-2"></i>{{ _('Usuarios') }}
+                                </a></li>
+                                <li><a class="dropdown-item" href="/admin/entrepreneurs">
+                                    <i class="fas fa-lightbulb me-2"></i>{{ _('Emprendedores') }}
+                                </a></li>
+                                <li><a class="dropdown-item" href="/admin/allies">
+                                    <i class="fas fa-handshake me-2"></i>{{ _('Aliados') }}
+                                </a></li>
+                                <li><a class="dropdown-item" href="/admin/organizations">
+                                    <i class="fas fa-building me-2"></i>{{ _('Organizaciones') }}
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/admin/programs">
+                                    <i class="fas fa-graduation-cap me-2"></i>{{ _('Programas') }}
+                                </a></li>
+                                <li><a class="dropdown-item" href="/admin/analytics">
+                                    <i class="fas fa-chart-bar me-2"></i>{{ _('Analytics') }}
+                                </a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/settings">
+                                <i class="fas fa-cog me-1"></i>{{ _('Configuración') }}
+                            </a>
+                        </li>
+
+                    {% elif current_user.role == 'entrepreneur' %}
+                        <!-- Entrepreneur Navigation -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/entrepreneur/dashboard">
+                                <i class="fas fa-tachometer-alt me-1"></i>{{ _('Dashboard') }}
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="projectsDropdown" role="button" 
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-project-diagram me-1"></i>{{ _('Proyectos') }}
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/entrepreneur/projects">
+                                    <i class="fas fa-list me-2"></i>{{ _('Mis Proyectos') }}
+                                </a></li>
+                                <li><a class="dropdown-item" href="/entrepreneur/projects/new">
+                                    <i class="fas fa-plus me-2"></i>{{ _('Nuevo Proyecto') }}
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/entrepreneur/progress">
+                                    <i class="fas fa-chart-line me-2"></i>{{ _('Seguimiento') }}
+                                </a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/entrepreneur/mentorship">
+                                <i class="fas fa-user-tie me-1"></i>{{ _('Mentoría') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/entrepreneur/calendar">
+                                <i class="fas fa-calendar me-1"></i>{{ _('Calendario') }}
+                            </a>
+                        </li>
+
+                    {% elif current_user.role == 'ally' or current_user.role == 'mentor' %}
+                        <!-- Ally/Mentor Navigation -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/ally/dashboard">
+                                <i class="fas fa-tachometer-alt me-1"></i>{{ _('Dashboard') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/ally/entrepreneurs">
+                                <i class="fas fa-users me-1"></i>{{ _('Mis Emprendedores') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/ally/mentorship">
+                                <i class="fas fa-chalkboard-teacher me-1"></i>{{ _('Sesiones') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/ally/calendar">
+                                <i class="fas fa-calendar me-1"></i>{{ _('Calendario') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/ally/reports">
+                                <i class="fas fa-file-alt me-1"></i>{{ _('Reportes') }}
+                            </a>
+                        </li>
+
+                    {% elif current_user.role == 'client' %}
+                        <!-- Client/Stakeholder Navigation -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/client/dashboard">
+                                <i class="fas fa-tachometer-alt me-1"></i>{{ _('Dashboard') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/client/directory">
+                                <i class="fas fa-building me-1"></i>{{ _('Directorio') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/client/impact">
+                                <i class="fas fa-chart-pie me-1"></i>{{ _('Impacto') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/client/reports">
+                                <i class="fas fa-file-chart me-1"></i>{{ _('Reportes') }}
+                            </a>
+                        </li>
+
+                    {% else %}
+                        <!-- Default User Navigation -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard">
+                                <i class="fas fa-home me-1"></i>{{ _('Inicio') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/profile">
+                                <i class="fas fa-user me-1"></i>{{ _('Perfil') }}
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    <!-- Common Navigation Items -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="/messages">
+                            <i class="fas fa-envelope me-1"></i>{{ _('Mensajes') }}
+                            {% if current_user.unread_messages_count and current_user.unread_messages_count > 0 %}
+                                <span class="badge bg-danger rounded-pill">{{ current_user.unread_messages_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Right Navigation - Search, Notifications, User Menu -->
+                <ul class="navbar-nav">
+                    <!-- Global Search -->
+                    <li class="nav-item me-2">
+                        <form class="d-flex" role="search" id="globalSearchForm">
+                            <div class="input-group">
+                                <input class="form-control form-control-sm" type="search" 
+                                       placeholder="{{ _('Buscar...') }}" aria-label="{{ _('Buscar') }}" 
+                                       id="globalSearchInput" autocomplete="off">
+                                <button class="btn btn-outline-light btn-sm" type="submit">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </li>
+
+                    <!-- Notifications Dropdown -->
+                    <li class="nav-item dropdown me-2">
+                        <a class="nav-link position-relative" href="#" id="notificationsDropdown" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-bell"></i>
+                            {% if current_user.unread_notifications_count and current_user.unread_notifications_count > 0 %}
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    {{ current_user.unread_notifications_count if current_user.unread_notifications_count < 100 else '99+' }}
+                                    <span class="visually-hidden">{{ _('notificaciones sin leer') }}</span>
+                                </span>
+                            {% endif %}
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end notification-dropdown" style="width: 350px;">
+                            <div class="dropdown-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">{{ _('Notificaciones') }}</h6>
+                                <button class="btn btn-sm btn-outline-primary" onclick="markAllAsRead()">
+                                    <i class="fas fa-check-double me-1"></i>{{ _('Marcar todas') }}
+                                </button>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div id="notificationsList" class="notification-list" style="max-height: 300px; overflow-y: auto;">
+                                <!-- Notifications will be loaded here -->
+                                <div class="text-center p-3">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">{{ _('Cargando...') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-item text-center">
+                                <a href="/notifications" class="text-decoration-none">
+                                    {{ _('Ver todas las notificaciones') }}
+                                </a>
+                            </div>
+                        </div>
+                    </li>
+
+                    <!-- Quick Actions Dropdown -->
+                    <li class="nav-item dropdown me-2">
+                        <a class="nav-link" href="#" id="quickActionsDropdown" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-plus-circle"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% if current_user.role == 'entrepreneur' %}
+                                <li><a class="dropdown-item" href="/entrepreneur/projects/new">
+                                    <i class="fas fa-project-diagram me-2 text-primary"></i>{{ _('Nuevo Proyecto') }}
+                                </a></li>
+                                <li><a class="dropdown-item" href="/entrepreneur/mentorship/request">
+                                    <i class="fas fa-handshake me-2 text-success"></i>{{ _('Solicitar Mentoría') }}
+                                </a></li>
+                            {% elif current_user.role == 'ally' or current_user.role == 'mentor' %}
+                                <li><a class="dropdown-item" href="/ally/sessions/new">
+                                    <i class="fas fa-calendar-plus me-2 text-primary"></i>{{ _('Nueva Sesión') }}
+                                </a></li>
+                                <li><a class="dropdown-item" href="/ally/reports/new">
+                                    <i class="fas fa-file-plus me-2 text-success"></i>{{ _('Nuevo Reporte') }}
+                                </a></li>
+                            {% endif %}
+                            <li><a class="dropdown-item" href="/meetings/new">
+                                <i class="fas fa-video me-2 text-info"></i>{{ _('Agendar Reunión') }}
+                            </a></li>
+                            <li><a class="dropdown-item" href="/tasks/new">
+                                <i class="fas fa-tasks me-2 text-warning"></i>{{ _('Nueva Tarea') }}
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/documents/upload">
+                                <i class="fas fa-upload me-2 text-secondary"></i>{{ _('Subir Documento') }}
+                            </a></li>
+                        </ul>
+                    </li>
+
+                    <!-- User Profile Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userMenuDropdown" 
+                           role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="{{ current_user.avatar_url or '/static/dist/img/default-avatar.jpg' }}" 
+                                 alt="{{ _('Avatar') }}" class="rounded-circle me-2" width="32" height="32"
+                                 onerror="this.src='/static/dist/img/default-avatar.jpg'">
+                            <span class="d-none d-md-inline">
+                                {{ current_user.full_name or current_user.username or current_user.email.split('@')[0] }}
+                            </span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li class="dropdown-header">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ current_user.avatar_url or '/static/dist/img/default-avatar.jpg' }}" 
+                                         alt="{{ _('Avatar') }}" class="rounded-circle me-2" width="40" height="40"
+                                         onerror="this.src='/static/dist/img/default-avatar.jpg'">
+                                    <div>
+                                        <div class="fw-bold">{{ current_user.full_name or current_user.username or _('Usuario') }}</div>
+                                        <small class="text-muted">{{ current_user.email }}</small>
+                                        <div>
+                                            <span class="badge bg-secondary">{{ _(current_user.role.title() if current_user.role else 'Usuario') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/profile">
+                                <i class="fas fa-user me-2"></i>{{ _('Mi Perfil') }}
+                            </a></li>
+                            <li><a class="dropdown-item" href="/settings">
+                                <i class="fas fa-cog me-2"></i>{{ _('Configuración') }}
+                            </a></li>
+                            <li><a class="dropdown-item" href="/billing">
+                                <i class="fas fa-credit-card me-2"></i>{{ _('Facturación') }}
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            
+                            <!-- Theme Toggle -->
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="toggleTheme()">
+                                    <i class="fas fa-moon me-2" id="themeIcon"></i>
+                                    <span id="themeText">{{ _('Modo Oscuro') }}</span>
+                                </a>
+                            </li>
+                            
+                            <!-- Language Selector -->
+                            <li class="dropdown-submenu">
+                                <a class="dropdown-item dropdown-toggle" href="#" id="languageDropdown">
+                                    <i class="fas fa-globe me-2"></i>{{ _('Idioma') }}
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="?lang=es">🇪🇸 Español</a></li>
+                                    <li><a class="dropdown-item" href="?lang=en">🇺🇸 English</a></li>
+                                    <li><a class="dropdown-item" href="?lang=pt">🇧🇷 Português</a></li>
+                                </ul>
+                            </li>
+                            
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/help">
+                                <i class="fas fa-question-circle me-2"></i>{{ _('Ayuda') }}
+                            </a></li>
+                            <li><a class="dropdown-item" href="/support">
+                                <i class="fas fa-headset me-2"></i>{{ _('Soporte') }}
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="/logout">
+                                <i class="fas fa-sign-out-alt me-2"></i>{{ _('Cerrar Sesión') }}
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+
+            {% else %}
+                <!-- Public Navigation (Non-authenticated) -->
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/#servicios">{{ _('Servicios') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/#programas">{{ _('Programas') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/#testimonios">{{ _('Testimonios') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about">{{ _('Acerca de') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/contact">{{ _('Contacto') }}</a>
+                    </li>
+                </ul>
+
+                <!-- Right Navigation for Public -->
+                <ul class="navbar-nav">
+                    <!-- Language Selector for Public -->
+                    <li class="nav-item dropdown me-2">
+                        <a class="nav-link dropdown-toggle" href="#" id="publicLanguageDropdown" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-globe me-1"></i>{{ _('ES') }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="?lang=es">🇪🇸 Español</a></li>
+                            <li><a class="dropdown-item" href="?lang=en">🇺🇸 English</a></li>
+                            <li><a class="dropdown-item" href="?lang=pt">🇧🇷 Português</a></li>
+                        </ul>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">{{ _('Iniciar Sesión') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-warning text-dark ms-2" href="/register">
+                            <i class="fas fa-rocket me-1"></i>{{ _('Registrarse') }}
+                        </a>
+                    </li>
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<!-- Search Results Modal -->
+<div class="modal fade" id="searchResultsModal" tabindex="-1" aria-labelledby="searchResultsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchResultsModalLabel">{{ _('Resultados de Búsqueda') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Cerrar') }}"></button>
+            </div>
+            <div class="modal-body">
+                <div id="searchResults">
+                    <!-- Search results will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles for Navbar -->
+<style>
+.navbar {
+    transition: all 0.3s ease;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.navbar-brand {
+    font-size: 1.4rem;
+    transition: all 0.3s ease;
+}
+
+.navbar-brand:hover {
+    transform: scale(1.05);
+}
+
+.brand-logo {
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.navbar-brand:hover .brand-logo {
+    background: rgba(255,255,255,0.2);
+    transform: rotate(15deg);
+}
+
+.nav-link {
+    transition: all 0.3s ease;
+    border-radius: 6px;
+    margin: 0 2px;
+}
+
+.nav-link:hover {
+    background: rgba(255,255,255,0.1);
+    transform: translateY(-1px);
+}
+
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    padding: 0.5rem 0;
+    animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 10px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.dropdown-item {
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    margin: 2px 8px;
+}
+
+.dropdown-item:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateX(5px);
+}
+
+.dropdown-header {
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border-radius: 8px 8px 0 0;
+    margin: -8px -8px 8px -8px;
+    padding: 1rem;
+}
+
+.notification-dropdown {
+    background: white;
+}
+
+.notification-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f3f4;
+    transition: all 0.3s ease;
+}
+
+.notification-item:hover {
+    background: #f8f9fa;
+}
+
+.notification-item.unread {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.05), transparent);
+    border-left: 3px solid var(--primary-color);
+}
+
+.search-container {
+    position: relative;
+}
+
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.search-suggestion {
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.search-suggestion:hover {
+    background: #f8f9fa;
+}
+
+.user-status-indicator {
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    border: 2px solid white;
+}
+
+.dropdown-submenu {
+    position: relative;
+}
+
+.dropdown-submenu .dropdown-menu {
+    top: 0;
+    left: 100%;
+    margin-top: -1px;
+}
+
+@media (max-width: 768px) {
+    .navbar-nav .dropdown-menu {
+        position: static;
+        float: none;
+        width: auto;
+        margin-top: 0;
+        background-color: transparent;
+        border: 0;
+        box-shadow: none;
+    }
+    
+    .dropdown-submenu .dropdown-menu {
+        position: static;
+        left: auto;
+        margin-left: 20px;
+    }
+    
+    .search-container {
+        width: 100%;
+        margin: 10px 0;
+    }
+}
+
+/* Theme specific styles */
+[data-bs-theme="dark"] .dropdown-menu {
+    background: var(--dark-color);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+[data-bs-theme="dark"] .dropdown-item {
+    color: #e9ecef;
+}
+
+[data-bs-theme="dark"] .dropdown-item:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Loading states */
+.btn-loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn-loading .spinner-border {
+    width: 1rem;
+    height: 1rem;
+}
+</style>
+
+<!-- Navbar JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize navbar functionality
+    initializeNavbar();
+});
+
+function initializeNavbar() {
+    // Global search functionality
+    initializeGlobalSearch();
+    
+    // Notifications functionality
+    initializeNotifications();
+    
+    // Theme toggle functionality
+    initializeThemeToggle();
+    
+    // Dropdown enhancements
+    initializeDropdowns();
+    
+    // Load user status
+    loadUserStatus();
+}
+
+function initializeGlobalSearch() {
+    const searchForm = document.getElementById('globalSearchForm');
+    const searchInput = document.getElementById('globalSearchInput');
+    
+    if (searchForm && searchInput) {
+        // Real-time search suggestions
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            if (query.length >= 2) {
+                searchTimeout = setTimeout(() => {
+                    fetchSearchSuggestions(query);
+                }, 300);
+            } else {
+                hideSearchSuggestions();
+            }
+        });
+        
+        // Handle search form submission
+        searchForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const query = searchInput.value.trim();
+            if (query) {
+                performGlobalSearch(query);
+            }
+        });
+        
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!searchForm.contains(e.target)) {
+                hideSearchSuggestions();
+            }
+        });
+    }
+}
+
+function fetchSearchSuggestions(query) {
+    fetch(`/api/v1/search/suggestions?q=${encodeURIComponent(query)}`, {
+        headers: {
+            'X-CSRFToken': window.AppConfig.csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSearchSuggestions(data.suggestions);
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching search suggestions:', error);
+    });
+}
+
+function showSearchSuggestions(suggestions) {
+    const searchForm = document.getElementById('globalSearchForm');
+    let suggestionsContainer = document.getElementById('searchSuggestions');
+    
+    if (!suggestionsContainer) {
+        suggestionsContainer = document.createElement('div');
+        suggestionsContainer.id = 'searchSuggestions';
+        suggestionsContainer.className = 'search-suggestions';
+        searchForm.appendChild(suggestionsContainer);
+    }
+    
+    suggestionsContainer.innerHTML = '';
+    
+    suggestions.forEach(suggestion => {
+        const item = document.createElement('div');
+        item.className = 'search-suggestion';
+        item.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas fa-${suggestion.icon || 'search'} me-2 text-muted"></i>
+                <div>
+                    <div class="fw-medium">${suggestion.title}</div>
+                    <small class="text-muted">${suggestion.type}</small>
+                </div>
+            </div>
+        `;
+        item.addEventListener('click', () => {
+            window.location.href = suggestion.url;
+        });
+        suggestionsContainer.appendChild(item);
+    });
+    
+    suggestionsContainer.style.display = 'block';
+}
+
+function hideSearchSuggestions() {
+    const suggestionsContainer = document.getElementById('searchSuggestions');
+    if (suggestionsContainer) {
+        suggestionsContainer.style.display = 'none';
+    }
+}
+
+function performGlobalSearch(query) {
+    // Show loading state
+    const searchInput = document.getElementById('globalSearchInput');
+    const originalValue = searchInput.value;
+    searchInput.value = 'Buscando...';
+    searchInput.disabled = true;
+    
+    fetch(`/api/v1/search?q=${encodeURIComponent(query)}`, {
+        headers: {
+            'X-CSRFToken': window.AppConfig.csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSearchResults(data.results, query);
+        } else {
+            window.showNotification('error', 'Error en la búsqueda');
+        }
+    })
+    .catch(error => {
+        console.error('Search error:', error);
+        window.showNotification('error', 'Error en la búsqueda');
+    })
+    .finally(() => {
+        searchInput.value = originalValue;
+        searchInput.disabled = false;
+        hideSearchSuggestions();
+    });
+}
+
+function showSearchResults(results, query) {
+    const modal = new bootstrap.Modal(document.getElementById('searchResultsModal'));
+    const resultsContainer = document.getElementById('searchResults');
+    
+    resultsContainer.innerHTML = `
+        <div class="mb-3">
+            <h6>Resultados para: "${query}" (${results.length})</h6>
+        </div>
+    `;
+    
+    if (results.length === 0) {
+        resultsContainer.innerHTML += `
+            <div class="text-center py-4">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No se encontraron resultados</p>
+            </div>
+        `;
+    } else {
+        results.forEach(result => {
+            const resultItem = document.createElement('div');
+            resultItem.className = 'card mb-2';
+            resultItem.innerHTML = `
+                <div class="card-body py-2">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-${result.icon || 'file'} me-3 text-primary"></i>
+                        <div class="flex-grow-1">
+                            <a href="${result.url}" class="text-decoration-none">
+                                <div class="fw-medium">${result.title}</div>
+                                <small class="text-muted">${result.description}</small>
+                            </a>
+                        </div>
+                        <span class="badge bg-light text-dark">${result.type}</span>
+                    </div>
+                </div>
+            `;
+            resultsContainer.appendChild(resultItem);
+        });
+    }
+    
+    modal.show();
+}
+
+function initializeNotifications() {
+    const notificationsDropdown = document.getElementById('notificationsDropdown');
+    
+    if (notificationsDropdown) {
+        notificationsDropdown.addEventListener('click', function() {
+            loadNotifications();
+        });
+        
+        // Poll for new notifications every 30 seconds
+        setInterval(checkNewNotifications, 30000);
+    }
+}
+
+function loadNotifications() {
+    const notificationsList = document.getElementById('notificationsList');
+    
+    fetch('/api/v1/notifications', {
+        headers: {
+            'X-CSRFToken': window.AppConfig.csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayNotifications(data.notifications);
+        }
+    })
+    .catch(error => {
+        console.error('Error loading notifications:', error);
+        notificationsList.innerHTML = `
+            <div class="text-center p-3 text-muted">
+                <i class="fas fa-exclamation-triangle"></i>
+                Error al cargar notificaciones
+            </div>
+        `;
+    });
+}
+
+function displayNotifications(notifications) {
+    const notificationsList = document.getElementById('notificationsList');
+    
+    if (notifications.length === 0) {
+        notificationsList.innerHTML = `
+            <div class="text-center p-3 text-muted">
+                <i class="fas fa-bell-slash fa-2x mb-2"></i>
+                <p class="mb-0">No hay notificaciones</p>
+            </div>
+        `;
+        return;
+    }
+    
+    notificationsList.innerHTML = '';
+    
+    notifications.forEach(notification => {
+        const item = document.createElement('div');
+        item.className = `notification-item ${notification.read ? '' : 'unread'}`;
+        item.innerHTML = `
+            <div class="d-flex">
+                <div class="me-3">
+                    <i class="fas fa-${notification.icon || 'info-circle'} text-${notification.type || 'primary'}"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-medium">${notification.title}</div>
+                    <p class="mb-1 small text-muted">${notification.message}</p>
+                    <small class="text-muted">${notification.created_at}</small>
+                </div>
+                ${!notification.read ? '<div class="ms-2"><span class="badge bg-primary rounded-pill">&nbsp;</span></div>' : ''}
+            </div>
+        `;
+        
+        item.addEventListener('click', () => {
+            markNotificationAsRead(notification.id);
+            if (notification.url) {
+                window.location.href = notification.url;
+            }
+        });
+        
+        notificationsList.appendChild(item);
+    });
+}
+
+function markNotificationAsRead(notificationId) {
+    fetch(`/api/v1/notifications/${notificationId}/read`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': window.AppConfig.csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateNotificationCounter();
+        }
+    });
+}
+
+function markAllAsRead() {
+    fetch('/api/v1/notifications/mark-all-read', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': window.AppConfig.csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadNotifications();
+            updateNotificationCounter();
+            window.showNotification('success', 'Todas las notificaciones marcadas como leídas');
+        }
+    });
+}
+
+function checkNewNotifications() {
+    fetch('/api/v1/notifications/count', {
+        headers: {
+            'X-CSRFToken': window.AppConfig.csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateNotificationBadge(data.unread_count);
+        }
+    });
+}
+
+function updateNotificationCounter() {
+    checkNewNotifications();
+}
+
+function updateNotificationBadge(count) {
+    const badge = document.querySelector('#notificationsDropdown .badge');
+    if (count > 0) {
+        if (badge) {
+            badge.textContent = count < 100 ? count : '99+';
+        } else {
+            const newBadge = document.createElement('span');
+            newBadge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger';
+            newBadge.innerHTML = `${count < 100 ? count : '99+'}<span class="visually-hidden">notificaciones sin leer</span>`;
+            document.getElementById('notificationsDropdown').appendChild(newBadge);
+        }
+    } else if (badge) {
+        badge.remove();
+    }
+}
+
+function initializeThemeToggle() {
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    updateThemeUI(currentTheme);
+    document.documentElement.setAttribute('data-bs-theme', currentTheme);
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    document.documentElement.setAttribute('data-bs-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    updateThemeUI(newTheme);
+    
+    // Save preference to server
+    fetch('/api/v1/user/preferences', {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.AppConfig.csrfToken
+        },
+        body: JSON.stringify({ theme: newTheme })
+    });
+}
+
+function updateThemeUI(theme) {
+    const themeIcon = document.getElementById('themeIcon');
+    const themeText = document.getElementById('themeText');
+    
+    if (themeIcon && themeText) {
+        if (theme === 'dark') {
+            themeIcon.className = 'fas fa-sun me-2';
+            themeText.textContent = 'Modo Claro';
+        } else {
+            themeIcon.className = 'fas fa-moon me-2';
+            themeText.textContent = 'Modo Oscuro';
+        }
+    }
+}
+
+function initializeDropdowns() {
+    // Enhanced dropdown behavior
+    const dropdowns = document.querySelectorAll('.dropdown-toggle');
+    dropdowns.forEach(dropdown => {
+        dropdown.addEventListener('click', function(e) {
+            const menu = this.nextElementSibling;
+            if (menu && menu.classList.contains('dropdown-menu')) {
+                // Add loading state if needed
+                if (this.dataset.loadData) {
+                    loadDropdownData(this.dataset.loadData, menu);
+                }
+            }
+        });
+    });
+}
+
+function loadUserStatus() {
+    // Load and display user online status, recent activity, etc.
+    if (window.AppConfig.user) {
+        updateUserStatusIndicator('online');
+    }
+}
+
+function updateUserStatusIndicator(status) {
+    const userAvatar = document.querySelector('#userMenuDropdown img');
+    if (userAvatar) {
+        let indicator = userAvatar.parentElement.querySelector('.user-status-indicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.className = 'user-status-indicator';
+            userAvatar.parentElement.style.position = 'relative';
+            userAvatar.parentElement.appendChild(indicator);
+        }
+        
+        indicator.style.background = status === 'online' ? '#10b981' : '#6b7280';
+    }
+}
+
+// Utility functions
+function showLoadingState(element) {
+    element.classList.add('btn-loading');
+    const spinner = document.createElement('span');
+    spinner.className = 'spinner-border spinner-border-sm me-2';
+    spinner.role = 'status';
+    element.prepend(spinner);
+}
+
+function hideLoadingState(element) {
+    element.classList.remove('btn-loading');
+    const spinner = element.querySelector('.spinner-border');
+    if (spinner) {
+        spinner.remove();
+    }
+}
+</script>

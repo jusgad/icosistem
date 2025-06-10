@@ -1,0 +1,1761 @@
+<!-- Modals Component System -->
+<div id="modalsContainer">
+
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <div class="modal-icon-container">
+                        <div class="modal-icon" id="confirmationIcon">
+                            <i class="fas fa-question-circle"></i>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Cerrar') }}"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <h5 class="modal-title mb-3" id="confirmationModalLabel">{{ _('¿Está seguro?') }}</h5>
+                    <p class="modal-message text-muted" id="confirmationMessage">
+                        {{ _('Esta acción no se puede deshacer.') }}
+                    </p>
+                    <div class="confirmation-details" id="confirmationDetails" style="display: none;">
+                        <!-- Dynamic content will be inserted here -->
+                    </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-center">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="confirmationCancelBtn">
+                        <i class="fas fa-times me-2"></i>{{ _('Cancelar') }}
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmationConfirmBtn">
+                        <i class="fas fa-check me-2"></i>{{ _('Confirmar') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dynamic Form Modal -->
+    <div class="modal fade" id="dynamicFormModal" tabindex="-1" aria-labelledby="dynamicFormModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="dynamicFormModalLabel">{{ _('Formulario') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Cerrar') }}"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-loading text-center py-4" id="formLoading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">{{ _('Cargando...') }}</span>
+                        </div>
+                        <p class="mt-3 text-muted">{{ _('Cargando formulario...') }}</p>
+                    </div>
+                    <div class="form-content" id="formContent" style="display: none;">
+                        <!-- Dynamic form content will be loaded here -->
+                    </div>
+                    <div class="form-error" id="formError" style="display: none;">
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <span id="formErrorMessage">{{ _('Error al cargar el formulario') }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>{{ _('Cancelar') }}
+                    </button>
+                    <button type="button" class="btn btn-primary" id="formSubmitBtn" style="display: none;">
+                        <i class="fas fa-save me-2"></i>{{ _('Guardar') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Information Modal -->
+    <div class="modal fade" id="informationModal" tabindex="-1" aria-labelledby="informationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <div class="modal-icon-container">
+                        <div class="modal-icon info" id="informationIcon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Cerrar') }}"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <h5 class="modal-title mb-3" id="informationModalLabel">{{ _('Información') }}</h5>
+                    <div class="modal-message" id="informationMessage">
+                        <!-- Dynamic content will be inserted here -->
+                    </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-center">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="informationOkBtn">
+                        <i class="fas fa-check me-2"></i>{{ _('Entendido') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Modal -->
+    <div class="modal fade" id="userProfileModal" tabindex="-1" aria-labelledby="userProfileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userProfileModalLabel">{{ _('Perfil de Usuario') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Cerrar') }}"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="profile-loading text-center py-4" id="profileLoading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">{{ _('Cargando...') }}</span>
+                        </div>
+                        <p class="mt-3 text-muted">{{ _('Cargando perfil...') }}</p>
+                    </div>
+                    <div class="profile-content" id="profileContent" style="display: none;">
+                        <!-- User profile content will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>{{ _('Cerrar') }}
+                    </button>
+                    <button type="button" class="btn btn-primary" id="editProfileBtn" style="display: none;">
+                        <i class="fas fa-edit me-2"></i>{{ _('Editar Perfil') }}
+                    </button>
+                    <button type="button" class="btn btn-success" id="contactUserBtn" style="display: none;">
+                        <i class="fas fa-envelope me-2"></i>{{ _('Contactar') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Media Lightbox Modal -->
+    <div class="modal fade" id="mediaLightboxModal" tabindex="-1" aria-labelledby="mediaLightboxModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen-lg-down modal-xl">
+            <div class="modal-content bg-dark">
+                <div class="modal-header border-0">
+                    <h6 class="modal-title text-white" id="mediaLightboxModalLabel">{{ _('Vista Previa') }}</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{{ _('Cerrar') }}"></button>
+                </div>
+                <div class="modal-body d-flex align-items-center justify-content-center p-0">
+                    <div class="media-container" id="mediaContainer">
+                        <!-- Media content will be loaded here -->
+                    </div>
+                    <div class="media-navigation">
+                        <button type="button" class="btn btn-outline-light media-nav-btn" id="mediaPrevBtn" style="display: none;">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-light media-nav-btn" id="mediaNextBtn" style="display: none;">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-between">
+                    <div class="media-info text-white">
+                        <span id="mediaTitle"></span>
+                        <small class="text-muted ms-2" id="mediaIndex"></small>
+                    </div>
+                    <div class="media-actions">
+                        <button type="button" class="btn btn-outline-light btn-sm" id="downloadMediaBtn">
+                            <i class="fas fa-download me-2"></i>{{ _('Descargar') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Meeting Scheduler Modal -->
+    <div class="modal fade" id="meetingSchedulerModal" tabindex="-1" aria-labelledby="meetingSchedulerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="meetingSchedulerModalLabel">{{ _('Agendar Reunión') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Cerrar') }}"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="meetingSchedulerForm" class="needs-validation" novalidate>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="meetingTitle" class="form-label">{{ _('Título de la reunión') }} <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="meetingTitle" name="title" required>
+                                    <div class="invalid-feedback">{{ _('El título es obligatorio') }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="meetingType" class="form-label">{{ _('Tipo de reunión') }}</label>
+                                    <select class="form-select" id="meetingType" name="type">
+                                        <option value="mentorship">{{ _('Mentoría') }}</option>
+                                        <option value="project_review">{{ _('Revisión de proyecto') }}</option>
+                                        <option value="planning">{{ _('Planificación') }}</option>
+                                        <option value="feedback">{{ _('Feedback') }}</option>
+                                        <option value="other">{{ _('Otro') }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="meetingDate" class="form-label">{{ _('Fecha') }} <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="meetingDate" name="date" required>
+                                    <div class="invalid-feedback">{{ _('La fecha es obligatoria') }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="meetingStartTime" class="form-label">{{ _('Hora inicio') }} <span class="text-danger">*</span></label>
+                                    <input type="time" class="form-control" id="meetingStartTime" name="start_time" required>
+                                    <div class="invalid-feedback">{{ _('La hora es obligatoria') }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="meetingDuration" class="form-label">{{ _('Duración (min)') }}</label>
+                                    <select class="form-select" id="meetingDuration" name="duration">
+                                        <option value="30">30 {{ _('minutos') }}</option>
+                                        <option value="45">45 {{ _('minutos') }}</option>
+                                        <option value="60" selected>60 {{ _('minutos') }}</option>
+                                        <option value="90">90 {{ _('minutos') }}</option>
+                                        <option value="120">120 {{ _('minutos') }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="meetingAttendees" class="form-label">{{ _('Participantes') }}</label>
+                            <select class="form-select" id="meetingAttendees" name="attendees[]" multiple>
+                                <!-- Options will be loaded dynamically -->
+                            </select>
+                            <div class="form-text">{{ _('Seleccione los participantes de la reunión') }}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="meetingDescription" class="form-label">{{ _('Descripción') }}</label>
+                            <textarea class="form-control" id="meetingDescription" name="description" rows="3" 
+                                      placeholder="{{ _('Agenda, objetivos, materiales necesarios...') }}"></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="meetingPlatform" class="form-label">{{ _('Plataforma') }}</label>
+                                    <select class="form-select" id="meetingPlatform" name="platform">
+                                        <option value="google_meet">Google Meet</option>
+                                        <option value="zoom">Zoom</option>
+                                        <option value="teams">Microsoft Teams</option>
+                                        <option value="in_person">{{ _('Presencial') }}</option>
+                                        <option value="other">{{ _('Otra') }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="meetingLocation" class="form-label">{{ _('Ubicación/Enlace') }}</label>
+                                    <input type="text" class="form-control" id="meetingLocation" name="location" 
+                                           placeholder="{{ _('Dirección o enlace de la reunión') }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="sendReminders" name="send_reminders" checked>
+                            <label class="form-check-label" for="sendReminders">
+                                {{ _('Enviar recordatorios por email') }}
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>{{ _('Cancelar') }}
+                    </button>
+                    <button type="button" class="btn btn-primary" id="scheduleMeetingBtn">
+                        <i class="fas fa-calendar-plus me-2"></i>{{ _('Agendar Reunión') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Viewer Modal -->
+    <div class="modal fade" id="documentViewerModal" tabindex="-1" aria-labelledby="documentViewerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="d-flex align-items-center">
+                        <h5 class="modal-title me-3" id="documentViewerModalLabel">{{ _('Visor de Documentos') }}</h5>
+                        <div class="document-info">
+                            <span class="badge bg-secondary" id="documentType"></span>
+                            <small class="text-muted ms-2" id="documentSize"></small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="downloadDocumentBtn">
+                            <i class="fas fa-download me-1"></i>{{ _('Descargar') }}
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="printDocumentBtn">
+                            <i class="fas fa-print me-1"></i>{{ _('Imprimir') }}
+                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Cerrar') }}"></button>
+                    </div>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="document-loading text-center py-5" id="documentLoading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">{{ _('Cargando documento...') }}</span>
+                        </div>
+                        <p class="mt-3 text-muted">{{ _('Cargando documento...') }}</p>
+                    </div>
+                    <div class="document-viewer" id="documentViewer" style="display: none;">
+                        <!-- Document content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Action Modal -->
+    <div class="modal fade" id="quickActionModal" tabindex="-1" aria-labelledby="quickActionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="quickActionModalLabel">{{ _('Acción Rápida') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Cerrar') }}"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="quick-actions-grid">
+                        {% if current_user.role == 'entrepreneur' %}
+                        <button type="button" class="quick-action-btn" onclick="createNewProject()">
+                            <i class="fas fa-project-diagram text-primary"></i>
+                            <span>{{ _('Nuevo Proyecto') }}</span>
+                        </button>
+                        <button type="button" class="quick-action-btn" onclick="requestMentorship()">
+                            <i class="fas fa-handshake text-success"></i>
+                            <span>{{ _('Solicitar Mentoría') }}</span>
+                        </button>
+                        {% elif current_user.role == 'ally' or current_user.role == 'mentor' %}
+                        <button type="button" class="quick-action-btn" onclick="scheduleSession()">
+                            <i class="fas fa-calendar-plus text-primary"></i>
+                            <span>{{ _('Nueva Sesión') }}</span>
+                        </button>
+                        <button type="button" class="quick-action-btn" onclick="createReport()">
+                            <i class="fas fa-file-alt text-info"></i>
+                            <span>{{ _('Crear Reporte') }}</span>
+                        </button>
+                        {% endif %}
+                        <button type="button" class="quick-action-btn" onclick="scheduleMeeting()">
+                            <i class="fas fa-video text-warning"></i>
+                            <span>{{ _('Agendar Reunión') }}</span>
+                        </button>
+                        <button type="button" class="quick-action-btn" onclick="uploadDocument()">
+                            <i class="fas fa-upload text-secondary"></i>
+                            <span>{{ _('Subir Documento') }}</span>
+                        </button>
+                        <button type="button" class="quick-action-btn" onclick="sendMessage()">
+                            <i class="fas fa-envelope text-primary"></i>
+                            <span>{{ _('Enviar Mensaje') }}</span>
+                        </button>
+                        <button type="button" class="quick-action-btn" onclick="createTask()">
+                            <i class="fas fa-tasks text-success"></i>
+                            <span>{{ _('Nueva Tarea') }}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Center Modal -->
+    <div class="modal fade" id="notificationCenterModal" tabindex="-1" aria-labelledby="notificationCenterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="notificationCenterModalLabel">{{ _('Centro de Notificaciones') }}</h5>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="markAllNotificationsRead()">
+                            <i class="fas fa-check-double me-1"></i>{{ _('Marcar todas') }}
+                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Cerrar') }}"></button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <div class="notification-filters mb-3">
+                        <div class="btn-group" role="group" aria-label="{{ _('Filtros de notificación') }}">
+                            <input type="radio" class="btn-check" name="notificationFilter" id="allNotifications" value="all" checked>
+                            <label class="btn btn-outline-primary btn-sm" for="allNotifications">{{ _('Todas') }}</label>
+                            
+                            <input type="radio" class="btn-check" name="notificationFilter" id="unreadNotifications" value="unread">
+                            <label class="btn btn-outline-primary btn-sm" for="unreadNotifications">{{ _('Sin leer') }}</label>
+                            
+                            <input type="radio" class="btn-check" name="notificationFilter" id="importantNotifications" value="important">
+                            <label class="btn btn-outline-primary btn-sm" for="importantNotifications">{{ _('Importantes') }}</label>
+                        </div>
+                    </div>
+                    
+                    <div class="notifications-list" id="notificationsList">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">{{ _('Cargando notificaciones...') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>{{ _('Cerrar') }}
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="openNotificationSettings()">
+                        <i class="fas fa-cog me-2"></i>{{ _('Configuración') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal Styles -->
+<style>
+/* Base Modal Styles */
+.modal-content {
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    backdrop-filter: blur(10px);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    border-radius: 16px 16px 0 0;
+    padding: 1.5rem;
+}
+
+.modal-header .btn-close {
+    filter: brightness(0) invert(1);
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+.modal-header .btn-close:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.modal-footer {
+    padding: 1.5rem 2rem;
+    background: #f8f9fa;
+    border-radius: 0 0 16px 16px;
+}
+
+/* Modal Icon Styles */
+.modal-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.modal-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+    margin: 0 auto;
+    animation: modalIconPulse 2s infinite;
+}
+
+.modal-icon.danger {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.modal-icon.warning {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+}
+
+.modal-icon.success {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.modal-icon.info {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+}
+
+.modal-icon.question {
+    background: linear-gradient(135deg, #6f42c1, #59359a);
+}
+
+@keyframes modalIconPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* Confirmation Modal */
+.confirmation-details {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    border-left: 4px solid var(--warning-color);
+}
+
+/* Form Modal Styles */
+.form-loading, .profile-loading, .document-loading {
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.form-content {
+    animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Media Lightbox */
+.media-container {
+    position: relative;
+    width: 100%;
+    height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.media-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.media-container video {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+}
+
+.media-navigation {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 2rem;
+    pointer-events: none;
+}
+
+.media-nav-btn {
+    pointer-events: all;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    transition: all 0.3s ease;
+}
+
+.media-nav-btn:hover {
+    background: rgba(0,0,0,0.8);
+    transform: scale(1.1);
+}
+
+/* Quick Actions Grid */
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    padding: 1rem 0;
+}
+
+.quick-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    background: white;
+    text-decoration: none;
+    color: #495057;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    min-height: 120px;
+}
+
+.quick-action-btn:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.quick-action-btn i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.quick-action-btn:hover i {
+    color: white;
+    transform: scale(1.1);
+}
+
+.quick-action-btn span {
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* Meeting Scheduler */
+.needs-validation .form-control:invalid {
+    border-color: #dc3545;
+}
+
+.needs-validation .form-control:valid {
+    border-color: #28a745;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* Document Viewer */
+.document-viewer {
+    height: calc(100vh - 140px);
+    overflow: auto;
+}
+
+.document-viewer iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.document-info {
+    display: flex;
+    align-items: center;
+}
+
+/* Notifications List */
+.notifications-list {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.notification-item {
+    display: flex;
+    align-items: start;
+    padding: 1rem;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.notification-item:hover {
+    background: #f8f9fa;
+    border-color: var(--primary-color);
+    transform: translateX(5px);
+}
+
+.notification-item.unread {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.05), transparent);
+    border-left: 4px solid var(--primary-color);
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-title {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.25rem;
+}
+
+.notification-message {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.notification-time {
+    font-size: 0.8rem;
+    color: #adb5bd;
+}
+
+.notification-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .modal-body {
+        padding: 1.5rem;
+    }
+    
+    .modal-footer {
+        padding: 1rem 1.5rem;
+    }
+    
+    .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .quick-action-btn {
+        min-height: 100px;
+        padding: 1rem 0.5rem;
+    }
+    
+    .media-navigation {
+        padding: 0 1rem;
+    }
+    
+    .media-nav-btn {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+/* Dark Theme */
+[data-bs-theme="dark"] .modal-content {
+    background: #2d3748;
+    color: #e2e8f0;
+}
+
+[data-bs-theme="dark"] .modal-header {
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+}
+
+[data-bs-theme="dark"] .modal-footer {
+    background: #1a202c;
+}
+
+[data-bs-theme="dark"] .quick-action-btn {
+    background: #4a5568;
+    border-color: #4a5568;
+    color: #e2e8f0;
+}
+
+[data-bs-theme="dark"] .quick-action-btn:hover {
+    background: var(--primary-color);
+}
+
+[data-bs-theme="dark"] .notification-item {
+    background: #4a5568;
+    border-color: #4a5568;
+}
+
+[data-bs-theme="dark"] .notification-item:hover {
+    background: #2d3748;
+}
+
+/* Loading States */
+.modal-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: 16px;
+}
+
+.modal-loading-content {
+    text-align: center;
+}
+
+/* Print Styles */
+@media print {
+    .modal {
+        display: none !important;
+    }
+}
+
+/* Animation for modal entrance */
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+    transform: translate(0, -50px);
+}
+
+.modal.show .modal-dialog {
+    transform: none;
+}
+
+/* Accessibility improvements */
+.modal:focus {
+    outline: none;
+}
+
+.modal-content {
+    outline: none;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .modal-content {
+        border: 2px solid;
+    }
+    
+    .quick-action-btn {
+        border-width: 3px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .modal-icon,
+    .quick-action-btn,
+    .notification-item {
+        animation: none;
+        transition: none;
+    }
+}
+</style>
+
+<!-- Modal JavaScript -->
+<script>
+// Global modal configuration
+window.ModalSystem = {
+    stack: [],
+    currentModal: null,
+    config: {
+        autoFocus: true,
+        keyboard: true,
+        backdrop: true,
+        maxStack: 3
+    }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeModalSystem();
+});
+
+function initializeModalSystem() {
+    // Initialize all modal event listeners
+    initializeModalEventListeners();
+    
+    // Initialize keyboard navigation
+    initializeModalKeyboardNavigation();
+    
+    // Initialize accessibility features
+    initializeModalAccessibility();
+    
+    // Initialize form validation
+    initializeModalFormValidation();
+}
+
+function initializeModalEventListeners() {
+    // Track modal stack
+    document.addEventListener('show.bs.modal', function(event) {
+        const modalId = event.target.id;
+        window.ModalSystem.stack.push(modalId);
+        window.ModalSystem.currentModal = modalId;
+        
+        // Adjust z-index for stacked modals
+        const zIndex = 1050 + (window.ModalSystem.stack.length * 10);
+        event.target.style.zIndex = zIndex;
+        
+        // Handle backdrop for stacked modals
+        if (window.ModalSystem.stack.length > 1) {
+            const backdrop = document.querySelector('.modal-backdrop:last-child');
+            if (backdrop) {
+                backdrop.style.zIndex = zIndex - 5;
+            }
+        }
+    });
+    
+    document.addEventListener('hidden.bs.modal', function(event) {
+        const modalId = event.target.id;
+        const index = window.ModalSystem.stack.indexOf(modalId);
+        if (index > -1) {
+            window.ModalSystem.stack.splice(index, 1);
+        }
+        
+        window.ModalSystem.currentModal = window.ModalSystem.stack.length > 0 
+            ? window.ModalSystem.stack[window.ModalSystem.stack.length - 1] 
+            : null;
+        
+        // Reset z-index
+        event.target.style.zIndex = '';
+    });
+}
+
+function initializeModalKeyboardNavigation() {
+    document.addEventListener('keydown', function(event) {
+        if (!window.ModalSystem.currentModal) return;
+        
+        const currentModal = document.getElementById(window.ModalSystem.currentModal);
+        if (!currentModal) return;
+        
+        switch(event.key) {
+            case 'Escape':
+                if (currentModal.getAttribute('data-bs-backdrop') !== 'static') {
+                    closeModal(window.ModalSystem.currentModal);
+                }
+                break;
+                
+            case 'Tab':
+                handleModalTabNavigation(event, currentModal);
+                break;
+        }
+    });
+}
+
+function handleModalTabNavigation(event, modal) {
+    const focusableElements = modal.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+    
+    if (event.shiftKey) {
+        if (document.activeElement === firstElement) {
+            event.preventDefault();
+            lastElement.focus();
+        }
+    } else {
+        if (document.activeElement === lastElement) {
+            event.preventDefault();
+            firstElement.focus();
+        }
+    }
+}
+
+function initializeModalAccessibility() {
+    // Set proper ARIA attributes
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        
+        const title = modal.querySelector('.modal-title');
+        if (title && !modal.getAttribute('aria-labelledby')) {
+            modal.setAttribute('aria-labelledby', title.id);
+        }
+    });
+}
+
+function initializeModalFormValidation() {
+    // Initialize Bootstrap form validation
+    document.querySelectorAll('.needs-validation').forEach(form => {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+    });
+}
+
+// Modal Management Functions
+function showModal(modalId, options = {}) {
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error(`Modal with ID ${modalId} not found`);
+        return;
+    }
+    
+    const modalInstance = new bootstrap.Modal(modal, {
+        backdrop: options.backdrop !== undefined ? options.backdrop : true,
+        keyboard: options.keyboard !== undefined ? options.keyboard : true,
+        focus: options.focus !== undefined ? options.focus : true
+    });
+    
+    modalInstance.show();
+    return modalInstance;
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        const modalInstance = bootstrap.Modal.getInstance(modal);
+        if (modalInstance) {
+            modalInstance.hide();
+        }
+    }
+}
+
+function closeAllModals() {
+    window.ModalSystem.stack.forEach(modalId => {
+        closeModal(modalId);
+    });
+}
+
+// Confirmation Modal
+function showConfirmationModal(options = {}) {
+    const modal = document.getElementById('confirmationModal');
+    const title = document.getElementById('confirmationModalLabel');
+    const message = document.getElementById('confirmationMessage');
+    const details = document.getElementById('confirmationDetails');
+    const icon = document.getElementById('confirmationIcon');
+    const confirmBtn = document.getElementById('confirmationConfirmBtn');
+    const cancelBtn = document.getElementById('confirmationCancelBtn');
+    
+    // Set content
+    title.textContent = options.title || '¿Está seguro?';
+    message.textContent = options.message || 'Esta acción no se puede deshacer.';
+    
+    // Set icon and style
+    const type = options.type || 'warning';
+    icon.className = `fas fa-${getIconForType(type)}`;
+    icon.parentElement.className = `modal-icon ${type}`;
+    
+    // Set button text and style
+    confirmBtn.textContent = options.confirmText || 'Confirmar';
+    confirmBtn.className = `btn btn-${getButtonClassForType(type)}`;
+    cancelBtn.textContent = options.cancelText || 'Cancelar';
+    
+    // Show/hide details
+    if (options.details) {
+        details.innerHTML = options.details;
+        details.style.display = 'block';
+    } else {
+        details.style.display = 'none';
+    }
+    
+    // Set callbacks
+    confirmBtn.onclick = function() {
+        if (options.onConfirm) {
+            options.onConfirm();
+        }
+        closeModal('confirmationModal');
+    };
+    
+    cancelBtn.onclick = function() {
+        if (options.onCancel) {
+            options.onCancel();
+        }
+        closeModal('confirmationModal');
+    };
+    
+    showModal('confirmationModal');
+}
+
+function getIconForType(type) {
+    const icons = {
+        'danger': 'exclamation-triangle',
+        'warning': 'exclamation-circle',
+        'success': 'check-circle',
+        'info': 'info-circle',
+        'question': 'question-circle'
+    };
+    return icons[type] || 'question-circle';
+}
+
+function getButtonClassForType(type) {
+    const classes = {
+        'danger': 'danger',
+        'warning': 'warning',
+        'success': 'success',
+        'info': 'info',
+        'question': 'primary'
+    };
+    return classes[type] || 'primary';
+}
+
+// Information Modal
+function showInformationModal(options = {}) {
+    const modal = document.getElementById('informationModal');
+    const title = document.getElementById('informationModalLabel');
+    const message = document.getElementById('informationMessage');
+    const icon = document.getElementById('informationIcon');
+    const okBtn = document.getElementById('informationOkBtn');
+    
+    title.textContent = options.title || 'Información';
+    message.innerHTML = options.message || '';
+    
+    const type = options.type || 'info';
+    icon.className = `fas fa-${getIconForType(type)}`;
+    icon.parentElement.className = `modal-icon ${type}`;
+    
+    okBtn.onclick = function() {
+        if (options.onOk) {
+            options.onOk();
+        }
+        closeModal('informationModal');
+    };
+    
+    showModal('informationModal');
+}
+
+// Dynamic Form Modal
+function showDynamicFormModal(options = {}) {
+    const modal = document.getElementById('dynamicFormModal');
+    const title = document.getElementById('dynamicFormModalLabel');
+    const loading = document.getElementById('formLoading');
+    const content = document.getElementById('formContent');
+    const error = document.getElementById('formError');
+    const errorMessage = document.getElementById('formErrorMessage');
+    const submitBtn = document.getElementById('formSubmitBtn');
+    
+    title.textContent = options.title || 'Formulario';
+    
+    // Reset state
+    loading.style.display = 'block';
+    content.style.display = 'none';
+    error.style.display = 'none';
+    submitBtn.style.display = 'none';
+    
+    showModal('dynamicFormModal');
+    
+    if (options.url) {
+        // Load form via AJAX
+        fetch(options.url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': window.AppConfig.csrfToken
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.text();
+        })
+        .then(html => {
+            loading.style.display = 'none';
+            content.innerHTML = html;
+            content.style.display = 'block';
+            submitBtn.style.display = 'inline-block';
+            
+            // Initialize form components
+            initializeFormComponents(content);
+            
+            // Set submit handler
+            submitBtn.onclick = function() {
+                submitDynamicForm(options);
+            };
+        })
+        .catch(err => {
+            loading.style.display = 'none';
+            error.style.display = 'block';
+            errorMessage.textContent = err.message;
+        });
+    } else if (options.content) {
+        // Set content directly
+        loading.style.display = 'none';
+        content.innerHTML = options.content;
+        content.style.display = 'block';
+        submitBtn.style.display = 'inline-block';
+        
+        initializeFormComponents(content);
+        
+        submitBtn.onclick = function() {
+            submitDynamicForm(options);
+        };
+    }
+}
+
+function initializeFormComponents(container) {
+    // Initialize Select2
+    const select2Elements = container.querySelectorAll('.select2');
+    select2Elements.forEach(element => {
+        if (typeof $ !== 'undefined' && $.fn.select2) {
+            $(element).select2({
+                theme: 'bootstrap-5',
+                dropdownParent: $('#dynamicFormModal')
+            });
+        }
+    });
+    
+    // Initialize date pickers
+    const dateInputs = container.querySelectorAll('input[type="date"]');
+    dateInputs.forEach(input => {
+        // Set min date to today for future dates
+        if (input.classList.contains('future-date')) {
+            input.min = new Date().toISOString().split('T')[0];
+        }
+    });
+    
+    // Initialize file uploads
+    const fileInputs = container.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            updateFileInputLabel(this);
+        });
+    });
+}
+
+function updateFileInputLabel(input) {
+    const label = input.nextElementSibling;
+    if (label && label.classList.contains('form-label')) {
+        const fileName = input.files[0] ? input.files[0].name : 'Seleccionar archivo';
+        label.textContent = fileName;
+    }
+}
+
+function submitDynamicForm(options) {
+    const form = document.querySelector('#formContent form');
+    if (!form) return;
+    
+    const formData = new FormData(form);
+    const submitBtn = document.getElementById('formSubmitBtn');
+    
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+    
+    fetch(options.submitUrl || form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': window.AppConfig.csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeModal('dynamicFormModal');
+            if (options.onSuccess) {
+                options.onSuccess(data);
+            } else {
+                window.showNotification('success', data.message || 'Guardado exitosamente');
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                } else {
+                    window.location.reload();
+                }
+            }
+        } else {
+            throw new Error(data.message || 'Error al guardar');
+        }
+    })
+    .catch(error => {
+        window.showNotification('error', error.message);
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Guardar';
+    });
+}
+
+// User Profile Modal
+function showUserProfile(userId) {
+    const modal = document.getElementById('userProfileModal');
+    const loading = document.getElementById('profileLoading');
+    const content = document.getElementById('profileContent');
+    const editBtn = document.getElementById('editProfileBtn');
+    const contactBtn = document.getElementById('contactUserBtn');
+    
+    loading.style.display = 'block';
+    content.style.display = 'none';
+    editBtn.style.display = 'none';
+    contactBtn.style.display = 'none';
+    
+    showModal('userProfileModal');
+    
+    fetch(`/api/v1/users/${userId}/profile`, {
+        headers: {
+            'X-CSRFToken': window.AppConfig.csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loading.style.display = 'none';
+            content.innerHTML = data.html;
+            content.style.display = 'block';
+            
+            // Show action buttons based on permissions
+            if (data.can_edit) {
+                editBtn.style.display = 'inline-block';
+                editBtn.onclick = () => editUserProfile(userId);
+            }
+            
+            if (data.can_contact) {
+                contactBtn.style.display = 'inline-block';
+                contactBtn.onclick = () => contactUser(userId);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error loading user profile:', error);
+    });
+}
+
+// Media Lightbox
+function showMediaLightbox(mediaUrl, title = '', mediaArray = null, currentIndex = 0) {
+    const modal = document.getElementById('mediaLightboxModal');
+    const container = document.getElementById('mediaContainer');
+    const titleElement = document.getElementById('mediaTitle');
+    const indexElement = document.getElementById('mediaIndex');
+    const prevBtn = document.getElementById('mediaPrevBtn');
+    const nextBtn = document.getElementById('mediaNextBtn');
+    const downloadBtn = document.getElementById('downloadMediaBtn');
+    
+    // Set title and index
+    titleElement.textContent = title;
+    
+    if (mediaArray && mediaArray.length > 1) {
+        indexElement.textContent = `${currentIndex + 1} de ${mediaArray.length}`;
+        prevBtn.style.display = 'block';
+        nextBtn.style.display = 'block';
+        
+        prevBtn.onclick = () => {
+            const newIndex = currentIndex > 0 ? currentIndex - 1 : mediaArray.length - 1;
+            showMediaLightbox(mediaArray[newIndex].url, mediaArray[newIndex].title, mediaArray, newIndex);
+        };
+        
+        nextBtn.onclick = () => {
+            const newIndex = currentIndex < mediaArray.length - 1 ? currentIndex + 1 : 0;
+            showMediaLightbox(mediaArray[newIndex].url, mediaArray[newIndex].title, mediaArray, newIndex);
+        };
+    } else {
+        indexElement.textContent = '';
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+    }
+    
+    // Set download button
+    downloadBtn.onclick = () => downloadMedia(mediaUrl, title);
+    
+    // Load media content
+    loadMediaContent(container, mediaUrl);
+    
+    showModal('mediaLightboxModal');
+}
+
+function loadMediaContent(container, url) {
+    const extension = url.split('.').pop().toLowerCase();
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension);
+    const isVideo = ['mp4', 'webm', 'ogg', 'mov'].includes(extension);
+    
+    if (isImage) {
+        container.innerHTML = `<img src="${url}" alt="Preview" loading="lazy">`;
+    } else if (isVideo) {
+        container.innerHTML = `
+            <video controls preload="metadata">
+                <source src="${url}" type="video/${extension}">
+                Tu navegador no soporta la reproducción de video.
+            </video>
+        `;
+    } else {
+        container.innerHTML = `
+            <div class="text-center text-white">
+                <i class="fas fa-file fa-4x mb-3"></i>
+                <p>Preview no disponible para este tipo de archivo</p>
+                <button class="btn btn-outline-light" onclick="downloadMedia('${url}', 'file')">
+                    <i class="fas fa-download me-2"></i>Descargar
+                </button>
+            </div>
+        `;
+    }
+}
+
+function downloadMedia(url, filename) {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename || 'download';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Meeting Scheduler Modal
+function showMeetingScheduler(options = {}) {
+    const modal = document.getElementById('meetingSchedulerModal');
+    const form = document.getElementById('meetingSchedulerForm');
+    const submitBtn = document.getElementById('scheduleMeetingBtn');
+    
+    // Pre-fill form if options provided
+    if (options.title) {
+        document.getElementById('meetingTitle').value = options.title;
+    }
+    if (options.date) {
+        document.getElementById('meetingDate').value = options.date;
+    }
+    if (options.attendees) {
+        loadMeetingAttendees(options.attendees);
+    }
+    
+    submitBtn.onclick = function() {
+        if (form.checkValidity()) {
+            submitMeetingForm();
+        } else {
+            form.classList.add('was-validated');
+        }
+    };
+    
+    showModal('meetingSchedulerModal');
+}
+
+function loadMeetingAttendees(preselected = []) {
+    const select = document.getElementById('meetingAttendees');
+    
+    fetch('/api/v1/users/available-attendees', {
+        headers: {
+            'X-CSRFToken': window.AppConfig.csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            select.innerHTML = '';
+            data.users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = `${user.name} (${user.role})`;
+                if (preselected.includes(user.id)) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+            
+            // Initialize Select2
+            if (typeof $ !== 'undefined' && $.fn.select2) {
+                $(select).select2({
+                    theme: 'bootstrap-5',
+                    dropdownParent: $('#meetingSchedulerModal')
+                });
+            }
+        }
+    });
+}
+
+function submitMeetingForm() {
+    const form = document.getElementById('meetingSchedulerForm');
+    const formData = new FormData(form);
+    const submitBtn = document.getElementById('scheduleMeetingBtn');
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Agendando...';
+    
+    fetch('/api/v1/meetings', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': window.AppConfig.csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeModal('meetingSchedulerModal');
+            window.showNotification('success', 'Reunión agendada exitosamente');
+            
+            // Optionally redirect or reload
+            if (data.redirect) {
+                window.location.href = data.redirect;
+            }
+        } else {
+            throw new Error(data.message || 'Error al agendar la reunión');
+        }
+    })
+    .catch(error => {
+        window.showNotification('error', error.message);
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-calendar-plus me-2"></i>Agendar Reunión';
+    });
+}
+
+// Quick Actions Modal
+function showQuickActions() {
+    showModal('quickActionModal');
+}
+
+// Document Viewer Modal
+function showDocumentViewer(documentUrl, title = '', type = '') {
+    const modal = document.getElementById('documentViewerModal');
+    const titleElement = document.getElementById('documentViewerModalLabel');
+    const typeElement = document.getElementById('documentType');
+    const viewer = document.getElementById('documentViewer');
+    const loading = document.getElementById('documentLoading');
+    const downloadBtn = document.getElementById('downloadDocumentBtn');
+    const printBtn = document.getElementById('printDocumentBtn');
+    
+    titleElement.textContent = title || 'Documento';
+    typeElement.textContent = type || 'PDF';
+    
+    loading.style.display = 'block';
+    viewer.style.display = 'none';
+    
+    downloadBtn.onclick = () => downloadMedia(documentUrl, title);
+    printBtn.onclick = () => printDocument(documentUrl);
+    
+    showModal('documentViewerModal');
+    
+    // Load document
+    setTimeout(() => {
+        viewer.innerHTML = `<iframe src="${documentUrl}" title="${title}"></iframe>`;
+        loading.style.display = 'none';
+        viewer.style.display = 'block';
+    }, 500);
+}
+
+function printDocument(url) {
+    const printWindow = window.open(url, '_blank');
+    printWindow.onload = function() {
+        printWindow.print();
+    };
+}
+
+// Notification Center Modal
+function showNotificationCenter() {
+    const modal = document.getElementById('notificationCenterModal');
+    showModal('notificationCenterModal');
+    loadNotifications('all');
+    
+    // Set up filter listeners
+    document.querySelectorAll('input[name="notificationFilter"]').forEach(input => {
+        input.addEventListener('change', function() {
+            loadNotifications(this.value);
+        });
+    });
+}
+
+function loadNotifications(filter = 'all') {
+    const container = document.getElementById('notificationsList');
+    
+    container.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando notificaciones...</span>
+            </div>
+        </div>
+    `;
+    
+    fetch(`/api/v1/notifications?filter=${filter}`, {
+        headers: {
+            'X-CSRFToken': window.AppConfig.csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayNotifications(data.notifications);
+        }
+    })
+    .catch(error => {
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Error al cargar las notificaciones
+            </div>
+        `;
+    });
+}
+
+function displayNotifications(notifications) {
+    const container = document.getElementById('notificationsList');
+    
+    if (notifications.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-bell-slash fa-3x mb-3"></i>
+                <p>No hay notificaciones</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = '';
+    
+    notifications.forEach(notification => {
+        const item = createNotificationItem(notification);
+        container.appendChild(item);
+    });
+}
+
+function createNotificationItem(notification) {
+    const item = document.createElement('div');
+    item.className = `notification-item ${notification.read ? '' : 'unread'}`;
+    item.onclick = () => handleNotificationClick(notification);
+    
+    item.innerHTML = `
+        <div class="notification-icon bg-${notification.type || 'primary'}">
+            <i class="fas fa-${notification.icon || 'bell'}"></i>
+        </div>
+        <div class="notification-content">
+            <div class="notification-title">${notification.title}</div>
+            <div class="notification-message">${notification.message}</div>
+            <div class="notification-time">${notification.time_ago}</div>
+        </div>
+        <div class="notification-actions">
+            ${!notification.read ? '<span class="badge bg-primary rounded-pill">&nbsp;</span>' : ''}
+        </div>
+    `;
+    
+    return item;
+}
+
+function handleNotificationClick(notification) {
+    // Mark as read
+    if (!notification.read) {
+        markNotificationAsRead(notification.id);
+    }
+    
+    // Navigate to related content
+    if (notification.url) {
+        window.location.href = notification.url;
+    }
+}
+
+function markNotificationAsRead(notificationId) {
+    fetch(`/api/v1/notifications/${notificationId}/read`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': window.AppConfig.csrfToken
+        }
+    });
+}
+
+function markAllNotificationsRead() {
+    fetch('/api/v1/notifications/mark-all-read', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': window.AppConfig.csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadNotifications(document.querySelector('input[name="notificationFilter"]:checked').value);
+            window.showNotification('success', 'Todas las notificaciones marcadas como leídas');
+        }
+    });
+}
+
+// Quick Action Functions
+function createNewProject() {
+    closeModal('quickActionModal');
+    showDynamicFormModal({
+        title: 'Nuevo Proyecto',
+        url: '/entrepreneur/projects/new',
+        submitUrl: '/api/v1/projects'
+    });
+}
+
+function requestMentorship() {
+    closeModal('quickActionModal');
+    showDynamicFormModal({
+        title: 'Solicitar Mentoría',
+        url: '/entrepreneur/mentorship/request',
+        submitUrl: '/api/v1/mentorship/request'
+    });
+}
+
+function scheduleSession() {
+    closeModal('quickActionModal');
+    showMeetingScheduler({
+        title: 'Sesión de Mentoría',
+        type: 'mentorship'
+    });
+}
+
+function createReport() {
+    closeModal('quickActionModal');
+    showDynamicFormModal({
+        title: 'Crear Reporte',
+        url: '/ally/reports/new',
+        submitUrl: '/api/v1/reports'
+    });
+}
+
+function scheduleMeeting() {
+    closeModal('quickActionModal');
+    showMeetingScheduler();
+}
+
+function uploadDocument() {
+    closeModal('quickActionModal');
+    showDynamicFormModal({
+        title: 'Subir Documento',
+        url: '/documents/upload',
+        submitUrl: '/api/v1/documents'
+    });
+}
+
+function sendMessage() {
+    closeModal('quickActionModal');
+    showDynamicFormModal({
+        title: 'Enviar Mensaje',
+        url: '/messages/compose',
+        submitUrl: '/api/v1/messages'
+    });
+}
+
+function createTask() {
+    closeModal('quickActionModal');
+    showDynamicFormModal({
+        title: 'Nueva Tarea',
+        url: '/tasks/new',
+        submitUrl: '/api/v1/tasks'
+    });
+}
+
+// Export global functions
+window.ModalUtils = {
+    showModal,
+    closeModal,
+    closeAllModals,
+    showConfirmationModal,
+    showInformationModal,
+    showDynamicFormModal,
+    showUserProfile,
+    showMediaLightbox,
+    showMeetingScheduler,
+    showQuickActions,
+    showDocumentViewer,
+    showNotificationCenter
+};
+</script>

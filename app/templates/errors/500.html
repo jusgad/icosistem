@@ -1,0 +1,1409 @@
+{% extends "layouts/public.html" %}
+
+{# =========================================================================
+   ERROR 500 PAGE - Página de error interno del servidor
+   Ecosistema de Emprendimiento
+   ========================================================================= #}
+
+{% block title %}Error del Servidor (500) - EcoEmprendimiento{% endblock %}
+
+{% block description %}Estamos experimentando problemas técnicos temporales. Nuestro equipo está trabajando para resolverlo. Disculpa las molestias.{% endblock %}
+
+{% block keywords %}error 500, error servidor, mantenimiento, problemas técnicos, emprendimiento{% endblock %}
+
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block og_title %}Error Temporal del Servidor - EcoEmprendimiento{% endblock %}
+{% block og_description %}Estamos resolviendo un problema técnico. Regresa en unos minutos para continuar con tu experiencia de emprendimiento.{% endblock %}
+
+{% block extra_css %}
+{{ super() }}
+<style>
+  /* ========================================================================= 
+     ERROR 500 PAGE STYLES
+     ========================================================================= */
+  
+  /* Variables específicas para página 500 */
+  :root {
+    --error-500-primary: #f97316;
+    --error-500-secondary: #dc2626;
+    --error-500-accent: #eab308;
+    --error-500-warning: #f59e0b;
+    --error-500-bg: linear-gradient(135deg, #fef7ed 0%, #fef2f2 50%, #fffbeb 100%);
+    --error-500-shadow: 0 20px 25px -5px rgba(249, 115, 22, 0.1), 0 10px 10px -5px rgba(249, 115, 22, 0.04);
+    --error-500-dark: #ea580c;
+  }
+  
+  /* Layout principal del error */
+  .error-page {
+    min-height: 100vh;
+    background: var(--error-500-bg);
+    display: flex;
+    align-items: center;
+    padding: 2rem 0;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .error-page::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    right: -20%;
+    width: 40%;
+    height: 40%;
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.08) 0%, transparent 70%);
+    animation: pulse 8s ease-in-out infinite;
+  }
+  
+  .error-page::after {
+    content: '';
+    position: absolute;
+    bottom: -20%;
+    left: -20%;
+    width: 40%;
+    height: 40%;
+    background: radial-gradient(circle, rgba(234, 179, 8, 0.06) 0%, transparent 70%);
+    animation: pulse 10s ease-in-out infinite reverse;
+  }
+  
+  /* Contenedor principal */
+  .error-container {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  
+  /* Ilustración del error */
+  .error-illustration {
+    margin-bottom: 3rem;
+    position: relative;
+  }
+  
+  .error-code {
+    font-size: 8rem;
+    font-weight: 900;
+    font-family: var(--font-heading);
+    background: linear-gradient(135deg, var(--error-500-primary) 0%, var(--error-500-secondary) 50%, var(--error-500-accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 1rem;
+    animation: shake 4s ease-in-out infinite;
+    text-shadow: 0 4px 8px rgba(249, 115, 22, 0.3);
+    position: relative;
+  }
+  
+  .error-code::before {
+    content: '500';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent 0%, rgba(249, 115, 22, 0.1) 50%, transparent 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: flicker 2s ease-in-out infinite;
+  }
+  
+  .robot-illustration {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 2rem;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect x="70" y="60" width="60" height="80" rx="10" fill="%23f97316"/><circle cx="85" cy="80" r="8" fill="%23dc2626"/><circle cx="115" cy="80" r="8" fill="%23dc2626"/><rect x="90" y="100" width="20" height="4" fill="%23dc2626"/><rect x="50" y="90" width="20" height="8" rx="4" fill="%23eab308"/><rect x="130" y="90" width="20" height="8" rx="4" fill="%23eab308"/><rect x="80" y="140" width="40" height="30" rx="5" fill="%23f97316"/><circle cx="100" cy="40" r="15" fill="%23eab308"/><path d="M 85 40 L 95 30 L 105 30 L 115 40" stroke="%23dc2626" stroke-width="3" fill="none"/></svg>') center/contain no-repeat;
+    animation: robotMalfunction 3s ease-in-out infinite;
+  }
+  
+  .error-sparks {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 50px;
+  }
+  
+  .spark {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--error-500-accent);
+    border-radius: 50%;
+    animation: spark 2s ease-in-out infinite;
+  }
+  
+  .spark:nth-child(1) { left: 20%; animation-delay: 0s; }
+  .spark:nth-child(2) { left: 40%; animation-delay: 0.3s; }
+  .spark:nth-child(3) { left: 60%; animation-delay: 0.6s; }
+  .spark:nth-child(4) { left: 80%; animation-delay: 0.9s; }
+  
+  /* Contenido del error */
+  .error-content h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 1rem;
+    animation: fadeInUp 1s ease-out;
+  }
+  
+  .error-content .error-subtitle {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--error-500-primary);
+    margin-bottom: 1.5rem;
+    animation: fadeInUp 1s ease-out 0.2s both;
+  }
+  
+  .error-content .error-description {
+    font-size: 1.125rem;
+    color: var(--gray-600);
+    line-height: 1.6;
+    margin-bottom: 3rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    animation: fadeInUp 1s ease-out 0.4s both;
+  }
+  
+  /* Estado del sistema */
+  .system-status {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    box-shadow: var(--shadow-lg);
+    border-left: 4px solid var(--error-500-primary);
+    animation: fadeInUp 1s ease-out 0.6s both;
+  }
+  
+  .status-title {
+    color: var(--gray-900);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .status-title i {
+    color: var(--error-500-primary);
+    margin-right: 0.75rem;
+    font-size: 1.75rem;
+    animation: rotate 2s linear infinite;
+  }
+  
+  .status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  
+  .status-item {
+    text-align: center;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: 0.75rem;
+    border: 2px solid var(--gray-200);
+    transition: all 0.3s ease;
+  }
+  
+  .status-item.working {
+    border-color: var(--success-color);
+    background: rgba(16, 185, 129, 0.05);
+  }
+  
+  .status-item.issue {
+    border-color: var(--error-500-primary);
+    background: rgba(249, 115, 22, 0.05);
+  }
+  
+  .status-item.checking {
+    border-color: var(--error-500-accent);
+    background: rgba(234, 179, 8, 0.05);
+  }
+  
+  .status-icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .status-item.working .status-icon {
+    color: var(--success-color);
+  }
+  
+  .status-item.issue .status-icon {
+    color: var(--error-500-primary);
+    animation: bounce 1s infinite;
+  }
+  
+  .status-item.checking .status-icon {
+    color: var(--error-500-accent);
+    animation: rotate 2s linear infinite;
+  }
+  
+  .status-label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  
+  .status-description {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+  }
+  
+  /* Tiempo estimado */
+  .eta-section {
+    background: linear-gradient(135deg, var(--error-500-primary) 0%, var(--error-500-secondary) 100%);
+    color: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    text-align: center;
+    animation: fadeInUp 1s ease-out 0.8s both;
+  }
+  
+  .eta-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  
+  .eta-time {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    font-family: var(--font-heading);
+  }
+  
+  .eta-description {
+    opacity: 0.9;
+    margin-bottom: 2rem;
+  }
+  
+  .eta-progress {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 1rem;
+    height: 8px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+  
+  .eta-progress-bar {
+    background: white;
+    height: 100%;
+    border-radius: 1rem;
+    animation: progressBar 30s linear infinite;
+  }
+  
+  /* Acciones disponibles */
+  .error-actions {
+    animation: fadeInUp 1s ease-out 1s both;
+  }
+  
+  .action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 3rem;
+  }
+  
+  .btn-500-primary {
+    background: linear-gradient(135deg, var(--error-500-primary) 0%, var(--error-500-secondary) 100%);
+    border: none;
+    color: white;
+    padding: 0.875rem 2rem;
+    font-weight: 600;
+    border-radius: 0.75rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.1);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  
+  .btn-500-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--error-500-shadow);
+    color: white;
+    text-decoration: none;
+  }
+  
+  .btn-500-secondary {
+    background: white;
+    border: 2px solid var(--error-500-primary);
+    color: var(--error-500-primary);
+    padding: 0.875rem 2rem;
+    font-weight: 600;
+    border-radius: 0.75rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  
+  .btn-500-secondary:hover {
+    background: var(--error-500-primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--error-500-shadow);
+    text-decoration: none;
+  }
+  
+  .btn i {
+    margin-right: 0.5rem;
+  }
+  
+  /* Alternativas */
+  .alternatives-section {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 3rem;
+    animation: fadeInUp 1s ease-out 1.2s both;
+  }
+  
+  .alternatives-title {
+    color: var(--gray-900);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .alternatives-title i {
+    color: var(--info-color);
+    margin-right: 0.75rem;
+    font-size: 1.75rem;
+  }
+  
+  .alternatives-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .alternative-item {
+    background: var(--gray-50);
+    border: 2px solid var(--gray-200);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: var(--gray-700);
+    transition: all 0.3s ease;
+    text-align: center;
+    position: relative;
+  }
+  
+  .alternative-item:hover {
+    border-color: var(--error-500-primary);
+    color: var(--error-500-primary);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    text-decoration: none;
+    background: white;
+  }
+  
+  .alternative-item i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: block;
+    transition: all 0.3s ease;
+  }
+  
+  .alternative-item:hover i {
+    transform: scale(1.1);
+    color: var(--error-500-primary);
+  }
+  
+  .alternative-item h4 {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    font-size: 1.125rem;
+  }
+  
+  .alternative-item p {
+    font-size: 0.9rem;
+    color: var(--gray-600);
+    line-height: 1.5;
+    margin: 0;
+  }
+  
+  /* Información de contacto emergencia */
+  .emergency-contact {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+    text-align: center;
+    border: 2px solid var(--error-500-accent);
+    animation: fadeInUp 1s ease-out 1.4s both;
+  }
+  
+  .emergency-title {
+    color: var(--gray-900);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .emergency-title i {
+    color: var(--error-500-accent);
+    margin-right: 0.75rem;
+    font-size: 1.75rem;
+    animation: pulse 2s infinite;
+  }
+  
+  .emergency-description {
+    margin-bottom: 2rem;
+    color: var(--gray-600);
+  }
+  
+  .emergency-methods {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .emergency-method {
+    display: flex;
+    align-items: center;
+    color: var(--error-500-primary);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    border: 2px solid var(--error-500-accent);
+    background: rgba(234, 179, 8, 0.05);
+  }
+  
+  .emergency-method:hover {
+    background: var(--error-500-primary);
+    border-color: var(--error-500-primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    text-decoration: none;
+  }
+  
+  .emergency-method i {
+    margin-right: 0.75rem;
+    font-size: 1.25rem;
+  }
+  
+  /* Auto-refresh indicator */
+  .refresh-indicator {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background: var(--error-500-primary);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    z-index: 1000;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+  }
+  
+  .refresh-indicator.show {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  
+  .refresh-indicator i {
+    margin-right: 0.5rem;
+    animation: rotate 1s linear infinite;
+  }
+  
+  /* Animaciones */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+    20%, 40%, 60%, 80% { transform: translateX(2px); }
+  }
+  
+  @keyframes robotMalfunction {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-5px) rotate(-2deg); }
+    50% { transform: translateY(0) rotate(1deg); }
+    75% { transform: translateY(-3px) rotate(-1deg); }
+  }
+  
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  
+  @keyframes spark {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    50% { transform: translateY(-20px) scale(1.2); opacity: 0.8; }
+    100% { transform: translateY(-40px) scale(0.8); opacity: 0; }
+  }
+  
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  
+  @keyframes bounce {
+    0%, 20%, 53%, 80%, 100% { transform: translate3d(0, 0, 0); }
+    40%, 43% { transform: translate3d(0, -8px, 0); }
+    70% { transform: translate3d(0, -4px, 0); }
+    90% { transform: translate3d(0, -2px, 0); }
+  }
+  
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes progressBar {
+    0% { width: 0%; }
+    50% { width: 70%; }
+    100% { width: 100%; }
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .error-code {
+      font-size: 6rem;
+    }
+    
+    .error-content h1 {
+      font-size: 2rem;
+    }
+    
+    .error-content .error-subtitle {
+      font-size: 1.25rem;
+    }
+    
+    .system-status,
+    .eta-section,
+    .alternatives-section,
+    .emergency-contact {
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .action-buttons {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .btn-500-primary,
+    .btn-500-secondary {
+      width: 100%;
+      max-width: 300px;
+      justify-content: center;
+    }
+    
+    .status-grid,
+    .alternatives-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    
+    .emergency-methods {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .robot-illustration {
+      width: 150px;
+      height: 150px;
+    }
+    
+    .eta-time {
+      font-size: 2.5rem;
+    }
+    
+    .refresh-indicator {
+      top: auto;
+      bottom: 1rem;
+      right: 1rem;
+      left: 1rem;
+      text-align: center;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .error-code {
+      font-size: 4.5rem;
+    }
+    
+    .error-content h1 {
+      font-size: 1.75rem;
+    }
+    
+    .error-page {
+      padding: 1rem 0;
+    }
+    
+    .eta-time {
+      font-size: 2rem;
+    }
+  }
+  
+  /* Modo oscuro */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --error-500-bg: linear-gradient(135deg, #292524 0%, #450a0a 50%, #451a03 100%);
+    }
+    
+    .system-status,
+    .alternatives-section,
+    .emergency-contact {
+      background: #1f2937;
+      color: #e5e7eb;
+    }
+    
+    .status-item,
+    .alternative-item {
+      background: #374151;
+      border-color: #4b5563;
+      color: #e5e7eb;
+    }
+    
+    .alternative-item:hover {
+      background: #4b5563;
+      border-color: var(--error-500-primary);
+      color: var(--error-500-primary);
+    }
+    
+    .emergency-method {
+      background: rgba(234, 179, 8, 0.1);
+      border-color: #4b5563;
+      color: #e5e7eb;
+    }
+  }
+  
+  /* Estados de carga */
+  .checking {
+    opacity: 0.7;
+  }
+  
+  .checking::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 30px;
+    border: 3px solid var(--gray-300);
+    border-top: 3px solid var(--error-500-primary);
+    border-radius: 50%;
+    animation: rotate 1s linear infinite;
+  }
+  
+  /* Impresión */
+  @media print {
+    .error-page::before,
+    .error-page::after {
+      display: none;
+    }
+    
+    .action-buttons,
+    .emergency-contact,
+    .refresh-indicator {
+      display: none;
+    }
+    
+    .error-page {
+      background: white;
+    }
+    
+    .error-code {
+      color: #000;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block hero %}
+<!-- No hero para página de error -->
+{% endblock %}
+
+{% block content %}
+<div class="error-page">
+  <div class="error-container">
+    <!-- Ilustración del Error -->
+    <div class="error-illustration">
+      <div class="robot-illustration" aria-hidden="true"></div>
+      <div class="error-sparks">
+        <div class="spark"></div>
+        <div class="spark"></div>
+        <div class="spark"></div>
+        <div class="spark"></div>
+      </div>
+      <div class="error-code" aria-label="Error 500">500</div>
+    </div>
+    
+    <!-- Contenido Principal del Error -->
+    <div class="error-content">
+      <h1>¡Ups! Algo salió mal</h1>
+      <p class="error-subtitle">Nuestros servidores están teniendo un mal día</p>
+      <p class="error-description">
+        Estamos experimentando problemas técnicos temporales. Nuestro equipo de ingenieros 
+        ya está trabajando para resolver este inconveniente. Disculpa las molestias.
+      </p>
+    </div>
+    
+    <!-- Estado del Sistema -->
+    <div class="system-status">
+      <h2 class="status-title">
+        <i class="fas fa-cogs" aria-hidden="true"></i>
+        Estado del Sistema
+      </h2>
+      
+      <div class="status-grid">
+        <div class="status-item working">
+          <div class="status-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <h4 class="status-label">Base de Datos</h4>
+          <p class="status-description">Funcionando correctamente</p>
+        </div>
+        
+        <div class="status-item issue">
+          <div class="status-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <h4 class="status-label">Servidor Web</h4>
+          <p class="status-description">Experimentando problemas</p>
+        </div>
+        
+        <div class="status-item checking">
+          <div class="status-icon">
+            <i class="fas fa-sync-alt"></i>
+          </div>
+          <h4 class="status-label">API</h4>
+          <p class="status-description">Verificando conexiones</p>
+        </div>
+        
+        <div class="status-item working">
+          <div class="status-icon">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <h4 class="status-label">Seguridad</h4>
+          <p class="status-description">Todos los sistemas seguros</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Tiempo Estimado de Resolución -->
+    <div class="eta-section">
+      <h3 class="eta-title">Tiempo Estimado de Resolución</h3>
+      <div class="eta-time" id="etaCountdown">15:00</div>
+      <p class="eta-description">
+        Estimamos que el servicio se restablecerá en aproximadamente 15 minutos. 
+        Te recomendamos intentar nuevamente en unos momentos.
+      </p>
+      <div class="eta-progress">
+        <div class="eta-progress-bar"></div>
+      </div>
+      <small>Última actualización: <span id="lastUpdate">{{ moment().format('HH:mm') }}</span></small>
+    </div>
+    
+    <!-- Acciones Disponibles -->
+    <div class="error-actions">
+      <div class="action-buttons">
+        <a href="javascript:location.reload()" class="btn-500-primary">
+          <i class="fas fa-redo-alt" aria-hidden="true"></i>
+          Intentar de Nuevo
+        </a>
+        <a href="{{ url_for('main.index') }}" class="btn-500-secondary">
+          <i class="fas fa-home" aria-hidden="true"></i>
+          Ir al Inicio
+        </a>
+        <a href="#" onclick="reportServerError(); return false;" class="btn-500-secondary">
+          <i class="fas fa-bug" aria-hidden="true"></i>
+          Reportar Problema
+        </a>
+      </div>
+    </div>
+    
+    <!-- Alternativas Disponibles -->
+    <div class="alternatives-section">
+      <h2 class="alternatives-title">
+        <i class="fas fa-lightbulb" aria-hidden="true"></i>
+        Mientras Tanto, Puedes...
+      </h2>
+      
+      <div class="alternatives-grid">
+        <a href="{{ url_for('public.about') }}" class="alternative-item">
+          <i class="fas fa-info-circle" aria-hidden="true"></i>
+          <h4>Conocer EcoEmprendimiento</h4>
+          <p>Aprende más sobre nuestra misión y visión</p>
+        </a>
+        
+        <a href="{{ url_for('public.success_stories') }}" class="alternative-item">
+          <i class="fas fa-trophy" aria-hidden="true"></i>
+          <h4>Casos de Éxito</h4>
+          <p>Inspírate con historias de emprendedores</p>
+        </a>
+        
+        <a href="{{ url_for('public.blog') }}" class="alternative-item">
+          <i class="fas fa-blog" aria-hidden="true"></i>
+          <h4>Leer Nuestro Blog</h4>
+          <p>Artículos y recursos para emprendedores</p>
+        </a>
+        
+        <a href="{{ url_for('public.resources') }}" class="alternative-item">
+          <i class="fas fa-download" aria-hidden="true"></i>
+          <h4>Descargar Recursos</h4>
+          <p>Guías y herramientas gratuitas</p>
+        </a>
+        
+        <a href="{{ url_for('public.events') }}" class="alternative-item">
+          <i class="fas fa-calendar" aria-hidden="true"></i>
+          <h4>Próximos Eventos</h4>
+          <p>Webinars y talleres programados</p>
+        </a>
+        
+        <a href="{{ url_for('public.newsletter') }}" class="alternative-item">
+          <i class="fas fa-envelope" aria-hidden="true"></i>
+          <h4>Suscribirse</h4>
+          <p>Recibe actualizaciones por email</p>
+        </a>
+      </div>
+    </div>
+    
+    <!-- Contacto de Emergencia -->
+    <div class="emergency-contact">
+      <h3 class="emergency-title">
+        <i class="fas fa-phone-alt" aria-hidden="true"></i>
+        ¿Necesitas Ayuda Urgente?
+      </h3>
+      <p class="emergency-description">
+        Si tienes una emergencia o necesitas asistencia inmediata, 
+        contacta a nuestro equipo de soporte técnico.
+      </p>
+      <div class="emergency-methods">
+        <a href="mailto:tech-support@ecoemprendimiento.com" class="emergency-method">
+          <i class="fas fa-envelope-open" aria-hidden="true"></i>
+          <span>Soporte Técnico</span>
+        </a>
+        <a href="tel:+34900987654" class="emergency-method">
+          <i class="fas fa-phone" aria-hidden="true"></i>
+          <span>+34 900 987 654</span>
+        </a>
+        <a href="{{ url_for('public.status') }}" class="emergency-method">
+          <i class="fas fa-chart-line" aria-hidden="true"></i>
+          <span>Estado del Sistema</span>
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Indicador de Auto-refresh -->
+  <div class="refresh-indicator" id="refreshIndicator">
+    <i class="fas fa-sync-alt" aria-hidden="true"></i>
+    <span>Verificando estado del servidor...</span>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script>
+// =========================================================================
+// ERROR 500 PAGE JAVASCRIPT
+// =========================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Log del error para analytics
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'exception', {
+      'description': 'Internal server error 500',
+      'fatal': true,
+      'custom_parameter': 'server_error'
+    });
+  }
+  
+  // Reporte del error para monitoring crítico
+  reportServerError500();
+  
+  // Inicializar funcionalidades
+  initializeCountdown();
+  initializeAutoRefresh();
+  initializeSystemMonitoring();
+  trackUserBehavior();
+  
+  // Mostrar mensaje de estado cada 30 segundos
+  showStatusUpdates();
+});
+
+// Reportar error 500 crítico
+function reportServerError500() {
+  const errorData = {
+    error_type: '500',
+    severity: 'critical',
+    url: window.location.href,
+    referrer: document.referrer,
+    user_agent: navigator.userAgent,
+    timestamp: new Date().toISOString(),
+    stack_trace_id: generateStackTraceId(),
+    session_id: getSessionId()
+  };
+  
+  // Usar navigator.sendBeacon para garantizar el envío
+  if (navigator.sendBeacon) {
+    const blob = new Blob([JSON.stringify(errorData)], {
+      type: 'application/json'
+    });
+    navigator.sendBeacon('/api/v1/errors/critical-report', blob);
+  } else {
+    // Fallback para navegadores que no soportan sendBeacon
+    fetch('/api/v1/errors/critical-report', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(errorData)
+    }).catch(error => {
+      console.log('Critical error reporting failed:', error);
+    });
+  }
+}
+
+// Generar ID único para rastreo del error
+function generateStackTraceId() {
+  return 'st_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+// Obtener ID de sesión
+function getSessionId() {
+  let sessionId = sessionStorage.getItem('session_id');
+  if (!sessionId) {
+    sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    sessionStorage.setItem('session_id', sessionId);
+  }
+  return sessionId;
+}
+
+// Inicializar countdown
+function initializeCountdown() {
+  const countdownElement = document.getElementById('etaCountdown');
+  const lastUpdateElement = document.getElementById('lastUpdate');
+  
+  if (!countdownElement) return;
+  
+  let timeLeft = 15 * 60; // 15 minutos en segundos
+  
+  function updateCountdown() {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    
+    countdownElement.textContent = 
+      `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    if (timeLeft <= 0) {
+      countdownElement.textContent = '00:00';
+      countdownElement.parentElement.innerHTML = `
+        <h3 class="eta-title">Tiempo Agotado</h3>
+        <div class="eta-time">--:--</div>
+        <p class="eta-description">
+          El tiempo estimado ha transcurrido. Estamos extendiendo los trabajos de reparación.
+          <br><strong>Nuevo estimado: 30 minutos adicionales</strong>
+        </p>
+      `;
+      // Reiniciar el countdown
+      timeLeft = 30 * 60;
+      setTimeout(() => {
+        location.reload();
+      }, 2000);
+      return;
+    }
+    
+    timeLeft--;
+  }
+  
+  // Actualizar cada segundo
+  const countdownInterval = setInterval(updateCountdown, 1000);
+  updateCountdown(); // Llamada inicial
+  
+  // Actualizar timestamp cada minuto
+  setInterval(() => {
+    lastUpdateElement.textContent = new Date().toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }, 60000);
+}
+
+// Auto-refresh inteligente
+function initializeAutoRefresh() {
+  const refreshIndicator = document.getElementById('refreshIndicator');
+  let refreshAttempts = 0;
+  const maxAttempts = 10;
+  
+  function checkServerStatus() {
+    if (refreshAttempts >= maxAttempts) {
+      refreshIndicator.innerHTML = `
+        <i class="fas fa-times-circle" style="color: var(--error-500-secondary);"></i>
+        <span>Máximo de intentos alcanzado. Recarga manualmente.</span>
+      `;
+      return;
+    }
+    
+    refreshIndicator.classList.add('show');
+    refreshAttempts++;
+    
+    // Verificar si el servidor está disponible
+    fetch('/api/v1/health/status', {
+      method: 'GET',
+      cache: 'no-cache',
+      timeout: 5000
+    })
+    .then(response => {
+      if (response.ok) {
+        refreshIndicator.innerHTML = `
+          <i class="fas fa-check-circle" style="color: var(--success-color);"></i>
+          <span>¡Servidor restaurado! Redirigiendo...</span>
+        `;
+        
+        setTimeout(() => {
+          window.location.href = document.referrer || '/';
+        }, 2000);
+      } else {
+        throw new Error('Server still down');
+      }
+    })
+    .catch(error => {
+      refreshIndicator.innerHTML = `
+        <i class="fas fa-sync-alt"></i>
+        <span>Intento ${refreshAttempts}/${maxAttempts} - Reintentando en 30s...</span>
+      `;
+      
+      setTimeout(() => {
+        refreshIndicator.classList.remove('show');
+      }, 3000);
+    });
+  }
+  
+  // Verificar cada 30 segundos después de 2 minutos iniciales
+  setTimeout(() => {
+    checkServerStatus();
+    setInterval(checkServerStatus, 30000);
+  }, 120000);
+}
+
+// Monitoreo del sistema en tiempo real
+function initializeSystemMonitoring() {
+  const statusItems = document.querySelectorAll('.status-item');
+  
+  function updateSystemStatus() {
+    fetch('/api/v1/system/status', {
+      method: 'GET',
+      cache: 'no-cache'
+    })
+    .then(response => response.json())
+    .then(data => {
+      statusItems.forEach((item, index) => {
+        const status = data.services[index];
+        if (status) {
+          item.className = `status-item ${status.status}`;
+          const description = item.querySelector('.status-description');
+          description.textContent = status.message;
+        }
+      });
+    })
+    .catch(error => {
+      console.log('Status update failed:', error);
+    });
+  }
+  
+  // Actualizar cada 60 segundos
+  setInterval(updateSystemStatus, 60000);
+}
+
+// Rastrear comportamiento del usuario en error 500
+function trackUserBehavior() {
+  let interactionCount = 0;
+  
+  // Track clicks en alternativas
+  document.querySelectorAll('.alternative-item').forEach(item => {
+    item.addEventListener('click', function() {
+      interactionCount++;
+      
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'click', {
+          'event_category': '500_page',
+          'event_label': 'alternative_click',
+          'value': this.href,
+          'custom_parameter': `interaction_${interactionCount}`
+        });
+      }
+    });
+  });
+  
+  // Track intentos de refresh
+  document.querySelector('.btn-500-primary').addEventListener('click', function() {
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'click', {
+        'event_category': '500_page',
+        'event_label': 'manual_refresh',
+        'value': 1
+      });
+    }
+  });
+  
+  // Track tiempo en página (crítico para errores 500)
+  const startTime = Date.now();
+  let timeTracked = false;
+  
+  window.addEventListener('beforeunload', function() {
+    if (!timeTracked) {
+      const timeSpent = Date.now() - startTime;
+      
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'timing_complete', {
+          'name': '500_page_time',
+          'value': timeSpent,
+          'custom_parameter': `interactions_${interactionCount}`
+        });
+      }
+      
+      timeTracked = true;
+    }
+  });
+  
+  // Track salida prematura (bounce en error 500)
+  setTimeout(() => {
+    if (!timeTracked) {
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'bounce', {
+          'event_category': '500_page',
+          'event_label': 'quick_exit',
+          'value': 1
+        });
+      }
+    }
+  }, 5000);
+}
+
+// Mostrar actualizaciones de estado
+function showStatusUpdates() {
+  const messages = [
+    "🔧 Nuestro equipo está trabajando activamente en la solución...",
+    "⚡ Verificando conectividad de la base de datos...",
+    "🛠️ Reiniciando servicios del servidor...",
+    "📊 Analizando logs del sistema...",
+    "🔄 Aplicando correcciones de emergencia...",
+    "✅ Progreso: Algunos servicios ya están operativos..."
+  ];
+  
+  let messageIndex = 0;
+  
+  function showNextMessage() {
+    if (messageIndex < messages.length) {
+      showNotification(messages[messageIndex], 'info', 8000);
+      messageIndex++;
+      
+      // Mostrar el siguiente mensaje en 30-45 segundos
+      setTimeout(showNextMessage, 30000 + Math.random() * 15000);
+    }
+  }
+  
+  // Empezar después de 10 segundos
+  setTimeout(showNextMessage, 10000);
+}
+
+// Sistema de notificaciones
+function showNotification(message, type = 'info', duration = 5000) {
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+  notification.style.cssText = 'top: 90px; right: 20px; z-index: 9999; min-width: 300px; max-width: 400px;';
+  notification.innerHTML = `
+    <div class="d-flex align-items-start">
+      <i class="fas fa-${type === 'info' ? 'info-circle' : 'check-circle'} me-2 mt-1"></i>
+      <div class="flex-grow-1">
+        ${message}
+      </div>
+      <button type="button" class="btn-close btn-close-sm ms-2" onclick="this.parentElement.parentElement.remove()"></button>
+    </div>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    if (notification.parentElement) {
+      notification.style.opacity = '0';
+      setTimeout(() => notification.remove(), 300);
+    }
+  }, duration);
+}
+
+// Reportar problema adicional
+function reportServerError() {
+  const modal = document.createElement('div');
+  modal.className = 'modal fade';
+  modal.innerHTML = `
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+            Reportar Problema del Servidor
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Ya estamos al tanto del problema.</strong> Este reporte adicional nos ayudará 
+            a entender mejor el impacto en los usuarios.
+          </div>
+          <form id="serverErrorForm">
+            <div class="mb-3">
+              <label for="userImpact" class="form-label">¿Cómo te está afectando este problema?</label>
+              <textarea class="form-control" id="userImpact" rows="3" 
+                        placeholder="Describe qué estabas intentando hacer cuando ocurrió el error..."></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="urgencyLevel" class="form-label">Nivel de urgencia:</label>
+              <select class="form-select" id="urgencyLevel">
+                <option value="low">Baja - Puedo esperar</option>
+                <option value="medium" selected>Media - Es importante pero no crítico</option>
+                <option value="high">Alta - Necesito acceso urgente</option>
+                <option value="critical">Crítica - Es una emergencia</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="contactInfo" class="form-label">Email de contacto (opcional):</label>
+              <input type="email" class="form-control" id="contactInfo" 
+                     placeholder="tu@email.com">
+              <small class="form-text text-muted">
+                Solo si quieres que te contactemos cuando el problema esté resuelto.
+              </small>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="submitServerErrorReport()">
+            <i class="fas fa-paper-plane me-1"></i>Enviar Reporte
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  const modalInstance = new bootstrap.Modal(modal);
+  modalInstance.show();
+  
+  modal.addEventListener('hidden.bs.modal', function() {
+    document.body.removeChild(modal);
+  });
+}
+
+// Enviar reporte de error del servidor
+function submitServerErrorReport() {
+  const userImpact = document.getElementById('userImpact').value;
+  const urgencyLevel = document.getElementById('urgencyLevel').value;
+  const contactInfo = document.getElementById('contactInfo').value;
+  
+  const reportData = {
+    type: 'server_error_impact',
+    user_impact: userImpact,
+    urgency_level: urgencyLevel,
+    contact_info: contactInfo,
+    error_time: new Date().toISOString(),
+    session_id: getSessionId(),
+    user_agent: navigator.userAgent,
+    page_url: window.location.href
+  };
+  
+  fetch('/api/v1/errors/user-impact-report', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(reportData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showNotification('Reporte enviado exitosamente. Te mantendremos informado.', 'success');
+      bootstrap.Modal.getInstance(document.querySelector('.modal')).hide();
+    } else {
+      showNotification('Error al enviar el reporte. El problema principal podría estar afectando esta función.', 'warning');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showNotification('No se pudo enviar el reporte debido al error del servidor.', 'warning');
+  });
+}
+
+// Accessibility improvements
+document.addEventListener('DOMContentLoaded', function() {
+  // Anunciar el error crítico a screen readers
+  const announcement = document.createElement('div');
+  announcement.setAttribute('aria-live', 'assertive');
+  announcement.setAttribute('aria-atomic', 'true');
+  announcement.className = 'sr-only';
+  announcement.textContent = 'Error crítico del servidor. Los servicios están temporalmente no disponibles. Nuestro equipo está trabajando para resolver el problema.';
+  document.body.appendChild(announcement);
+  
+  // Actualizar anuncio cada 2 minutos
+  setInterval(() => {
+    announcement.textContent = 'Actualización: Continuamos trabajando en la resolución del problema del servidor. Tiempo estimado de reparación actualizado.';
+  }, 120000);
+});
+
+// Performance monitoring específico para errores 500
+window.addEventListener('load', function() {
+  if ('performance' in window) {
+    const perfData = performance.getEntriesByType('navigation')[0];
+    const loadTime = perfData.loadEventEnd - perfData.loadEventStart;
+    
+    // Para errores 500, el tiempo de carga puede ser indicativo de problemas
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'timing_complete', {
+        'name': '500_page_load',
+        'value': loadTime,
+        'custom_parameter': loadTime > 3000 ? 'slow_load' : 'normal_load'
+      });
+    }
+  }
+});
+
+// Detectar conectividad de red
+window.addEventListener('online', function() {
+  showNotification('Conexión a internet restaurada. Verificando estado del servidor...', 'success');
+  setTimeout(() => {
+    location.reload();
+  }, 2000);
+});
+
+window.addEventListener('offline', function() {
+  showNotification('Sin conexión a internet. Verifica tu conectividad de red.', 'warning');
+});
+</script>
+{% endblock %}

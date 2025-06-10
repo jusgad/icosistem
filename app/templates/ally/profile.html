@@ -1,249 +1,1905 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil de Aliado Estratégico - Gestión de Perfil</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #1a237e;
+            --secondary-color: #3f51b5;
+            --accent-color: #00bcd4;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --info-color: #2196f3;
+            --light-bg: #f8f9fa;
+            --dark-text: #263238;
+            --border-radius: 15px;
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
 
-{% block title %}Perfil de Aliado{% endblock %}
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            color: var(--dark-text);
+        }
 
-{% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">Información Personal</h5>
+        .profile-header {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="hexagons" width="20" height="17.32" patternUnits="userSpaceOnUse"><polygon points="10,1 18.66,6 18.66,16 10,21 1.34,16 1.34,6" fill="none" stroke="white" stroke-width="0.5" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23hexagons)"/></svg>');
+        }
+
+        .profile-header .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .profile-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 5px solid white;
+            box-shadow: var(--card-shadow);
+            object-fit: cover;
+            background: var(--gradient-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            font-weight: bold;
+        }
+
+        .profile-info {
+            margin-left: 2rem;
+        }
+
+        .profile-badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            margin-right: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-stats {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            color: var(--dark-text);
+            box-shadow: var(--card-shadow);
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .profile-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .profile-section:hover {
+            box-shadow: var(--hover-shadow);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--dark-text);
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title i {
+            margin-right: 0.75rem;
+            color: var(--secondary-color);
+        }
+
+        .nav-tabs-custom {
+            border-bottom: 2px solid #f0f0f0;
+            margin-bottom: 2rem;
+        }
+
+        .nav-tabs-custom .nav-link {
+            border: none;
+            border-radius: 0;
+            color: #666;
+            font-weight: 600;
+            padding: 1rem 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs-custom .nav-link:hover {
+            color: var(--secondary-color);
+            border-color: transparent;
+            background: none;
+        }
+
+        .nav-tabs-custom .nav-link.active {
+            color: var(--secondary-color);
+            background: none;
+            border-bottom: 3px solid var(--secondary-color);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .info-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--gradient-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-right: 1rem;
+        }
+
+        .info-content h6 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+
+        .info-content p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .investment-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .investment-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .investment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .company-logo-small {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--gradient-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+
+        .investment-amount {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .investment-roi {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .investment-roi.positive {
+            color: var(--success-color);
+        }
+
+        .investment-roi.negative {
+            color: var(--danger-color);
+        }
+
+        .skill-item {
+            display: inline-block;
+            background: var(--gradient-accent);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin: 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .skill-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+        }
+
+        .experience-item {
+            border-left: 3px solid var(--secondary-color);
+            padding-left: 1.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .experience-item::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 0;
+            width: 12px;
+            height: 12px;
+            background: var(--secondary-color);
+            border-radius: 50%;
+        }
+
+        .experience-period {
+            font-size: 0.85rem;
+            color: var(--secondary-color);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .experience-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--dark-text);
+            margin: 0.5rem 0;
+        }
+
+        .experience-company {
+            font-size: 1rem;
+            color: var(--accent-color);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .experience-description {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .certification-item {
+            background: white;
+            border: 2px solid #f0f0f0;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .certification-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--gradient-accent);
+        }
+
+        .certification-item:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .certification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .certification-badge {
+            background: var(--gradient-accent);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .preference-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .preference-item:hover {
+            border-color: var(--accent-color);
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .preference-range {
+            margin-top: 1rem;
+        }
+
+        .preference-range input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+        }
+
+        .preference-range input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+        }
+
+        .btn-custom {
+            border-radius: 25px;
+            padding: 0.7rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary-custom {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-accent-custom {
+            background: var(--gradient-accent);
+            color: white;
+        }
+
+        .btn-accent-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-outline-custom {
+            border: 2px solid var(--secondary-color);
+            color: var(--secondary-color);
+            background: transparent;
+        }
+
+        .btn-outline-custom:hover {
+            background: var(--secondary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .document-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .document-item:hover {
+            border-color: var(--accent-color);
+            background: white;
+        }
+
+        .document-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .document-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--gradient-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-right: 1rem;
+        }
+
+        .notification-setting {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .form-switch .form-check-input {
+            width: 3rem;
+            height: 1.5rem;
+        }
+
+        .form-switch .form-check-input:checked {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: var(--border-radius);
+            padding: 3rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent-color);
+            background: rgba(79, 172, 254, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--accent-color);
+            background: rgba(79, 172, 254, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .profile-header {
+                padding: 1rem 0;
+            }
+            
+            .profile-avatar {
+                width: 100px;
+                height: 100px;
+                font-size: 2rem;
+            }
+            
+            .profile-info {
+                margin-left: 1rem;
+                margin-top: 1rem;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-item {
+                padding: 0.5rem;
+            }
+            
+            .stat-value {
+                font-size: 1.5rem;
+            }
+            
+            .nav-tabs-custom .nav-link {
+                padding: 0.75rem 1rem;
+            }
+        }
+
+        .verification-badge {
+            display: inline-flex;
+            align-items: center;
+            background: var(--success-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .verification-badge i {
+            margin-right: 0.25rem;
+        }
+
+        .investment-timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .investment-timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--gradient-accent);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2.75rem;
+            top: 1.5rem;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px var(--accent-color);
+        }
+
+        .network-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .network-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .network-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--gradient-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header del Perfil -->
+    <div class="profile-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <div class="d-flex align-items-center">
+                        <div class="profile-avatar" id="profileAvatar">AH</div>
+                        <div class="profile-info">
+                            <h1 class="mb-2">
+                                Alexander Hamilton
+                                <span class="verification-badge">
+                                    <i class="fas fa-check"></i>Verificado
+                                </span>
+                            </h1>
+                            <div class="mb-3">
+                                <span class="profile-badge">
+                                    <i class="fas fa-briefcase me-2"></i>Inversor Ángel
+                                </span>
+                                <span class="profile-badge">
+                                    <i class="fas fa-graduation-cap me-2"></i>MBA Stanford
+                                </span>
+                                <span class="profile-badge">
+                                    <i class="fas fa-map-marker-alt me-2"></i>Nueva York, USA
+                                </span>
+                            </div>
+                            <p class="mb-0 lead">
+                                Inversor estratégico especializado en tecnología con 15+ años de experiencia. 
+                                Fundador y ex-CEO de TechVentures Corp.
+                            </p>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="text-center mb-3">
-                        <img src="{{ ally.profile_image or url_for('static', filename='images/default-profile.png') }}" 
-                             alt="Foto de perfil" class="img-fluid rounded-circle profile-image">
-                        <div class="mt-2">
-                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#changePhotoModal">
-                                Cambiar foto
+                <div class="col-lg-4">
+                    <div class="profile-stats">
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <div class="stat-value">24</div>
+                                    <div class="stat-label">Inversiones</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <div class="stat-value">€12M</div>
+                                    <div class="stat-label">Invertido</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <div class="stat-value">47%</div>
+                                    <div class="stat-label">ROI Avg</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Navegación por Pestañas -->
+        <ul class="nav nav-tabs nav-tabs-custom" id="profileTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                    <i class="fas fa-user me-2"></i>Información General
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="investments-tab" data-bs-toggle="tab" data-bs-target="#investments" type="button" role="tab">
+                    <i class="fas fa-chart-line me-2"></i>Portfolio de Inversiones
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="experience-tab" data-bs-toggle="tab" data-bs-target="#experience" type="button" role="tab">
+                    <i class="fas fa-briefcase me-2"></i>Experiencia Profesional
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="preferences-tab" data-bs-toggle="tab" data-bs-target="#preferences" type="button" role="tab">
+                    <i class="fas fa-cog me-2"></i>Preferencias
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab">
+                    <i class="fas fa-file-alt me-2"></i>Documentos
+                </button>
+            </li>
+        </ul>
+
+        <!-- Contenido de las Pestañas -->
+        <div class="tab-content" id="profileTabsContent">
+            <!-- Información General -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <!-- Información Personal -->
+                        <div class="profile-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <i class="fas fa-id-card"></i>Información Personal
+                                </h3>
+                                <button class="btn btn-outline-custom btn-sm" onclick="editPersonalInfo()">
+                                    <i class="fas fa-edit me-2"></i>Editar
+                                </button>
+                            </div>
+                            
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-envelope"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <h6>Email</h6>
+                                        <p>alexander.hamilton@techventures.com</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-phone"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <h6>Teléfono</h6>
+                                        <p>+1 (555) 123-4567</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-calendar"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <h6>Fecha de Nacimiento</h6>
+                                        <p>15 de Marzo, 1978</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-linkedin"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <h6>LinkedIn</h6>
+                                        <p>linkedin.com/in/alexander-hamilton</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-globe"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <h6>Sitio Web</h6>
+                                        <p>www.alexanderhamilton.com</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-building"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <h6>Empresa Actual</h6>
+                                        <p>TechVentures Corp - Founder & CEO</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Especialización -->
+                        <div class="profile-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <i class="fas fa-star"></i>Áreas de Especialización
+                                </h3>
+                                <button class="btn btn-outline-custom btn-sm" onclick="editSkills()">
+                                    <i class="fas fa-edit me-2"></i>Editar
+                                </button>
+                            </div>
+                            
+                            <div id="skillsList">
+                                <span class="skill-item">Fintech</span>
+                                <span class="skill-item">SaaS</span>
+                                <span class="skill-item">Inteligencia Artificial</span>
+                                <span class="skill-item">E-commerce</span>
+                                <span class="skill-item">Blockchain</span>
+                                <span class="skill-item">Ciberseguridad</span>
+                                <span class="skill-item">Estrategia Empresarial</span>
+                                <span class="skill-item">Venture Capital</span>
+                                <span class="skill-item">Due Diligence</span>
+                                <span class="skill-item">Escalabilidad</span>
+                                <span class="skill-item">M&A</span>
+                                <span class="skill-item">IPO Strategy</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <!-- Resumen de Inversiones -->
+                        <div class="profile-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <i class="fas fa-chart-pie"></i>Resumen Portfolio
+                                </h3>
+                            </div>
+                            
+                            <canvas id="portfolioSummaryChart" width="300" height="200"></canvas>
+                            
+                            <div class="mt-4">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Total Invertido:</span>
+                                    <strong>€12.4M</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Valor Actual:</span>
+                                    <strong class="text-success">€18.2M</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>ROI Total:</span>
+                                    <strong class="text-success">+47%</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Empresas Activas:</span>
+                                    <strong>24</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Network -->
+                        <div class="profile-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <i class="fas fa-users"></i>Red de Contactos
+                                </h3>
+                                <button class="btn btn-outline-custom btn-sm" onclick="viewNetwork()">
+                                    <i class="fas fa-eye me-2"></i>Ver Todo
+                                </button>
+                            </div>
+                            
+                            <div id="networkList">
+                                <div class="network-item">
+                                    <div class="network-avatar">JD</div>
+                                    <div>
+                                        <h6 class="mb-0">John Doe</h6>
+                                        <small class="text-muted">CEO @ StartupAI</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="network-item">
+                                    <div class="network-avatar">SM</div>
+                                    <div>
+                                        <h6 class="mb-0">Sarah Miller</h6>
+                                        <small class="text-muted">CTO @ BlockchainCorp</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="network-item">
+                                    <div class="network-avatar">MJ</div>
+                                    <div>
+                                        <h6 class="mb-0">Mike Johnson</h6>
+                                        <small class="text-muted">Founder @ EcoTech</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mt-3">
+                                <small class="text-muted">+127 contactos más</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Portfolio de Inversiones -->
+            <div class="tab-pane fade" id="investments" role="tabpanel">
+                <div class="profile-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-chart-line"></i>Historial de Inversiones
+                        </h3>
+                        <div class="d-flex gap-2">
+                            <select class="form-select form-select-sm" style="width: auto;" onchange="filterInvestments(this.value)">
+                                <option value="all">Todas</option>
+                                <option value="active">Activas</option>
+                                <option value="exited">Exits</option>
+                                <option value="written-off">Write-offs</option>
+                            </select>
+                            <button class="btn btn-accent-custom btn-sm" onclick="exportInvestments()">
+                                <i class="fas fa-download me-2"></i>Exportar
                             </button>
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <h5>{{ ally.user.full_name }}</h5>
-                        <p class="text-muted">{{ ally.title or 'Aliado' }}</p>
-                    </div>
-                    
-                    <div class="personal-info">
-                        <p><i class="bi bi-envelope"></i> {{ ally.user.email }}</p>
-                        <p><i class="bi bi-telephone"></i> {{ ally.phone or 'No registrado' }}</p>
-                        <p><i class="bi bi-geo-alt"></i> {{ ally.location or 'No registrada' }}</p>
+                    <div class="investment-timeline" id="investmentTimeline">
+                        <!-- Timeline items will be loaded here -->
                     </div>
                 </div>
             </div>
-            
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h5 class="card-title">Estadísticas</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Emprendedores asignados:</span>
-                        <span class="badge bg-primary">{{ ally.entrepreneurs|length }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Horas registradas:</span>
-                        <span class="badge bg-success">{{ total_hours }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Reuniones realizadas:</span>
-                        <span class="badge bg-info">{{ meetings_count }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title">Perfil Profesional</h5>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                        <i class="bi bi-pencil"></i> Editar
-                    </button>
-                </div>
-                <div class="card-body">
-                    <h6>Biografía</h6>
-                    <p>{{ ally.bio or 'No hay biografía disponible.' }}</p>
-                    
-                    <hr>
-                    
-                    <h6>Experiencia</h6>
-                    <ul class="list-unstyled">
-                        {% for experience in ally.experiences %}
-                        <li class="mb-2">
-                            <div><strong>{{ experience.position }}</strong> en {{ experience.company }}</div>
-                            <div class="text-muted">{{ experience.start_date.strftime('%b %Y') }} - 
-                                {{ experience.end_date.strftime('%b %Y') if experience.end_date else 'Presente' }}</div>
-                            <div>{{ experience.description }}</div>
-                        </li>
-                        {% else %}
-                        <li>No hay experiencia registrada.</li>
-                        {% endfor %}
-                    </ul>
-                    
-                    <hr>
-                    
-                    <h6>Habilidades</h6>
-                    <div class="skills-container">
-                        {% for skill in ally.skills %}
-                        <span class="badge bg-secondary me-1 mb-1">{{ skill.name }}</span>
-                        {% else %}
-                        <p>No hay habilidades registradas.</p>
-                        {% endfor %}
-                    </div>
-                    
-                    <hr>
-                    
-                    <h6>Áreas de especialización</h6>
-                    <div class="specialization-container">
-                        {% for specialization in ally.specializations %}
-                        <span class="badge bg-info me-1 mb-1">{{ specialization.name }}</span>
-                        {% else %}
-                        <p>No hay áreas de especialización registradas.</p>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h5 class="card-title">Disponibilidad</h5>
-                </div>
-                <div class="card-body">
-                    <div id="availabilityCalendar"></div>
-                </div>
-                <div class="card-footer">
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editAvailabilityModal">
-                        Editar disponibilidad
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Modal para cambiar foto -->
-<div class="modal fade" id="changePhotoModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Cambiar foto de perfil</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="POST" action="{{ url_for('ally.profile.update_photo') }}" enctype="multipart/form-data">
-                <div class="modal-body">
-                    {{ form.csrf_token }}
-                    <div class="mb-3">
-                        <label for="profilePhoto" class="form-label">Seleccionar nueva foto</label>
-                        <input type="file" class="form-control" id="profilePhoto" name="profile_photo" accept="image/*" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para editar perfil -->
-<div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Editar perfil profesional</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="POST" action="{{ url_for('ally.profile.update') }}">
-                <div class="modal-body">
-                    {{ profile_form.csrf_token }}
-                    
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Título profesional</label>
-                        {{ profile_form.title(class="form-control", placeholder="Ej: Consultor de Negocios") }}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="bio" class="form-label">Biografía</label>
-                        {{ profile_form.bio(class="form-control", rows=4) }}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="phone" class="form-label">Teléfono</label>
-                        {{ profile_form.phone(class="form-control") }}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="location" class="form-label">Ubicación</label>
-                        {{ profile_form.location(class="form-control") }}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Habilidades</label>
-                        <div class="skill-selection">
-                            {{ profile_form.skills(class="form-select", multiple=True) }}
-                            <small class="text-muted">Mantén presionado Ctrl (o Cmd en Mac) para seleccionar múltiples opciones</small>
+            <!-- Experiencia Profesional -->
+            <div class="tab-pane fade" id="experience" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="profile-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <i class="fas fa-briefcase"></i>Experiencia Profesional
+                                </h3>
+                                <button class="btn btn-outline-custom btn-sm" onclick="addExperience()">
+                                    <i class="fas fa-plus me-2"></i>Agregar
+                                </button>
+                            </div>
+                            
+                            <div id="experienceList">
+                                <div class="experience-item">
+                                    <div class="experience-period">2015 - Presente</div>
+                                    <div class="experience-title">Founder & CEO</div>
+                                    <div class="experience-company">TechVentures Corp</div>
+                                    <div class="experience-description">
+                                        Fundé y dirijo un fondo de venture capital especializado en startups tecnológicas. 
+                                        Bajo mi liderazgo, hemos invertido en más de 50 empresas con un ROI promedio del 47%.
+                                        Responsable de estrategia de inversión, due diligence y mentoría post-inversión.
+                                    </div>
+                                </div>
+                                
+                                <div class="experience-item">
+                                    <div class="experience-period">2010 - 2015</div>
+                                    <div class="experience-title">Senior Partner</div>
+                                    <div class="experience-company">Goldman Sachs - Investment Banking</div>
+                                    <div class="experience-description">
+                                        Lideré el equipo de tecnología en operaciones de M&A e IPOs. Participé en transacciones
+                                        por valor superior a $2B, incluyendo el IPO de TechStart y la adquisición de CloudCorp.
+                                    </div>
+                                </div>
+                                
+                                <div class="experience-item">
+                                    <div class="experience-period">2005 - 2010</div>
+                                    <div class="experience-title">Principal</div>
+                                    <div class="experience-company">McKinsey & Company</div>
+                                    <div class="experience-description">
+                                        Consultor estratégico especializado en transformación digital y estrategia de crecimiento
+                                        para empresas Fortune 500. Lideré proyectos de optimización operacional y digital transformation.
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label class="form-label">Áreas de especialización</label>
-                        <div class="specialization-selection">
-                            {{ profile_form.specializations(class="form-select", multiple=True) }}
-                            <small class="text-muted">Mantén presionado Ctrl (o Cmd en Mac) para seleccionar múltiples opciones</small>
+                    <div class="col-lg-4">
+                        <div class="profile-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <i class="fas fa-graduation-cap"></i>Educación & Certificaciones
+                                </h3>
+                            </div>
+                            
+                            <div id="certificationsList">
+                                <div class="certification-item">
+                                    <div class="certification-header">
+                                        <div>
+                                            <h6 class="mb-1">MBA</h6>
+                                            <p class="mb-0 text-muted">Stanford Graduate School of Business</p>
+                                        </div>
+                                        <span class="certification-badge">2005</span>
+                                    </div>
+                                    <small class="text-muted">Concentración en Finanzas y Emprendimiento</small>
+                                </div>
+                                
+                                <div class="certification-item">
+                                    <div class="certification-header">
+                                        <div>
+                                            <h6 class="mb-1">B.S. Computer Science</h6>
+                                            <p class="mb-0 text-muted">MIT</p>
+                                        </div>
+                                        <span class="certification-badge">2003</span>
+                                    </div>
+                                    <small class="text-muted">Magna Cum Laude</small>
+                                </div>
+                                
+                                <div class="certification-item">
+                                    <div class="certification-header">
+                                        <div>
+                                            <h6 class="mb-1">CFA Charter</h6>
+                                            <p class="mb-0 text-muted">CFA Institute</p>
+                                        </div>
+                                        <span class="certification-badge">2008</span>
+                                    </div>
+                                    <small class="text-muted">Chartered Financial Analyst</small>
+                                </div>
+                                
+                                <div class="certification-item">
+                                    <div class="certification-header">
+                                        <div>
+                                            <h6 class="mb-1">Series 7 & 63</h6>
+                                            <p class="mb-0 text-muted">FINRA</p>
+                                        </div>
+                                        <span class="certification-badge">2006</span>
+                                    </div>
+                                    <small class="text-muted">Securities Licenses</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para editar disponibilidad -->
-<div class="modal fade" id="editAvailabilityModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Editar disponibilidad</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="POST" action="{{ url_for('ally.profile.update_availability') }}">
-                <div class="modal-body">
-                    {{ availability_form.csrf_token }}
+
+            <!-- Preferencias -->
+            <div class="tab-pane fade" id="preferences" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="profile-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <i class="fas fa-target"></i>Preferencias de Inversión
+                                </h3>
+                                <button class="btn btn-primary-custom btn-sm" onclick="savePreferences()">
+                                    <i class="fas fa-save me-2"></i>Guardar Cambios
+                                </button>
+                            </div>
+                            
+                            <div class="preference-item">
+                                <h6>Rango de Inversión</h6>
+                                <p class="text-muted">Monto típico por inversión</p>
+                                <div class="preference-range">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>€50K</span>
+                                        <span id="investmentRangeValue">€500K</span>
+                                        <span>€2M</span>
+                                    </div>
+                                    <input type="range" class="form-range" id="investmentRange" 
+                                           min="50000" max="2000000" value="500000" step="50000"
+                                           oninput="updateRangeValue('investmentRange', 'investmentRangeValue')">
+                                </div>
+                            </div>
+                            
+                            <div class="preference-item">
+                                <h6>Etapas Preferidas</h6>
+                                <p class="text-muted">Etapas de empresas en las que prefieres invertir</p>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="stageSeed" checked>
+                                            <label class="form-check-label" for="stageSeed">Seed</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="stageSeriesA" checked>
+                                            <label class="form-check-label" for="stageSeriesA">Serie A</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="stageSeriesB">
+                                            <label class="form-check-label" for="stageSeriesB">Serie B</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="stageGrowth">
+                                            <label class="form-check-label" for="stageGrowth">Growth</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="preference-item">
+                                <h6>Sectores de Interés</h6>
+                                <p class="text-muted">Industrias en las que tienes experiencia</p>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sectorFintech" checked>
+                                            <label class="form-check-label" for="sectorFintech">Fintech</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sectorSaaS" checked>
+                                            <label class="form-check-label" for="sectorSaaS">SaaS</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sectorAI" checked>
+                                            <label class="form-check-label" for="sectorAI">IA & ML</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sectorEcommerce">
+                                            <label class="form-check-label" for="sectorEcommerce">E-commerce</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sectorBlockchain" checked>
+                                            <label class="form-check-label" for="sectorBlockchain">Blockchain</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sectorHealthtech">
+                                            <label class="form-check-label" for="sectorHealthtech">Healthtech</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sectorEdtech">
+                                            <label class="form-check-label" for="sectorEdtech">Edtech</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sectorCybersecurity">
+                                            <label class="form-check-label" for="sectorCybersecurity">Ciberseguridad</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sectorIoT">
+                                            <label class="form-check-label" for="sectorIoT">IoT</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="preference-item">
+                                <h6>Geografía</h6>
+                                <p class="text-muted">Regiones geográficas de inversión</p>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="geoNorthAmerica" checked>
+                                            <label class="form-check-label" for="geoNorthAmerica">Norte América</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="geoEurope" checked>
+                                            <label class="form-check-label" for="geoEurope">Europa</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="geoAsia">
+                                            <label class="form-check-label" for="geoAsia">Asia</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="geoLatAm">
+                                            <label class="form-check-label" for="geoLatAm">América Latina</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     
-                    <div id="availabilityEditor">
-                        <!-- Aquí iría la interfaz para seleccionar días y horas disponibles -->
-                        <!-- Se implementaría con checkboxes o un componente personalizado -->
-                        {{ availability_form.availability_data() }}
+                    <div class="col-lg-4">
+                        <div class="profile-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <i class="fas fa-bell"></i>Notificaciones
+                                </h3>
+                            </div>
+                            
+                            <div class="notification-setting">
+                                <div>
+                                    <h6 class="mb-1">Nuevas Oportunidades</h6>
+                                    <small class="text-muted">Recibir propuestas de inversión</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="notifOpportunities" checked>
+                                </div>
+                            </div>
+                            
+                            <div class="notification-setting">
+                                <div>
+                                    <h6 class="mb-1">Updates del Portfolio</h6>
+                                    <small class="text-muted">Actualizaciones de empresas</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="notifPortfolio" checked>
+                                </div>
+                            </div>
+                            
+                            <div class="notification-setting">
+                                <div>
+                                    <h6 class="mb-1">Reportes Financieros</h6>
+                                    <small class="text-muted">Reportes mensuales/trimestrales</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="notifReports" checked>
+                                </div>
+                            </div>
+                            
+                            <div class="notification-setting">
+                                <div>
+                                    <h6 class="mb-1">Eventos & Webinars</h6>
+                                    <small class="text-muted">Invitaciones a eventos</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="notifEvents">
+                                </div>
+                            </div>
+                            
+                            <div class="notification-setting">
+                                <div>
+                                    <h6 class="mb-1">Newsletter Semanal</h6>
+                                    <small class="text-muted">Resumen semanal del mercado</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="notifNewsletter" checked>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="profile-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <i class="fas fa-shield-alt"></i>Seguridad
+                                </h3>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-custom" onclick="changePassword()">
+                                    <i class="fas fa-key me-2"></i>Cambiar Contraseña
+                                </button>
+                                <button class="btn btn-outline-custom" onclick="setup2FA()">
+                                    <i class="fas fa-mobile-alt me-2"></i>Configurar 2FA
+                                </button>
+                                <button class="btn btn-outline-custom" onclick="downloadData()">
+                                    <i class="fas fa-download me-2"></i>Descargar Datos
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar disponibilidad</button>
+            </div>
+
+            <!-- Documentos -->
+            <div class="tab-pane fade" id="documents" role="tabpanel">
+                <div class="profile-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-file-alt"></i>Documentos y Certificaciones
+                        </h3>
+                        <button class="btn btn-accent-custom btn-sm" onclick="uploadDocument()">
+                            <i class="fas fa-upload me-2"></i>Subir Documento
+                        </button>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="upload-area" onclick="triggerFileUpload()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <h5>Arrastra archivos aquí o haz clic para subir</h5>
+                                <p class="text-muted">Formatos soportados: PDF, DOC, DOCX, JPG, PNG (Max 10MB)</p>
+                                <input type="file" id="documentUpload" class="d-none" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="documentsList">
+                        <div class="document-item">
+                            <div class="document-info">
+                                <div class="document-icon">
+                                    <i class="fas fa-file-pdf"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Certificación CFA</h6>
+                                    <small class="text-muted">Subido el 15 Jun 2025 • 2.3 MB</small>
+                                </div>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="viewDocument('cfa-cert.pdf')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="downloadDocument('cfa-cert.pdf')">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteDocument('cfa-cert.pdf')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="document-item">
+                            <div class="document-info">
+                                <div class="document-icon">
+                                    <i class="fas fa-file-word"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">CV Actualizado</h6>
+                                    <small class="text-muted">Subido el 10 Jun 2025 • 1.8 MB</small>
+                                </div>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="viewDocument('cv-updated.docx')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="downloadDocument('cv-updated.docx')">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteDocument('cv-updated.docx')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="document-item">
+                            <div class="document-info">
+                                <div class="document-icon">
+                                    <i class="fas fa-file-image"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Diploma MBA Stanford</h6>
+                                    <small class="text-muted">Subido el 5 Jun 2025 • 4.1 MB</small>
+                                </div>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="viewDocument('mba-diploma.jpg')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="downloadDocument('mba-diploma.jpg')">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteDocument('mba-diploma.jpg')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="document-item">
+                            <div class="document-info">
+                                <div class="document-icon">
+                                    <i class="fas fa-file-pdf"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Referencias Profesionales</h6>
+                                    <small class="text-muted">Subido el 1 Jun 2025 • 1.2 MB</small>
+                                </div>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="viewDocument('references.pdf')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="downloadDocument('references.pdf')">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteDocument('references.pdf')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
-</div>
-{% endblock %}
 
-{% block scripts %}
-{{ super() }}
-<script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
-<script>
-    $(document).ready(function() {
-        // Inicializar calendario de disponibilidad
-        initAvailabilityCalendar('availabilityCalendar', {{ availability_json|safe }});
-        
-        // Inicializar editor de disponibilidad
-        initAvailabilityEditor('availabilityEditor', {{ availability_json|safe }});
-    });
-</script>
-{% endblock %}
+    <!-- Modal Editar Perfil -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Información Personal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editProfileForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="firstName" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="firstName" value="Alexander">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="lastName" class="form-label">Apellido</label>
+                                <input type="text" class="form-control" id="lastName" value="Hamilton">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" value="alexander.hamilton@techventures.com">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" id="phone" value="+1 (555) 123-4567">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="linkedinUrl" class="form-label">LinkedIn</label>
+                                <input type="url" class="form-control" id="linkedinUrl" value="linkedin.com/in/alexander-hamilton">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="websiteUrl" class="form-label">Sitio Web</label>
+                                <input type="url" class="form-control" id="websiteUrl" value="www.alexanderhamilton.com">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bio" class="form-label">Biografía</label>
+                            <textarea class="form-control" id="bio" rows="4">Inversor estratégico especializado en tecnología con 15+ años de experiencia. Fundador y ex-CEO de TechVentures Corp.</textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary-custom" onclick="savePersonalInfo()">
+                        <span class="loading-spinner d-none me-2"></span>
+                        <i class="fas fa-save me-2"></i>Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Estado global de la aplicación
+        let profileData = {};
+        let investments = [];
+        let documents = [];
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProfileData();
+            loadInvestments();
+            initializeCharts();
+            setupEventListeners();
+        });
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            document.getElementById('documentUpload').addEventListener('change', handleFileUpload);
+            
+            // Drag and drop para documentos
+            const uploadArea = document.querySelector('.upload-area');
+            
+            uploadArea.addEventListener('dragenter', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleDrop(e);
+            });
+        }
+
+        // Cargar datos del perfil
+        function loadProfileData() {
+            // Datos simulados - en producción vendrían de la API
+            profileData = {
+                firstName: 'Alexander',
+                lastName: 'Hamilton',
+                email: 'alexander.hamilton@techventures.com',
+                phone: '+1 (555) 123-4567',
+                linkedin: 'linkedin.com/in/alexander-hamilton',
+                website: 'www.alexanderhamilton.com',
+                bio: 'Inversor estratégico especializado en tecnología con 15+ años de experiencia.',
+                totalInvested: 12400000,
+                currentValue: 18200000,
+                activeCompanies: 24
+            };
+        }
+
+        // Cargar inversiones
+        function loadInvestments() {
+            investments = [
+                {
+                    id: 1,
+                    date: '2025-05-15',
+                    company: 'TechStart AI',
+                    amount: 500000,
+                    equity: 12,
+                    currentValue: 750000,
+                    status: 'active',
+                    sector: 'AI/ML'
+                },
+                {
+                    id: 2,
+                    date: '2025-03-22',
+                    company: 'FinanceFlow',
+                    amount: 320000,
+                    equity: 8,
+                    currentValue: 445000,
+                    status: 'active',
+                    sector: 'Fintech'
+                },
+                {
+                    id: 3,
+                    date: '2025-01-10',
+                    company: 'EcoSolutions',
+                    amount: 180000,
+                    equity: 15,
+                    currentValue: 195000,
+                    status: 'active',
+                    sector: 'CleanTech'
+                },
+                {
+                    id: 4,
+                    date: '2024-11-05',
+                    company: 'BlockTrade',
+                    amount: 600000,
+                    equity: 10,
+                    currentValue: 1200000,
+                    status: 'exited',
+                    sector: 'Blockchain'
+                },
+                {
+                    id: 5,
+                    date: '2024-09-18',
+                    company: 'HealthTech Pro',
+                    amount: 280000,
+                    equity: 18,
+                    currentValue: 265000,
+                    status: 'active',
+                    sector: 'Healthtech'
+                }
+            ];
+
+            renderInvestmentTimeline();
+        }
+
+        // Renderizar timeline de inversiones
+        function renderInvestmentTimeline() {
+            const timeline = document.getElementById('investmentTimeline');
+            timeline.innerHTML = '';
+
+            investments.forEach(investment => {
+                const roi = ((investment.currentValue - investment.amount) / investment.amount * 100).toFixed(1);
+                const timelineItem = document.createElement('div');
+                timelineItem.className = 'timeline-item';
+                
+                timelineItem.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="mb-1">${investment.company}</h6>
+                            <small class="text-muted">${formatDate(investment.date)} • ${investment.sector}</small>
+                        </div>
+                        <span class="badge bg-${getStatusColor(investment.status)}">${getStatusText(investment.status)}</span>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <small class="text-muted">Inversión</small>
+                            <div class="fw-bold">€${formatNumber(investment.amount)}</div>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Valor Actual</small>
+                            <div class="fw-bold">€${formatNumber(investment.currentValue)}</div>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">Participación</small>
+                            <div class="fw-bold">${investment.equity}%</div>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">ROI</small>
+                            <div class="fw-bold ${roi >= 0 ? 'text-success' : 'text-danger'}">${roi >= 0 ? '+' : ''}${roi}%</div>
+                        </div>
+                    </div>
+                `;
+                
+                timeline.appendChild(timelineItem);
+            });
+        }
+
+        // Inicializar gráficos
+        function initializeCharts() {
+            initPortfolioSummaryChart();
+        }
+
+        // Gráfico resumen del portfolio
+        function initPortfolioSummaryChart() {
+            const ctx = document.getElementById('portfolioSummaryChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Tecnología', 'Fintech', 'Healthtech', 'CleanTech', 'Blockchain'],
+                    datasets: [{
+                        data: [35, 25, 20, 15, 5],
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#4facfe',
+                            '#00f2fe',
+                            '#f093fb'
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Funciones de edición
+        function editPersonalInfo() {
+            const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+            modal.show();
+        }
+
+        function savePersonalInfo() {
+            const btn = event.target;
+            const spinner = btn.querySelector('.loading-spinner');
+            const icon = btn.querySelector('i');
+            
+            // Mostrar loading
+            spinner.classList.remove('d-none');
+            icon.classList.add('d-none');
+            btn.disabled = true;
+            
+            // Simular guardado
+            setTimeout(() => {
+                showNotification('Información actualizada correctamente', 'success');
+                
+                // Ocultar loading
+                spinner.classList.add('d-none');
+                icon.classList.remove('d-none');
+                btn.disabled = false;
+                
+                // Cerrar modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
+                modal.hide();
+            }, 2000);
+        }
+
+        function editSkills() {
+            showNotification('Abriendo editor de habilidades...', 'info');
+        }
+
+        function addExperience() {
+            showNotification('Abriendo formulario de experiencia...', 'info');
+        }
+
+        function savePreferences() {
+            showNotification('Guardando preferencias...', 'info');
+            
+            setTimeout(() => {
+                showNotification('Preferencias guardadas correctamente', 'success');
+            }, 1500);
+        }
+
+        // Funciones de range sliders
+        function updateRangeValue(rangeId, valueId) {
+            const range = document.getElementById(rangeId);
+            const valueElement = document.getElementById(valueId);
+            const value = parseInt(range.value);
+            valueElement.textContent = '€' + formatNumber(value);
+        }
+
+        // Funciones de documentos
+        function triggerFileUpload() {
+            document.getElementById('documentUpload').click();
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        }
+
+        function handleFileUpload(e) {
+            const files = e.target.files;
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (validateFile(file)) {
+                    uploadFile(file);
+                }
+            });
+        }
+
+        function validateFile(file) {
+            const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png'];
+            const maxSize = 10 * 1024 * 1024; // 10MB
+
+            if (!allowedTypes.includes(file.type)) {
+                showNotification('Tipo de archivo no soportado: ' + file.name, 'danger');
+                return false;
+            }
+
+            if (file.size > maxSize) {
+                showNotification('Archivo demasiado grande: ' + file.name, 'danger');
+                return false;
+            }
+
+            return true;
+        }
+
+        function uploadFile(file) {
+            showNotification(`Subiendo ${file.name}...`, 'info');
+            
+            // Simular upload
+            setTimeout(() => {
+                showNotification(`${file.name} subido correctamente`, 'success');
+                // Aquí se agregaría el archivo a la lista
+            }, 2000);
+        }
+
+        function viewDocument(filename) {
+            showNotification(`Abriendo ${filename}...`, 'info');
+        }
+
+        function downloadDocument(filename) {
+            showNotification(`Descargando ${filename}...`, 'info');
+        }
+
+        function deleteDocument(filename) {
+            if (confirm(`¿Estás seguro de que quieres eliminar ${filename}?`)) {
+                showNotification(`${filename} eliminado`, 'warning');
+            }
+        }
+
+        // Funciones de seguridad
+        function changePassword() {
+            showNotification('Abriendo configuración de contraseña...', 'info');
+        }
+
+        function setup2FA() {
+            showNotification('Configurando autenticación de dos factores...', 'info');
+        }
+
+        function downloadData() {
+            showNotification('Preparando descarga de datos...', 'info');
+        }
+
+        // Otras funciones
+        function filterInvestments(filter) {
+            // Implementar filtrado de inversiones
+            console.log('Filtrando por:', filter);
+        }
+
+        function exportInvestments() {
+            showNotification('Exportando datos de inversiones...', 'info');
+        }
+
+        function viewNetwork() {
+            showNotification('Cargando red de contactos completa...', 'info');
+        }
+
+        // Funciones auxiliares
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+
+        function formatNumber(number) {
+            if (number >= 1000000) {
+                return (number / 1000000).toFixed(1) + 'M';
+            } else if (number >= 1000) {
+                return (number / 1000).toFixed(0) + 'K';
+            }
+            return number.toLocaleString();
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'active': 'success',
+                'exited': 'info',
+                'written-off': 'danger'
+            };
+            return colors[status] || 'secondary';
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                'active': 'Activa',
+                'exited': 'Exit',
+                'written-off': 'Write-off'
+            };
+            return texts[status] || status;
+        }
+
+        function showNotification(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+            
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type === 'info' ? 'primary' : type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+            });
+        }
+
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+            return container;
+        }
+    </script>
+</body>
+</html>

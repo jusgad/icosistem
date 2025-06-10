@@ -1,512 +1,2118 @@
-{% extends "base.html" %}
+{% extends "layouts/admin.html" %}
 
-{% block title %}Emprendedores - Plataforma de Emprendimiento{% endblock %}
+{% block title %}Gestión de Emprendedores - Panel Administrativo{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+<link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css" rel="stylesheet">
+<link href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css" rel="stylesheet">
+<style>
+    :root {
+        --admin-primary: #1e40af;
+        --admin-secondary: #64748b;
+        --admin-success: #059669;
+        --admin-warning: #d97706;
+        --admin-danger: #dc2626;
+        --admin-info: #0284c7;
+        --admin-dark: #0f172a;
+        --admin-light: #f1f5f9;
+        --admin-border: #e2e8f0;
+        --admin-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        --admin-shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+        --admin-gradient: linear-gradient(135deg, var(--admin-primary) 0%, #3b82f6 100%);
+        --entrepreneur-primary: #7c3aed;
+        --entrepreneur-secondary: #a855f7;
+        --entrepreneur-gradient: linear-gradient(135deg, var(--entrepreneur-primary) 0%, var(--entrepreneur-secondary) 100%);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .page-header {
+        background: var(--entrepreneur-gradient);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 24px 24px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="lightbulb" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23lightbulb)"/></svg>');
+        opacity: 0.3;
+    }
+
+    .page-header .container {
+        position: relative;
+        z-index: 1;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: var(--admin-shadow);
+        border: 1px solid var(--admin-border);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--admin-shadow-lg);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--card-color, var(--entrepreneur-primary));
+    }
+
+    .stat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        background: var(--card-color, var(--entrepreneur-primary));
+    }
+
+    .stat-trend {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .trend-up { color: var(--admin-success); }
+    .trend-down { color: var(--admin-danger); }
+    .trend-neutral { color: var(--admin-secondary); }
+
+    .stat-value {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: var(--admin-dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        color: var(--admin-secondary);
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .entrepreneurs-card {
+        background: white;
+        border-radius: 16px;
+        padding: 0;
+        box-shadow: var(--admin-shadow);
+        border: 1px solid var(--admin-border);
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: var(--admin-light);
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--admin-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--admin-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary {
+        background: var(--entrepreneur-gradient);
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        color: white;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--admin-shadow-lg);
+        color: white;
+    }
+
+    .filters-section {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--admin-shadow);
+        border: 1px solid var(--admin-border);
+    }
+
+    .filters-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        cursor: pointer;
+    }
+
+    .filters-title {
+        font-weight: 600;
+        color: var(--admin-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filters-content {
+        display: none;
+        animation: slideDown 0.3s ease-out;
+    }
+
+    .filters-content.show {
+        display: block;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        font-weight: 500;
+        color: var(--admin-dark);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid var(--admin-border);
+        border-radius: 12px;
+        padding: 0.75rem;
+        transition: var(--transition);
+        background: white;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--entrepreneur-primary);
+        box-shadow: 0 0 0 0.2rem rgba(124, 58, 237, 0.25);
+    }
+
+    .entrepreneurs-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .entrepreneurs-table th {
+        background: var(--admin-light);
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--admin-dark);
+        border-bottom: 2px solid var(--admin-border);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .entrepreneurs-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--admin-border);
+        vertical-align: middle;
+    }
+
+    .entrepreneurs-table tbody tr {
+        transition: var(--transition);
+    }
+
+    .entrepreneurs-table tbody tr:hover {
+        background: var(--admin-light);
+    }
+
+    .entrepreneur-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .entrepreneur-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--entrepreneur-gradient);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        flex-shrink: 0;
+        position: relative;
+    }
+
+    .entrepreneur-avatar img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .entrepreneur-details h6 {
+        margin: 0 0 0.25rem 0;
+        font-weight: 600;
+        color: var(--admin-dark);
+    }
+
+    .entrepreneur-details p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: var(--admin-secondary);
+    }
+
+    .project-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .project-name {
+        font-weight: 600;
+        color: var(--admin-dark);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .project-description {
+        font-size: 0.875rem;
+        color: var(--admin-secondary);
+        line-height: 1.4;
+    }
+
+    .badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .badge-idea { background: rgba(124, 58, 237, 0.1); color: var(--entrepreneur-primary); }
+    .badge-mvp { background: rgba(217, 119, 6, 0.1); color: var(--admin-warning); }
+    .badge-early { background: rgba(2, 132, 199, 0.1); color: var(--admin-info); }
+    .badge-growth { background: rgba(5, 150, 105, 0.1); color: var(--admin-success); }
+    .badge-scale { background: rgba(220, 38, 38, 0.1); color: var(--admin-danger); }
+
+    .badge-tech { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+    .badge-health { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    .badge-education { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    .badge-fintech { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+    .badge-ecommerce { background: rgba(168, 85, 247, 0.1); color: #a855f7; }
+    .badge-agriculture { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+
+    .progress-container {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .progress-bar-container {
+        flex: 1;
+        height: 8px;
+        background: var(--admin-border);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background: var(--entrepreneur-gradient);
+        border-radius: 4px;
+        transition: var(--transition);
+    }
+
+    .progress-text {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--admin-dark);
+        min-width: 40px;
+        text-align: right;
+    }
+
+    .mentor-assignment {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .mentor-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--admin-success);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .mentor-name {
+        font-size: 0.875rem;
+        color: var(--admin-dark);
+        font-weight: 500;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-action {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid var(--admin-border);
+        background: white;
+        color: var(--admin-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+
+    .btn-action:hover {
+        background: var(--admin-light);
+        transform: translateY(-2px);
+    }
+
+    .btn-action.btn-view:hover {
+        color: var(--admin-info);
+        border-color: var(--admin-info);
+    }
+
+    .btn-action.btn-edit:hover {
+        color: var(--admin-warning);
+        border-color: var(--admin-warning);
+    }
+
+    .btn-action.btn-mentor:hover {
+        color: var(--admin-success);
+        border-color: var(--admin-success);
+    }
+
+    .btn-action.btn-delete:hover {
+        color: var(--admin-danger);
+        border-color: var(--admin-danger);
+    }
+
+    /* Dashboard Charts */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .chart-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: var(--admin-shadow);
+        border: 1px solid var(--admin-border);
+    }
+
+    .chart-header {
+        display: flex;
+        align-items: center;
+        justify-content: between;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--admin-border);
+    }
+
+    .chart-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--admin-dark);
+        margin: 0;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 1rem;
+    }
+
+    /* Modal Styles */
+    .modal-content {
+        border-radius: 16px;
+        border: none;
+        box-shadow: var(--admin-shadow-lg);
+    }
+
+    .modal-header {
+        background: var(--entrepreneur-gradient);
+        color: white;
+        border-radius: 16px 16px 0 0;
+        padding: 1.5rem 2rem;
+        border-bottom: none;
+    }
+
+    .modal-title {
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .btn-close {
+        filter: invert(1);
+        opacity: 0.8;
+    }
+
+    .modal-body {
+        padding: 2rem;
+    }
+
+    .modal-footer {
+        padding: 1.5rem 2rem;
+        border-top: 1px solid var(--admin-border);
+        border-radius: 0 0 16px 16px;
+    }
+
+    /* Loading States */
+    .loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--admin-border);
+        border-top: 4px solid var(--entrepreneur-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Custom Checkbox */
+    .custom-checkbox {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .custom-checkbox input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .checkmark {
+        width: 20px;
+        height: 20px;
+        background: white;
+        border: 2px solid var(--admin-border);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+    }
+
+    .custom-checkbox input:checked ~ .checkmark {
+        background: var(--entrepreneur-primary);
+        border-color: var(--entrepreneur-primary);
+        color: white;
+    }
+
+    .checkmark::after {
+        content: '\f00c';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        font-size: 0.75rem;
+        opacity: 0;
+        transition: var(--transition);
+    }
+
+    .custom-checkbox input:checked ~ .checkmark::after {
+        opacity: 1;
+    }
+
+    /* Program Assignment */
+    .program-assignment {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .program-name {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--admin-dark);
+    }
+
+    .program-progress {
+        font-size: 0.75rem;
+        color: var(--admin-secondary);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .card-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .card-actions {
+            justify-content: stretch;
+        }
+
+        .card-actions .btn {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .filter-row {
+            grid-template-columns: 1fr;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .entrepreneurs-table {
+            font-size: 0.875rem;
+        }
+
+        .entrepreneurs-table th,
+        .entrepreneurs-table td {
+            padding: 0.75rem 0.5rem;
+        }
+    }
+
+    /* Score indicators */
+    .score-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .score-value {
+        padding: 0.25rem 0.5rem;
+        border-radius: 8px;
+        color: white;
+        min-width: 35px;
+        text-align: center;
+    }
+
+    .score-high { background: var(--admin-success); }
+    .score-medium { background: var(--admin-warning); }
+    .score-low { background: var(--admin-danger); }
+
+    /* Activity timeline in modals */
+    .activity-timeline {
+        max-height: 400px;
+        overflow-y: auto;
+        padding-right: 1rem;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 0;
+        bottom: -1.5rem;
+        width: 2px;
+        background: var(--admin-border);
+    }
+
+    .timeline-item:last-child::before {
+        bottom: 0;
+    }
+
+    .timeline-icon {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--entrepreneur-primary);
+        border: 3px solid white;
+        box-shadow: 0 0 0 1px var(--admin-border);
+    }
+
+    .timeline-content {
+        background: white;
+        border: 1px solid var(--admin-border);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .timeline-time {
+        font-size: 0.75rem;
+        color: var(--admin-secondary);
+        margin-bottom: 0.5rem;
+    }
+
+    .timeline-title {
+        font-weight: 600;
+        color: var(--admin-dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .timeline-description {
+        color: var(--admin-secondary);
+        font-size: 0.875rem;
+        line-height: 1.4;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar -->
-        <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
-            <div class="position-sticky pt-3">
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
-                            <i class="bi bi-speedometer2 me-2"></i>
-                            Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.users') }}">
-                            <i class="bi bi-people me-2"></i>
-                            Usuarios
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{{ url_for('admin.entrepreneurs') }}">
-                            <i class="bi bi-briefcase me-2"></i>
-                            Emprendedores
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.allies') }}">
-                            <i class="bi bi-person-check me-2"></i>
-                            Aliados
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.assign_ally') }}">
-                            <i class="bi bi-link-45deg me-2"></i>
-                            Asignar Aliados
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.settings') }}">
-                            <i class="bi bi-gear me-2"></i>
-                            Configuración
-                        </a>
-                    </li>
-                </ul>
-
-                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                    <span>Reportes</span>
-                </h6>
-                <ul class="nav flex-column mb-2">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.reports_activity') }}">
-                            <i class="bi bi-file-earmark-text me-2"></i>
-                            Actividad
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.reports_impact') }}">
-                            <i class="bi bi-graph-up me-2"></i>
-                            Impacto
-                        </a>
-                    </li>
-                </ul>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    Gestión de Emprendedores
+                </h1>
+                <p class="page-subtitle">Administra emprendedores, proyectos y su progreso en el ecosistema</p>
             </div>
-        </nav>
-
-        <!-- Main content -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Emprendedores</h1>
-                <div class="btn-toolbar mb-2 mb-md-0">
-                    <div class="input-group me-2">
-                        <input type="text" class="form-control" placeholder="Buscar emprendedores..." id="searchEntrepreneurs" value="{{ request.args.get('search', '') }}">
-                        <button class="btn btn-outline-secondary" type="button" id="searchButton">
-                            <i class="bi bi-search"></i>
-                        </button>
-                    </div>
-                    <button type="button" class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#exportModal">
-                        <i class="bi bi-download me-1"></i> Exportar
+            <div class="col-md-4 text-end">
+                <div class="d-flex justify-content-end gap-2">
+                    <button class="btn btn-outline-light" id="importEntrepreneurs">
+                        <i class="fas fa-upload me-1"></i> Importar
                     </button>
-                    <a href="{{ url_for('admin.user_new', role='entrepreneur') }}" class="btn btn-primary">
-                        <i class="bi bi-plus-lg me-1"></i> Nuevo Emprendedor
-                    </a>
+                    <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#createEntrepreneurModal">
+                        <i class="fas fa-plus me-1"></i> Nuevo Emprendedor
+                    </button>
                 </div>
-            </div>
-
-            <!-- Stats cards -->
-            <div class="row mb-4">
-                <div class="col-md-3 mb-4 mb-md-0">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="text-muted fw-normal mb-0">Total Emprendedores</h6>
-                                    <h2 class="fw-bold mb-0">{{ stats.total }}</h2>
-                                </div>
-                                <div class="icon-shape bg-light text-primary rounded-circle">
-                                    <i class="bi bi-briefcase"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3 mb-4 mb-md-0">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="text-muted fw-normal mb-0">Con Aliado Asignado</h6>
-                                    <h2 class="fw-bold mb-0">{{ stats.with_ally }}</h2>
-                                </div>
-                                <div class="icon-shape bg-light text-success rounded-circle">
-                                    <i class="bi bi-person-check"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3 mb-4 mb-md-0">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="text-muted fw-normal mb-0">Sin Aliado</h6>
-                                    <h2 class="fw-bold mb-0">{{ stats.without_ally }}</h2>
-                                </div>
-                                <div class="icon-shape bg-light text-warning rounded-circle">
-                                    <i class="bi bi-person-dash"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="text-muted fw-normal mb-0">Nuevos este mes</h6>
-                                    <h2 class="fw-bold mb-0">{{ stats.new_this_month }}</h2>
-                                </div>
-                                <div class="icon-shape bg-light text-info rounded-circle">
-                                    <i class="bi bi-calendar-plus"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Filters -->
-            <div class="row mb-3">
-                <div class="col-md-12">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body">
-                            <form id="filterForm" class="row g-3 align-items-end" action="{{ url_for('admin.entrepreneurs') }}" method="GET">
-                                <div class="col-md-3">
-                                    <label for="industryFilter" class="form-label">Industria</label>
-                                    <select class="form-select" id="industryFilter" name="industry">
-                                        <option value="">Todas las industrias</option>
-                                        {% for industry in industries %}
-                                        <option value="{{ industry.id }}" {% if request.args.get('industry') == industry.id|string %}selected{% endif %}>{{ industry.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="stageFilter" class="form-label">Etapa</label>
-                                    <select class="form-select" id="stageFilter" name="stage">
-                                        <option value="">Todas las etapas</option>
-                                        {% for stage in stages %}
-                                        <option value="{{ stage.id }}" {% if request.args.get('stage') == stage.id|string %}selected{% endif %}>{{ stage.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="allyFilter" class="form-label">Aliado</label>
-                                    <select class="form-select" id="allyFilter" name="ally">
-                                        <option value="">Todos</option>
-                                        <option value="assigned" {% if request.args.get('ally') == 'assigned' %}selected{% endif %}>Con aliado asignado</option>
-                                        <option value="unassigned" {% if request.args.get('ally') == 'unassigned' %}selected{% endif %}>Sin aliado asignado</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="dateFilter" class="form-label">Fecha de registro</label>
-                                    <select class="form-select" id="dateFilter" name="date_filter">
-                                        <option value="">Todas las fechas</option>
-                                        <option value="this_month" {% if request.args.get('date_filter') == 'this_month' %}selected{% endif %}>Este mes</option>
-                                        <option value="last_month" {% if request.args.get('date_filter') == 'last_month' %}selected{% endif %}>Mes anterior</option>
-                                        <option value="last_3_months" {% if request.args.get('date_filter') == 'last_3_months' %}selected{% endif %}>Últimos 3 meses</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-12 d-flex mt-3">
-                                    <button type="submit" class="btn btn-primary me-2">Filtrar</button>
-                                    <button type="reset" class="btn btn-outline-secondary">Limpiar</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Entrepreneurs cards -->
-            <div class="row">
-                {% if entrepreneurs is defined and entrepreneurs|length > 0 %}
-                    {% for entrepreneur in entrepreneurs %}
-                    <div class="col-md-6 col-lg-4 mb-4">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center mb-3">
-                                    <img src="{{ entrepreneur.profile_image or url_for('static', filename='images/default-profile.png') }}" class="rounded-circle me-3" width="60" height="60" alt="{{ entrepreneur.name }}">
-                                    <div>
-                                        <h5 class="card-title mb-0">{{ entrepreneur.name }}</h5>
-                                        <p class="text-muted mb-0">{{ entrepreneur.company_name or 'Sin empresa' }}</p>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <span class="badge bg-primary">{{ entrepreneur.industry }}</span>
-                                    <span class="badge bg-secondary">{{ entrepreneur.company_stage }}</span>
-                                    {% if entrepreneur.ally %}
-                                    <span class="badge bg-success">Con aliado</span>
-                                    {% else %}
-                                    <span class="badge bg-warning text-dark">Sin aliado</span>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <small class="text-muted d-block mb-1">
-                                        <i class="bi bi-envelope me-1"></i> {{ entrepreneur.email }}
-                                    </small>
-                                    {% if entrepreneur.phone %}
-                                    <small class="text-muted d-block mb-1">
-                                        <i class="bi bi-telephone me-1"></i> {{ entrepreneur.phone }}
-                                    </small>
-                                    {% endif %}
-                                    <small class="text-muted d-block">
-                                        <i class="bi bi-calendar me-1"></i> Registrado: {{ entrepreneur.created_at|datetime }}
-                                    </small>
-                                </div>
-                                
-                                {% if entrepreneur.ally %}
-                                <div class="mb-3 p-2 bg-light rounded">
-                                    <small class="text-muted d-block mb-1">Aliado asignado:</small>
-                                    <div class="d-flex align-items-center">
-                                        <img src="{{ entrepreneur.ally.profile_image or url_for('static', filename='images/default-profile.png') }}" class="rounded-circle me-2" width="30" height="30" alt="{{ entrepreneur.ally.name }}">
-                                        <div>
-                                            <small class="d-block">{{ entrepreneur.ally.name }}</small>
-                                            <small class="text-muted">{{ entrepreneur.ally.email }}</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endif %}
-                                
-                                <div class="d-flex justify-content-between mt-3">
-                                    <a href="{{ url_for('admin.entrepreneur_detail', entrepreneur_id=entrepreneur.id) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-eye me-1"></i> Ver detalles
-                                    </a>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ entrepreneur.id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton{{ entrepreneur.id }}">
-                                            <li><a class="dropdown-item" href="{{ url_for('admin.user_edit', user_id=entrepreneur.user_id) }}">
-                                                <i class="bi bi-pencil me-2"></i> Editar
-                                            </a></li>
-                                            <li><a class="dropdown-item" href="{{ url_for('admin.entrepreneur_assign_ally', entrepreneur_id=entrepreneur.id) }}">
-                                                <i class="bi bi-person-plus me-2"></i> Asignar aliado
-                                            </a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteEntrepreneurModal" data-entrepreneur-id="{{ entrepreneur.id }}" data-entrepreneur-name="{{ entrepreneur.name }}">
-                                                <i class="bi bi-trash me-2"></i> Eliminar
-                                            </a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="col-12">
-                        <div class="alert alert-info text-center">
-                            <i class="bi bi-info-circle me-2"></i> No se encontraron emprendedores con los filtros seleccionados.
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-
-            <!-- Pagination -->
-            {% if pagination.pages is defined and pagination.pages|length > 1 %}
-            <nav class="d-flex justify-content-center mt-4">
-                <ul class="pagination">
-                    <li class="page-item {% if pagination.current_page == 1 %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('admin.entrepreneurs', page=pagination.current_page-1, **{k:v for k,v in request.args.items() if k != 'page'}) }}" aria-label="Previous">
-                            <span aria-hidden="true">&laquo;</span>
-                        </a>
-                    </li>
-                    {% for page in pagination.pages %}
-                    <li class="page-item {% if page == pagination.current_page %}active{% endif %}">
-                        <a class="page-link" href="{{ url_for('admin.entrepreneurs', page=page, **{k:v for k,v in request.args.items() if k != 'page'}) }}">{{ page }}</a>
-                    </li>
-                    {% endfor %}
-                    <li class="page-item {% if pagination.current_page == pagination.total_pages %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('admin.entrepreneurs', page=pagination.current_page+1, **{k:v for k,v in request.args.items() if k != 'page'}) }}" aria-label="Next">
-                            <span aria-hidden="true">&raquo;</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-            {% endif %}
-
-        </main>
-    </div>
-</div>
-
-<!-- Delete Entrepreneur Modal -->
-<div class="modal fade" id="deleteEntrepreneurModal" tabindex="-1" aria-labelledby="deleteEntrepreneurModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteEntrepreneurModalLabel">Confirmar eliminación</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>¿Estás seguro de que deseas eliminar a <span id="entrepreneurName"></span>? Esta acción no se puede deshacer.</p>
-                <p class="text-danger"><strong>Nota:</strong> Esto eliminará tanto el perfil de emprendedor como la cuenta de usuario asociada.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <form id="deleteEntrepreneurForm" method="POST" action="{{ url_for('admin.entrepreneur_delete') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="entrepreneur_id" id="deleteEntrepreneurId">
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
-                </form>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Export Modal -->
-<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="exportModalLabel">Exportar datos de emprendedores</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<div class="container">
+    <!-- Statistics Row -->
+    <div class="stats-grid">
+        <div class="stat-card" style="--card-color: var(--entrepreneur-primary)">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>15%</span>
+                </div>
             </div>
-            <div class="modal-body">
-                <form id="exportForm">
-                    <div class="mb-3">
-                        <label for="exportFormat" class="form-label">Formato</label>
-                        <select class="form-select" id="exportFormat" name="format">
-                            <option value="csv">CSV</option>
-                            <option value="excel">Excel</option>
-                            <option value="pdf">PDF</option>
+            <div class="stat-value">{{ stats.total_entrepreneurs | default(342) }}</div>
+            <div class="stat-label">Total Emprendedores</div>
+        </div>
+
+        <div class="stat-card" style="--card-color: var(--admin-success)">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>23%</span>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.active_projects | default(156) }}</div>
+            <div class="stat-label">Proyectos Activos</div>
+        </div>
+
+        <div class="stat-card" style="--card-color: var(--admin-warning)">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-handshake"></i>
+                </div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>8%</span>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.mentorships_active | default(89) }}</div>
+            <div class="stat-label">Mentorías Activas</div>
+        </div>
+
+        <div class="stat-card" style="--card-color: var(--admin-info)">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <div class="stat-trend trend-neutral">
+                    <i class="fas fa-minus"></i>
+                    <span>0%</span>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.in_programs | default(67) }}</div>
+            <div class="stat-label">En Programas</div>
+        </div>
+
+        <div class="stat-card" style="--card-color: var(--admin-danger)">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>12%</span>
+                </div>
+            </div>
+            <div class="stat-value">{{ stats.success_rate | default(73) }}%</div>
+            <div class="stat-label">Tasa de Éxito</div>
+        </div>
+    </div>
+
+    <!-- Dashboard Charts -->
+    <div class="dashboard-grid">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">Distribución por Sectores</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="sectorsChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">Etapas de Desarrollo</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="stagesChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+        <div class="filters-header" id="filtersToggle">
+            <h4 class="filters-title">
+                <i class="fas fa-filter me-2"></i>
+                Filtros Avanzados
+            </h4>
+            <i class="fas fa-chevron-down" id="filtersChevron"></i>
+        </div>
+        <div class="filters-content" id="filtersContent">
+            <form id="filtersForm">
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label for="filterSector">Sector</label>
+                        <select class="form-select" id="filterSector" name="sector">
+                            <option value="">Todos los sectores</option>
+                            <option value="tecnologia">Tecnología</option>
+                            <option value="salud">Salud</option>
+                            <option value="educacion">Educación</option>
+                            <option value="fintech">Fintech</option>
+                            <option value="ecommerce">E-commerce</option>
+                            <option value="agricultura">Agricultura</option>
+                            <option value="turismo">Turismo</option>
+                            <option value="manufactura">Manufactura</option>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Campos a incluir</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="basic_info" id="exportBasicInfo" name="fields" checked>
-                            <label class="form-check-label" for="exportBasicInfo">
-                                Información básica (nombre, email, teléfono)
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="company_info" id="exportCompanyInfo" name="fields" checked>
-                            <label class="form-check-label" for="exportCompanyInfo">
-                                Información de empresa (nombre, industria, etapa)
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="ally_info" id="exportAllyInfo" name="fields" checked>
-                            <label class="form-check-label" for="exportAllyInfo">
-                                Información de aliado asignado
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="metrics" id="exportMetrics" name="fields">
-                            <label class="form-check-label" for="exportMetrics">
-                                Métricas (horas de mentoría, reuniones, etc.)
-                            </label>
-                        </div>
+                    <div class="form-group">
+                        <label for="filterStage">Etapa</label>
+                        <select class="form-select" id="filterStage" name="stage">
+                            <option value="">Todas las etapas</option>
+                            <option value="idea">Idea/Concepto</option>
+                            <option value="mvp">MVP/Prototipo</option>
+                            <option value="early">Producto inicial</option>
+                            <option value="growth">Crecimiento</option>
+                            <option value="scale">Escalamiento</option>
+                        </select>
                     </div>
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="1" id="applyFilters" name="apply_filters" checked>
-                            <label class="form-check-label" for="applyFilters">
-                                Aplicar filtros actuales
-                            </label>
-                        </div>
+                    <div class="form-group">
+                        <label for="filterStatus">Estado</label>
+                        <select class="form-select" id="filterStatus" name="status">
+                            <option value="">Todos los estados</option>
+                            <option value="active">Activo</option>
+                            <option value="inactive">Inactivo</option>
+                            <option value="graduated">Graduado</option>
+                            <option value="dropped">Retirado</option>
+                        </select>
                     </div>
-                </form>
+                    <div class="form-group">
+                        <label for="filterMentor">Con Mentor</label>
+                        <select class="form-select" id="filterMentor" name="has_mentor">
+                            <option value="">Todos</option>
+                            <option value="1">Con Mentor</option>
+                            <option value="0">Sin Mentor</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label for="filterProgram">Programa</label>
+                        <select class="form-select" id="filterProgram" name="program">
+                            <option value="">Todos los programas</option>
+                            <option value="incubadora">Incubadora</option>
+                            <option value="aceleradora">Aceleradora</option>
+                            <option value="mentoria">Mentoría Individual</option>
+                            <option value="bootcamp">Bootcamp</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filterCountry">País</label>
+                        <select class="form-select" id="filterCountry" name="country">
+                            <option value="">Todos los países</option>
+                            <option value="CO">Colombia</option>
+                            <option value="MX">México</option>
+                            <option value="AR">Argentina</option>
+                            <option value="CL">Chile</option>
+                            <option value="PE">Perú</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filterSearch">Búsqueda</label>
+                        <input type="text" class="form-control" id="filterSearch" name="search" 
+                               placeholder="Nombre, proyecto, email...">
+                    </div>
+                    <div class="form-group d-flex align-items-end">
+                        <button type="button" class="btn btn-primary me-2" id="applyFilters">
+                            <i class="fas fa-search me-1"></i> Filtrar
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="clearFilters">
+                            <i class="fas fa-times me-1"></i> Limpiar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Entrepreneurs Table -->
+    <div class="entrepreneurs-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-table me-2"></i>
+                Lista de Emprendedores
+            </h3>
+            <div class="card-actions">
+                <button class="btn btn-outline-primary" id="exportEntrepreneurs">
+                    <i class="fas fa-download me-1"></i> Exportar
+                </button>
+                <button class="btn btn-secondary" id="refreshTable">
+                    <i class="fas fa-sync-alt me-1"></i> Actualizar
+                </button>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="exportButton">Exportar</button>
+        </div>
+
+        <!-- Table Container -->
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="table entrepreneurs-table" id="entrepreneursTable">
+                    <thead>
+                        <tr>
+                            <th>
+                                <label class="custom-checkbox">
+                                    <input type="checkbox" id="selectAll">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </th>
+                            <th>Emprendedor</th>
+                            <th>Proyecto</th>
+                            <th>Sector</th>
+                            <th>Etapa</th>
+                            <th>Progreso</th>
+                            <th>Mentor Asignado</th>
+                            <th>Programa</th>
+                            <th>Score</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entrepreneur in entrepreneurs | default([
+                            {
+                                'id': 1,
+                                'name': 'María González',
+                                'email': 'maria@ecotech.com',
+                                'project_name': 'EcoTech Solutions',
+                                'project_description': 'Plataforma IoT para monitoreo ambiental en tiempo real',
+                                'sector': 'tecnologia',
+                                'stage': 'growth',
+                                'progress': 75,
+                                'mentor': {'name': 'Carlos Mendoza', 'id': 2},
+                                'program': 'Aceleradora Tech',
+                                'score': 85,
+                                'country': 'CO',
+                                'avatar': None,
+                                'status': 'active'
+                            },
+                            {
+                                'id': 2,
+                                'name': 'Pedro Silva',
+                                'email': 'pedro@foodtech.com',
+                                'project_name': 'FoodTech Innovation',
+                                'project_description': 'App de delivery sustentable con packaging ecológico',
+                                'sector': 'ecommerce',
+                                'stage': 'mvp',
+                                'progress': 45,
+                                'mentor': None,
+                                'program': 'Incubadora Verde',
+                                'score': 67,
+                                'country': 'MX',
+                                'avatar': None,
+                                'status': 'active'
+                            },
+                            {
+                                'id': 3,
+                                'name': 'Ana Patricia Ruiz',
+                                'email': 'ana@healthplus.com',
+                                'project_name': 'HealthPlus',
+                                'project_description': 'Telemedicina con IA para diagnósticos preventivos',
+                                'sector': 'salud',
+                                'stage': 'early',
+                                'progress': 60,
+                                'mentor': {'name': 'Dr. Luis Ramírez', 'id': 3},
+                                'program': 'Health Accelerator',
+                                'score': 78,
+                                'country': 'AR',
+                                'avatar': None,
+                                'status': 'active'
+                            },
+                            {
+                                'id': 4,
+                                'name': 'José Miguel Torres',
+                                'email': 'jose@edutech.com',
+                                'project_name': 'EduTech Learning',
+                                'project_description': 'Plataforma de educación personalizada con machine learning',
+                                'sector': 'educacion',
+                                'stage': 'idea',
+                                'progress': 25,
+                                'mentor': {'name': 'Carmen Vega', 'id': 4},
+                                'program': 'Bootcamp EdTech',
+                                'score': 54,
+                                'country': 'CL',
+                                'avatar': None,
+                                'status': 'active'
+                            },
+                            {
+                                'id': 5,
+                                'name': 'Laura Martínez',
+                                'email': 'laura@agritech.com',
+                                'project_name': 'AgriTech Smart',
+                                'project_description': 'Sensores IoT para agricultura de precisión',
+                                'sector': 'agricultura',
+                                'stage': 'scale',
+                                'progress': 90,
+                                'mentor': {'name': 'Roberto Campos', 'id': 5},
+                                'program': 'Aceleradora AgTech',
+                                'score': 92,
+                                'country': 'PE',
+                                'avatar': None,
+                                'status': 'graduated'
+                            }
+                        ]) %}
+                        <tr data-entrepreneur-id="{{ entrepreneur.id }}">
+                            <td>
+                                <label class="custom-checkbox">
+                                    <input type="checkbox" class="entrepreneur-checkbox" value="{{ entrepreneur.id }}">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </td>
+                            <td>
+                                <div class="entrepreneur-info">
+                                    <div class="entrepreneur-avatar">
+                                        {% if entrepreneur.avatar %}
+                                            <img src="{{ entrepreneur.avatar }}" alt="{{ entrepreneur.name }}">
+                                        {% else %}
+                                            {{ entrepreneur.name[0] }}{{ entrepreneur.name.split()[1][0] if entrepreneur.name.split()|length > 1 else '' }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="entrepreneur-details">
+                                        <h6>{{ entrepreneur.name }}</h6>
+                                        <p>{{ entrepreneur.email }}</p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-map-marker-alt me-1"></i>{{ entrepreneur.country }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="project-info">
+                                    <div class="project-name">
+                                        <i class="fas fa-lightbulb me-1 text-warning"></i>
+                                        {{ entrepreneur.project_name }}
+                                    </div>
+                                    <div class="project-description">
+                                        {{ entrepreneur.project_description[:60] }}...
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ entrepreneur.sector }}">
+                                    {% if entrepreneur.sector == 'tecnologia' %}
+                                        <i class="fas fa-laptop me-1"></i> Tech
+                                    {% elif entrepreneur.sector == 'salud' %}
+                                        <i class="fas fa-heartbeat me-1"></i> Salud
+                                    {% elif entrepreneur.sector == 'educacion' %}
+                                        <i class="fas fa-graduation-cap me-1"></i> EdTech
+                                    {% elif entrepreneur.sector == 'fintech' %}
+                                        <i class="fas fa-coins me-1"></i> Fintech
+                                    {% elif entrepreneur.sector == 'ecommerce' %}
+                                        <i class="fas fa-shopping-cart me-1"></i> E-commerce
+                                    {% elif entrepreneur.sector == 'agricultura' %}
+                                        <i class="fas fa-seedling me-1"></i> AgTech
+                                    {% else %}
+                                        <i class="fas fa-industry me-1"></i> {{ entrepreneur.sector|title }}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ entrepreneur.stage }}">
+                                    {% if entrepreneur.stage == 'idea' %}
+                                        <i class="fas fa-lightbulb me-1"></i> Idea
+                                    {% elif entrepreneur.stage == 'mvp' %}
+                                        <i class="fas fa-cogs me-1"></i> MVP
+                                    {% elif entrepreneur.stage == 'early' %}
+                                        <i class="fas fa-rocket me-1"></i> Early
+                                    {% elif entrepreneur.stage == 'growth' %}
+                                        <i class="fas fa-chart-line me-1"></i> Growth
+                                    {% elif entrepreneur.stage == 'scale' %}
+                                        <i class="fas fa-expand-arrows-alt me-1"></i> Scale
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="progress-container">
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" style="width: {{ entrepreneur.progress }}%"></div>
+                                    </div>
+                                    <div class="progress-text">{{ entrepreneur.progress }}%</div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if entrepreneur.mentor %}
+                                    <div class="mentor-assignment">
+                                        <div class="mentor-avatar">
+                                            {{ entrepreneur.mentor.name[0] }}{{ entrepreneur.mentor.name.split()[1][0] if entrepreneur.mentor.name.split()|length > 1 else '' }}
+                                        </div>
+                                        <div class="mentor-name">{{ entrepreneur.mentor.name }}</div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">
+                                        <i class="fas fa-user-plus me-1"></i>Sin asignar
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="program-assignment">
+                                    <div class="program-name">{{ entrepreneur.program }}</div>
+                                    <div class="program-progress">
+                                        {% if entrepreneur.status == 'graduated' %}
+                                            <i class="fas fa-graduation-cap text-success me-1"></i>Graduado
+                                        {% else %}
+                                            <i class="fas fa-clock text-warning me-1"></i>En progreso
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="score-indicator">
+                                    <div class="score-value score-{{ 'high' if entrepreneur.score >= 80 else 'medium' if entrepreneur.score >= 60 else 'low' }}">
+                                        {{ entrepreneur.score }}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-action btn-view" data-bs-toggle="tooltip" 
+                                            title="Ver perfil completo" onclick="viewEntrepreneur({{ entrepreneur.id }})">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-action btn-edit" data-bs-toggle="tooltip" 
+                                            title="Editar información" onclick="editEntrepreneur({{ entrepreneur.id }})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn-action btn-mentor" data-bs-toggle="tooltip" 
+                                            title="Asignar mentor" onclick="assignMentor({{ entrepreneur.id }})">
+                                        <i class="fas fa-handshake"></i>
+                                    </button>
+                                    <button class="btn-action btn-delete" data-bs-toggle="tooltip" 
+                                            title="Eliminar emprendedor" onclick="deleteEntrepreneur({{ entrepreneur.id }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
+</div>
+
+<!-- Create Entrepreneur Modal -->
+<div class="modal fade" id="createEntrepreneurModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Registrar Nuevo Emprendedor
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createEntrepreneurForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Información Personal</h6>
+                            <div class="form-group mb-3">
+                                <label for="firstName" class="form-label">Nombre *</label>
+                                <input type="text" class="form-control" id="firstName" name="first_name" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="lastName" class="form-label">Apellido *</label>
+                                <input type="text" class="form-control" id="lastName" name="last_name" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="phone" class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" id="phone" name="phone">
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="country" class="form-label">País *</label>
+                                <select class="form-select" id="country" name="country" required>
+                                    <option value="">Seleccionar país</option>
+                                    <option value="CO">Colombia</option>
+                                    <option value="MX">México</option>
+                                    <option value="AR">Argentina</option>
+                                    <option value="CL">Chile</option>
+                                    <option value="PE">Perú</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Información del Proyecto</h6>
+                            <div class="form-group mb-3">
+                                <label for="projectName" class="form-label">Nombre del Proyecto *</label>
+                                <input type="text" class="form-control" id="projectName" name="project_name" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="projectDescription" class="form-label">Descripción del Proyecto *</label>
+                                <textarea class="form-control" id="projectDescription" name="project_description" 
+                                          rows="3" required></textarea>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="sector" class="form-label">Sector *</label>
+                                <select class="form-select" id="sector" name="sector" required>
+                                    <option value="">Seleccionar sector</option>
+                                    <option value="tecnologia">Tecnología</option>
+                                    <option value="salud">Salud</option>
+                                    <option value="educacion">Educación</option>
+                                    <option value="fintech">Fintech</option>
+                                    <option value="ecommerce">E-commerce</option>
+                                    <option value="agricultura">Agricultura</option>
+                                    <option value="turismo">Turismo</option>
+                                    <option value="manufactura">Manufactura</option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="stage" class="form-label">Etapa Actual *</label>
+                                <select class="form-select" id="stage" name="stage" required>
+                                    <option value="">Seleccionar etapa</option>
+                                    <option value="idea">Idea/Concepto</option>
+                                    <option value="mvp">MVP/Prototipo</option>
+                                    <option value="early">Producto inicial</option>
+                                    <option value="growth">Crecimiento</option>
+                                    <option value="scale">Escalamiento</option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="program" class="form-label">Programa a Asignar</label>
+                                <select class="form-select" id="program" name="program">
+                                    <option value="">Sin programa inicial</option>
+                                    <option value="incubadora">Incubadora</option>
+                                    <option value="aceleradora">Aceleradora</option>
+                                    <option value="mentoria">Mentoría Individual</option>
+                                    <option value="bootcamp">Bootcamp</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="sendWelcomeEmail" name="send_welcome_email" checked>
+                            <label class="form-check-label" for="sendWelcomeEmail">
+                                Enviar email de bienvenida con credenciales de acceso
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Registrar Emprendedor
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Entrepreneur Details Modal -->
+<div class="modal fade" id="entrepreneurDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user me-2"></i>
+                    Perfil del Emprendedor
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div id="entrepreneurDetailsContent">
+                            <!-- Entrepreneur details will be loaded here -->
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Timeline de Actividad</h6>
+                        <div class="activity-timeline" id="entrepreneurActivity">
+                            <!-- Activity timeline will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="editEntrepreneurFromDetails()">
+                    <i class="fas fa-edit me-1"></i> Editar Información
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Mentor Modal -->
+<div class="modal fade" id="assignMentorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-handshake me-2"></i>
+                    Asignar Mentor
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="assignMentorForm">
+                <div class="modal-body">
+                    <div id="assignMentorContent">
+                        <!-- Mentor assignment form will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-handshake me-1"></i> Asignar Mentor
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay d-none" id="loadingOverlay">
+    <div class="spinner"></div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Search functionality
-        const searchInput = document.getElementById('searchEntrepreneurs');
-        const searchButton = document.getElementById('searchButton');
-        
-        searchButton.addEventListener('click', function() {
-            const searchTerm = searchInput.value.trim();
-            if (searchTerm) {
-                window.location.href = "{{ url_for('admin.entrepreneurs') }}?search=" + encodeURIComponent(searchTerm);
-            }
-        });
-        
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                searchButton.click();
-            }
-        });
-        
-        // Filter form submission
-        const filterForm = document.getElementById('filterForm');
-        if (filterForm) {
-            filterForm.addEventListener('submit', function(e) {
-                // Permitimos el comportamiento normal del formulario con método GET
-                // Pero aseguramos que los campos vacíos no se incluyan en la URL
-                for (const element of filterForm.elements) {
-                    if (element.value === '') {
-                        element.name = ''; // Evitamos enviar parámetros vacíos
-                    }
-                }
-            });
-        }
-        
-        filterForm.addEventListener('reset', function() {
-            setTimeout(() => {
-                window.location.href = "{{ url_for('admin.entrepreneurs') }}";
-            }, 10);
-        });
-        
-        // Delete entrepreneur modal
-        const deleteEntrepreneurModal = document.getElementById('deleteEntrepreneurModal');
-        if (deleteEntrepreneurModal) {
-            deleteEntrepreneurModal.addEventListener('show.bs.modal', function(event) {
-                const button = event.relatedTarget;
-                const entrepreneurId = button.getAttribute('data-entrepreneur-id');
-                const entrepreneurName = button.getAttribute('data-entrepreneur-name');
-                
-                document.getElementById('deleteEntrepreneurId').value = entrepreneurId;
-                document.getElementById('entrepreneurName').textContent = entrepreneurName;
-            });
-        }
-        
-        // Export functionality
-        const exportButton = document.getElementById('exportButton');
-        if (exportButton) {
-            exportButton.addEventListener('click', function() {
-                try {
-                    const formData = new FormData(document.getElementById('exportForm'));
-                    const params = new URLSearchParams();
-                    
-                    // Get selected fields
-                    const selectedFields = [];
-                    document.querySelectorAll('input[name="fields"]:checked').forEach(checkbox => {
-                        selectedFields.push(checkbox.value);
-                    });
-                    
-                    params.append('format', formData.get('format'));
-                    params.append('fields', selectedFields.join(','));
-                    
-                    if (formData.get('apply_filters')) {
-                        // Obtener los parámetros de búsqueda actuales de la URL
-                        const currentUrl = new URL(window.location.href);
-                        const searchParams = currentUrl.searchParams;
-                        
-                        // Iterar sobre todos los parámetros actuales y añadirlos
-                        for (const [key, value] of searchParams.entries()) {
-                            // Excluir page y format de los parámetros
-                            if (key !== 'page' && key !== 'format') {
-                                params.append(key, value);
-                            }
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Entrepreneurs Management
+    const entrepreneursManager = new EntrepreneursManager();
+    entrepreneursManager.init();
+});
+
+class EntrepreneursManager {
+    constructor() {
+        this.dataTable = null;
+        this.selectedEntrepreneurs = new Set();
+        this.charts = {};
+    }
+
+    init() {
+        this.initializeCharts();
+        this.initializeDataTable();
+        this.bindEvents();
+        this.initializeTooltips();
+    }
+
+    initializeCharts() {
+        // Sectors Chart
+        const sectorsCtx = document.getElementById('sectorsChart').getContext('2d');
+        this.charts.sectors = new Chart(sectorsCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Tecnología', 'Salud', 'Educación', 'Fintech', 'E-commerce', 'Agricultura'],
+                datasets: [{
+                    data: [35, 20, 15, 12, 10, 8],
+                    backgroundColor: [
+                        '#3b82f6',
+                        '#ef4444',
+                        '#10b981',
+                        '#f59e0b',
+                        '#a855f7',
+                        '#22c55e'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
                         }
                     }
-                    
-                    window.location.href = "{{ url_for('admin.export_entrepreneurs') }}?" + params.toString();
-                    
-                    // Close modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('exportModal'));
-                    modal.hide();
-                } catch (error) {
-                    console.error('Error al exportar datos:', error);
-                    alert('Ha ocurrido un error al exportar los datos. Por favor, inténtalo de nuevo.');
                 }
-            });
+            }
+        });
+
+        // Stages Chart
+        const stagesCtx = document.getElementById('stagesChart').getContext('2d');
+        this.charts.stages = new Chart(stagesCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Idea', 'MVP', 'Early', 'Growth', 'Scale'],
+                datasets: [{
+                    data: [45, 78, 56, 34, 23],
+                    backgroundColor: [
+                        '#7c3aed',
+                        '#d97706',
+                        '#0284c7',
+                        '#059669',
+                        '#dc2626'
+                    ],
+                    borderRadius: 8,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#e2e8f0'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    initializeDataTable() {
+        this.dataTable = $('#entrepreneursTable').DataTable({
+            responsive: true,
+            pageLength: 25,
+            order: [[8, 'desc']], // Order by score
+            columnDefs: [
+                { orderable: false, targets: [0, 9] }, // Checkbox and actions columns
+                { searchable: false, targets: [0, 9] }
+            ],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+            },
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                 '<"row"<"col-sm-12"tr>>' +
+                 '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            drawCallback: () => {
+                this.initializeTooltips();
+                this.updateSelectedCount();
+            }
+        });
+    }
+
+    bindEvents() {
+        // Filters toggle
+        document.getElementById('filtersToggle').addEventListener('click', () => {
+            this.toggleFilters();
+        });
+
+        // Apply filters
+        document.getElementById('applyFilters').addEventListener('click', () => {
+            this.applyFilters();
+        });
+
+        // Clear filters
+        document.getElementById('clearFilters').addEventListener('click', () => {
+            this.clearFilters();
+        });
+
+        // Select all checkbox
+        document.getElementById('selectAll').addEventListener('change', (e) => {
+            this.toggleSelectAll(e.target.checked);
+        });
+
+        // Individual checkboxes
+        document.addEventListener('change', (e) => {
+            if (e.target.classList.contains('entrepreneur-checkbox')) {
+                this.handleEntrepreneurSelection(e.target);
+            }
+        });
+
+        // Create entrepreneur form
+        document.getElementById('createEntrepreneurForm').addEventListener('submit', (e) => {
+            this.handleCreateEntrepreneur(e);
+        });
+
+        // Assign mentor form
+        document.getElementById('assignMentorForm').addEventListener('submit', (e) => {
+            this.handleAssignMentor(e);
+        });
+
+        // Refresh table
+        document.getElementById('refreshTable').addEventListener('click', () => {
+            this.refreshTable();
+        });
+
+        // Export entrepreneurs
+        document.getElementById('exportEntrepreneurs').addEventListener('click', () => {
+            this.exportEntrepreneurs();
+        });
+
+        // Import entrepreneurs
+        document.getElementById('importEntrepreneurs').addEventListener('click', () => {
+            this.importEntrepreneurs();
+        });
+    }
+
+    toggleFilters() {
+        const content = document.getElementById('filtersContent');
+        const chevron = document.getElementById('filtersChevron');
+        
+        if (content.classList.contains('show')) {
+            content.classList.remove('show');
+            chevron.style.transform = 'rotate(0deg)';
+        } else {
+            content.classList.add('show');
+            chevron.style.transform = 'rotate(180deg)';
         }
-    });
+    }
+
+    applyFilters() {
+        const formData = new FormData(document.getElementById('filtersForm'));
+        const filters = Object.fromEntries(formData.entries());
+        
+        // Apply filters to DataTable
+        Object.keys(filters).forEach(key => {
+            if (filters[key]) {
+                this.applyColumnFilter(key, filters[key]);
+            }
+        });
+
+        this.dataTable.draw();
+        this.showNotification('Filtros aplicados exitosamente', 'success');
+    }
+
+    applyColumnFilter(column, value) {
+        // Map filter names to column indices
+        const columnMap = {
+            'sector': 3,
+            'stage': 4,
+            'has_mentor': 6,
+            'program': 7,
+            'search': -1 // Global search
+        };
+
+        if (column === 'search') {
+            this.dataTable.search(value);
+        } else if (columnMap[column] !== undefined) {
+            this.dataTable.column(columnMap[column]).search(value);
+        }
+    }
+
+    clearFilters() {
+        document.getElementById('filtersForm').reset();
+        this.dataTable.search('').columns().search('').draw();
+        this.showNotification('Filtros limpiados', 'info');
+    }
+
+    toggleSelectAll(checked) {
+        const checkboxes = document.querySelectorAll('.entrepreneur-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = checked;
+            this.handleEntrepreneurSelection(checkbox);
+        });
+    }
+
+    handleEntrepreneurSelection(checkbox) {
+        const entrepreneurId = parseInt(checkbox.value);
+        
+        if (checkbox.checked) {
+            this.selectedEntrepreneurs.add(entrepreneurId);
+        } else {
+            this.selectedEntrepreneurs.delete(entrepreneurId);
+            document.getElementById('selectAll').checked = false;
+        }
+        
+        this.updateSelectedCount();
+    }
+
+    updateSelectedCount() {
+        const count = this.selectedEntrepreneurs.size;
+        
+        // Update select all checkbox state
+        const totalCheckboxes = document.querySelectorAll('.entrepreneur-checkbox').length;
+        const selectAllCheckbox = document.getElementById('selectAll');
+        
+        if (count === 0) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = false;
+        } else if (count === totalCheckboxes) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = true;
+        } else {
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+
+    async handleCreateEntrepreneur(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const entrepreneurData = Object.fromEntries(formData.entries());
+        
+        this.showLoading();
+
+        try {
+            const response = await fetch(`{{ url_for('admin.create_entrepreneur') }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify(entrepreneurData)
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showNotification('Emprendedor registrado exitosamente', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('createEntrepreneurModal')).hide();
+                this.refreshTable();
+                e.target.reset();
+            } else {
+                this.showNotification(result.message || 'Error al registrar emprendedor', 'error');
+            }
+        } catch (error) {
+            console.error('Create entrepreneur error:', error);
+            this.showNotification('Error de conexión', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async handleAssignMentor(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const assignmentData = Object.fromEntries(formData.entries());
+        
+        this.showLoading();
+
+        try {
+            const response = await fetch(`{{ url_for('admin.assign_mentor') }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify(assignmentData)
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showNotification('Mentor asignado exitosamente', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('assignMentorModal')).hide();
+                this.refreshTable();
+            } else {
+                this.showNotification(result.message || 'Error al asignar mentor', 'error');
+            }
+        } catch (error) {
+            console.error('Assign mentor error:', error);
+            this.showNotification('Error de conexión', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    refreshTable() {
+        this.dataTable.ajax.reload(null, false);
+        this.selectedEntrepreneurs.clear();
+        this.updateSelectedCount();
+        this.showNotification('Tabla actualizada', 'success');
+    }
+
+    async exportEntrepreneurs() {
+        this.showLoading();
+
+        try {
+            const response = await fetch(`{{ url_for('admin.export_entrepreneurs') }}`);
+            
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `emprendedores_${new Date().toISOString().split('T')[0]}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                this.showNotification('Exportación completada', 'success');
+            } else {
+                throw new Error('Error en la exportación');
+            }
+        } catch (error) {
+            console.error('Export error:', error);
+            this.showNotification('Error en la exportación', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    importEntrepreneurs() {
+        // Create file input
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.xlsx,.xls,.csv';
+        
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            this.showLoading();
+            
+            try {
+                const response = await fetch(`{{ url_for('admin.import_entrepreneurs') }}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.showNotification(`${result.imported_count} emprendedores importados exitosamente`, 'success');
+                    this.refreshTable();
+                } else {
+                    this.showNotification(result.message || 'Error en la importación', 'error');
+                }
+            } catch (error) {
+                console.error('Import error:', error);
+                this.showNotification('Error en la importación', 'error');
+            } finally {
+                this.hideLoading();
+            }
+        };
+        
+        input.click();
+    }
+
+    initializeTooltips() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+
+    showLoading() {
+        document.getElementById('loadingOverlay').classList.remove('d-none');
+    }
+
+    hideLoading() {
+        document.getElementById('loadingOverlay').classList.add('d-none');
+    }
+
+    showNotification(message, type = 'info') {
+        // Create notification
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} position-fixed`;
+        notification.style.cssText = `
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            animation: slideInRight 0.3s ease-out;
+        `;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close ms-2" aria-label="Close"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+        
+        // Manual close
+        notification.querySelector('.btn-close').addEventListener('click', () => {
+            notification.remove();
+        });
+    }
+}
+
+// Global functions for inline actions
+window.viewEntrepreneur = async function(entrepreneurId) {
+    try {
+        const response = await fetch(`{{ url_for('admin.get_entrepreneur_details', entrepreneur_id='ENTREPRENEUR_ID') }}`.replace('ENTREPRENEUR_ID', entrepreneurId));
+        const entrepreneur = await response.json();
+        
+        if (entrepreneur.success) {
+            document.getElementById('entrepreneurDetailsContent').innerHTML = generateEntrepreneurDetailsHTML(entrepreneur.data);
+            document.getElementById('entrepreneurActivity').innerHTML = generateEntrepreneurActivityHTML(entrepreneur.data.activity);
+            
+            const modal = new bootstrap.Modal(document.getElementById('entrepreneurDetailsModal'));
+            modal.show();
+        } else {
+            throw new Error(entrepreneur.message || 'Error al cargar detalles');
+        }
+    } catch (error) {
+        console.error('View entrepreneur error:', error);
+        alert('Error al cargar los detalles del emprendedor');
+    }
+};
+
+window.editEntrepreneur = async function(entrepreneurId) {
+    try {
+        const response = await fetch(`{{ url_for('admin.get_entrepreneur_edit', entrepreneur_id='ENTREPRENEUR_ID') }}`.replace('ENTREPRENEUR_ID', entrepreneurId));
+        const entrepreneur = await response.json();
+        
+        if (entrepreneur.success) {
+            // Open edit modal with pre-filled data
+            console.log('Edit entrepreneur:', entrepreneur.data);
+        } else {
+            throw new Error(entrepreneur.message || 'Error al cargar datos');
+        }
+    } catch (error) {
+        console.error('Edit entrepreneur error:', error);
+        alert('Error al cargar los datos del emprendedor');
+    }
+};
+
+window.assignMentor = async function(entrepreneurId) {
+    try {
+        const response = await fetch(`{{ url_for('admin.get_available_mentors') }}`);
+        const mentors = await response.json();
+        
+        if (mentors.success) {
+            document.getElementById('assignMentorContent').innerHTML = generateAssignMentorHTML(entrepreneurId, mentors.data);
+            
+            const modal = new bootstrap.Modal(document.getElementById('assignMentorModal'));
+            modal.show();
+        } else {
+            throw new Error(mentors.message || 'Error al cargar mentores');
+        }
+    } catch (error) {
+        console.error('Assign mentor error:', error);
+        alert('Error al cargar la lista de mentores');
+    }
+};
+
+window.deleteEntrepreneur = async function(entrepreneurId) {
+    if (!confirm('¿Estás seguro de que quieres eliminar este emprendedor? Esta acción no se puede deshacer.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`{{ url_for('admin.delete_entrepreneur', entrepreneur_id='ENTREPRENEUR_ID') }}`.replace('ENTREPRENEUR_ID', entrepreneurId), {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            location.reload();
+        } else {
+            alert(result.message || 'Error al eliminar emprendedor');
+        }
+    } catch (error) {
+        console.error('Delete entrepreneur error:', error);
+        alert('Error de conexión');
+    }
+};
+
+window.editEntrepreneurFromDetails = function() {
+    const detailsModal = bootstrap.Modal.getInstance(document.getElementById('entrepreneurDetailsModal'));
+    detailsModal.hide();
+    
+    // Implementation for editing from details view
+    console.log('Edit entrepreneur from details');
+};
+
+function generateEntrepreneurDetailsHTML(entrepreneur) {
+    return `
+        <div class="entrepreneur-profile">
+            <div class="d-flex align-items-center mb-4">
+                <div class="entrepreneur-avatar me-3" style="width: 80px; height: 80px; font-size: 1.5rem;">
+                    ${entrepreneur.avatar ? `<img src="${entrepreneur.avatar}" alt="${entrepreneur.name}">` : entrepreneur.name[0] + (entrepreneur.name.split()[1] ? entrepreneur.name.split()[1][0] : '')}
+                </div>
+                <div>
+                    <h4>${entrepreneur.name}</h4>
+                    <p class="text-muted">${entrepreneur.email}</p>
+                    <div class="d-flex gap-2">
+                        <span class="badge badge-${entrepreneur.sector}">${entrepreneur.sector}</span>
+                        <span class="badge badge-${entrepreneur.stage}">${entrepreneur.stage}</span>
+                        <div class="score-indicator">
+                            <div class="score-value score-${entrepreneur.score >= 80 ? 'high' : entrepreneur.score >= 60 ? 'medium' : 'low'}">
+                                ${entrepreneur.score}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Información Personal</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Teléfono:</strong> ${entrepreneur.phone || 'No proporcionado'}</li>
+                        <li><strong>País:</strong> ${entrepreneur.country}</li>
+                        <li><strong>Programa:</strong> ${entrepreneur.program || 'No asignado'}</li>
+                        <li><strong>Estado:</strong> ${entrepreneur.status}</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>Proyecto: ${entrepreneur.project_name}</h6>
+                    <p>${entrepreneur.project_description}</p>
+                    <div class="progress-container">
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: ${entrepreneur.progress}%"></div>
+                        </div>
+                        <div class="progress-text">${entrepreneur.progress}%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function generateEntrepreneurActivityHTML(activities) {
+    if (!activities || activities.length === 0) {
+        return '<p class="text-muted">No hay actividad reciente</p>';
+    }
+    
+    return activities.map(activity => `
+        <div class="timeline-item">
+            <div class="timeline-icon"></div>
+            <div class="timeline-content">
+                <div class="timeline-time">${activity.timestamp}</div>
+                <div class="timeline-title">${activity.title}</div>
+                <div class="timeline-description">${activity.description}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function generateAssignMentorHTML(entrepreneurId, mentors) {
+    return `
+        <input type="hidden" name="entrepreneur_id" value="${entrepreneurId}">
+        <div class="form-group mb-3">
+            <label class="form-label">Seleccionar Mentor *</label>
+            <select class="form-select" name="mentor_id" required>
+                <option value="">Seleccionar mentor</option>
+                ${mentors.map(mentor => `
+                    <option value="${mentor.id}">${mentor.name} - ${mentor.expertise}</option>
+                `).join('')}
+            </select>
+        </div>
+        <div class="form-group mb-3">
+            <label class="form-label">Tipo de Mentoría</label>
+            <select class="form-select" name="mentorship_type">
+                <option value="general">Mentoría General</option>
+                <option value="business">Modelo de Negocio</option>
+                <option value="marketing">Marketing y Ventas</option>
+                <option value="finance">Finanzas</option>
+                <option value="legal">Legal</option>
+                <option value="technical">Técnica</option>
+            </select>
+        </div>
+        <div class="form-group mb-3">
+            <label class="form-label">Notas Adicionales</label>
+            <textarea class="form-control" name="notes" rows="3" placeholder="Información adicional sobre la asignación..."></textarea>
+        </div>
+    `;
+}
+
+// Add animation styles
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(100%); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes slideOutRight {
+        from { opacity: 1; transform: translateX(0); }
+        to { opacity: 0; transform: translateX(100%); }
+    }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %}

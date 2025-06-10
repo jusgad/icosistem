@@ -1,0 +1,1211 @@
+{# =========================================================================
+   CHARTS COMPONENT - Componentes de gráficos reutilizables
+   Ecosistema de Emprendimiento - Chart.js & D3.js Integration
+   ========================================================================= #}
+
+{# Librerías CDN requeridas - incluir en el template base #}
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/3.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+<!-- D3.js para gráficos avanzados -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+
+{# Macro: Gráfico de Líneas para Métricas Temporales #}
+{% macro line_chart(chart_id, title, data, labels, options={}, height='400px', custom_class='') %}
+<div class="chart-container {{ custom_class }}">
+  <div class="chart-header d-flex justify-content-between align-items-center mb-3">
+    <h5 class="chart-title mb-0">{{ title }}</h5>
+    <div class="chart-actions">
+      <div class="btn-group btn-group-sm" role="group">
+        <button type="button" class="btn btn-outline-secondary" onclick="exportChart('{{ chart_id }}', 'png')">
+          <i class="fas fa-download"></i>
+        </button>
+        <button type="button" class="btn btn-outline-secondary" onclick="toggleChartFullscreen('{{ chart_id }}')">
+          <i class="fas fa-expand"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="chart-wrapper" style="height: {{ height }}; position: relative;">
+    <canvas id="{{ chart_id }}" width="400" height="200"></canvas>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const ctx = document.getElementById('{{ chart_id }}').getContext('2d');
+      
+      const defaultOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          intersect: false,
+          mode: 'index'
+        },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              usePointStyle: true,
+              padding: 20
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            borderColor: '#007bff',
+            borderWidth: 1,
+            cornerRadius: 8,
+            displayColors: true
+          }
+        },
+        scales: {
+          x: {
+            display: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            },
+            ticks: {
+              color: '#6c757d'
+            }
+          },
+          y: {
+            display: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            },
+            ticks: {
+              color: '#6c757d'
+            }
+          }
+        },
+        animation: {
+          duration: 1000,
+          easing: 'easeInOutQuad'
+        }
+      };
+      
+      const chartOptions = Object.assign({}, defaultOptions, {{ options | safe }});
+      
+      window['chart_{{ chart_id }}'] = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: {{ labels | safe }},
+          datasets: {{ data | safe }}
+        },
+        options: chartOptions
+      });
+    });
+  </script>
+</div>
+{% endmacro %}
+
+{# Macro: Gráfico de Barras para Comparativas #}
+{% macro bar_chart(chart_id, title, data, labels, orientation='vertical', options={}, height='400px', custom_class='') %}
+<div class="chart-container {{ custom_class }}">
+  <div class="chart-header d-flex justify-content-between align-items-center mb-3">
+    <h5 class="chart-title mb-0">{{ title }}</h5>
+    <div class="chart-actions">
+      <div class="btn-group btn-group-sm" role="group">
+        <button type="button" class="btn btn-outline-secondary" onclick="switchChartType('{{ chart_id }}', 'bar')">
+          <i class="fas fa-chart-bar"></i>
+        </button>
+        <button type="button" class="btn btn-outline-secondary" onclick="switchChartType('{{ chart_id }}', 'horizontalBar')">
+          <i class="fas fa-chart-bar fa-rotate-90"></i>
+        </button>
+        <button type="button" class="btn btn-outline-secondary" onclick="exportChart('{{ chart_id }}', 'png')">
+          <i class="fas fa-download"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="chart-wrapper" style="height: {{ height }}; position: relative;">
+    <canvas id="{{ chart_id }}" width="400" height="200"></canvas>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const ctx = document.getElementById('{{ chart_id }}').getContext('2d');
+      
+      const defaultOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: '{{ 'y' if orientation == 'horizontal' else 'x' }}',
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              usePointStyle: true,
+              padding: 20
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            borderColor: '#007bff',
+            borderWidth: 1,
+            cornerRadius: 8
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            },
+            ticks: {
+              color: '#6c757d'
+            }
+          },
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            },
+            ticks: {
+              color: '#6c757d'
+            }
+          }
+        },
+        animation: {
+          duration: 1000,
+          easing: 'easeInOutQuad'
+        }
+      };
+      
+      const chartOptions = Object.assign({}, defaultOptions, {{ options | safe }});
+      
+      window['chart_{{ chart_id }}'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: {{ labels | safe }},
+          datasets: {{ data | safe }}
+        },
+        options: chartOptions
+      });
+    });
+  </script>
+</div>
+{% endmacro %}
+
+{# Macro: Gráfico Circular (Pie/Dona) para Distribuciones #}
+{% macro pie_chart(chart_id, title, data, labels, chart_type='pie', options={}, height='400px', custom_class='') %}
+<div class="chart-container {{ custom_class }}">
+  <div class="chart-header d-flex justify-content-between align-items-center mb-3">
+    <h5 class="chart-title mb-0">{{ title }}</h5>
+    <div class="chart-actions">
+      <div class="btn-group btn-group-sm" role="group">
+        <button type="button" class="btn btn-outline-secondary" onclick="switchChartType('{{ chart_id }}', 'pie')">
+          <i class="fas fa-chart-pie"></i>
+        </button>
+        <button type="button" class="btn btn-outline-secondary" onclick="switchChartType('{{ chart_id }}', 'doughnut')">
+          <i class="far fa-circle"></i>
+        </button>
+        <button type="button" class="btn btn-outline-secondary" onclick="exportChart('{{ chart_id }}', 'png')">
+          <i class="fas fa-download"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-8">
+      <div class="chart-wrapper" style="height: {{ height }}; position: relative;">
+        <canvas id="{{ chart_id }}" width="400" height="400"></canvas>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="chart-legend-custom" id="{{ chart_id }}_legend">
+        <!-- La leyenda se generará dinámicamente -->
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const ctx = document.getElementById('{{ chart_id }}').getContext('2d');
+      
+      const defaultOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false // Usaremos leyenda personalizada
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            borderColor: '#007bff',
+            borderWidth: 1,
+            cornerRadius: 8,
+            callbacks: {
+              label: function(context) {
+                const value = context.parsed;
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = ((value / total) * 100).toFixed(1);
+                return context.label + ': ' + value + ' (' + percentage + '%)';
+              }
+            }
+          }
+        },
+        animation: {
+          duration: 1000,
+          easing: 'easeInOutQuad'
+        }
+      };
+      
+      const chartOptions = Object.assign({}, defaultOptions, {{ options | safe }});
+      
+      window['chart_{{ chart_id }}'] = new Chart(ctx, {
+        type: '{{ chart_type }}',
+        data: {
+          labels: {{ labels | safe }},
+          datasets: [{{ data | safe }}]
+        },
+        options: chartOptions
+      });
+      
+      // Generar leyenda personalizada
+      generateCustomLegend('{{ chart_id }}', {{ labels | safe }}, {{ data | safe }});
+    });
+  </script>
+</div>
+{% endmacro %}
+
+{# Macro: Gráfico de Área para Tendencias #}
+{% macro area_chart(chart_id, title, data, labels, options={}, height='400px', custom_class='') %}
+<div class="chart-container {{ custom_class }}">
+  <div class="chart-header d-flex justify-content-between align-items-center mb-3">
+    <h5 class="chart-title mb-0">{{ title }}</h5>
+    <div class="chart-actions">
+      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportChart('{{ chart_id }}', 'png')">
+        <i class="fas fa-download"></i>
+      </button>
+    </div>
+  </div>
+  
+  <div class="chart-wrapper" style="height: {{ height }}; position: relative;">
+    <canvas id="{{ chart_id }}" width="400" height="200"></canvas>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const ctx = document.getElementById('{{ chart_id }}').getContext('2d');
+      
+      // Configurar datasets para área (fill)
+      const datasets = {{ data | safe }};
+      datasets.forEach(dataset => {
+        dataset.fill = true;
+        dataset.tension = 0.4;
+        if (!dataset.backgroundColor) {
+          dataset.backgroundColor = dataset.borderColor.replace('1)', '0.2)');
+        }
+      });
+      
+      const defaultOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          intersect: false,
+          mode: 'index'
+        },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              usePointStyle: true,
+              padding: 20
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            borderColor: '#007bff',
+            borderWidth: 1,
+            cornerRadius: 8
+          }
+        },
+        scales: {
+          x: {
+            display: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            }
+          },
+          y: {
+            display: true,
+            stacked: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            }
+          }
+        },
+        animation: {
+          duration: 1000,
+          easing: 'easeInOutQuad'
+        }
+      };
+      
+      const chartOptions = Object.assign({}, defaultOptions, {{ options | safe }});
+      
+      window['chart_{{ chart_id }}'] = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: {{ labels | safe }},
+          datasets: datasets
+        },
+        options: chartOptions
+      });
+    });
+  </script>
+</div>
+{% endmacro %}
+
+{# Macro: Gráfico de Radar para Perfiles de Competencias #}
+{% macro radar_chart(chart_id, title, data, labels, options={}, height='400px', custom_class='') %}
+<div class="chart-container {{ custom_class }}">
+  <div class="chart-header d-flex justify-content-between align-items-center mb-3">
+    <h5 class="chart-title mb-0">{{ title }}</h5>
+    <div class="chart-actions">
+      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportChart('{{ chart_id }}', 'png')">
+        <i class="fas fa-download"></i>
+      </button>
+    </div>
+  </div>
+  
+  <div class="chart-wrapper" style="height: {{ height }}; position: relative;">
+    <canvas id="{{ chart_id }}" width="400" height="400"></canvas>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const ctx = document.getElementById('{{ chart_id }}').getContext('2d');
+      
+      const defaultOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              usePointStyle: true,
+              padding: 20
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            borderColor: '#007bff',
+            borderWidth: 1,
+            cornerRadius: 8
+          }
+        },
+        scales: {
+          r: {
+            beginAtZero: true,
+            max: 100,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            },
+            angleLines: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            },
+            pointLabels: {
+              color: '#6c757d',
+              font: {
+                size: 12
+              }
+            },
+            ticks: {
+              color: '#6c757d',
+              stepSize: 20
+            }
+          }
+        },
+        animation: {
+          duration: 1000,
+          easing: 'easeInOutQuad'
+        }
+      };
+      
+      const chartOptions = Object.assign({}, defaultOptions, {{ options | safe }});
+      
+      window['chart_{{ chart_id }}'] = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: {{ labels | safe }},
+          datasets: {{ data | safe }}
+        },
+        options: chartOptions
+      });
+    });
+  </script>
+</div>
+{% endmacro %}
+
+{# Macro: Gráfico de Progreso (Gauge) usando D3.js #}
+{% macro gauge_chart(chart_id, title, value, max_value=100, color='#007bff', height='300px', custom_class='') %}
+<div class="chart-container {{ custom_class }}">
+  <div class="chart-header text-center mb-3">
+    <h5 class="chart-title mb-0">{{ title }}</h5>
+  </div>
+  
+  <div class="gauge-wrapper text-center" style="height: {{ height }};">
+    <div id="{{ chart_id }}" class="gauge-chart"></div>
+    <div class="gauge-value mt-3">
+      <h3 class="mb-0" style="color: {{ color }};">{{ value }}%</h3>
+      <small class="text-muted">de {{ max_value }}%</small>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      createGaugeChart('{{ chart_id }}', {{ value }}, {{ max_value }}, '{{ color }}');
+    });
+  </script>
+</div>
+{% endmacro %}
+
+{# Macro: Gráfico de Dispersión para Análisis Comparativo #}
+{% macro scatter_chart(chart_id, title, data, options={}, height='400px', custom_class='') %}
+<div class="chart-container {{ custom_class }}">
+  <div class="chart-header d-flex justify-content-between align-items-center mb-3">
+    <h5 class="chart-title mb-0">{{ title }}</h5>
+    <div class="chart-actions">
+      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportChart('{{ chart_id }}', 'png')">
+        <i class="fas fa-download"></i>
+      </button>
+    </div>
+  </div>
+  
+  <div class="chart-wrapper" style="height: {{ height }}; position: relative;">
+    <canvas id="{{ chart_id }}" width="400" height="200"></canvas>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const ctx = document.getElementById('{{ chart_id }}').getContext('2d');
+      
+      const defaultOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              usePointStyle: true,
+              padding: 20
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            borderColor: '#007bff',
+            borderWidth: 1,
+            cornerRadius: 8,
+            callbacks: {
+              title: function() {
+                return '';
+              },
+              label: function(context) {
+                return `X: ${context.parsed.x}, Y: ${context.parsed.y}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            position: 'bottom',
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            },
+            ticks: {
+              color: '#6c757d'
+            }
+          },
+          y: {
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            },
+            ticks: {
+              color: '#6c757d'
+            }
+          }
+        },
+        animation: {
+          duration: 1000,
+          easing: 'easeInOutQuad'
+        }
+      };
+      
+      const chartOptions = Object.assign({}, defaultOptions, {{ options | safe }});
+      
+      window['chart_{{ chart_id }}'] = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: {{ data | safe }}
+        },
+        options: chartOptions
+      });
+    });
+  </script>
+</div>
+{% endmacro %}
+
+{# Macro: Dashboard de KPIs con múltiples métricas #}
+{% macro kpi_dashboard(kpis, custom_class='') %}
+<div class="kpi-dashboard {{ custom_class }}">
+  <div class="row g-3">
+    {% for kpi in kpis %}
+      <div class="col-xl-3 col-lg-4 col-md-6">
+        <div class="kpi-card card">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="kpi-icon me-3">
+                <div class="icon-container bg-{{ kpi.color }}-subtle text-{{ kpi.color }}">
+                  <i class="{{ kpi.icon }}"></i>
+                </div>
+              </div>
+              
+              <div class="kpi-content flex-grow-1">
+                <h3 class="kpi-value mb-0">{{ kpi.value }}</h3>
+                <p class="kpi-label text-muted mb-1">{{ kpi.label }}</p>
+                
+                {% if kpi.change is defined %}
+                  <div class="kpi-change">
+                    <span class="badge bg-{{ 'success' if kpi.change >= 0 else 'danger' }}-subtle text-{{ 'success' if kpi.change >= 0 else 'danger' }}">
+                      <i class="fas fa-{{ 'arrow-up' if kpi.change >= 0 else 'arrow-down' }} me-1"></i>
+                      {{ "{:+.1f}".format(kpi.change) }}%
+                    </span>
+                    {% if kpi.period %}
+                      <small class="text-muted ms-1">{{ kpi.period }}</small>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              </div>
+              
+              {% if kpi.mini_chart %}
+                <div class="kpi-mini-chart">
+                  <canvas id="mini_chart_{{ kpi.id }}" width="80" height="40"></canvas>
+                </div>
+              {% endif %}
+            </div>
+            
+            {% if kpi.progress is defined %}
+              <div class="kpi-progress mt-3">
+                <div class="d-flex justify-content-between mb-1">
+                  <small class="text-muted">Progreso</small>
+                  <small class="text-muted">{{ kpi.progress }}%</small>
+                </div>
+                <div class="progress" style="height: 6px;">
+                  <div class="progress-bar bg-{{ kpi.color }}" style="width: {{ kpi.progress }}%"></div>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      
+      {% if kpi.mini_chart %}
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('mini_chart_{{ kpi.id }}').getContext('2d');
+            new Chart(ctx, {
+              type: 'line',
+              data: {
+                labels: {{ kpi.mini_chart.labels | safe }},
+                datasets: [{
+                  data: {{ kpi.mini_chart.data | safe }},
+                  borderColor: 'var(--bs-{{ kpi.color }})',
+                  backgroundColor: 'var(--bs-{{ kpi.color }})',
+                  borderWidth: 2,
+                  pointRadius: 0,
+                  tension: 0.4
+                }]
+              },
+              options: {
+                responsive: false,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: false },
+                  tooltip: { enabled: false }
+                },
+                scales: {
+                  x: { display: false },
+                  y: { display: false }
+                },
+                animation: { duration: 500 }
+              }
+            });
+          });
+        </script>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endmacro %}
+
+{# Macro: Gráfico de Heat Map para Actividad #}
+{% macro heatmap_chart(chart_id, title, data, height='400px', custom_class='') %}
+<div class="chart-container {{ custom_class }}">
+  <div class="chart-header d-flex justify-content-between align-items-center mb-3">
+    <h5 class="chart-title mb-0">{{ title }}</h5>
+    <div class="chart-actions">
+      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportChart('{{ chart_id }}', 'png')">
+        <i class="fas fa-download"></i>
+      </button>
+    </div>
+  </div>
+  
+  <div class="heatmap-wrapper" style="height: {{ height }};">
+    <div id="{{ chart_id }}" class="heatmap-chart"></div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      createHeatmapChart('{{ chart_id }}', {{ data | safe }});
+    });
+  </script>
+</div>
+{% endmacro %}
+
+{# ========================================================================= 
+   ESTILOS CSS ESPECÍFICOS PARA GRÁFICOS
+   ========================================================================= #}
+
+<style>
+/* Contenedores de gráficos */
+.chart-container {
+  background: #fff;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.chart-container:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.chart-header {
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.chart-title {
+  color: #495057;
+  font-weight: 600;
+}
+
+.chart-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+/* Leyenda personalizada */
+.chart-legend-custom {
+  padding: 1rem 0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+.legend-item:hover {
+  opacity: 0.8;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.legend-label {
+  font-size: 0.875rem;
+  color: #495057;
+}
+
+.legend-value {
+  font-weight: 600;
+  margin-left: auto;
+}
+
+/* KPI Dashboard */
+.kpi-dashboard .kpi-card {
+  border: none;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  transition: all 0.3s ease;
+}
+
+.kpi-dashboard .kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.kpi-icon .icon-container {
+  width: 48px;
+  height: 48px;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.kpi-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #495057;
+}
+
+.kpi-label {
+  font-size: 0.875rem;
+  margin-bottom: 0;
+}
+
+.kpi-mini-chart {
+  width: 80px;
+  height: 40px;
+}
+
+/* Gauge Chart */
+.gauge-chart {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.gauge-value h3 {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+/* Heatmap */
+.heatmap-chart {
+  width: 100%;
+  height: 100%;
+}
+
+.heatmap-cell {
+  stroke: #fff;
+  stroke-width: 2px;
+  transition: all 0.3s ease;
+}
+
+.heatmap-cell:hover {
+  stroke: #007bff;
+  stroke-width: 3px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .chart-container {
+    padding: 1rem;
+  }
+  
+  .chart-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .chart-actions {
+    justify-content: center;
+  }
+  
+  .kpi-dashboard .col-xl-3,
+  .kpi-dashboard .col-lg-4,
+  .kpi-dashboard .col-md-6 {
+    min-width: 100%;
+  }
+  
+  .kpi-value {
+    font-size: 1.5rem;
+  }
+}
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  .chart-container {
+    background: #2d3748;
+    color: #e2e8f0;
+  }
+  
+  .chart-title {
+    color: #e2e8f0;
+  }
+  
+  .chart-header {
+    border-color: #4a5568;
+  }
+}
+
+/* Animaciones */
+@keyframes chartFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chart-container {
+  animation: chartFadeIn 0.6s ease-out;
+}
+
+/* Pantalla completa */
+.chart-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: #fff;
+  padding: 2rem;
+  overflow: auto;
+}
+
+.chart-fullscreen .chart-wrapper {
+  height: calc(100vh - 200px) !important;
+}
+</style>
+
+{# ========================================================================= 
+   JAVASCRIPT PARA FUNCIONALIDADES AVANZADAS DE GRÁFICOS
+   ========================================================================= #}
+
+<script>
+// Configuración global de Chart.js
+Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+Chart.defaults.color = '#6c757d';
+
+// Paleta de colores del sistema
+const chartColors = {
+  primary: '#007bff',
+  secondary: '#6c757d',
+  success: '#28a745',
+  danger: '#dc3545',
+  warning: '#ffc107',
+  info: '#17a2b8',
+  light: '#f8f9fa',
+  dark: '#343a40'
+};
+
+const chartColorArray = [
+  'rgba(0, 123, 255, 0.8)',
+  'rgba(40, 167, 69, 0.8)',
+  'rgba(220, 53, 69, 0.8)',
+  'rgba(255, 193, 7, 0.8)',
+  'rgba(23, 162, 184, 0.8)',
+  'rgba(108, 117, 125, 0.8)',
+  'rgba(52, 58, 64, 0.8)',
+  'rgba(111, 66, 193, 0.8)'
+];
+
+// Función para cambiar tipo de gráfico
+function switchChartType(chartId, newType) {
+  const chart = window['chart_' + chartId];
+  if (chart) {
+    chart.config.type = newType;
+    chart.update();
+  }
+}
+
+// Función para exportar gráfico
+function exportChart(chartId, format = 'png') {
+  const chart = window['chart_' + chartId];
+  if (chart) {
+    const url = chart.toBase64Image();
+    const link = document.createElement('a');
+    link.download = `chart_${chartId}.${format}`;
+    link.href = url;
+    link.click();
+  }
+}
+
+// Función para pantalla completa
+function toggleChartFullscreen(chartId) {
+  const container = document.querySelector(`#${chartId}`).closest('.chart-container');
+  
+  if (container.classList.contains('chart-fullscreen')) {
+    container.classList.remove('chart-fullscreen');
+    document.body.style.overflow = '';
+  } else {
+    container.classList.add('chart-fullscreen');
+    document.body.style.overflow = 'hidden';
+  }
+  
+  // Redimensionar gráfico después de un breve delay
+  setTimeout(() => {
+    const chart = window['chart_' + chartId];
+    if (chart) {
+      chart.resize();
+    }
+  }, 300);
+}
+
+// Función para generar leyenda personalizada
+function generateCustomLegend(chartId, labels, data) {
+  const chart = window['chart_' + chartId];
+  const legendContainer = document.getElementById(chartId + '_legend');
+  
+  if (chart && legendContainer) {
+    const dataset = Array.isArray(data) ? data : data.data;
+    const colors = Array.isArray(data) ? data : data.backgroundColor;
+    
+    let legendHTML = '';
+    labels.forEach((label, index) => {
+      const value = Array.isArray(dataset) ? dataset[index] : dataset.data[index];
+      const color = Array.isArray(colors) ? colors[index] : colors.backgroundColor[index];
+      const total = Array.isArray(dataset) ? dataset.reduce((a, b) => a + b, 0) : dataset.data.reduce((a, b) => a + b, 0);
+      const percentage = ((value / total) * 100).toFixed(1);
+      
+      legendHTML += `
+        <div class="legend-item" onclick="toggleDataset('${chartId}', ${index})">
+          <div class="legend-color" style="background-color: ${color};"></div>
+          <div class="legend-label">${label}</div>
+          <div class="legend-value">${value} (${percentage}%)</div>
+        </div>
+      `;
+    });
+    
+    legendContainer.innerHTML = legendHTML;
+  }
+}
+
+// Función para alternar dataset
+function toggleDataset(chartId, index) {
+  const chart = window['chart_' + chartId];
+  if (chart) {
+    const meta = chart.getDatasetMeta(0);
+    meta.data[index].hidden = !meta.data[index].hidden;
+    chart.update();
+  }
+}
+
+// Función para crear gráfico gauge con D3.js
+function createGaugeChart(chartId, value, maxValue, color) {
+  const container = d3.select(`#${chartId}`);
+  const width = 200;
+  const height = 120;
+  const radius = Math.min(width, height) / 2;
+  
+  const svg = container.append('svg')
+    .attr('width', width)
+    .attr('height', height);
+  
+  const g = svg.append('g')
+    .attr('transform', `translate(${width/2}, ${height - 10})`);
+  
+  // Crear arco de fondo
+  const backgroundArc = d3.arc()
+    .innerRadius(radius - 20)
+    .outerRadius(radius)
+    .startAngle(-Math.PI / 2)
+    .endAngle(Math.PI / 2);
+  
+  g.append('path')
+    .attr('d', backgroundArc)
+    .attr('fill', '#e9ecef');
+  
+  // Crear arco de progreso
+  const progressArc = d3.arc()
+    .innerRadius(radius - 20)
+    .outerRadius(radius)
+    .startAngle(-Math.PI / 2)
+    .endAngle(-Math.PI / 2 + (Math.PI * value / maxValue));
+  
+  g.append('path')
+    .attr('d', progressArc)
+    .attr('fill', color)
+    .transition()
+    .duration(1000)
+    .attrTween('d', function() {
+      const interpolate = d3.interpolate(0, value / maxValue);
+      return function(t) {
+        const currentAngle = -Math.PI / 2 + (Math.PI * interpolate(t));
+        return d3.arc()
+          .innerRadius(radius - 20)
+          .outerRadius(radius)
+          .startAngle(-Math.PI / 2)
+          .endAngle(currentAngle)();
+      };
+    });
+}
+
+// Función para crear heatmap con D3.js
+function createHeatmapChart(chartId, data) {
+  const container = d3.select(`#${chartId}`);
+  const margin = {top: 50, right: 50, bottom: 50, left: 100};
+  const width = container.node().getBoundingClientRect().width - margin.left - margin.right;
+  const height = 300 - margin.top - margin.bottom;
+  
+  const svg = container.append('svg')
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom);
+  
+  const g = svg.append('g')
+    .attr('transform', `translate(${margin.left}, ${margin.top})`);
+  
+  // Escalas
+  const xScale = d3.scaleBand()
+    .domain(data.map(d => d.x))
+    .range([0, width])
+    .padding(0.1);
+  
+  const yScale = d3.scaleBand()
+    .domain(data.map(d => d.y))
+    .range([0, height])
+    .padding(0.1);
+  
+  const colorScale = d3.scaleSequential(d3.interpolateBlues)
+    .domain(d3.extent(data, d => d.value));
+  
+  // Crear celdas
+  g.selectAll('.heatmap-cell')
+    .data(data)
+    .enter()
+    .append('rect')
+    .attr('class', 'heatmap-cell')
+    .attr('x', d => xScale(d.x))
+    .attr('y', d => yScale(d.y))
+    .attr('width', xScale.bandwidth())
+    .attr('height', yScale.bandwidth())
+    .attr('fill', d => colorScale(d.value))
+    .on('mouseover', function(event, d) {
+      // Tooltip
+      const tooltip = d3.select('body').append('div')
+        .attr('class', 'tooltip')
+        .style('opacity', 0);
+      
+      tooltip.transition()
+        .duration(200)
+        .style('opacity', 0.9);
+      
+      tooltip.html(`Valor: ${d.value}`)
+        .style('left', (event.pageX + 10) + 'px')
+        .style('top', (event.pageY - 28) + 'px');
+    })
+    .on('mouseout', function() {
+      d3.selectAll('.tooltip').remove();
+    });
+  
+  // Ejes
+  g.append('g')
+    .attr('transform', `translate(0, ${height})`)
+    .call(d3.axisBottom(xScale));
+  
+  g.append('g')
+    .call(d3.axisLeft(yScale));
+}
+
+// Función para actualizar datos de gráfico
+function updateChartData(chartId, newData, newLabels = null) {
+  const chart = window['chart_' + chartId];
+  if (chart) {
+    if (newLabels) {
+      chart.data.labels = newLabels;
+    }
+    
+    if (Array.isArray(newData)) {
+      chart.data.datasets.forEach((dataset, index) => {
+        if (newData[index]) {
+          dataset.data = newData[index];
+        }
+      });
+    } else {
+      chart.data.datasets[0].data = newData;
+    }
+    
+    chart.update('none'); // Sin animación para actualizaciones en tiempo real
+  }
+}
+
+// Función para cambiar tema de gráficos
+function changeChartTheme(theme = 'light') {
+  const textColor = theme === 'dark' ? '#e2e8f0' : '#6c757d';
+  const gridColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+  
+  Chart.defaults.color = textColor;
+  Chart.defaults.scale.grid.color = gridColor;
+  
+  // Actualizar todos los gráficos existentes
+  Object.keys(window).forEach(key => {
+    if (key.startsWith('chart_') && window[key].update) {
+      window[key].options.scales.x.grid.color = gridColor;
+      window[key].options.scales.y.grid.color = gridColor;
+      window[key].options.scales.x.ticks.color = textColor;
+      window[key].options.scales.y.ticks.color = textColor;
+      window[key].update();
+    }
+  });
+}
+
+// Inicialización cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+  // Detectar cambio de tema del sistema
+  if (window.matchMedia) {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addListener(function(e) {
+      changeChartTheme(e.matches ? 'dark' : 'light');
+    });
+    
+    // Aplicar tema inicial
+    changeChartTheme(mediaQuery.matches ? 'dark' : 'light');
+  }
+  
+  // Cerrar pantalla completa con Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const fullscreenChart = document.querySelector('.chart-fullscreen');
+      if (fullscreenChart) {
+        fullscreenChart.classList.remove('chart-fullscreen');
+        document.body.style.overflow = '';
+      }
+    }
+  });
+});
+
+// Función de utilidad para formatear números
+function formatNumber(num) {
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + 'M';
+  } else if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'K';
+  }
+  return num.toString();
+}
+
+// Función de utilidad para generar colores automáticamente
+function generateColors(count, opacity = 0.8) {
+  const colors = [];
+  for (let i = 0; i < count; i++) {
+    const hue = (i * 360 / count) % 360;
+    colors.push(`hsla(${hue}, 70%, 50%, ${opacity})`);
+  }
+  return colors;
+}
+</script>

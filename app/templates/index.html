@@ -1,148 +1,978 @@
 {% extends "base.html" %}
 
-{% block title %}Inicio - Plataforma de Emprendimiento{% endblock %}
+{% block title %}{{ _('Inicio') }} - {{ super() }}{% endblock %}
+
+{% block description %}Plataforma integral para el ecosistema de emprendimiento. Conectamos emprendedores, mentores y aliados estratégicos para impulsar la innovación y el crecimiento empresarial.{% endblock %}
+
+{% block keywords %}emprendimiento, startup, incubadora, aceleradora, mentoria, innovacion, emprendedores, financiamiento, networking{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .hero-bg-pattern {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.1;
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    
+    .feature-card {
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        font-size: 1.5rem;
+    }
+    
+    .stats-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 2rem 1rem;
+    }
+    
+    .stat-number {
+        font-size: 3rem;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 0.5rem;
+        counter-reset: num var(--num);
+        animation: countUp 2s ease-out;
+    }
+    
+    @keyframes countUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .testimonial-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 1rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .testimonial-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .program-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .program-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+    
+    .program-header {
+        height: 200px;
+        background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .program-icon {
+        font-size: 4rem;
+        color: white;
+        opacity: 0.9;
+    }
+    
+    .cta-section {
+        background: linear-gradient(135deg, var(--dark-color) 0%, #2d3748 100%);
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .floating-elements {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+    }
+    
+    .floating-element {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        animation: float 6s ease-in-out infinite;
+    }
+    
+    .floating-element:nth-child(1) {
+        width: 80px;
+        height: 80px;
+        top: 20%;
+        left: 10%;
+        animation-delay: 0s;
+    }
+    
+    .floating-element:nth-child(2) {
+        width: 120px;
+        height: 120px;
+        top: 60%;
+        right: 15%;
+        animation-delay: 2s;
+    }
+    
+    .floating-element:nth-child(3) {
+        width: 60px;
+        height: 60px;
+        bottom: 20%;
+        left: 20%;
+        animation-delay: 4s;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+    }
+    
+    .btn-gradient {
+        background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+        border: none;
+        color: white;
+        padding: 12px 30px;
+        border-radius: 50px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-gradient:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+    
+    .btn-gradient:hover:before {
+        left: 100%;
+    }
+    
+    .btn-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+    
+    .dashboard-preview {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-top: 2rem;
+    }
+    
+    .metric-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s ease;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .section-title {
+        position: relative;
+        text-align: center;
+        margin-bottom: 4rem;
+    }
+    
+    .section-title:after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 4px;
+        background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+        border-radius: 2px;
+    }
+    
+    .fade-in {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.6s ease;
+    }
+    
+    .fade-in.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    @media (max-width: 768px) {
+        .hero-section {
+            min-height: 80vh;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+        }
+        
+        .program-header {
+            height: 150px;
+        }
+        
+        .program-icon {
+            font-size: 2.5rem;
+        }
+    }
+</style>
 {% endblock %}
+
+{% block body_class %}landing-page{% endblock %}
+
+{% block navigation %}
+<!-- Navigation for landing page -->
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background: rgba(0,0,0,0.1); backdrop-filter: blur(10px);">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/">
+            <i class="fas fa-rocket me-2"></i>
+            {{ config.get('APP_NAME', 'Ecosistema Emprendimiento') }}
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#inicio">{{ _('Inicio') }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#servicios">{{ _('Servicios') }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#programas">{{ _('Programas') }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#testimonios">{{ _('Testimonios') }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#contacto">{{ _('Contacto') }}</a>
+                </li>
+            </ul>
+            
+            <div class="navbar-nav">
+                {% if current_user and current_user.is_authenticated %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                        <img src="{{ current_user.avatar_url or '/static/dist/img/default-avatar.jpg' }}" alt="Avatar" class="rounded-circle me-2" width="30" height="30">
+                        {{ current_user.username or current_user.email }}
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/dashboard"><i class="fas fa-tachometer-alt me-2"></i>{{ _('Dashboard') }}</a></li>
+                        <li><a class="dropdown-item" href="/profile"><i class="fas fa-user me-2"></i>{{ _('Perfil') }}</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>{{ _('Cerrar Sesión') }}</a></li>
+                    </ul>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="/login">{{ _('Iniciar Sesión') }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-outline-light ms-2" href="/register">{{ _('Registrarse') }}</a>
+                </li>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block breadcrumb %}
+<!-- No breadcrumb for landing page -->
+{% endblock %}
+
+{% block main_class %}p-0{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
-<section class="hero-section py-5">
-    <div class="container">
-        <div class="row align-items-center">
+<section id="inicio" class="hero-section d-flex align-items-center">
+    <div class="hero-bg-pattern"></div>
+    <div class="floating-elements">
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+    </div>
+    
+    <div class="container hero-content">
+        <div class="row align-items-center min-vh-100">
+            <div class="col-lg-6 text-white">
+                <div class="fade-in">
+                    <h1 class="display-4 fw-bold mb-4">
+                        {{ _('Transforma tu') }}
+                        <span class="text-warning">{{ _('idea') }}</span>
+                        {{ _('en una') }}
+                        <span class="text-warning">{{ _('empresa exitosa') }}</span>
+                    </h1>
+                    <p class="lead mb-4">
+                        {{ _('Únete al ecosistema de emprendimiento más completo. Conecta con mentores expertos, accede a financiamiento y haz realidad tus sueños empresariales.') }}
+                    </p>
+                    
+                    <div class="d-flex flex-wrap gap-3 mb-4">
+                        {% if not current_user or not current_user.is_authenticated %}
+                        <a href="/register" class="btn btn-gradient btn-lg">
+                            <i class="fas fa-rocket me-2"></i>{{ _('Comenzar Ahora') }}
+                        </a>
+                        <a href="#servicios" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-play me-2"></i>{{ _('Ver Demo') }}
+                        </a>
+                        {% else %}
+                        <a href="/dashboard" class="btn btn-gradient btn-lg">
+                            <i class="fas fa-tachometer-alt me-2"></i>{{ _('Ir al Dashboard') }}
+                        </a>
+                        <a href="/projects/new" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-plus me-2"></i>{{ _('Nuevo Proyecto') }}
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row text-center mt-5">
+                        <div class="col-4">
+                            <div class="h4 fw-bold">1,500+</div>
+                            <small>{{ _('Emprendedores') }}</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="h4 fw-bold">200+</div>
+                            <small>{{ _('Mentores') }}</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="h4 fw-bold">95%</div>
+                            <small>{{ _('Éxito') }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <div class="col-lg-6">
-                <h1 class="display-4 fw-bold mb-4">Conectamos emprendedores con aliados estratégicos</h1>
-                <p class="lead mb-4">Nuestra plataforma facilita el acompañamiento y crecimiento de emprendimientos a través de mentorías, recursos y seguimiento personalizado.</p>
-                <div class="d-grid gap-2 d-md-flex justify-content-md-start">
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg px-4 me-md-2">Comenzar ahora</a>
-                    <a href="#como-funciona" class="btn btn-outline-secondary btn-lg px-4">Cómo funciona</a>
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <img src="{{ url_for('static', filename='images/hero-image.jpg') }}" alt="Emprendedores colaborando" class="img-fluid rounded shadow-lg">
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Estadísticas -->
-<section class="stats-section py-5 bg-light">
-    <div class="container">
-        <div class="row text-center">
-            <div class="col-md-4 mb-4 mb-md-0">
-                <div class="stat-card p-4 bg-white rounded shadow-sm">
-                    <h2 class="display-4 fw-bold text-primary">{{ stats.entrepreneurs }}</h2>
-                    <p class="lead">Emprendedores</p>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4 mb-md-0">
-                <div class="stat-card p-4 bg-white rounded shadow-sm">
-                    <h2 class="display-4 fw-bold text-primary">{{ stats.allies }}</h2>
-                    <p class="lead">Aliados estratégicos</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-card p-4 bg-white rounded shadow-sm">
-                    <h2 class="display-4 fw-bold text-primary">{{ stats.hours }}</h2>
-                    <p class="lead">Horas de mentoría</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Cómo funciona -->
-<section id="como-funciona" class="how-it-works-section py-5">
-    <div class="container">
-        <h2 class="text-center mb-5">Cómo funciona nuestra plataforma</h2>
-        <div class="row">
-            <div class="col-md-4 mb-4 mb-md-0">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="feature-icon bg-primary text-white rounded-circle mb-3 mx-auto">
-                            <i class="bi bi-person-plus-fill"></i>
-                        </div>
-                        <h3 class="h4 mb-3">1. Regístrate</h3>
-                        <p class="card-text">Crea tu perfil como emprendedor, aliado o cliente y accede a todas las funcionalidades de la plataforma.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4 mb-md-0">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="feature-icon bg-primary text-white rounded-circle mb-3 mx-auto">
-                            <i class="bi bi-people-fill"></i>
-                        </div>
-                        <h3 class="h4 mb-3">2. Conecta</h3>
-                        <p class="card-text">Los emprendedores son asignados a aliados estratégicos según sus necesidades y áreas de experiencia.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="feature-icon bg-primary text-white rounded-circle mb-3 mx-auto">
-                            <i class="bi bi-graph-up"></i>
-                        </div>
-                        <h3 class="h4 mb-3">3. Crece</h3>
-                        <p class="card-text">Aprovecha las herramientas de seguimiento, comunicación y gestión para impulsar tu emprendimiento.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Testimonios -->
-<section class="testimonials-section py-5 bg-light">
-    <div class="container">
-        <h2 class="text-center mb-5">Lo que dicen nuestros usuarios</h2>
-        <div class="row">
-            {% for testimonial in testimonials %}
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <div class="d-flex align-items-center mb-3">
-                            <img src="{{ testimonial.image }}" alt="{{ testimonial.name }}" class="rounded-circle me-3" width="60" height="60">
-                            <div>
-                                <h5 class="mb-0">{{ testimonial.name }}</h5>
-                                <p class="text-muted mb-0">{{ testimonial.role }}</p>
+                {% if current_user and current_user.is_authenticated %}
+                <!-- Dashboard Preview for authenticated users -->
+                <div class="dashboard-preview fade-in">
+                    <h5 class="text-dark mb-3">{{ _('Tu Progreso') }}</h5>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="metric-card">
+                                <i class="fas fa-project-diagram text-primary mb-2" style="font-size: 2rem;"></i>
+                                <h6 class="text-muted">{{ _('Proyectos') }}</h6>
+                                <h4 class="text-primary mb-0">{{ current_user.projects_count or 0 }}</h4>
                             </div>
                         </div>
-                        <p class="card-text mb-0">"{{ testimonial.text }}"</p>
+                        <div class="col-6">
+                            <div class="metric-card">
+                                <i class="fas fa-calendar-check text-success mb-2" style="font-size: 2rem;"></i>
+                                <h6 class="text-muted">{{ _('Reuniones') }}</h6>
+                                <h4 class="text-success mb-0">{{ current_user.meetings_count or 0 }}</h4>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-card">
+                                <i class="fas fa-tasks text-warning mb-2" style="font-size: 2rem;"></i>
+                                <h6 class="text-muted">{{ _('Tareas') }}</h6>
+                                <h4 class="text-warning mb-0">{{ current_user.tasks_count or 0 }}</h4>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-card">
+                                <i class="fas fa-chart-line text-info mb-2" style="font-size: 2rem;"></i>
+                                <h6 class="text-muted">{{ _('Progreso') }}</h6>
+                                <h4 class="text-info mb-0">{{ current_user.progress_percentage or 0 }}%</h4>
+                            </div>
+                        </div>
                     </div>
                 </div>
+                {% else %}
+                <!-- Hero Image for non-authenticated users -->
+                <div class="text-center fade-in">
+                    <div class="position-relative d-inline-block">
+                        <div class="bg-white rounded-4 p-4 shadow-lg" style="backdrop-filter: blur(10px);">
+                            <i class="fas fa-chart-line text-primary" style="font-size: 8rem; opacity: 0.8;"></i>
+                        </div>
+                        <div class="position-absolute top-0 start-0 bg-warning rounded-circle p-3 shadow" style="transform: translate(-50%, -50%);">
+                            <i class="fas fa-lightbulb text-white"></i>
+                        </div>
+                        <div class="position-absolute top-0 end-0 bg-success rounded-circle p-3 shadow" style="transform: translate(50%, -50%);">
+                            <i class="fas fa-rocket text-white"></i>
+                        </div>
+                        <div class="position-absolute bottom-0 start-50 bg-danger rounded-circle p-3 shadow" style="transform: translate(-50%, 50%);">
+                            <i class="fas fa-target text-white"></i>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
-            {% endfor %}
         </div>
     </div>
 </section>
 
-<!-- Llamado a la acción -->
-<section class="cta-section py-5 bg-primary text-white">
-    <div class="container text-center">
-        <h2 class="mb-4">¿Listo para impulsar tu emprendimiento?</h2>
-        <p class="lead mb-4">Únete a nuestra comunidad y accede a recursos, mentorías y herramientas para hacer crecer tu negocio.</p>
-        <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg px-4">Registrarse ahora</a>
+<!-- Services Section -->
+<section id="servicios" class="py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="section-title h1 fw-bold text-dark">
+                    {{ _('Servicios que Impulsan tu Éxito') }}
+                </h2>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card card h-100 fade-in">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-handshake"></i>
+                        </div>
+                        <h5 class="card-title">{{ _('Mentoría Personalizada') }}</h5>
+                        <p class="card-text text-muted">
+                            {{ _('Conecta con mentores expertos que te guiarán en cada etapa de tu emprendimiento.') }}
+                        </p>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="fas fa-check text-success me-2"></i>{{ _('Sesiones 1:1') }}</li>
+                            <li><i class="fas fa-check text-success me-2"></i>{{ _('Seguimiento continuo') }}</li>
+                            <li><i class="fas fa-check text-success me-2"></i>{{ _('Red de contactos') }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card card h-100 fade-in">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <h5 class="card-title">{{ _('Acceso a Financiamiento') }}</h5>
+                        <p class="card-text text-muted">
+                            {{ _('Conectamos tu startup con inversionistas y fondos de capital de riesgo.') }}
+                        </p>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="fas fa-check text-success me-2"></i>{{ _('Pitch deck review') }}</li>
+                            <li><i class="fas fa-check text-success me-2"></i>{{ _('Investor matching') }}</li>
+                            <li><i class="fas fa-check text-success me-2"></i>{{ _('Due diligence support') }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card card h-100 fade-in">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h5 class="card-title">{{ _('Networking Estratégico') }}</h5>
+                        <p class="card-text text-muted">
+                            {{ _('Participa en eventos exclusivos y conecta con otros emprendedores.') }}
+                        </p>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="fas fa-check text-success me-2"></i>{{ _('Eventos mensuales') }}</li>
+                            <li><i class="fas fa-check text-success me-2"></i>{{ _('Workshops especializados') }}</li>
+                            <li><i class="fas fa-check text-success me-2"></i>{{ _('Comunidad activa') }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card card h-100 fade-in">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h5 class="card-title">{{ _('Analytics y Métricas') }}</h5>
+                        <p class="card-text text-muted">
+                            {{ _('Monitorea el progreso de tu startup con herramientas avanzadas de análisis.') }}
+                        </p>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="fas fa-check text-success me-2"></i>{{ _('KPIs en tiempo real') }}</li>
+                            <li><i class="fas fa-check text-success me-2"></i>{{ _('Reportes automáticos') }}</li>
+                            <li><i class="fas fa-check text-success me-2"></i>{{ _('Benchmarking') }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card card h-100 fade-in">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <h5 class="card-title">{{ _('Capacitación Continua') }}</h5>
+                        <p class="card-text text-muted">
+                            {{ _('Accede a cursos y recursos educativos para desarrollar tus habilidades.') }}
+                        </p>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="fas fa-check text-success me-2"></i>{{ _('Cursos online') }}</li>
+                            <li><i class="fas fa-check text-success me-2"></i>{{ _('Certificaciones') }}</li>
+                            <li><i class="fas fa-check text-success me-2"></i>{{ _('Biblioteca de recursos') }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card card h-100 fade-in">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <h5 class="card-title">{{ _('Herramientas Integradas') }}</h5>
+                        <p class="card-text text-muted">
+                            {{ _('Plataforma todo-en-uno para gestionar tu emprendimiento eficientemente.') }}
+                        </p>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="fas fa-check text-success me-2"></i>{{ _('Project management') }}</li>
+                            <li><i class="fas fa-check text-success me-2"></i>{{ _('CRM integrado') }}</li>
+                            <li><i class="fas fa-check text-success me-2"></i>{{ _('Comunicación unificada') }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 
-<!-- Aliados y patrocinadores -->
-<section class="partners-section py-5">
+<!-- Stats Section -->
+<section class="stats-section py-5">
     <div class="container">
-        <h2 class="text-center mb-5">Nuestros aliados y patrocinadores</h2>
-        <div class="row align-items-center justify-content-center">
-            {% for partner in partners %}
-            <div class="col-6 col-md-3 col-lg-2 mb-4 text-center">
-                <img src="{{ partner.logo }}" alt="{{ partner.name }}" class="img-fluid partner-logo" style="max-height: 80px;">
+        <div class="row">
+            <div class="col-12 text-center mb-5">
+                <h2 class="h1 fw-bold text-white mb-3">{{ _('Resultados que Hablan por Sí Solos') }}</h2>
+                <p class="lead text-white-50">{{ _('Más de 5 años impulsando el éxito empresarial') }}</p>
             </div>
-            {% endfor %}
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-item fade-in">
+                    <span class="stat-number" data-target="1547">0</span>
+                    <p class="mb-0 text-white-50">{{ _('Emprendedores Activos') }}</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-item fade-in">
+                    <span class="stat-number" data-target="234">0</span>
+                    <p class="mb-0 text-white-50">{{ _('Mentores Expertos') }}</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-item fade-in">
+                    <span class="stat-number" data-target="89">0</span>
+                    <p class="mb-0 text-white-50">{{ _('Startups Exitosas') }}%</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-item fade-in">
+                    <span class="stat-number" data-target="15">0</span>
+                    <p class="mb-0 text-white-50">{{ _('Millones Invertidos') }} USD</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Programs Section -->
+<section id="programas" class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="section-title h1 fw-bold text-dark">
+                    {{ _('Programas de Aceleración') }}
+                </h2>
+                <p class="text-center text-muted lead mb-5">
+                    {{ _('Elige el programa que mejor se adapte a tu etapa empresarial') }}
+                </p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="program-card fade-in">
+                    <div class="program-header">
+                        <i class="program-icon fas fa-seedling"></i>
+                    </div>
+                    <div class="p-4">
+                        <h4 class="mb-3">{{ _('Semilla') }}</h4>
+                        <p class="text-muted mb-4">
+                            {{ _('Para emprendedores con ideas innovadoras que buscan validar su modelo de negocio.') }}
+                        </p>
+                        <ul class="list-unstyled mb-4">
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>{{ _('Validación de idea') }}</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>{{ _('Desarrollo de MVP') }}</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>{{ _('Mentoría inicial') }}</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>{{ _('Networking básico') }}</li>
+                        </ul>
+                        <div class="text-center">
+                            <div class="h3 text-primary mb-3">{{ _('Gratuito') }}</div>
+                            <a href="/register?program=seed" class="btn btn-outline-primary btn-block w-100">
+                                {{ _('Aplicar Ahora') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="program-card fade-in">
+                    <div class="program-header">
+                        <i class="program-icon fas fa-rocket"></i>
+                    </div>
+                    <div class="p-4">
+                        <h4 class="mb-3">{{ _('Aceleración') }}</h4>
+                        <p class="text-muted mb-4">
+                            {{ _('Para startups con tracción que buscan escalar rápidamente y conseguir inversión.') }}
+                        </p>
+                        <ul class="list-unstyled mb-4">
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>{{ _('Escalamiento estratégico') }}</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>{{ _('Preparación para inversión') }}</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>{{ _('Mentoría premium') }}</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>{{ _('Demo Day') }}</li>
+                        </ul>
+                        <div class="text-center">
+                            <div class="h3 text-primary mb-3">$2,500 <small class="text-muted">/3 meses</small></div>
+                            <a href="/register?program=accelerator" class="btn btn-primary btn-block w-100">
+                                {{ _('Aplicar Ahora') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="program-card fade-in">
+                    <div class="program-header">
+                        <i class="program-icon fas fa-crown"></i>
+                    </div>
+                    <div class="p-4">
+                        <h4 class="mb-3">{{ _('Elite') }}</h4>
+                        <p class="text-muted mb-4">
+                            {{ _('Para empresas establecidas que buscan expansión internacional y nuevos mercados.') }}
+                        </p>
+                        <ul class="list-unstyled mb-4">
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>{{ _('Expansión global') }}</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>{{ _('Asesoría legal internacional') }}</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>{{ _('Board de asesores') }}</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>{{ _('Acceso a fondos Series A+') }}</li>
+                        </ul>
+                        <div class="text-center">
+                            <div class="h3 text-primary mb-3">{{ _('Personalizado') }}</div>
+                            <a href="/contact?program=elite" class="btn btn-gradient btn-block w-100">
+                                {{ _('Contactar') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section id="testimonios" class="py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="section-title h1 fw-bold text-dark">
+                    {{ _('Historias de Éxito') }}
+                </h2>
+                <p class="text-center text-muted lead mb-5">
+                    {{ _('Conoce las experiencias de emprendedores que han transformado sus ideas en empresas exitosas') }}
+                </p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="testimonial-card fade-in">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="/static/dist/img/testimonials/maria-rodriguez.jpg" alt="María Rodríguez" class="rounded-circle me-3" width="60" height="60" onerror="this.src='/static/dist/img/default-avatar.jpg'">
+                        <div>
+                            <h6 class="mb-0">María Rodríguez</h6>
+                            <small class="text-muted">CEO, EcoTech Solutions</small>
+                        </div>
+                    </div>
+                    <p class="text-muted">
+                        "{{ _('Gracias al programa de aceleración, conseguimos nuestra Serie A de $2M en solo 6 meses. La mentoría fue clave para nuestro éxito.') }}"
+                    </p>
+                    <div class="text-warning">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="testimonial-card fade-in">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="/static/dist/img/testimonials/carlos-mendez.jpg" alt="Carlos Méndez" class="rounded-circle me-3" width="60" height="60" onerror="this.src='/static/dist/img/default-avatar.jpg'">
+                        <div>
+                            <h6 class="mb-0">Carlos Méndez</h6>
+                            <small class="text-muted">Founder, FinanceApp</small>
+                        </div>
+                    </div>
+                    <p class="text-muted">
+                        "{{ _('La plataforma me conectó con el mentor perfecto. Su experiencia en fintech fue fundamental para validar nuestro producto.') }}"
+                    </p>
+                    <div class="text-warning">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="testimonial-card fade-in">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="/static/dist/img/testimonials/ana-silva.jpg" alt="Ana Silva" class="rounded-circle me-3" width="60" height="60" onerror="this.src='/static/dist/img/default-avatar.jpg'">
+                        <div>
+                            <h6 class="mb-0">Ana Silva</h6>
+                            <small class="text-muted">Co-founder, HealthTech</small>
+                        </div>
+                    </div>
+                    <p class="text-muted">
+                        "{{ _('El networking fue increíble. Conocí a mi co-founder en uno de sus eventos y ahora tenemos una startup valorada en $5M.') }}"
+                    </p>
+                    <div class="text-warning">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section id="contacto" class="cta-section py-5">
+    <div class="floating-elements">
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+    </div>
+    
+    <div class="container position-relative">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-8">
+                <h2 class="h1 fw-bold text-white mb-4 fade-in">
+                    {{ _('¿Listo para Transformar tu Idea en Realidad?') }}
+                </h2>
+                <p class="lead text-white-50 mb-5 fade-in">
+                    {{ _('Únete a más de 1,500 emprendedores que ya están construyendo el futuro. Tu próximo gran éxito comienza aquí.') }}
+                </p>
+                
+                <div class="d-flex flex-wrap justify-content-center gap-3 mb-5 fade-in">
+                    {% if not current_user or not current_user.is_authenticated %}
+                    <a href="/register" class="btn btn-gradient btn-lg">
+                        <i class="fas fa-rocket me-2"></i>{{ _('Comenzar Gratis') }}
+                    </a>
+                    <a href="/contact" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-phone me-2"></i>{{ _('Agendar Demo') }}
+                    </a>
+                    {% else %}
+                    <a href="/projects/new" class="btn btn-gradient btn-lg">
+                        <i class="fas fa-plus me-2"></i>{{ _('Crear Proyecto') }}
+                    </a>
+                    <a href="/mentors" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-handshake me-2"></i>{{ _('Encontrar Mentor') }}
+                    </a>
+                    {% endif %}
+                </div>
+                
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <i class="fas fa-shield-alt fa-2x text-white-50 mb-2"></i>
+                        <p class="text-white-50">{{ _('100% Seguro') }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <i class="fas fa-clock fa-2x text-white-50 mb-2"></i>
+                        <p class="text-white-50">{{ _('Setup en 5 min') }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <i class="fas fa-headset fa-2x text-white-50 mb-2"></i>
+                        <p class="text-white-50">{{ _('Soporte 24/7') }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </section>
 {% endblock %}
 
-{% block extra_js %}
-<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+{% block page_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+    
+    // Intersection Observer for fade-in animations
+    const fadeElements = document.querySelectorAll('.fade-in');
+    const fadeObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+    
+    fadeElements.forEach(el => fadeObserver.observe(el));
+    
+    // Counter animation for stats
+    const countElements = document.querySelectorAll('.stat-number');
+    const countObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const target = parseInt(entry.target.getAttribute('data-target'));
+                animateCounter(entry.target, target);
+                countObserver.unobserve(entry.target);
+            }
+        });
+    });
+    
+    countElements.forEach(el => countObserver.observe(el));
+    
+    function animateCounter(element, target) {
+        let current = 0;
+        const increment = target / 100;
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            element.textContent = Math.floor(current);
+        }, 20);
+    }
+    
+    // Navbar background change on scroll
+    const navbar = document.querySelector('.navbar');
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 100) {
+            navbar.style.background = 'rgba(0,0,0,0.9)';
+        } else {
+            navbar.style.background = 'rgba(0,0,0,0.1)';
+        }
+    });
+    
+    // Feature cards hover effect
+    const featureCards = document.querySelectorAll('.feature-card');
+    featureCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    // Add loading animation to buttons
+    document.querySelectorAll('.btn-gradient').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            if (this.href && !this.href.includes('#')) {
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Cargando...';
+                this.disabled = true;
+                
+                // Re-enable after navigation (fallback)
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }, 3000);
+            }
+        });
+    });
+    
+    // Initialize tooltips if Bootstrap is available
+    if (typeof bootstrap !== 'undefined') {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+});
+</script>
 {% endblock %}

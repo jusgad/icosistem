@@ -1,0 +1,982 @@
+{% extends "layouts/dashboard.html" %}
+{% from "components/modals.html" import modal_dialog %}
+{% from "components/forms.html" import form_field, form_select, form_textarea, form_rating %}
+{% from "components/cards.html" import mentor_card, session_card %}
+{% from "components/pagination.html" import render_pagination %}
+
+{% set page_title = "Mentorías" %}
+{% set active_menu = "mentorship" %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='dist/css/mentorship.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='vendor/calendar/fullcalendar.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='vendor/chat/chat.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='vendor/rating/rating.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="h3 text-dark mb-1">
+                        <i class="fas fa-chalkboard-teacher text-primary me-2"></i>
+                        Mi Programa de Mentoría
+                    </h2>
+                    <p class="text-muted mb-0">Conecta con mentores expertos y acelera tu crecimiento emprendedor</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#findMentorModal">
+                        <i class="fas fa-search me-1"></i>
+                        Buscar Mentor
+                    </button>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#scheduleSessionModal">
+                        <i class="fas fa-calendar-plus me-1"></i>
+                        Agendar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100 stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted mb-1 small">Total Sesiones</p>
+                            <h4 class="mb-0 text-dark">{{ mentorship_stats.total_sessions or 0 }}</h4>
+                            <small class="text-success">
+                                <i class="fas fa-arrow-up me-1"></i>
+                                +{{ mentorship_stats.sessions_this_month or 0 }} este mes
+                            </small>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                            <i class="fas fa-video text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100 stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted mb-1 small">Horas de Mentoría</p>
+                            <h4 class="mb-0 text-success">{{ "%.1f"|format(mentorship_stats.total_hours or 0) }}</h4>
+                            <small class="text-info">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ "%.1f"|format(mentorship_stats.avg_session_duration or 0) }}h promedio
+                            </small>
+                        </div>
+                        <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                            <i class="fas fa-clock text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100 stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted mb-1 small">Mentores Activos</p>
+                            <h4 class="mb-0 text-info">{{ mentorship_stats.active_mentors or 0 }}</h4>
+                            <small class="text-warning">
+                                <i class="fas fa-star me-1"></i>
+                                {{ "%.1f"|format(mentorship_stats.avg_rating or 0) }} promedio
+                            </small>
+                        </div>
+                        <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                            <i class="fas fa-users text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100 stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted mb-1 small">Próxima Sesión</p>
+                            {% if next_session %}
+                            <h6 class="mb-0 text-warning">{{ next_session.scheduled_at.strftime('%d/%m') }}</h6>
+                            <small class="text-muted">
+                                {{ next_session.scheduled_at.strftime('%H:%M') }} - {{ next_session.mentor.first_name }}
+                            </small>
+                            {% else %}
+                            <h6 class="mb-0 text-muted">No programada</h6>
+                            <small class="text-muted">Agenda una nueva sesión</small>
+                            {% endif %}
+                        </div>
+                        <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                            <i class="fas fa-calendar-alt text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Left Column: Calendar & Upcoming Sessions -->
+        <div class="col-lg-8">
+            <!-- Calendar Section -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-bottom-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-calendar text-primary me-2"></i>
+                            Calendario de Mentorías
+                        </h5>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-secondary active" data-view="month">Mes</button>
+                            <button type="button" class="btn btn-outline-secondary" data-view="week">Semana</button>
+                            <button type="button" class="btn btn-outline-secondary" data-view="day">Día</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="mentorshipCalendar"></div>
+                </div>
+            </div>
+
+            <!-- Upcoming Sessions -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-bottom-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-clock text-success me-2"></i>
+                            Próximas Sesiones
+                        </h5>
+                        <a href="{{ url_for('entrepreneur.mentorship_history') }}" class="btn btn-sm btn-outline-primary">
+                            Ver Historial
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_sessions %}
+                        <div class="row g-3">
+                            {% for session in upcoming_sessions %}
+                            <div class="col-12">
+                                <div class="session-card border rounded p-3 position-relative">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-2 text-center">
+                                            <div class="session-date">
+                                                <div class="day">{{ session.scheduled_at.strftime('%d') }}</div>
+                                                <div class="month">{{ session.scheduled_at.strftime('%b').upper() }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="d-flex align-items-center">
+                                                <img src="{{ session.mentor.avatar_url or url_for('static', filename='img/default-avatar.png') }}" 
+                                                     alt="{{ session.mentor.full_name }}" 
+                                                     class="rounded-circle me-3"
+                                                     style="width: 48px; height: 48px;">
+                                                <div>
+                                                    <h6 class="mb-0">{{ session.mentor.full_name }}</h6>
+                                                    <small class="text-muted">{{ session.mentor.specialization }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="session-details">
+                                                <div class="mb-1">
+                                                    <i class="fas fa-clock text-muted me-1"></i>
+                                                    <span class="small">{{ session.scheduled_at.strftime('%H:%M') }} - {{ session.end_time.strftime('%H:%M') if session.end_time else 'N/A' }}</span>
+                                                </div>
+                                                <div class="mb-1">
+                                                    <i class="fas fa-video text-muted me-1"></i>
+                                                    <span class="small">{{ session.session_type.title() }}</span>
+                                                </div>
+                                                {% if session.topic %}
+                                                <div>
+                                                    <i class="fas fa-tag text-muted me-1"></i>
+                                                    <span class="small">{{ session.topic }}</span>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            {% set status_class = {
+                                                'scheduled': 'bg-warning',
+                                                'confirmed': 'bg-success',
+                                                'pending': 'bg-secondary',
+                                                'cancelled': 'bg-danger'
+                                            } %}
+                                            <span class="badge {{ status_class.get(session.status, 'bg-secondary') }} small">
+                                                {{ session.get_status_display() }}
+                                            </span>
+                                        </div>
+                                        <div class="col-md-2 text-end">
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    {% if session.status == 'confirmed' and session.meet_link %}
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{ session.meet_link }}" target="_blank">
+                                                            <i class="fas fa-video me-2 text-success"></i>Unirse a la Sesión
+                                                        </a>
+                                                    </li>
+                                                    {% endif %}
+                                                    <li>
+                                                        <button class="dropdown-item" onclick="viewSessionDetails({{ session.id }})">
+                                                            <i class="fas fa-eye me-2"></i>Ver Detalles
+                                                        </button>
+                                                    </li>
+                                                    {% if session.can_reschedule() %}
+                                                    <li>
+                                                        <button class="dropdown-item" onclick="rescheduleSession({{ session.id }})">
+                                                            <i class="fas fa-calendar-alt me-2"></i>Reprogramar
+                                                        </button>
+                                                    </li>
+                                                    {% endif %}
+                                                    {% if session.can_cancel() %}
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <button class="dropdown-item text-danger" onclick="cancelSession({{ session.id }})">
+                                                            <i class="fas fa-times me-2"></i>Cancelar
+                                                        </button>
+                                                    </li>
+                                                    {% endif %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Session Progress/Preparation -->
+                                    {% if session.agenda or session.preparation_notes %}
+                                    <div class="mt-3 pt-3 border-top">
+                                        {% if session.agenda %}
+                                        <div class="mb-2">
+                                            <strong class="small text-muted">Agenda:</strong>
+                                            <p class="small mb-0">{{ session.agenda[:120] }}{% if session.agenda|length > 120 %}...{% endif %}</p>
+                                        </div>
+                                        {% endif %}
+                                        {% if session.preparation_notes %}
+                                        <div>
+                                            <strong class="small text-muted">Preparación:</strong>
+                                            <p class="small mb-0">{{ session.preparation_notes[:120] }}{% if session.preparation_notes|length > 120 %}...{% endif %}</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-calendar-plus text-muted mb-3" style="font-size: 3rem; opacity: 0.3;"></i>
+                            <h5 class="text-muted mb-2">No tienes sesiones programadas</h5>
+                            <p class="text-muted mb-3">Agenda tu próxima sesión de mentoría</p>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#scheduleSessionModal">
+                                <i class="fas fa-calendar-plus me-1"></i>
+                                Agendar Sesión
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Mentors & Resources -->
+        <div class="col-lg-4">
+            <!-- My Mentors -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-bottom-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-user-tie text-info me-2"></i>
+                            Mis Mentores
+                        </h5>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#findMentorModal">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if my_mentors %}
+                        {% for mentor in my_mentors %}
+                        <div class="mentor-item d-flex align-items-center mb-3 p-2 rounded hover-bg-light">
+                            <img src="{{ mentor.avatar_url or url_for('static', filename='img/default-avatar.png') }}" 
+                                 alt="{{ mentor.full_name }}" 
+                                 class="rounded-circle me-3"
+                                 style="width: 48px; height: 48px;">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">{{ mentor.full_name }}</h6>
+                                <small class="text-muted">{{ mentor.specialization }}</small>
+                                <div class="mt-1">
+                                    {% for i in range(5) %}
+                                    <i class="fas fa-star {{ 'text-warning' if i < mentor.avg_rating else 'text-muted' }}" style="font-size: 12px;"></i>
+                                    {% endfor %}
+                                    <span class="small text-muted ms-1">({{ mentor.sessions_count }} sesiones)</span>
+                                </div>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <button class="dropdown-item" onclick="scheduleWithMentor({{ mentor.id }})">
+                                            <i class="fas fa-calendar-plus me-2"></i>Agendar Sesión
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" onclick="openMentorChat({{ mentor.id }})">
+                                            <i class="fas fa-comments me-2"></i>Enviar Mensaje
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ url_for('entrepreneur.mentor_profile', id=mentor.id) }}">
+                                            <i class="fas fa-user me-2"></i>Ver Perfil
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-user-plus text-muted mb-2" style="font-size: 2rem; opacity: 0.3;"></i>
+                            <p class="text-muted mb-2">No tienes mentores asignados</p>
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#findMentorModal">
+                                Buscar Mentor
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Feedback -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-bottom-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-star text-warning me-2"></i>
+                        Feedback Reciente
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_feedback %}
+                        {% for feedback in recent_feedback %}
+                        <div class="feedback-item mb-3 p-3 bg-light rounded">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ feedback.mentor.avatar_url or url_for('static', filename='img/default-avatar.png') }}" 
+                                         alt="{{ feedback.mentor.full_name }}" 
+                                         class="rounded-circle me-2"
+                                         style="width: 32px; height: 32px;">
+                                    <div>
+                                        <h6 class="mb-0 small">{{ feedback.mentor.full_name }}</h6>
+                                        <small class="text-muted">{{ feedback.created_at|timeago }}</small>
+                                    </div>
+                                </div>
+                                <div class="rating">
+                                    {% for i in range(5) %}
+                                    <i class="fas fa-star {{ 'text-warning' if i < feedback.rating else 'text-muted' }}" style="font-size: 12px;"></i>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <p class="small mb-0">{{ feedback.comments[:100] }}{% if feedback.comments|length > 100 %}...{% endif %}</p>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-comment-alt text-muted mb-2" style="font-size: 2rem; opacity: 0.3;"></i>
+                            <p class="text-muted mb-0">No hay feedback reciente</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Resources & Materials -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-bottom-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-book text-success me-2"></i>
+                        Recursos Compartidos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if shared_resources %}
+                        <div class="list-group list-group-flush">
+                            {% for resource in shared_resources %}
+                            <div class="list-group-item border-0 px-0">
+                                <div class="d-flex align-items-center">
+                                    <div class="file-icon me-3">
+                                        {% set file_ext = resource.file_path.split('.')[-1].lower() %}
+                                        {% if file_ext in ['pdf'] %}
+                                        <i class="fas fa-file-pdf text-danger"></i>
+                                        {% elif file_ext in ['doc', 'docx'] %}
+                                        <i class="fas fa-file-word text-primary"></i>
+                                        {% elif file_ext in ['xls', 'xlsx'] %}
+                                        <i class="fas fa-file-excel text-success"></i>
+                                        {% elif file_ext in ['ppt', 'pptx'] %}
+                                        <i class="fas fa-file-powerpoint text-warning"></i>
+                                        {% else %}
+                                        <i class="fas fa-file text-muted"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0 small">{{ resource.title }}</h6>
+                                        <small class="text-muted">Por {{ resource.shared_by.full_name }} • {{ resource.created_at|timeago }}</small>
+                                    </div>
+                                    <a href="{{ url_for('entrepreneur.download_resource', id=resource.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-folder-open text-muted mb-2" style="font-size: 2rem; opacity: 0.3;"></i>
+                            <p class="text-muted mb-0">No hay recursos compartidos</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Session Modal -->
+<div class="modal fade" id="scheduleSessionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="scheduleSessionForm" method="POST">
+                {{ csrf_token() }}
+                <div class="modal-header">
+                    <h5 class="modal-title">Agendar Nueva Sesión de Mentoría</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <!-- Mentor Selection -->
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">Selección de Mentor</h6>
+                        </div>
+                        
+                        <div class="col-12">
+                            {{ form_select('mentor_id', 'Mentor', options=available_mentors,
+                                          option_value='id', option_text='full_name_with_specialization', required=True) }}
+                        </div>
+
+                        <!-- Session Details -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-muted mb-3">Detalles de la Sesión</h6>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form_field('scheduled_date', 'Fecha', type='date', required=True) }}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form_field('scheduled_time', 'Hora', type='time', required=True) }}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form_select('duration', 'Duración', options=[
+                                (30, '30 minutos'),
+                                (60, '1 hora'),
+                                (90, '1.5 horas'),
+                                (120, '2 horas')
+                            ], required=True) }}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form_select('session_type', 'Tipo de Sesión', options=[
+                                ('video_call', 'Videollamada'),
+                                ('phone_call', 'Llamada telefónica'),
+                                ('in_person', 'Presencial'),
+                                ('text_chat', 'Chat de texto')
+                            ], required=True) }}
+                        </div>
+
+                        <!-- Session Content -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-muted mb-3">Contenido de la Sesión</h6>
+                        </div>
+                        
+                        <div class="col-12">
+                            {{ form_field('topic', 'Tema Principal', 
+                                         placeholder='Ej: Estrategia de marketing digital, Plan de negocios, etc.') }}
+                        </div>
+                        
+                        <div class="col-12">
+                            {{ form_textarea('objectives', 'Objetivos de la Sesión', rows=3,
+                                           placeholder='¿Qué esperas lograr en esta sesión? ¿Qué temas específicos quieres cubrir?') }}
+                        </div>
+                        
+                        <div class="col-12">
+                            {{ form_textarea('preparation_notes', 'Notas de Preparación', rows=2,
+                                           placeholder='Información adicional que el mentor debería conocer antes de la sesión...') }}
+                        </div>
+
+                        <!-- Priority and Special Requirements -->
+                        <div class="col-md-6">
+                            {{ form_select('priority', 'Prioridad', options=[
+                                ('low', 'Baja'),
+                                ('medium', 'Media'),
+                                ('high', 'Alta'),
+                                ('urgent', 'Urgente')
+                            ]) }}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form_select('language', 'Idioma', options=[
+                                ('es', 'Español'),
+                                ('en', 'Inglés'),
+                                ('pt', 'Portugués')
+                            ]) }}
+                        </div>
+                        
+                        <div class="col-12">
+                            {{ form_textarea('special_requirements', 'Requerimientos Especiales', rows=2,
+                                           placeholder='Accesibilidad, herramientas específicas, etc.') }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-calendar-plus me-1"></i>
+                        Agendar Sesión
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Find Mentor Modal -->
+<div class="modal fade" id="findMentorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Buscar Mentor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Search Filters -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" id="mentorSearch" placeholder="Buscar por nombre o especialidad...">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="specializationFilter">
+                            <option value="">Todas las especialidades</option>
+                            {% for spec in mentor_specializations %}
+                            <option value="{{ spec.id }}">{{ spec.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="experienceFilter">
+                            <option value="">Experiencia</option>
+                            <option value="1-3">1-3 años</option>
+                            <option value="3-5">3-5 años</option>
+                            <option value="5-10">5-10 años</option>
+                            <option value="10+">10+ años</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="ratingFilter">
+                            <option value="">Rating</option>
+                            <option value="4">4+ estrellas</option>
+                            <option value="4.5">4.5+ estrellas</option>
+                            <option value="5">5 estrellas</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-primary w-100" onclick="searchMentors()">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mentors Grid -->
+                <div id="mentorsGrid" class="row g-3">
+                    {% for mentor in available_mentors %}
+                    <div class="col-md-6 col-lg-4 mentor-card-container">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <img src="{{ mentor.avatar_url or url_for('static', filename='img/default-avatar.png') }}" 
+                                     alt="{{ mentor.full_name }}" 
+                                     class="rounded-circle mb-3"
+                                     style="width: 80px; height: 80px;">
+                                <h6 class="card-title">{{ mentor.full_name }}</h6>
+                                <p class="text-muted small">{{ mentor.specialization }}</p>
+                                <div class="mb-2">
+                                    {% for i in range(5) %}
+                                    <i class="fas fa-star {{ 'text-warning' if i < mentor.avg_rating else 'text-muted' }}" style="font-size: 14px;"></i>
+                                    {% endfor %}
+                                    <span class="small text-muted ms-1">({{ mentor.reviews_count }})</span>
+                                </div>
+                                <p class="small text-muted mb-3">{{ mentor.bio[:80] }}{% if mentor.bio|length > 80 %}...{% endif %}</p>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="viewMentorProfile({{ mentor.id }})">
+                                        Ver Perfil
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-primary" onclick="selectMentor({{ mentor.id }})">
+                                        Seleccionar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Session Details Modal -->
+<div class="modal fade" id="sessionDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalles de la Sesión</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="sessionDetailsContent">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Feedback Modal -->
+<div class="modal fade" id="feedbackModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="feedbackForm" method="POST">
+                {{ csrf_token() }}
+                <div class="modal-header">
+                    <h5 class="modal-title">Evaluar Sesión de Mentoría</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="session_id" id="feedbackSessionId">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Calificación General</label>
+                        <div class="rating-input">
+                            {% for i in range(1, 6) %}
+                            <input type="radio" name="rating" value="{{ i }}" id="rating{{ i }}">
+                            <label for="rating{{ i }}"><i class="fas fa-star"></i></label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form_textarea('comments', 'Comentarios', rows=4,
+                                       placeholder='Comparte tu experiencia sobre la sesión de mentoría...') }}
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label">Preparación del Mentor</label>
+                            <select class="form-select" name="preparation_rating">
+                                <option value="1">1 - Muy pobre</option>
+                                <option value="2">2 - Pobre</option>
+                                <option value="3">3 - Regular</option>
+                                <option value="4">4 - Buena</option>
+                                <option value="5">5 - Excelente</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Comunicación</label>
+                            <select class="form-select" name="communication_rating">
+                                <option value="1">1 - Muy pobre</option>
+                                <option value="2">2 - Pobre</option>
+                                <option value="3">3 - Regular</option>
+                                <option value="4">4 - Buena</option>
+                                <option value="5">5 - Excelente</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="recommend_mentor" id="recommendMentor">
+                            <label class="form-check-label" for="recommendMentor">
+                                Recomendaría este mentor a otros emprendedores
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-star me-1"></i>
+                        Enviar Evaluación
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='vendor/calendar/fullcalendar.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/rating/rating.js') }}"></script>
+<script src="{{ url_for('static', filename='dist/js/mentorship.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize mentorship manager
+    const mentorshipManager = new MentorshipManager({
+        endpoints: {
+            sessions: "{{ url_for('api.v1.mentorship.sessions') }}",
+            schedule: "{{ url_for('api.v1.mentorship.schedule') }}",
+            feedback: "{{ url_for('api.v1.mentorship.feedback') }}",
+            mentors: "{{ url_for('api.v1.mentorship.mentors') }}"
+        },
+        csrfToken: "{{ csrf_token() }}"
+    });
+
+    // Initialize calendar
+    const calendarEl = document.getElementById('mentorshipCalendar');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'es',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        events: {{ calendar_events|tojson }},
+        eventClick: function(info) {
+            viewSessionDetails(info.event.id);
+        },
+        selectable: true,
+        select: function(info) {
+            openScheduleModal(info.startStr);
+        }
+    });
+    calendar.render();
+
+    // Calendar view buttons
+    document.querySelectorAll('[data-view]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelector('[data-view].active').classList.remove('active');
+            this.classList.add('active');
+            calendar.changeView(this.dataset.view);
+        });
+    });
+
+    // Stats cards animation
+    const statsCards = document.querySelectorAll('.stats-card');
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const statsObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '0';
+                entry.target.style.transform = 'translateY(20px)';
+                entry.target.style.transition = 'all 0.6s ease';
+                
+                setTimeout(() => {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }, Math.random() * 200);
+            }
+        });
+    }, observerOptions);
+
+    statsCards.forEach(card => statsObserver.observe(card));
+
+    // Initialize rating system
+    initializeRatingSystem();
+
+    // Form validation
+    document.getElementById('scheduleSessionForm').addEventListener('submit', function(e) {
+        if (!validateScheduleForm(this)) {
+            e.preventDefault();
+        }
+    });
+
+    // Auto-refresh upcoming sessions every 5 minutes
+    setInterval(() => {
+        refreshUpcomingSessions();
+    }, 300000);
+});
+
+// Global functions
+function scheduleWithMentor(mentorId) {
+    document.querySelector('select[name="mentor_id"]').value = mentorId;
+    const modal = new bootstrap.Modal(document.getElementById('scheduleSessionModal'));
+    modal.show();
+}
+
+function openMentorChat(mentorId) {
+    window.open(`{{ url_for('entrepreneur.chat') }}?mentor=${mentorId}`, '_blank');
+}
+
+function viewSessionDetails(sessionId) {
+    fetch(`{{ url_for('api.v1.mentorship.session_details', id='') }}${sessionId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('sessionDetailsContent').innerHTML = data.html;
+            const modal = new bootstrap.Modal(document.getElementById('sessionDetailsModal'));
+            modal.show();
+        });
+}
+
+function rescheduleSession(sessionId) {
+    if (confirm('¿Estás seguro de que quieres reprogramar esta sesión?')) {
+        // Logic for rescheduling
+        window.mentorshipManager.rescheduleSession(sessionId);
+    }
+}
+
+function cancelSession(sessionId) {
+    if (confirm('¿Estás seguro de que quieres cancelar esta sesión?')) {
+        window.mentorshipManager.cancelSession(sessionId);
+    }
+}
+
+function openScheduleModal(date) {
+    if (date) {
+        document.querySelector('input[name="scheduled_date"]').value = date;
+    }
+    const modal = new bootstrap.Modal(document.getElementById('scheduleSessionModal'));
+    modal.show();
+}
+
+function selectMentor(mentorId) {
+    document.querySelector('select[name="mentor_id"]').value = mentorId;
+    bootstrap.Modal.getInstance(document.getElementById('findMentorModal')).hide();
+    const modal = new bootstrap.Modal(document.getElementById('scheduleSessionModal'));
+    modal.show();
+}
+
+function searchMentors() {
+    const search = document.getElementById('mentorSearch').value;
+    const specialization = document.getElementById('specializationFilter').value;
+    const experience = document.getElementById('experienceFilter').value;
+    const rating = document.getElementById('ratingFilter').value;
+    
+    window.mentorshipManager.searchMentors({
+        search, specialization, experience, rating
+    });
+}
+
+function viewMentorProfile(mentorId) {
+    window.open(`{{ url_for('entrepreneur.mentor_profile', id='') }}${mentorId}`, '_blank');
+}
+
+function validateScheduleForm(form) {
+    const mentor = form.querySelector('select[name="mentor_id"]').value;
+    const date = form.querySelector('input[name="scheduled_date"]').value;
+    const time = form.querySelector('input[name="scheduled_time"]').value;
+    
+    if (!mentor) {
+        alert('Debes seleccionar un mentor');
+        return false;
+    }
+    
+    if (!date || !time) {
+        alert('Debes especificar fecha y hora');
+        return false;
+    }
+    
+    const selectedDateTime = new Date(`${date}T${time}`);
+    const now = new Date();
+    
+    if (selectedDateTime <= now) {
+        alert('La fecha y hora deben ser futuras');
+        return false;
+    }
+    
+    return true;
+}
+
+function initializeRatingSystem() {
+    const ratingInputs = document.querySelectorAll('.rating-input');
+    ratingInputs.forEach(rating => {
+        const stars = rating.querySelectorAll('input[type="radio"]');
+        const labels = rating.querySelectorAll('label');
+        
+        labels.forEach((label, index) => {
+            label.addEventListener('mouseenter', () => {
+                labels.forEach((l, i) => {
+                    l.classList.toggle('hover', i <= index);
+                });
+            });
+            
+            label.addEventListener('mouseleave', () => {
+                labels.forEach(l => l.classList.remove('hover'));
+            });
+            
+            label.addEventListener('click', () => {
+                stars[index].checked = true;
+                labels.forEach((l, i) => {
+                    l.classList.toggle('selected', i <= index);
+                });
+            });
+        });
+    });
+}
+
+function refreshUpcomingSessions() {
+    fetch(`{{ url_for('api.v1.mentorship.upcoming_sessions') }}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.has_updates) {
+                location.reload();
+            }
+        });
+}
+
+// WebSocket integration for real-time updates
+if (typeof io !== 'undefined') {
+    const socket = io('/mentorship');
+    
+    socket.on('session_updated', function(data) {
+        showNotification('Sesión actualizada: ' + data.message, 'info');
+        refreshUpcomingSessions();
+    });
+    
+    socket.on('new_message', function(data) {
+        showNotification('Nuevo mensaje de ' + data.sender_name, 'info');
+    });
+}
+
+function showNotification(message, type = 'info') {
+    // Implementation for showing notifications
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+</script>
+{% endblock %}

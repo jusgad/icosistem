@@ -1,524 +1,632 @@
-from flask import Blueprint, render_template, current_app
-from flask_login import login_required
-from sqlalchemy import func, desc, case, extract
+"""
+Dashboard Administrativo
+========================
+
+Este módulo contiene las vistas del panel de administración principal.
+Proporciona métricas, estadísticas y acceso rápido a funcionalidades clave.
+
+Autor: Sistema de Emprendimiento
+Fecha: 2025
+"""
+
 from datetime import datetime, timedelta
-import calendar
+from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, current_app
+from flask_login import login_required, current_user
+from sqlalchemy import func, desc, and_, or_
+from sqlalchemy.orm import joinedload
 
-from app.utils.decorators import admin_required
-from app.extensions import db
-from app.models.user import User
-from app.models.entrepreneur import Entrepreneur
-from app.models.ally import Ally
-from app.models.relationship import Relationship
-from app.models.meeting import Meeting
-from app.models.task import Task
-from app.models.message import Message
+# Importaciones del core del sistema
+from app.core.permissions import admin_required, permission_required
+from app.core.exceptions import ValidationError, AuthorizationError
+from app.core.constants import (
+    USER_ROLES, PROJECT_STATUS, MEETING_STATUS, 
+    NOTIFICATION_TYPES, ACTIVITY_TYPES
+)
 
-# Crear Blueprint para las rutas del dashboard de administrador
-admin_dashboard = Blueprint('admin_dashboard', __name__)
+# Importaciones de modelos
+from app.models import (
+    User, Admin, Entrepreneur, Ally, Client, Organization, Program,
+    Project, Meeting, Message, Document, Task, Notification,
+    ActivityLog, Analytics
+)
 
-@admin_dashboard.route('/admin/dashboard')
+# Importaciones de servicios
+from app.services.analytics_service import AnalyticsService
+from app.services.user_service import UserService
+from app.services.notification_service import NotificationService
+from app.services.project_service import ProjectService
+
+# Importaciones de utilidades
+from app.utils.decorators import handle_exceptions, cache_result
+from app.utils.formatters import format_currency, format_percentage, format_number
+from app.utils.date_utils import get_date_range, format_date_range
+from app.utils.export_utils import export_to_excel, export_to_pdf
+
+# Extensiones
+from app.extensions import db, cache
+
+# Crear blueprint
+admin_dashboard = Blueprint('admin_dashboard', __name__, url_prefix='/admin')
+
+# ============================================================================
+# DASHBOARD PRINCIPAL
+# ============================================================================
+
+@admin_dashboard.route('/dashboard')
 @login_required
 @admin_required
-def dashboard():
-    """Vista principal del dashboard de administración."""
-    # Obtener fecha actual y cálculo de períodos
-    today = datetime.utcnow().date()
-    start_of_month = datetime(today.year, today.month, 1).date()
-    end_of_month = datetime(today.year, today.month, 
-                           calendar.monthrange(today.year, today.month)[1]).date()
-    start_of_prev_month = (start_of_month - timedelta(days=1)).replace(day=1)
-    
-    # Estadísticas de usuarios
-    user_stats = {
-        'total': User.query.count(),
-        'active': User.query.filter_by(is_active=True).count(),
-        'inactive': User.query.filter_by(is_active=False).count(),
-        'admins': User.query.filter_by(role='admin', is_active=True).count(),
-        'entrepreneurs': User.query.filter_by(role='entrepreneur', is_active=True).count(),
-        'allies': User.query.filter_by(role='ally', is_active=True).count(),
-        'clients': User.query.filter_by(role='client', is_active=True).count(),
-        'new_this_month': User.query.filter(
-            User.created_at >= start_of_month,
-            User.created_at <= end_of_month
-        ).count(),
-    }
-    
-    # Estadísticas de emprendedores
-    entrepreneur_stats = {
-        'total': Entrepreneur.query.count(),
-        'active': Entrepreneur.query.join(User).filter(User.is_active == True).count(),
-        'with_ally': db.session.query(func.count(Entrepreneur.id.distinct()))
-            .join(Relationship, Relationship.entrepreneur_id == Entrepreneur.id)
-            .filter(Relationship.is_active == True).scalar() or 0,
-        'without_ally': db.session.query(func.count(Entrepreneur.id))
-            .outerjoin(
-                Relationship, 
-                (Relationship.entrepreneur_id == Entrepreneur.id) & (Relationship.is_active == True)
-            )
-            .filter(Relationship.id == None)
-            .scalar() or 0,
-        'new_this_month': Entrepreneur.query.filter(
-            Entrepreneur.created_at >= start_of_month,
-            Entrepreneur.created_at <= end_of_month
-        ).count(),
-    }
-    
-    # Estadísticas de aliados
-    ally_stats = {
-        'total': Ally.query.count(),
-        'active': Ally.query.join(User).filter(User.is_active == True).count(),
-        'with_entrepreneurs': db.session.query(func.count(Ally.id.distinct()))
-            .join(Relationship, Relationship.ally_id == Ally.id)
-            .filter(Relationship.is_active == True).scalar() or 0,
-        'new_this_month': Ally.query.filter(
-            Ally.created_at >= start_of_month,
-            Ally.created_at <= end_of_month
-        ).count(),
-    }
-    
-    # Estadísticas de relaciones activas
-    relationship_stats = {
-        'total_active': Relationship.query.filter_by(is_active=True).count(),
-        'ended_this_month': Relationship.query.filter(
-            Relationship.is_active == False,
-            Relationship.end_date >= start_of_month,
-            Relationship.end_date <= end_of_month
-        ).count(),
-        'new_this_month': Relationship.query.filter(
-            Relationship.start_date >= start_of_month,
-            Relationship.start_date <= end_of_month
-        ).count(),
-        'avg_duration': db.session.query(
-            func.avg(
-                case(
-                    [(Relationship.is_active == True, 
-                      func.julianday(func.current_date()) - func.julianday(Relationship.start_date))],
-                    else_=func.julianday(Relationship.end_date) - func.julianday(Relationship.start_date)
-                )
-            )
-        ).scalar() or 0,
-    }
-    
-    # Convertir duración promedio de días a meses (aproximado)
-    relationship_stats['avg_duration_months'] = round(relationship_stats['avg_duration'] / 30, 1)
-    
-    # Estadísticas de actividad
-    activity_stats = {
-        'meetings_this_month': Meeting.query.filter(
-            Meeting.start_time >= start_of_month,
-            Meeting.start_time <= end_of_month
-        ).count(),
-        'tasks_completed_this_month': Task.query.filter(
-            Task.completed_at >= start_of_month,
-            Task.completed_at <= end_of_month
-        ).count(),
-        'tasks_pending': Task.query.filter_by(completed_at=None).count(),
-        'messages_this_month': Message.query.filter(
-            Message.created_at >= start_of_month,
-            Message.created_at <= end_of_month
-        ).count(),
-    }
-    
-    # Datos para gráficos
-    
-    # Nuevos usuarios por mes (últimos 6 meses)
-    six_months_ago = today.replace(day=1) - timedelta(days=1)
-    six_months_ago = six_months_ago.replace(day=1) - timedelta(days=180)
-    
-    user_growth = db.session.query(
-        func.strftime('%Y-%m', User.created_at).label('month'),
-        func.count(User.id).label('count')
-    ).filter(
-        User.created_at >= six_months_ago
-    ).group_by(
-        'month'
-    ).order_by(
-        'month'
-    ).all()
-    
-    user_growth_data = {
-        'labels': [item[0] for item in user_growth],
-        'data': [item[1] for item in user_growth],
-    }
-    
-    # Distribución de emprendedores por sector
-    sector_distribution = db.session.query(
-        Entrepreneur.sector,
-        func.count(Entrepreneur.id).label('count')
-    ).group_by(
-        Entrepreneur.sector
-    ).order_by(
-        desc('count')
-    ).all()
-    
-    sector_data = {
-        'labels': [item[0] for item in sector_distribution],
-        'data': [item[1] for item in sector_distribution],
-    }
-    
-    # Distribución de emprendedores por fase
-    phase_distribution = db.session.query(
-        Entrepreneur.phase,
-        func.count(Entrepreneur.id).label('count')
-    ).group_by(
-        Entrepreneur.phase
-    ).order_by(
-        desc('count')
-    ).all()
-    
-    phase_data = {
-        'labels': [item[0] for item in phase_distribution],
-        'data': [item[1] for item in phase_distribution],
-    }
-    
-    # Actividad de reuniones por mes
-    meeting_activity = db.session.query(
-        func.strftime('%Y-%m', Meeting.start_time).label('month'),
-        func.count(Meeting.id).label('count')
-    ).filter(
-        Meeting.start_time >= six_months_ago
-    ).group_by(
-        'month'
-    ).order_by(
-        'month'
-    ).all()
-    
-    meeting_activity_data = {
-        'labels': [item[0] for item in meeting_activity],
-        'data': [item[1] for item in meeting_activity],
-    }
-    
-    # Aliados más activos (por número de reuniones)
-    top_allies = db.session.query(
-        User.first_name, 
-        User.last_name,
-        func.count(Meeting.id).label('meeting_count')
-    ).join(
-        Ally, Ally.user_id == User.id
-    ).join(
-        Meeting, Meeting.ally_id == Ally.id
-    ).filter(
-        Meeting.start_time >= start_of_month,
-        Meeting.start_time <= end_of_month
-    ).group_by(
-        User.id
-    ).order_by(
-        desc('meeting_count')
-    ).limit(5).all()
-    
-    # Emprendedores sin actividad reciente (sin reuniones en el último mes)
-    inactive_entrepreneurs = db.session.query(
-        Entrepreneur.id,
-        Entrepreneur.company_name,
-        User.first_name,
-        User.last_name,
-        User.email,
-        func.max(Meeting.start_time).label('last_activity')
-    ).join(
-        User, User.id == Entrepreneur.user_id
-    ).outerjoin(
-        Meeting, Meeting.entrepreneur_id == Entrepreneur.id
-    ).group_by(
-        Entrepreneur.id
-    ).having(
-        (func.max(Meeting.start_time) < start_of_month) | 
-        (func.max(Meeting.start_time).is_(None))
-    ).order_by(
-        func.max(Meeting.start_time).asc().nullslast()
-    ).limit(10).all()
-    
-    # Emprendedores por ubicación
-    location_distribution = db.session.query(
-        Entrepreneur.location,
-        func.count(Entrepreneur.id).label('count')
-    ).group_by(
-        Entrepreneur.location
-    ).order_by(
-        desc('count')
-    ).limit(10).all()
-    
-    location_data = {
-        'labels': [item[0] for item in location_distribution],
-        'data': [item[1] for item in location_distribution],
-    }
-    
-    return render_template(
-        'admin/dashboard.html',
-        user_stats=user_stats,
-        entrepreneur_stats=entrepreneur_stats,
-        ally_stats=ally_stats,
-        relationship_stats=relationship_stats,
-        activity_stats=activity_stats,
-        user_growth_data=user_growth_data,
-        sector_data=sector_data,
-        phase_data=phase_data,
-        meeting_activity_data=meeting_activity_data,
-        top_allies=top_allies,
-        inactive_entrepreneurs=inactive_entrepreneurs,
-        location_data=location_data,
-        today=today,
-        start_of_month=start_of_month,
-        end_of_month=end_of_month
-    )
-
-
-@admin_dashboard.route('/admin/dashboard/activity')
-@login_required
-@admin_required
-def activity_dashboard():
-    """Dashboard secundario enfocado en actividad reciente."""
-    # Obtener fecha actual y cálculo de períodos
-    today = datetime.utcnow().date()
-    last_30_days = today - timedelta(days=30)
-    
-    # Reuniones recientes
-    recent_meetings = Meeting.query.filter(
-        Meeting.start_time >= last_30_days
-    ).order_by(
-        Meeting.start_time.desc()
-    ).limit(10).all()
-    
-    # Tareas completadas recientemente
-    recent_completed_tasks = Task.query.filter(
-        Task.completed_at >= last_30_days
-    ).order_by(
-        Task.completed_at.desc()
-    ).limit(10).all()
-    
-    # Tareas próximas a vencer
-    upcoming_tasks = Task.query.filter(
-        Task.completed_at.is_(None),
-        Task.due_date >= today,
-        Task.due_date <= today + timedelta(days=7)
-    ).order_by(
-        Task.due_date.asc()
-    ).limit(10).all()
-    
-    # Relaciones recientemente iniciadas
-    new_relationships = Relationship.query.filter(
-        Relationship.start_date >= last_30_days
-    ).order_by(
-        Relationship.start_date.desc()
-    ).limit(10).all()
-    
-    # Relaciones recientemente finalizadas
-    ended_relationships = Relationship.query.filter(
-        Relationship.is_active == False,
-        Relationship.end_date >= last_30_days
-    ).order_by(
-        Relationship.end_date.desc()
-    ).limit(10).all()
-    
-    # Nuevos usuarios registrados
-    new_users = User.query.filter(
-        User.created_at >= last_30_days
-    ).order_by(
-        User.created_at.desc()
-    ).limit(10).all()
-    
-    # Estadísticas de actividad diaria (últimos 30 días)
-    daily_activity = db.session.query(
-        func.date(Meeting.start_time).label('date'),
-        func.count(Meeting.id).label('meeting_count')
-    ).filter(
-        Meeting.start_time >= last_30_days
-    ).group_by(
-        'date'
-    ).order_by(
-        'date'
-    ).all()
-    
-    daily_activity_data = {
-        'labels': [str(item[0]) for item in daily_activity],
-        'data': [item[1] for item in daily_activity],
-    }
-    
-    # Distribución de actividad por día de la semana
-    weekday_activity = db.session.query(
-        extract('dow', Meeting.start_time).label('weekday'),
-        func.count(Meeting.id).label('count')
-    ).filter(
-        Meeting.start_time >= last_30_days
-    ).group_by(
-        'weekday'
-    ).order_by(
-        'weekday'
-    ).all()
-    
-    # Convertir números de día de la semana (0-6) a nombres
-    weekday_names = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
-    weekday_data = {
-        'labels': [weekday_names[item[0]] for item in weekday_activity],
-        'data': [item[1] for item in weekday_activity],
-    }
-    
-    return render_template(
-        'admin/activity_dashboard.html',
-        recent_meetings=recent_meetings,
-        recent_completed_tasks=recent_completed_tasks,
-        upcoming_tasks=upcoming_tasks,
-        new_relationships=new_relationships,
-        ended_relationships=ended_relationships,
-        new_users=new_users,
-        daily_activity_data=daily_activity_data,
-        weekday_data=weekday_data,
-        today=today,
-        last_30_days=last_30_days
-    )
-
-
-@admin_dashboard.route('/admin/dashboard/metrics')
-@login_required
-@admin_required
-def metrics_dashboard():
-    """Dashboard terciario enfocado en métricas y KPIs."""
-    # Obtener fecha actual y cálculo de períodos
-    today = datetime.utcnow().date()
-    start_of_month = datetime(today.year, today.month, 1).date()
-    start_of_prev_month = (start_of_month - timedelta(days=1)).replace(day=1)
-    start_of_year = datetime(today.year, 1, 1).date()
-    
-    # KPI: Retención de emprendedores (% que siguen activos después de 3 meses)
-    three_months_ago = today - timedelta(days=90)
-    entrepreneurs_3m_ago = Entrepreneur.query.filter(
-        Entrepreneur.created_at <= three_months_ago
-    ).count()
-    
-    if entrepreneurs_3m_ago > 0:
-        still_active = Entrepreneur.query.join(User).filter(
-            Entrepreneur.created_at <= three_months_ago,
-            User.is_active == True
-        ).count()
-        retention_rate = round((still_active / entrepreneurs_3m_ago) * 100, 1)
-    else:
-        retention_rate = 0
-    
-    # KPI: Promedio de reuniones por relación/mes
-    avg_meetings = db.session.query(
-        func.avg(func.count(Meeting.id))
-    ).filter(
-        Meeting.start_time >= start_of_prev_month,
-        Meeting.start_time < start_of_month
-    ).join(
-        Relationship, Relationship.id == Meeting.relationship_id
-    ).group_by(
-        Relationship.id
-    ).scalar() or 0
-    
-    # KPI: Tasa de completado de tareas (% de tareas completadas a tiempo)
-    tasks_due_last_month = Task.query.filter(
-        Task.due_date >= start_of_prev_month,
-        Task.due_date < start_of_month
-    ).count()
-    
-    if tasks_due_last_month > 0:
-        tasks_completed_on_time = Task.query.filter(
-            Task.due_date >= start_of_prev_month,
-            Task.due_date < start_of_month,
-            Task.completed_at <= Task.due_date
-        ).count()
-        task_completion_rate = round((tasks_completed_on_time / tasks_due_last_month) * 100, 1)
-    else:
-        task_completion_rate = 0
-    
-    # KPI: Tiempo promedio de respuesta en mensajes (horas)
-    avg_response_time = db.session.query(
-        func.avg(
-            func.julianday(Message.created_at) - func.julianday(
-                db.session.query(Message.created_at)
-                .filter(Message.conversation_id == Message.conversation_id)
-                .filter(Message.sender_id != Message.sender_id)
-                .filter(Message.created_at < Message.created_at)
-                .order_by(Message.created_at.desc())
-                .limit(1)
-            )
-        ) * 24  # Convertir de días a horas
-    ).filter(
-        Message.created_at >= start_of_month
-    ).scalar() or 0
-    
-    # KPI: Satisfacción de emprendedores (promedio de evaluaciones)
-    # Suponiendo que hay un modelo de evaluación que los emprendedores completan
-    # Esta es una implementación de ejemplo
-    entrepreneur_satisfaction = 4.2  # De 1 a 5, ejemplo
-    
-    # KPI: Crecimiento mes a mes
-    prev_month_entrepreneurs = Entrepreneur.query.filter(
-        Entrepreneur.created_at < start_of_month
-    ).count()
-    
-    current_entrepreneurs = Entrepreneur.query.count()
-    
-    if prev_month_entrepreneurs > 0:
-        growth_rate = round(((current_entrepreneurs - prev_month_entrepreneurs) / prev_month_entrepreneurs) * 100, 1)
-    else:
-        growth_rate = 100  # Si no había emprendedores el mes anterior
-    
-    # KPIs adicionales
-    kpis = {
-        'retention_rate': retention_rate,
-        'avg_meetings_per_relationship': round(avg_meetings, 1),
-        'task_completion_rate': task_completion_rate,
-        'avg_response_time': round(avg_response_time, 1),
-        'entrepreneur_satisfaction': entrepreneur_satisfaction,
-        'growth_rate': growth_rate
-    }
-    
-    # Datos para gráficos de tendencias
-    
-    # Tendencia de retención (últimos 6 meses)
-    retention_trend = []
-    for i in range(6, 0, -1):
-        month_date = today.replace(day=1) - timedelta(days=i*30)
-        three_months_before = month_date - timedelta(days=90)
+@handle_exceptions
+def index():
+    """
+    Dashboard principal del administrador.
+    Muestra métricas clave, gráficos y accesos rápidos.
+    """
+    try:
+        # Obtener parámetros de filtro
+        date_range = request.args.get('date_range', '30d')
+        start_date, end_date = get_date_range(date_range)
         
-        count_before = Entrepreneur.query.filter(
-            Entrepreneur.created_at <= three_months_before
-        ).count()
+        # Inicializar servicios
+        analytics_service = AnalyticsService()
+        user_service = UserService()
         
-        if count_before > 0:
-            still_active_count = Entrepreneur.query.join(User).filter(
-                Entrepreneur.created_at <= three_months_before,
-                User.is_active == True
-            ).filter(
-                Entrepreneur.created_at >= three_months_before - timedelta(days=30)
-            ).count()
-            
-            month_retention = round((still_active_count / count_before) * 100, 1)
+        # Métricas principales
+        metrics = _get_dashboard_metrics(start_date, end_date)
+        
+        # Datos para gráficos
+        charts_data = _get_charts_data(start_date, end_date, analytics_service)
+        
+        # Actividad reciente
+        recent_activities = _get_recent_activities(limit=10)
+        
+        # Usuarios recientes
+        recent_users = _get_recent_users(limit=5)
+        
+        # Proyectos destacados
+        featured_projects = _get_featured_projects(limit=5)
+        
+        # Alertas del sistema
+        system_alerts = _get_system_alerts()
+        
+        # Estadísticas por rol
+        role_stats = _get_role_statistics()
+        
+        # Rendimiento del sistema
+        performance_metrics = _get_performance_metrics()
+
+        return render_template(
+            'admin/dashboard.html',
+            metrics=metrics,
+            charts_data=charts_data,
+            recent_activities=recent_activities,
+            recent_users=recent_users,
+            featured_projects=featured_projects,
+            system_alerts=system_alerts,
+            role_stats=role_stats,
+            performance_metrics=performance_metrics,
+            date_range=date_range,
+            date_range_formatted=format_date_range(start_date, end_date)
+        )
+        
+    except Exception as e:
+        current_app.logger.error(f"Error en dashboard admin: {str(e)}")
+        flash('Error al cargar el dashboard. Inténtalo de nuevo.', 'error')
+        return redirect(url_for('main.index'))
+
+# ============================================================================
+# API ENDPOINTS PARA DASHBOARD
+# ============================================================================
+
+@admin_dashboard.route('/api/metrics')
+@login_required
+@admin_required
+@handle_exceptions
+def api_metrics():
+    """API endpoint para obtener métricas en tiempo real."""
+    try:
+        date_range = request.args.get('date_range', '7d')
+        start_date, end_date = get_date_range(date_range)
+        
+        metrics = _get_dashboard_metrics(start_date, end_date)
+        
+        return jsonify({
+            'success': True,
+            'data': metrics,
+            'timestamp': datetime.utcnow().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@admin_dashboard.route('/api/charts/<chart_type>')
+@login_required
+@admin_required
+@handle_exceptions
+def api_chart_data(chart_type):
+    """API endpoint para datos específicos de gráficos."""
+    try:
+        date_range = request.args.get('date_range', '30d')
+        start_date, end_date = get_date_range(date_range)
+        
+        analytics_service = AnalyticsService()
+        
+        if chart_type == 'user_growth':
+            data = analytics_service.get_user_growth_data(start_date, end_date)
+        elif chart_type == 'project_status':
+            data = analytics_service.get_project_status_distribution()
+        elif chart_type == 'activity_timeline':
+            data = analytics_service.get_activity_timeline(start_date, end_date)
+        elif chart_type == 'engagement':
+            data = analytics_service.get_engagement_metrics(start_date, end_date)
         else:
-            month_retention = 0
+            return jsonify({'success': False, 'error': 'Tipo de gráfico no válido'}), 400
             
-        retention_trend.append({
-            'month': month_date.strftime('%Y-%m'),
-            'rate': month_retention
+        return jsonify({
+            'success': True,
+            'data': data,
+            'chart_type': chart_type
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@admin_dashboard.route('/api/system-status')
+@login_required
+@admin_required
+@cache_result(timeout=300)  # Cache por 5 minutos
+def api_system_status():
+    """API endpoint para estado del sistema."""
+    try:
+        status = {
+            'database': _check_database_health(),
+            'redis': _check_redis_health(),
+            'celery': _check_celery_health(),
+            'storage': _check_storage_health(),
+            'email': _check_email_service(),
+            'integrations': _check_integrations_health()
+        }
+        
+        overall_health = all(status.values())
+        
+        return jsonify({
+            'success': True,
+            'healthy': overall_health,
+            'services': status,
+            'timestamp': datetime.utcnow().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# ============================================================================
+# VISTAS DE GESTIÓN RÁPIDA
+# ============================================================================
+
+@admin_dashboard.route('/quick-actions')
+@login_required
+@admin_required
+def quick_actions():
+    """Panel de acciones rápidas para administradores."""
+    return render_template('admin/quick_actions.html')
+
+@admin_dashboard.route('/notifications-center')
+@login_required
+@admin_required
+@handle_exceptions
+def notifications_center():
+    """Centro de notificaciones administrativas."""
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = current_app.config.get('NOTIFICATIONS_PER_PAGE', 20)
+        
+        # Filtros
+        status = request.args.get('status', 'all')
+        type_filter = request.args.get('type', 'all')
+        
+        # Query base
+        query = Notification.query.filter_by(is_admin=True)
+        
+        # Aplicar filtros
+        if status != 'all':
+            query = query.filter_by(read=status == 'read')
+            
+        if type_filter != 'all':
+            query = query.filter_by(type=type_filter)
+        
+        # Ordenar y paginar
+        notifications = query.order_by(desc(Notification.created_at)).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        
+        # Estadísticas de notificaciones
+        notification_stats = {
+            'total': Notification.query.filter_by(is_admin=True).count(),
+            'unread': Notification.query.filter_by(is_admin=True, read=False).count(),
+            'today': Notification.query.filter(
+                and_(
+                    Notification.is_admin == True,
+                    Notification.created_at >= datetime.utcnow().date()
+                )
+            ).count()
+        }
+        
+        return render_template(
+            'admin/notifications_center.html',
+            notifications=notifications,
+            notification_stats=notification_stats,
+            notification_types=NOTIFICATION_TYPES,
+            current_status=status,
+            current_type=type_filter
+        )
+        
+    except Exception as e:
+        current_app.logger.error(f"Error en centro de notificaciones: {str(e)}")
+        flash('Error al cargar las notificaciones.', 'error')
+        return redirect(url_for('admin_dashboard.index'))
+
+@admin_dashboard.route('/export-data')
+@login_required
+@admin_required
+@handle_exceptions
+def export_data():
+    """Exportar datos del sistema."""
+    try:
+        export_type = request.args.get('type', 'users')
+        format_type = request.args.get('format', 'excel')
+        date_range = request.args.get('date_range', '30d')
+        
+        start_date, end_date = get_date_range(date_range)
+        
+        if export_type == 'users':
+            data = _export_users_data(start_date, end_date)
+            filename = f'usuarios_{datetime.now().strftime("%Y%m%d")}'
+        elif export_type == 'projects':
+            data = _export_projects_data(start_date, end_date)
+            filename = f'proyectos_{datetime.now().strftime("%Y%m%d")}'
+        elif export_type == 'analytics':
+            data = _export_analytics_data(start_date, end_date)
+            filename = f'analytics_{datetime.now().strftime("%Y%m%d")}'
+        else:
+            flash('Tipo de exportación no válido.', 'error')
+            return redirect(url_for('admin_dashboard.index'))
+        
+        if format_type == 'excel':
+            return export_to_excel(data, filename)
+        elif format_type == 'pdf':
+            return export_to_pdf(data, filename)
+        else:
+            flash('Formato de exportación no válido.', 'error')
+            return redirect(url_for('admin_dashboard.index'))
+            
+    except Exception as e:
+        current_app.logger.error(f"Error exportando datos: {str(e)}")
+        flash('Error al exportar los datos.', 'error')
+        return redirect(url_for('admin_dashboard.index'))
+
+# ============================================================================
+# FUNCIONES AUXILIARES
+# ============================================================================
+
+def _get_dashboard_metrics(start_date, end_date):
+    """Obtiene las métricas principales del dashboard."""
+    
+    # Usuarios totales y nuevos
+    total_users = User.query.filter_by(is_active=True).count()
+    new_users = User.query.filter(
+        and_(
+            User.created_at >= start_date,
+            User.created_at <= end_date
+        )
+    ).count()
+    
+    # Emprendedores activos
+    active_entrepreneurs = Entrepreneur.query.join(User).filter(
+        and_(
+            User.is_active == True,
+            User.last_login >= datetime.utcnow() - timedelta(days=30)
+        )
+    ).count()
+    
+    # Proyectos por estado
+    total_projects = Project.query.count()
+    active_projects = Project.query.filter_by(status='active').count()
+    completed_projects = Project.query.filter_by(status='completed').count()
+    
+    # Reuniones programadas
+    upcoming_meetings = Meeting.query.filter(
+        and_(
+            Meeting.scheduled_for >= datetime.utcnow(),
+            Meeting.status == 'scheduled'
+        )
+    ).count()
+    
+    # Mensajes del período
+    messages_count = Message.query.filter(
+        and_(
+            Message.created_at >= start_date,
+            Message.created_at <= end_date
+        )
+    ).count()
+    
+    # Tasa de engagement (ejemplo: usuarios activos / total usuarios)
+    engagement_rate = (active_entrepreneurs / total_users * 100) if total_users > 0 else 0
+    
+    # Documentos subidos
+    documents_count = Document.query.filter(
+        and_(
+            Document.uploaded_at >= start_date,
+            Document.uploaded_at <= end_date
+        )
+    ).count()
+    
+    return {
+        'total_users': total_users,
+        'new_users': new_users,
+        'active_entrepreneurs': active_entrepreneurs,
+        'total_projects': total_projects,
+        'active_projects': active_projects,
+        'completed_projects': completed_projects,
+        'upcoming_meetings': upcoming_meetings,
+        'messages_count': messages_count,
+        'engagement_rate': round(engagement_rate, 2),
+        'documents_count': documents_count,
+        'project_completion_rate': round(
+            (completed_projects / total_projects * 100) if total_projects > 0 else 0, 2
+        )
+    }
+
+def _get_charts_data(start_date, end_date, analytics_service):
+    """Obtiene datos para los gráficos del dashboard."""
+    return {
+        'user_growth': analytics_service.get_user_growth_data(start_date, end_date),
+        'project_status': analytics_service.get_project_status_distribution(),
+        'role_distribution': analytics_service.get_role_distribution(),
+        'activity_heatmap': analytics_service.get_activity_heatmap(start_date, end_date),
+        'engagement_trends': analytics_service.get_engagement_trends(start_date, end_date)
+    }
+
+def _get_recent_activities(limit=10):
+    """Obtiene las actividades recientes del sistema."""
+    return ActivityLog.query.options(
+        joinedload(ActivityLog.user)
+    ).order_by(desc(ActivityLog.created_at)).limit(limit).all()
+
+def _get_recent_users(limit=5):
+    """Obtiene los usuarios más recientes."""
+    return User.query.filter_by(is_active=True).order_by(
+        desc(User.created_at)
+    ).limit(limit).all()
+
+def _get_featured_projects(limit=5):
+    """Obtiene proyectos destacados."""
+    return Project.query.options(
+        joinedload(Project.entrepreneur),
+        joinedload(Project.entrepreneur).joinedload(Entrepreneur.user)
+    ).filter_by(is_featured=True).order_by(
+        desc(Project.updated_at)
+    ).limit(limit).all()
+
+def _get_system_alerts():
+    """Obtiene alertas del sistema."""
+    alerts = []
+    
+    # Verificar usuarios inactivos
+    inactive_users = User.query.filter(
+        and_(
+            User.is_active == True,
+            User.last_login < datetime.utcnow() - timedelta(days=90)
+        )
+    ).count()
+    
+    if inactive_users > 0:
+        alerts.append({
+            'type': 'warning',
+            'message': f'{inactive_users} usuarios no han iniciado sesión en 90+ días',
+            'action_url': url_for('admin_users.inactive_users')
         })
     
-    retention_trend_data = {
-        'labels': [item['month'] for item in retention_trend],
-        'data': [item['rate'] for item in retention_trend],
-    }
+    # Verificar proyectos sin actividad
+    stale_projects = Project.query.filter(
+        and_(
+            Project.status == 'active',
+            Project.updated_at < datetime.utcnow() - timedelta(days=30)
+        )
+    ).count()
     
-    # Tendencia de satisfacción (datos simulados)
-    # En una implementación real, estos datos vendrían de una tabla de encuestas
-    satisfaction_trend = [
-        {'month': '2023-01', 'score': 4.0},
-        {'month': '2023-02', 'score': 4.1},
-        {'month': '2023-03', 'score': 4.0},
-        {'month': '2023-04', 'score': 4.2},
-        {'month': '2023-05', 'score': 4.3},
-        {'month': '2023-06', 'score': 4.2},
+    if stale_projects > 0:
+        alerts.append({
+            'type': 'info',
+            'message': f'{stale_projects} proyectos sin actividad en 30+ días',
+            'action_url': url_for('admin_projects.stale_projects')
+        })
+    
+    # Verificar espacio de almacenamiento (simulado)
+    storage_usage = 85  # Esto vendría de un servicio real
+    if storage_usage > 80:
+        alerts.append({
+            'type': 'danger',
+            'message': f'Uso de almacenamiento al {storage_usage}%',
+            'action_url': url_for('admin_settings.storage_management')
+        })
+    
+    return alerts
+
+def _get_role_statistics():
+    """Obtiene estadísticas por rol de usuario."""
+    return {
+        'entrepreneurs': Entrepreneur.query.join(User).filter_by(is_active=True).count(),
+        'allies': Ally.query.join(User).filter_by(is_active=True).count(),
+        'clients': Client.query.join(User).filter_by(is_active=True).count(),
+        'admins': Admin.query.join(User).filter_by(is_active=True).count()
+    }
+
+def _get_performance_metrics():
+    """Obtiene métricas de rendimiento del sistema."""
+    # En un entorno real, estos datos vendrían de herramientas de monitoreo
+    return {
+        'avg_response_time': 245,  # ms
+        'uptime_percentage': 99.9,
+        'active_sessions': 42,
+        'database_queries_per_minute': 1250,
+        'memory_usage': 68,  # %
+        'cpu_usage': 35  # %
+    }
+
+def _check_database_health():
+    """Verifica el estado de la base de datos."""
+    try:
+        db.session.execute('SELECT 1')
+        return True
+    except:
+        return False
+
+def _check_redis_health():
+    """Verifica el estado de Redis."""
+    try:
+        from app.extensions import redis_client
+        redis_client.ping()
+        return True
+    except:
+        return False
+
+def _check_celery_health():
+    """Verifica el estado de Celery."""
+    try:
+        from app.tasks.celery_app import celery
+        inspect = celery.control.inspect()
+        stats = inspect.stats()
+        return bool(stats)
+    except:
+        return False
+
+def _check_storage_health():
+    """Verifica el estado del almacenamiento."""
+    import shutil
+    try:
+        upload_dir = current_app.config.get('UPLOAD_FOLDER', '/tmp')
+        free_space = shutil.disk_usage(upload_dir).free
+        return free_space > 1024 * 1024 * 1024  # Al menos 1GB libre
+    except:
+        return False
+
+def _check_email_service():
+    """Verifica el servicio de email."""
+    try:
+        from app.services.email import EmailService
+        email_service = EmailService()
+        return email_service.test_connection()
+    except:
+        return False
+
+def _check_integrations_health():
+    """Verifica el estado de las integraciones."""
+    try:
+        # Verificar Google Calendar API
+        from app.services.google_calendar import GoogleCalendarService
+        calendar_service = GoogleCalendarService()
+        return calendar_service.test_connection()
+    except:
+        return False
+
+def _export_users_data(start_date, end_date):
+    """Exporta datos de usuarios para el período especificado."""
+    users = User.query.filter(
+        and_(
+            User.created_at >= start_date,
+            User.created_at <= end_date
+        )
+    ).all()
+    
+    return [
+        {
+            'ID': user.id,
+            'Nombre': user.full_name,
+            'Email': user.email,
+            'Rol': user.role.value if user.role else 'N/A',
+            'Activo': 'Sí' if user.is_active else 'No',
+            'Último acceso': user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Nunca',
+            'Fecha creación': user.created_at.strftime('%Y-%m-%d %H:%M')
+        }
+        for user in users
     ]
+
+def _export_projects_data(start_date, end_date):
+    """Exporta datos de proyectos para el período especificado."""
+    projects = Project.query.filter(
+        and_(
+            Project.created_at >= start_date,
+            Project.created_at <= end_date
+        )
+    ).options(
+        joinedload(Project.entrepreneur),
+        joinedload(Project.entrepreneur).joinedload(Entrepreneur.user)
+    ).all()
     
-    satisfaction_trend_data = {
-        'labels': [item['month'] for item in satisfaction_trend],
-        'data': [item['score'] for item in satisfaction_trend],
-    }
+    return [
+        {
+            'ID': project.id,
+            'Nombre': project.name,
+            'Emprendedor': project.entrepreneur.user.full_name,
+            'Estado': project.status,
+            'Progreso': f"{project.progress}%",
+            'Fecha creación': project.created_at.strftime('%Y-%m-%d'),
+            'Última actualización': project.updated_at.strftime('%Y-%m-%d')
+        }
+        for project in projects
+    ]
+
+def _export_analytics_data(start_date, end_date):
+    """Exporta datos de analytics para el período especificado."""
+    analytics = Analytics.query.filter(
+        and_(
+            Analytics.date >= start_date.date(),
+            Analytics.date <= end_date.date()
+        )
+    ).all()
     
-    return render_template(
-        'admin/metrics_dashboard.html',
-        kpis=kpis,
-        retention_trend_data=retention_trend_data,
-        satisfaction_trend_data=satisfaction_trend_data,
-        today=today
-    )
+    return [
+        {
+            'Fecha': analytic.date.strftime('%Y-%m-%d'),
+            'Métrica': analytic.metric_name,
+            'Valor': analytic.value,
+            'Categoría': analytic.category or 'General'
+        }
+        for analytic in analytics
+    ]
+
+# ============================================================================
+# MANEJADORES DE ERRORES ESPECÍFICOS
+# ============================================================================
+
+@admin_dashboard.errorhandler(ValidationError)
+def handle_validation_error(error):
+    """Maneja errores de validación."""
+    flash(f'Error de validación: {str(error)}', 'error')
+    return redirect(url_for('admin_dashboard.index'))
+
+@admin_dashboard.errorhandler(AuthorizationError)
+def handle_authorization_error(error):
+    """Maneja errores de autorización."""
+    flash('No tienes permisos para realizar esta acción.', 'error')
+    return redirect(url_for('main.index'))
+
+@admin_dashboard.errorhandler(404)
+def handle_not_found(error):
+    """Maneja errores 404 específicos del admin."""
+    return render_template('admin/errors/404.html'), 404
+
+@admin_dashboard.errorhandler(500)
+def handle_internal_error(error):
+    """Maneja errores internos del servidor."""
+    db.session.rollback()
+    current_app.logger.error(f'Error interno en admin dashboard: {str(error)}')
+    return render_template('admin/errors/500.html'), 500

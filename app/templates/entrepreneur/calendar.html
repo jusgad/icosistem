@@ -1,1089 +1,1477 @@
-{% extends "base.html" %}
+{% extends "layouts/dashboard.html" %}
+{% from "components/modals.html" import modal_dialog %}
+{% from "components/forms.html" import form_field, form_select, form_textarea, form_checkbox %}
+{% from "components/cards.html" import event_card %}
 
-{% block title %}Calendario | Portal de Emprendimiento{% endblock %}
+{% set page_title = "Calendario" %}
+{% set active_menu = "calendar" %}
 
-{% block styles %}
-{{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/fullcalendar.min.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/calendar.css') }}">
+{% block extra_css %}
+<link href="{{ url_for('static', filename='vendor/fullcalendar/fullcalendar.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='vendor/flatpickr/flatpickr.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='vendor/colorpicker/colorpicker.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='dist/css/calendar.css') }}" rel="stylesheet">
+<style>
+.fc-event-main {
+    padding: 2px 4px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.fc-event {
+    border: none !important;
+    border-radius: 4px !important;
+    margin: 1px 0;
+}
+
+.fc-daygrid-event {
+    border-radius: 3px;
+    margin: 1px;
+    padding: 1px 3px;
+}
+
+.calendar-sidebar {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+.agenda-item {
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.agenda-item:hover {
+    background-color: #f8f9fa;
+    border-left-color: #007bff;
+}
+
+.event-category {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.calendar-filters .form-check-input:checked {
+    background-color: var(--category-color, #007bff);
+    border-color: var(--category-color, #007bff);
+}
+
+.mini-calendar .fc {
+    font-size: 12px;
+}
+
+.mini-calendar .fc-toolbar {
+    margin-bottom: 10px;
+}
+
+.mini-calendar .fc-button {
+    padding: 2px 6px;
+    font-size: 11px;
+}
+
+.time-slot {
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    background: #f8f9fa;
+    border-left: 3px solid #dee2e6;
+}
+
+.time-slot.busy {
+    background: #fff5f5;
+    border-left-color: #dc3545;
+}
+
+.time-slot.available {
+    background: #f0fff4;
+    border-left-color: #28a745;
+}
+
+.stats-widget {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.sync-status {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.sync-status.synced {
+    background: #d4edda;
+    color: #155724;
+}
+
+.sync-status.syncing {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.sync-status.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.event-conflict {
+    border: 2px solid #dc3545 !important;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.agenda-timeline {
+    position: relative;
+}
+
+.agenda-timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, #e9ecef, #dee2e6);
+}
+
+.agenda-timeline-item {
+    position: relative;
+    padding-left: 40px;
+    margin-bottom: 15px;
+}
+
+.agenda-timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 8px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid #007bff;
+    z-index: 1;
+}
+
+@media (max-width: 768px) {
+    .calendar-sidebar {
+        max-height: 400px;
+    }
+    
+    .fc-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .fc-toolbar-chunk {
+        margin: 5px 0;
+    }
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="row">
-        <!-- Sidebar - Filtros y próximos eventos -->
-        <div class="col-md-3">
-            <!-- Filtros -->
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Filtros</h5>
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="h3 text-dark mb-1">
+                        <i class="fas fa-calendar-alt text-primary me-2"></i>
+                        Mi Calendario
+                    </h2>
+                    <p class="text-muted mb-0">Organiza tu tiempo y mantente al día con tus compromisos emprendedores</p>
                 </div>
-                <div class="card-body">
-                    <form id="calendarFilters">
-                        <div class="mb-3">
-                            <label class="form-label">Tipo de Evento</label>
-                            <div class="form-check">
-                                <input class="form-check-input event-type-filter" type="checkbox" value="meeting" id="meetingFilter" checked>
-                                <label class="form-check-label" for="meetingFilter">
-                                    <span class="badge bg-primary me-1">●</span> Reuniones
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input event-type-filter" type="checkbox" value="task" id="taskFilter" checked>
-                                <label class="form-check-label" for="taskFilter">
-                                    <span class="badge bg-success me-1">●</span> Tareas
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input event-type-filter" type="checkbox" value="deadline" id="deadlineFilter" checked>
-                                <label class="form-check-label" for="deadlineFilter">
-                                    <span class="badge bg-danger me-1">●</span> Fechas límite
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input event-type-filter" type="checkbox" value="other" id="otherFilter" checked>
-                                <label class="form-check-label" for="otherFilter">
-                                    <span class="badge bg-info me-1">●</span> Otros eventos
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Participantes</label>
-                            <div class="form-check">
-                                <input class="form-check-input participant-filter" type="checkbox" value="ally" id="allyFilter" checked>
-                                <label class="form-check-label" for="allyFilter">
-                                    Aliados
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input participant-filter" type="checkbox" value="entrepreneur" id="entrepreneurFilter" checked>
-                                <label class="form-check-label" for="entrepreneurFilter">
-                                    Otros emprendedores
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input participant-filter" type="checkbox" value="personal" id="personalFilter" checked>
-                                <label class="form-check-label" for="personalFilter">
-                                    Eventos personales
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div class="d-grid">
-                            <button type="button" id="resetFilters" class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-arrow-counterclockwise"></i> Restablecer filtros
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            
-            <!-- Próximos eventos -->
-            <div class="card">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Próximos Eventos</h5>
-                    <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#addEventModal">
-                        <i class="bi bi-plus"></i>
+                <div class="d-flex gap-2 align-items-center">
+                    <!-- Google Calendar Sync -->
+                    <div class="me-3">
+                        <span class="sync-status {{ google_calendar_status or 'error' }}">
+                            <i class="fas fa-{{ 'check' if google_calendar_status == 'synced' else 'sync' if google_calendar_status == 'syncing' else 'exclamation-triangle' }}"></i>
+                            {{ 'Sincronizado' if google_calendar_status == 'synced' else 'Sincronizando...' if google_calendar_status == 'syncing' else 'Error de sincronización' }}
+                        </span>
+                    </div>
+                    
+                    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#importCalendarModal">
+                        <i class="fas fa-download me-1"></i>
+                        Importar
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" onclick="exportCalendar()">
+                        <i class="fas fa-upload me-1"></i>
+                        Exportar
+                    </button>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createEventModal">
+                        <i class="fas fa-plus me-1"></i>
+                        Nuevo Evento
                     </button>
                 </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush" id="upcomingEventsList">
-                        {% if upcoming_events %}
-                            {% for event in upcoming_events %}
-                                <a href="#" class="list-group-item list-group-item-action event-item" 
-                                   data-event-id="{{ event.id }}" data-bs-toggle="modal" data-bs-target="#viewEventModal">
-                                    <div class="d-flex w-100 justify-content-between align-items-center">
-                                        <h6 class="mb-1 text-truncate">
-                                            <span class="badge 
-                                                {% if event.event_type == 'meeting' %}bg-primary
-                                                {% elif event.event_type == 'task' %}bg-success
-                                                {% elif event.event_type == 'deadline' %}bg-danger
-                                                {% else %}bg-info{% endif %} me-1">●</span>
-                                            {{ event.title }}
-                                        </h6>
-                                        <small class="text-muted">
-                                            {% if event.is_today %}Hoy{% elif event.is_tomorrow %}Mañana{% else %}{{ event.start_time.strftime('%d/%m') }}{% endif %}
-                                        </small>
-                                    </div>
-                                    <div class="d-flex w-100 justify-content-between align-items-center">
-                                        <small class="text-muted">
-                                            {% if event.all_day %}
-                                                Todo el día
-                                            {% else %}
-                                                {{ event.start_time.strftime('%H:%M') }}
-                                                {% if event.end_time %} - {{ event.end_time.strftime('%H:%M') }}{% endif %}
-                                            {% endif %}
-                                        </small>
-                                        {% if event.participants %}
-                                            <small class="text-muted">
-                                                <i class="bi bi-people"></i> {{ event.participants|length }}
-                                            </small>
-                                        {% endif %}
-                                    </div>
-                                </a>
-                            {% endfor %}
-                        {% else %}
-                            <div class="text-center py-4">
-                                <p class="text-muted mb-0">No hay eventos próximos</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Calendar Column -->
+        <div class="col-lg-9">
+            <!-- Calendar Controls -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-primary active" data-calendar-view="dayGridMonth">
+                                        Mes
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary" data-calendar-view="timeGridWeek">
+                                        Semana
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary" data-calendar-view="timeGridDay">
+                                        Día
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary" data-calendar-view="listWeek">
+                                        Agenda
+                                    </button>
+                                </div>
+                                
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="calendar.today()">
+                                    Hoy
+                                </button>
                             </div>
-                        {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center justify-content-end gap-2">
+                                <input type="text" class="form-control form-control-sm" style="max-width: 200px;" 
+                                       placeholder="Buscar eventos..." id="eventSearch">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#calendarFiltersModal">
+                                    <i class="fas fa-filter"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Main Calendar -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div id="fullCalendar"></div>
+                </div>
+            </div>
         </div>
-        
-        <!-- Calendario principal -->
-        <div class="col-md-9">
-            <div class="card">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-0 d-inline-block" id="calendarTitle">Calendario</h5>
-                        <div class="btn-group ms-3">
-                            <button type="button" id="prevBtn" class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-chevron-left"></i>
-                            </button>
-                            <button type="button" id="todayBtn" class="btn btn-sm btn-outline-primary">Hoy</button>
-                            <button type="button" id="nextBtn" class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-chevron-right"></i>
-                            </button>
-                        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <!-- Quick Stats -->
+            <div class="stats-widget">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0 text-white">Resumen Semanal</h6>
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="h4 mb-0">{{ weekly_stats.total_events or 0 }}</div>
+                        <small>Eventos</small>
                     </div>
-                    <div class="btn-group">
-                        <button type="button" id="monthViewBtn" class="btn btn-sm btn-outline-primary active">Mes</button>
-                        <button type="button" id="weekViewBtn" class="btn btn-sm btn-outline-primary">Semana</button>
-                        <button type="button" id="dayViewBtn" class="btn btn-sm btn-outline-primary">Día</button>
-                        <button type="button" id="listViewBtn" class="btn btn-sm btn-outline-primary">Lista</button>
+                    <div class="col-4">
+                        <div class="h4 mb-0">{{ weekly_stats.meetings or 0 }}</div>
+                        <small>Reuniones</small>
                     </div>
+                    <div class="col-4">
+                        <div class="h4 mb-0">{{ "%.1f"|format(weekly_stats.total_hours or 0) }}h</div>
+                        <small>Total</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mini Calendar -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-bottom-0">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-calendar text-primary me-2"></i>
+                        Navegación Rápida
+                    </h6>
                 </div>
                 <div class="card-body">
-                    <div id="calendar"></div>
+                    <div id="miniCalendar" class="mini-calendar"></div>
+                </div>
+            </div>
+
+            <!-- Today's Agenda -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-bottom-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-clock text-success me-2"></i>
+                            Agenda de Hoy
+                        </h6>
+                        <span class="badge bg-primary">{{ today_events|length }}</span>
+                    </div>
+                </div>
+                <div class="card-body calendar-sidebar">
+                    {% if today_events %}
+                        <div class="agenda-timeline">
+                            {% for event in today_events %}
+                            <div class="agenda-timeline-item agenda-item" 
+                                 data-event-id="{{ event.id }}"
+                                 onclick="viewEventDetails({{ event.id }})">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-2">
+                                        <span class="event-category" style="background-color: {{ event.category.color }}"></span>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-bold small">{{ event.title }}</div>
+                                        <div class="text-muted tiny">
+                                            {{ event.start_time.strftime('%H:%M') }}
+                                            {% if event.end_time %}
+                                             - {{ event.end_time.strftime('%H:%M') }}
+                                            {% endif %}
+                                        </div>
+                                        {% if event.location %}
+                                        <div class="text-muted tiny">
+                                            <i class="fas fa-map-marker-alt me-1"></i>
+                                            {{ event.location[:20] }}{% if event.location|length > 20 %}...{% endif %}
+                                        </div>
+                                        {% endif %}
+                                        {% if event.attendees_count > 0 %}
+                                        <div class="text-muted tiny">
+                                            <i class="fas fa-users me-1"></i>
+                                            {{ event.attendees_count }} participantes
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="ms-auto">
+                                        {% if event.is_urgent %}
+                                        <i class="fas fa-exclamation-triangle text-warning" title="Urgente"></i>
+                                        {% endif %}
+                                        {% if event.has_conflicts %}
+                                        <i class="fas fa-exclamation-circle text-danger" title="Conflicto de horario"></i>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-calendar-check text-muted mb-2" style="font-size: 2rem; opacity: 0.3;"></i>
+                            <p class="text-muted mb-0 small">No tienes eventos programados para hoy</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Upcoming Events -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-bottom-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-calendar-plus text-warning me-2"></i>
+                            Próximos Eventos
+                        </h6>
+                        <span class="badge bg-warning">{{ upcoming_events|length }}</span>
+                    </div>
+                </div>
+                <div class="card-body calendar-sidebar">
+                    {% if upcoming_events %}
+                        {% for event in upcoming_events[:5] %}
+                        <div class="agenda-item p-2 rounded mb-2" 
+                             data-event-id="{{ event.id }}"
+                             onclick="viewEventDetails({{ event.id }})">
+                            <div class="d-flex align-items-center">
+                                <span class="event-category me-2" style="background-color: {{ event.category.color }}"></span>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold small">{{ event.title }}</div>
+                                    <div class="text-muted tiny">
+                                        {{ event.start_time.strftime('%d/%m/%Y %H:%M') }}
+                                    </div>
+                                </div>
+                                <div class="tiny text-muted">
+                                    {{ event.start_time|timeago }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% if upcoming_events|length > 5 %}
+                        <div class="text-center">
+                            <a href="{{ url_for('entrepreneur.events_list') }}" class="btn btn-sm btn-outline-primary">
+                                Ver todos ({{ upcoming_events|length - 5 }} más)
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-calendar-plus text-muted mb-2" style="font-size: 2rem; opacity: 0.3;"></i>
+                            <p class="text-muted mb-0 small">No hay próximos eventos</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Calendar Filters -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-bottom-0">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-eye text-info me-2"></i>
+                        Filtros Rápidos
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="calendar-filters">
+                        {% for category in event_categories %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" 
+                                   value="{{ category.id }}" 
+                                   id="filter{{ category.id }}"
+                                   checked
+                                   data-category-color="{{ category.color }}"
+                                   style="--category-color: {{ category.color }}">
+                            <label class="form-check-label small" for="filter{{ category.id }}">
+                                <span class="event-category me-2" style="background-color: {{ category.color }}"></span>
+                                {{ category.name }}
+                                <span class="badge bg-light text-dark ms-1">{{ category.events_count }}</span>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <hr class="my-3">
+                    
+                    <!-- Quick Actions -->
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="syncGoogleCalendar()">
+                            <i class="fas fa-sync me-1"></i>
+                            Sincronizar Google Calendar
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="showAvailableSlots()">
+                            <i class="fas fa-clock me-1"></i>
+                            Ver Disponibilidad
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal para añadir evento -->
-<div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<!-- Create/Edit Event Modal -->
+<div class="modal fade" id="createEventModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addEventModalLabel">Añadir Evento</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="addEventForm" action="{{ url_for('entrepreneur.calendar.add_event') }}" method="post">
+            <form id="eventForm" method="POST" enctype="multipart/form-data">
+                {{ csrf_token() }}
+                <input type="hidden" name="event_id" id="eventId">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="eventModalTitle">Nuevo Evento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
                 <div class="modal-body">
-                    {{ event_form.csrf_token }}
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Título</label>
-                        {{ event_form.title(class="form-control") }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="event_type" class="form-label">Tipo de evento</label>
-                        {{ event_form.event_type(class="form-select") }}
-                    </div>
-                    <div class="mb-3">
-                        <div class="form-check">
-                            {{ event_form.all_day(class="form-check-input") }}
-                            <label class="form-check-label" for="all_day">
-                                Todo el día
-                            </label>
+                    <div class="row g-3">
+                        <!-- Basic Information -->
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">Información Básica</h6>
                         </div>
-                    </div>
-                    <div class="row mb-3">
+                        
+                        <div class="col-md-8">
+                            {{ form_field('title', 'Título del Evento', required=True, 
+                                         placeholder='Ej: Reunión con inversor, Sesión de mentoría...') }}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            {{ form_select('category_id', 'Categoría', options=event_categories,
+                                          option_value='id', option_text='name', required=True) }}
+                        </div>
+                        
+                        <div class="col-12">
+                            {{ form_textarea('description', 'Descripción', rows=3,
+                                           placeholder='Detalles del evento, agenda, objetivos...') }}
+                        </div>
+
+                        <!-- Date and Time -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-muted mb-3">Fecha y Hora</h6>
+                        </div>
+                        
                         <div class="col-md-6">
-                            <label for="start_date" class="form-label">Fecha de inicio</label>
-                            {{ event_form.start_date(class="form-control", type="date") }}
+                            {{ form_field('start_date', 'Fecha de Inicio', type='date', required=True) }}
                         </div>
-                        <div class="col-md-6 time-field">
-                            <label for="start_time" class="form-label">Hora de inicio</label>
-                            {{ event_form.start_time(class="form-control", type="time") }}
-                        </div>
-                    </div>
-                    <div class="row mb-3">
+                        
                         <div class="col-md-6">
-                            <label for="end_date" class="form-label">Fecha de fin</label>
-                            {{ event_form.end_date(class="form-control", type="date") }}
+                            {{ form_field('start_time', 'Hora de Inicio', type='time', required=True) }}
                         </div>
-                        <div class="col-md-6 time-field">
-                            <label for="end_time" class="form-label">Hora de fin</label>
-                            {{ event_form.end_time(class="form-control", type="time") }}
+                        
+                        <div class="col-md-6">
+                            {{ form_field('end_date', 'Fecha de Fin', type='date') }}
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Descripción</label>
-                        {{ event_form.description(class="form-control", rows=3) }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="location" class="form-label">Ubicación</label>
-                        {{ event_form.location(class="form-control") }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="participants" class="form-label">Participantes</label>
-                        {{ event_form.participants(class="form-select", multiple=True) }}
-                        <div class="form-text">Mantén presionada la tecla Ctrl para seleccionar múltiples participantes.</div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="color" class="form-label">Color</label>
-                        {{ event_form.color(class="form-control", type="color") }}
-                    </div>
-                    <div class="mb-3">
-                        <div class="form-check">
-                            {{ event_form.reminder(class="form-check-input") }}
-                            <label class="form-check-label" for="reminder">
-                                Recordatorio
-                            </label>
+                        
+                        <div class="col-md-6">
+                            {{ form_field('end_time', 'Hora de Fin', type='time') }}
                         </div>
-                    </div>
-                    <div id="reminderTimeField" class="mb-3 d-none">
-                        <label for="reminder_time" class="form-label">Tiempo de recordatorio</label>
-                        {{ event_form.reminder_time(class="form-select") }}
+                        
+                        <div class="col-12">
+                            {{ form_checkbox('all_day', 'Evento de todo el día') }}
+                        </div>
+
+                        <!-- Location and Virtual -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-muted mb-3">Ubicación</h6>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form_select('location_type', 'Tipo de Ubicación', options=[
+                                ('physical', 'Presencial'),
+                                ('virtual', 'Virtual'),
+                                ('hybrid', 'Híbrido')
+                            ]) }}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form_field('location', 'Ubicación/Enlace',
+                                         placeholder='Dirección física o enlace de reunión virtual') }}
+                        </div>
+
+                        <!-- Attendees and Notifications -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-muted mb-3">Participantes y Notificaciones</h6>
+                        </div>
+                        
+                        <div class="col-12">
+                            {{ form_field('attendees_emails', 'Invitados (correos separados por comas)',
+                                         placeholder='correo1@ejemplo.com, correo2@ejemplo.com') }}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form_select('reminder_time', 'Recordatorio', options=[
+                                ('', 'Sin recordatorio'),
+                                (5, '5 minutos antes'),
+                                (15, '15 minutos antes'),
+                                (30, '30 minutos antes'),
+                                (60, '1 hora antes'),
+                                (120, '2 horas antes'),
+                                (1440, '1 día antes')
+                            ]) }}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form_select('visibility', 'Visibilidad', options=[
+                                ('private', 'Privado'),
+                                ('public', 'Público'),
+                                ('team', 'Solo equipo')
+                            ]) }}
+                        </div>
+
+                        <!-- Recurrence -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-muted mb-3">Recurrencia</h6>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form_select('recurrence_type', 'Repetir', options=[
+                                ('', 'No repetir'),
+                                ('daily', 'Diario'),
+                                ('weekly', 'Semanal'),
+                                ('monthly', 'Mensual'),
+                                ('yearly', 'Anual'),
+                                ('custom', 'Personalizado')
+                            ]) }}
+                        </div>
+                        
+                        <div class="col-md-6" id="recurrenceEndDiv" style="display: none;">
+                            {{ form_field('recurrence_end', 'Hasta', type='date') }}
+                        </div>
+
+                        <!-- Additional Options -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-muted mb-3">Opciones Adicionales</h6>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form_select('priority', 'Prioridad', options=[
+                                ('low', 'Baja'),
+                                ('medium', 'Media'),
+                                ('high', 'Alta'),
+                                ('urgent', 'Urgente')
+                            ]) }}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form_field('color', 'Color Personalizado', type='color', value='#007bff') }}
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="sync_google_calendar" id="syncGoogleCalendar">
+                                <label class="form-check-label" for="syncGoogleCalendar">
+                                    Sincronizar con Google Calendar
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="send_invitations" id="sendInvitations" checked>
+                                <label class="form-check-label" for="sendInvitations">
+                                    Enviar invitaciones por correo
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="button" class="btn btn-danger" id="deleteEventBtn" style="display: none;" onclick="deleteEvent()">
+                        <i class="fas fa-trash me-1"></i>
+                        Eliminar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="saveEventBtn">
+                        <i class="fas fa-save me-1"></i>
+                        Guardar Evento
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Modal para ver evento -->
-<div class="modal fade" id="viewEventModal" tabindex="-1" aria-labelledby="viewEventModalLabel" aria-hidden="true">
+<!-- Calendar Filters Modal -->
+<div class="modal fade" id="calendarFiltersModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="viewEventModalLabel">Detalles del Evento</h5>
+                <h5 class="modal-title">Filtros de Calendario</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div id="eventDetails">
-                    <h4 id="eventTitle" class="mb-3"></h4>
-                    
-                    <div class="mb-3">
-                        <div class="d-flex align-items-center mb-2">
-                            <i class="bi bi-calendar-event me-2 text-primary"></i>
-                            <strong>Fecha y hora:</strong>
+                <form id="filtersForm">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Categorías</label>
+                            {% for category in event_categories %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" 
+                                       value="{{ category.id }}" 
+                                       id="filterModal{{ category.id }}"
+                                       checked>
+                                <label class="form-check-label" for="filterModal{{ category.id }}">
+                                    <span class="event-category me-2" style="background-color: {{ category.color }}"></span>
+                                    {{ category.name }}
+                                </label>
+                            </div>
+                            {% endfor %}
                         </div>
-                        <p id="eventDateTime" class="ms-4 mb-0"></p>
-                    </div>
-                    
-                    <div class="mb-3" id="eventLocationContainer">
-                        <div class="d-flex align-items-center mb-2">
-                            <i class="bi bi-geo-alt me-2 text-primary"></i>
-                            <strong>Ubicación:</strong>
-                        </div>
-                        <p id="eventLocation" class="ms-4 mb-0"></p>
-                    </div>
-                    
-                    <div class="mb-3" id="eventDescriptionContainer">
-                        <div class="d-flex align-items-center mb-2">
-                            <i class="bi bi-card-text me-2 text-primary"></i>
-                            <strong>Descripción:</strong>
-                        </div>
-                        <p id="eventDescription" class="ms-4 mb-0"></p>
-                    </div>
-                    
-                    <div class="mb-3" id="eventParticipantsContainer">
-                        <div class="d-flex align-items-center mb-2">
-                            <i class="bi bi-people me-2 text-primary"></i>
-                            <strong>Participantes:</strong>
-                        </div>
-                        <div id="eventParticipants" class="ms-4"></div>
-                    </div>
-                    
-                    <div class="mb-3" id="eventReminderContainer">
-                        <div class="d-flex align-items-center mb-2">
-                            <i class="bi bi-bell me-2 text-primary"></i>
-                            <strong>Recordatorio:</strong>
-                        </div>
-                        <p id="eventReminder" class="ms-4 mb-0"></p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <button type="button" class="btn btn-primary" id="editEventBtn">Editar</button>
-                <button type="button" class="btn btn-danger" id="deleteEventBtn">Eliminar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para editar evento -->
-<div class="modal fade" id="editEventModal" tabindex="-1" aria-labelledby="editEventModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editEventModalLabel">Editar Evento</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="editEventForm" action="{{ url_for('entrepreneur.calendar.edit_event') }}" method="post">
-                <div class="modal-body">
-                    {{ edit_form.csrf_token }}
-                    <input type="hidden" id="edit_event_id" name="event_id">
-                    <div class="mb-3">
-                        <label for="edit_title" class="form-label">Título</label>
-                        {{ edit_form.title(class="form-control", id="edit_title") }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_event_type" class="form-label">Tipo de evento</label>
-                        {{ edit_form.event_type(class="form-select", id="edit_event_type") }}
-                    </div>
-                    <div class="mb-3">
-                        <div class="form-check">
-                            {{ edit_form.all_day(class="form-check-input", id="edit_all_day") }}
-                            <label class="form-check-label" for="edit_all_day">
-                                Todo el día
-                            </label>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
+                        
                         <div class="col-md-6">
-                            <label for="edit_start_date" class="form-label">Fecha de inicio</label>
-                            {{ edit_form.start_date(class="form-control", type="date", id="edit_start_date") }}
+                            <label class="form-label">Fecha Desde</label>
+                            <input type="date" class="form-control" name="date_from">
                         </div>
-                        <div class="col-md-6 edit-time-field">
-                            <label for="edit_start_time" class="form-label">Hora de inicio</label>
-                            {{ edit_form.start_time(class="form-control", type="time", id="edit_start_time") }}
-                        </div>
-                    </div>
-                    <div class="row mb-3">
+                        
                         <div class="col-md-6">
-                            <label for="edit_end_date" class="form-label">Fecha de fin</label>
-                            {{ edit_form.end_date(class="form-control", type="date", id="edit_end_date") }}
+                            <label class="form-label">Fecha Hasta</label>
+                            <input type="date" class="form-control" name="date_to">
                         </div>
-                        <div class="col-md-6 edit-time-field">
-                            <label for="edit_end_time" class="form-label">Hora de fin</label>
-                            {{ edit_form.end_time(class="form-control", type="time", id="edit_end_time") }}
+                        
+                        <div class="col-12">
+                            <label class="form-label">Prioridad</label>
+                            <select class="form-select" name="priority">
+                                <option value="">Todas las prioridades</option>
+                                <option value="low">Baja</option>
+                                <option value="medium">Media</option>
+                                <option value="high">Alta</option>
+                                <option value="urgent">Urgente</option>
+                            </select>
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_description" class="form-label">Descripción</label>
-                        {{ edit_form.description(class="form-control", rows=3, id="edit_description") }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_location" class="form-label">Ubicación</label>
-                        {{ edit_form.location(class="form-control", id="edit_location") }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_participants" class="form-label">Participantes</label>
-                        {{ edit_form.participants(class="form-select", multiple=True, id="edit_participants") }}
-                        <div class="form-text">Mantén presionada la tecla Ctrl para seleccionar múltiples participantes.</div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_color" class="form-label">Color</label>
-                        {{ edit_form.color(class="form-control", type="color", id="edit_color") }}
-                    </div>
-                    <div class="mb-3">
-                        <div class="form-check">
-                            {{ edit_form.reminder(class="form-check-input", id="edit_reminder") }}
-                            <label class="form-check-label" for="edit_reminder">
-                                Recordatorio
-                            </label>
+                        
+                        <div class="col-12">
+                            <label class="form-label">Tipo de Ubicación</label>
+                            <select class="form-select" name="location_type">
+                                <option value="">Todos los tipos</option>
+                                <option value="physical">Presencial</option>
+                                <option value="virtual">Virtual</option>
+                                <option value="hybrid">Híbrido</option>
+                            </select>
                         </div>
                     </div>
-                    <div id="editReminderTimeField" class="mb-3 d-none">
-                        <label for="edit_reminder_time" class="form-label">Tiempo de recordatorio</label>
-                        {{ edit_form.reminder_time(class="form-select", id="edit_reminder_time") }}
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de confirmación para eliminar evento -->
-<div class="modal fade" id="deleteEventConfirmModal" tabindex="-1" aria-labelledby="deleteEventConfirmModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteEventConfirmModalLabel">Confirmar eliminación</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>¿Estás seguro de que deseas eliminar este evento? Esta acción no se puede deshacer.</p>
-                <p><strong>Evento: </strong><span id="deleteEventTitle"></span></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <form id="deleteEventForm" action="{{ url_for('entrepreneur.calendar.delete_event') }}" method="post">
-                    <input type="hidden" id="delete_event_id" name="event_id">
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
                 </form>
             </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="clearFilters()">Limpiar</button>
+                <button type="button" class="btn btn-primary" onclick="applyFilters()">Aplicar Filtros</button>
+            </div>
         </div>
     </div>
 </div>
 
-{% block scripts %}
-{{ super() }}
-<script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/fullcalendar.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/es.js') }}"></script>
-<script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
-<script>
-    $(document).ready(function() {
-        // Inicializar FullCalendar
-        var calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-            locale: 'es',
-            initialView: 'dayGridMonth',
-            headerToolbar: false,
-            selectable: true,
-            selectMirror: true,
-            editable: true,
-            dayMaxEvents: true,
-            events: {{ events_json|safe }},
-            select: function(info) {
-                // Preparar modal para añadir evento
-                $('#start_date').val(info.startStr);
-                if (info.end) {
-                    // Restar un día a la fecha de fin para eventos de todo el día
-                    var endDate = new Date(info.end);
-                    endDate.setDate(endDate.getDate() - 1);
-                    $('#end_date').val(endDate.toISOString().split('T')[0]);
-                } else {
-                    $('#end_date').val(info.startStr);
-                }
-                
-                // Abrir modal
-                $('#addEventModal').modal('show');
-            },
-            eventClick: function(info) {
-                // Cargar datos del evento en el modal de visualización
-                $('#eventTitle').text(info.event.title);
-                
-                // Formatear fecha y hora
-                var startDate = info.event.start;
-                var endDate = info.event.end;
-                var dateTimeText = '';
-                
-                if (info.event.allDay) {
-                    if (endDate) {
-                        // Restar un día a la fecha de fin para eventos de todo el día
-                        endDate = new Date(endDate);
-                        endDate.setDate(endDate.getDate() - 1);
-                        
-                        if (startDate.toDateString() === endDate.toDateString()) {
-                            dateTimeText = moment(startDate).format('DD/MM/YYYY') + ' (Todo el día)';
-                        } else {
-                            dateTimeText = moment(startDate).format('DD/MM/YYYY') + ' - ' + 
-                                          moment(endDate).format('DD/MM/YYYY') + ' (Todo el día)';
-                        }
-                    } else {
-                        dateTimeText = moment(startDate).format('DD/MM/YYYY') + ' (Todo el día)';
-                    }
-                } else {
-                    if (endDate) {
-                        if (startDate.toDateString() === endDate.toDateString()) {
-                            dateTimeText = moment(startDate).format('DD/MM/YYYY, HH:mm') + ' - ' + 
-                                          moment(endDate).format('HH:mm');
-                        } else {
-                            dateTimeText = moment(startDate).format('DD/MM/YYYY, HH:mm') + ' - ' + 
-                                          moment(endDate).format('DD/MM/YYYY, HH:mm');
-                        }
-                    } else {
-                        dateTimeText = moment(startDate).format('DD/MM/YYYY, HH:mm');
-                    }
-                }
-                
-                $('#eventDateTime').text(dateTimeText);
-                
-                // Ubicación
-                if (info.event.extendedProps.location) {
-                    $('#eventLocation').text(info.event.extendedProps.location);
-                    $('#eventLocationContainer').show();
-                } else {
-                    $('#eventLocationContainer').hide();
-                }
-                
-                // Descripción
-                if (info.event.extendedProps.description) {
-                    $('#eventDescription').text(info.event.extendedProps.description);
-                    $('#eventDescriptionContainer').show();
-                } else {
-                    $('#eventDescriptionContainer').hide();
-                }
-                
-                // Participantes
-                if (info.event.extendedProps.participants && info.event.extendedProps.participants.length > 0) {
-                    var participantsHtml = '';
-                    info.event.extendedProps.participants.forEach(function(participant) {
-                        participantsHtml += `
-                            <div class="d-flex align-items-center mb-2">
-                                <img src="${participant.image_url}" alt="${participant.name}" 
-                                     class="rounded-circle me-2" width="30" height="30">
-                                <span>${participant.name}</span>
-                            </div>
-                        `;
-                    });
-                    $('#eventParticipants').html(participantsHtml);
-                    $('#eventParticipantsContainer').show();
-                } else {
-                    $('#eventParticipantsContainer').hide();
-                }
-                
-                // Recordatorio
-                if (info.event.extendedProps.reminder) {
-                    $('#eventReminder').text(info.event.extendedProps.reminder_text);
-                    $('#eventReminderContainer').show();
-                } else {
-                    $('#eventReminderContainer').hide();
-                }
-                
-                // Guardar ID del evento para edición/eliminación
-                $('#edit_event_id').val(info.event.id);
-                $('#delete_event_id').val(info.event.id);
-                $('#deleteEventTitle').text(info.event.title);
-
-                // Abrir modal
-$('#viewEventModal').modal('show');
-},
-eventDrop: function(info) {
-    // Actualizar evento después de arrastrar
-    $.ajax({
-        url: "{{ url_for('entrepreneur.calendar.update_event_dates') }}",
-        type: 'POST',
-        data: {
-            event_id: info.event.id,
-            start_date: info.event.start.toISOString(),
-            end_date: info.event.end ? info.event.end.toISOString() : null,
-            all_day: info.event.allDay
-        },
-        success: function(response) {
-            if (response.status === 'success') {
-                // Actualizar lista de próximos eventos
-                updateUpcomingEvents();
-            } else {
-                alert('Error al actualizar el evento: ' + response.message);
-                info.revert();
-            }
-        },
-        error: function() {
-            alert('Error de conexión al actualizar el evento');
-            info.revert();
-        }
-    });
-},
-eventResize: function(info) {
-    // Actualizar evento después de redimensionar
-    $.ajax({
-        url: "{{ url_for('entrepreneur.calendar.update_event_dates') }}",
-        type: 'POST',
-        data: {
-            event_id: info.event.id,
-            start_date: info.event.start.toISOString(),
-            end_date: info.event.end ? info.event.end.toISOString() : null,
-            all_day: info.event.allDay
-        },
-        success: function(response) {
-            if (response.status === 'success') {
-                // Actualizar lista de próximos eventos
-                updateUpcomingEvents();
-            } else {
-                alert('Error al actualizar el evento: ' + response.message);
-                info.revert();
-            }
-        },
-        error: function() {
-            alert('Error de conexión al actualizar el evento');
-            info.revert();
-        }
-    });
-}
-});
-
-// Botones de navegación del calendario
-$('#prevBtn').click(function() {
-    calendar.prev();
-    updateCalendarTitle();
-});
-
-$('#nextBtn').click(function() {
-    calendar.next();
-    updateCalendarTitle();
-});
-
-$('#todayBtn').click(function() {
-    calendar.today();
-    updateCalendarTitle();
-});
-
-// Botones de vista del calendario
-$('#monthViewBtn').click(function() {
-    calendar.changeView('dayGridMonth');
-    updateViewButtons(this);
-});
-
-$('#weekViewBtn').click(function() {
-    calendar.changeView('timeGridWeek');
-    updateViewButtons(this);
-});
-
-$('#dayViewBtn').click(function() {
-    calendar.changeView('timeGridDay');
-    updateViewButtons(this);
-});
-
-$('#listViewBtn').click(function() {
-    calendar.changeView('listWeek');
-    updateViewButtons(this);
-});
-
-// Actualizar título del calendario
-function updateCalendarTitle() {
-    var view = calendar.view;
-    var title = '';
-    
-    if (view.type === 'dayGridMonth') {
-        title = moment(view.currentStart).format('MMMM YYYY');
-    } else if (view.type === 'timeGridWeek' || view.type === 'listWeek') {
-        title = moment(view.currentStart).format('D MMM') + ' - ' + 
-                moment(view.currentEnd).subtract(1, 'days').format('D MMM, YYYY');
-    } else if (view.type === 'timeGridDay') {
-        title = moment(view.currentStart).format('D [de] MMMM, YYYY');
-    }
-    
-    $('#calendarTitle').text(title.charAt(0).toUpperCase() + title.slice(1));
-}
-
-// Actualizar botones de vista
-function updateViewButtons(activeButton) {
-    $('#monthViewBtn, #weekViewBtn, #dayViewBtn, #listViewBtn').removeClass('active');
-    $(activeButton).addClass('active');
-}
-
-// Inicializar título del calendario
-updateCalendarTitle();
-
-// Filtros de calendario
-$('.event-type-filter, .participant-filter').change(function() {
-    applyFilters();
-});
-
-$('#resetFilters').click(function() {
-    $('.event-type-filter, .participant-filter').prop('checked', true);
-    applyFilters();
-});
-
-function applyFilters() {
-    var selectedEventTypes = [];
-    var selectedParticipantTypes = [];
-    
-    $('.event-type-filter:checked').each(function() {
-        selectedEventTypes.push($(this).val());
-    });
-    
-    $('.participant-filter:checked').each(function() {
-        selectedParticipantTypes.push($(this).val());
-    });
-    
-    calendar.getEvents().forEach(function(event) {
-        var eventType = event.extendedProps.event_type;
-        var participantType = event.extendedProps.participant_type;
-        
-        var showEvent = selectedEventTypes.includes(eventType) && 
-                        (participantType ? selectedParticipantTypes.includes(participantType) : true);
-        
-        event.setProp('display', showEvent ? 'auto' : 'none');
-    });
-}
-
-// Manejo de eventos de todo el día
-$('#all_day').change(function() {
-    if ($(this).is(':checked')) {
-        $('.time-field').hide();
-    } else {
-        $('.time-field').show();
-    }
-});
-
-$('#edit_all_day').change(function() {
-    if ($(this).is(':checked')) {
-        $('.edit-time-field').hide();
-    } else {
-        $('.edit-time-field').show();
-    }
-});
-
-// Manejo de recordatorios
-$('#reminder').change(function() {
-    if ($(this).is(':checked')) {
-        $('#reminderTimeField').removeClass('d-none');
-    } else {
-        $('#reminderTimeField').addClass('d-none');
-    }
-});
-
-$('#edit_reminder').change(function() {
-    if ($(this).is(':checked')) {
-        $('#editReminderTimeField').removeClass('d-none');
-    } else {
-        $('#editReminderTimeField').addClass('d-none');
-    }
-});
-
-// Botón de editar evento
-$('#editEventBtn').click(function() {
-    var eventId = $('#edit_event_id').val();
-    
-    // Cargar datos del evento en el formulario de edición
-    $.ajax({
-        url: "{{ url_for('entrepreneur.calendar.get_event') }}",
-        type: 'GET',
-        data: { event_id: eventId },
-        success: function(response) {
-            if (response.status === 'success') {
-                var event = response.event;
-                
-                // Llenar formulario con datos del evento
-                $('#edit_title').val(event.title);
-                $('#edit_event_type').val(event.event_type);
-                $('#edit_all_day').prop('checked', event.all_day);
-                
-                // Fechas y horas
-                $('#edit_start_date').val(event.start_date);
-                $('#edit_start_time').val(event.start_time);
-                $('#edit_end_date').val(event.end_date);
-                $('#edit_end_time').val(event.end_time);
-                
-                // Otros campos
-                $('#edit_description').val(event.description);
-                $('#edit_location').val(event.location);
-                $('#edit_color').val(event.color);
-                
-                // Participantes
-                $('#edit_participants').val(event.participants);
-                
-                // Recordatorio
-                $('#edit_reminder').prop('checked', event.reminder);
-                if (event.reminder) {
-                    $('#edit_reminder_time').val(event.reminder_time);
-                    $('#editReminderTimeField').removeClass('d-none');
-                } else {
-                    $('#editReminderTimeField').addClass('d-none');
-                }
-                
-                // Mostrar/ocultar campos de tiempo según si es todo el día
-                if (event.all_day) {
-                    $('.edit-time-field').hide();
-                } else {
-                    $('.edit-time-field').show();
-                }
-                
-                // Cerrar modal de visualización y abrir modal de edición
-                $('#viewEventModal').modal('hide');
-                $('#editEventModal').modal('show');
-            } else {
-                alert('Error al cargar los datos del evento: ' + response.message);
-            }
-        },
-        error: function() {
-            alert('Error de conexión al cargar los datos del evento');
-        }
-    });
-});
-
-// Botón de eliminar evento
-$('#deleteEventBtn').click(function() {
-    $('#viewEventModal').modal('hide');
-    $('#deleteEventConfirmModal').modal('show');
-});
-
-// Actualizar lista de próximos eventos
-function updateUpcomingEvents() {
-    $.ajax({
-        url: "{{ url_for('entrepreneur.calendar.get_upcoming_events') }}",
-        type: 'GET',
-        success: function(response) {
-            if (response.status === 'success') {
-                var upcomingEventsHtml = '';
-                
-                if (response.events.length > 0) {
-                    response.events.forEach(function(event) {
-                        var badgeClass = 'bg-info';
-                        if (event.event_type === 'meeting') badgeClass = 'bg-primary';
-                        else if (event.event_type === 'task') badgeClass = 'bg-success';
-                        else if (event.event_type === 'deadline') badgeClass = 'bg-danger';
-                        
-                        var dateText = event.is_today ? 'Hoy' : 
-                                      (event.is_tomorrow ? 'Mañana' : event.date);
-                        
-                        upcomingEventsHtml += `
-                            <a href="#" class="list-group-item list-group-item-action event-item" 
-                               data-event-id="${event.id}" data-bs-toggle="modal" data-bs-target="#viewEventModal">
-                                <div class="d-flex w-100 justify-content-between align-items-center">
-                                    <h6 class="mb-1 text-truncate">
-                                        <span class="badge ${badgeClass} me-1">●</span>
-                                        ${event.title}
-                                    </h6>
-                                    <small class="text-muted">${dateText}</small>
-                                </div>
-                                <div class="d-flex w-100 justify-content-between align-items-center">
-                                    <small class="text-muted">
-                                        ${event.all_day ? 'Todo el día' : event.time}
-                                    </small>
-                                    ${event.participants_count > 0 ? 
-                                        `<small class="text-muted">
-                                            <i class="bi bi-people"></i> ${event.participants_count}
-                                        </small>` : ''}
-                                </div>
-                            </a>
-                        `;
-                    });
-                } else {
-                    upcomingEventsHtml = `
-                        <div class="text-center py-4">
-                            <p class="text-muted mb-0">No hay eventos próximos</p>
+<!-- Import Calendar Modal -->
+<div class="modal fade" id="importCalendarModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="importForm" method="POST" enctype="multipart/form-data">
+                {{ csrf_token() }}
+                <div class="modal-header">
+                    <h5 class="modal-title">Importar Calendario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Fuente de Importación</label>
+                            <select class="form-select" name="import_source" onchange="toggleImportOptions(this.value)">
+                                <option value="file">Archivo ICS</option>
+                                <option value="google">Google Calendar</option>
+                                <option value="outlook">Outlook</option>
+                                <option value="url">URL de Calendario</option>
+                            </select>
                         </div>
-                    `;
-                }
-                
-                $('#upcomingEventsList').html(upcomingEventsHtml);
-                
-                // Actualizar manejador de eventos para los nuevos elementos
-                $('.event-item').click(function() {
-                    var eventId = $(this).data('event-id');
-                    var event = calendar.getEventById(eventId);
-                    if (event) {
-                        calendar.gotoDate(event.start);
-                        setTimeout(function() {
-                            event.setProp('display', 'auto');
-                        }, 100);
-                    }
-                });
-            }
-        }
-    });
-}
-
-// Manejar envío de formularios
-$('#addEventForm').submit(function(e) {
-    e.preventDefault();
-    
-    $.ajax({
-        url: $(this).attr('action'),
-        type: 'POST',
-        data: $(this).serialize(),
-        success: function(response) {
-            if (response.status === 'success') {
-                // Añadir evento al calendario
-                calendar.addEvent({
-                    id: response.event.id,
-                    title: response.event.title,
-                    start: response.event.start,
-                    end: response.event.end,
-                    allDay: response.event.all_day,
-                    color: response.event.color,
-                    extendedProps: {
-                        event_type: response.event.event_type,
-                        description: response.event.description,
-                        location: response.event.location,
-                        participant_type: response.event.participant_type,
-                        participants: response.event.participants,
-                        reminder: response.event.reminder,
-                        reminder_text: response.event.reminder_text
-                    }
-                });
-                
-                // Cerrar modal y limpiar formulario
-                $('#addEventModal').modal('hide');
-                $('#addEventForm')[0].reset();
-                
-                // Actualizar lista de próximos eventos
-                updateUpcomingEvents();
-            } else {
-                alert('Error al crear el evento: ' + response.message);
-            }
-        },
-        error: function() {
-            alert('Error de conexión al crear el evento');
-        }
-    });
-});
-
-$('#editEventForm').submit(function(e) {
-    e.preventDefault();
-    
-    $.ajax({
-        url: $(this).attr('action'),
-        type: 'POST',
-        data: $(this).serialize(),
-        success: function(response) {
-            if (response.status === 'success') {
-                // Actualizar evento en el calendario
-                var event = calendar.getEventById(response.event.id);
-                if (event) {
-                    event.setProp('title', response.event.title);
-                    event.setProp('color', response.event.color);
-                    event.setStart(response.event.start);
-                    event.setEnd(response.event.end);
-                    event.setAllDay(response.event.all_day);
-                    event.setExtendedProp('event_type', response.event.event_type);
-                    event.setExtendedProp('description', response.event.description);
-                    event.setExtendedProp('location', response.event.location);
-                    event.setExtendedProp('participant_type', response.event.participant_type);
-                    event.setExtendedProp('participants', response.event.participants);
-                    event.setExtendedProp('reminder', response.event.reminder);
-                    event.setExtendedProp('reminder_text', response.event.reminder_text);
-                }
-                
-                // Cerrar modal
-                $('#editEventModal').modal('hide');
-                
-                // Actualizar lista de próximos eventos
-                updateUpcomingEvents();
-            } else {
-                alert('Error al actualizar el evento: ' + response.message);
-            }
-        },
-        error: function() {
-            alert('Error de conexión al actualizar el evento');
-        }
-    });
-});
-
-$('#deleteEventForm').submit(function(e) {
-    e.preventDefault();
-    
-    $.ajax({
-        url: $(this).attr('action'),
-        type: 'POST',
-        data: $(this).serialize(),
-        success: function(response) {
-            if (response.status === 'success') {
-                // Eliminar evento del calendario
-                var event = calendar.getEventById($('#delete_event_id').val());
-                if (event) {
-                    event.remove();
-                }
-                
-                // Cerrar modal
-                $('#deleteEventConfirmModal').modal('hide');
-                
-                // Actualizar lista de próximos eventos
-                updateUpcomingEvents();
-            } else {
-                alert('Error al eliminar el evento: ' + response.message);
-            }
-        },
-        error: function() {
-            alert('Error de conexión al eliminar el evento');
-        }
-    });
-});
-
-// Manejar clic en eventos de la lista de próximos eventos
-$(document).on('click', '.event-item', function() {
-    var eventId = $(this).data('event-id');
-    
-    // Cargar datos del evento en el modal de visualización
-    $.ajax({
-        url: "{{ url_for('entrepreneur.calendar.get_event') }}",
-        type: 'GET',
-        data: { event_id: eventId },
-        success: function(response) {
-            if (response.status === 'success') {
-                var event = response.event;
-                
-                // Título
-                $('#eventTitle').text(event.title);
-                
-                // Fecha y hora
-                var dateTimeText = '';
-                if (event.all_day) {
-                    if (event.start_date === event.end_date) {
-                        dateTimeText = moment(event.start_date).format('DD/MM/YYYY') + ' (Todo el día)';
-                    } else {
-                        dateTimeText = moment(event.start_date).format('DD/MM/YYYY') + ' - ' + 
-                                      moment(event.end_date).format('DD/MM/YYYY') + ' (Todo el día)';
-                    }
-                } else {
-                    if (event.start_date === event.end_date) {
-                        dateTimeText = moment(event.start_date).format('DD/MM/YYYY') + ', ' + 
-                                      event.start_time + ' - ' + event.end_time;
-                    } else {
-                        dateTimeText = moment(event.start_date).format('DD/MM/YYYY') + ', ' + event.start_time + ' - ' + 
-                                      moment(event.end_date).format('DD/MM/YYYY') + ', ' + event.end_time;
-                    }
-                }
-                $('#eventDateTime').text(dateTimeText);
-                
-                // Ubicación
-                if (event.location) {
-                    $('#eventLocation').text(event.location);
-                    $('#eventLocationContainer').show();
-                } else {
-                    $('#eventLocationContainer').hide();
-                }
-                
-                // Descripción
-                if (event.description) {
-                    $('#eventDescription').text(event.description);
-                    $('#eventDescriptionContainer').show();
-                } else {
-                    $('#eventDescriptionContainer').hide();
-                }
-                
-                // Participantes
-                if (event.participants && event.participants.length > 0) {
-                    var participantsHtml = '';
-                    event.participants.forEach(function(participant) {
-                        participantsHtml += `
-                            <div class="d-flex align-items-center mb-2">
-                                <img src="${participant.image_url}" alt="${participant.name}" 
-                                     class="rounded-circle me-2" width="30" height="30">
-                                <span>${participant.name}</span>
+                        
+                        <div class="col-12" id="fileImportDiv">
+                            <label class="form-label">Archivo ICS</label>
+                            <input type="file" class="form-control" name="calendar_file" accept=".ics">
+                            <div class="form-text">Selecciona un archivo .ics exportado de tu calendario</div>
+                        </div>
+                        
+                        <div class="col-12" id="urlImportDiv" style="display: none;">
+                            <label class="form-label">URL del Calendario</label>
+                            <input type="url" class="form-control" name="calendar_url" placeholder="https://...">
+                            <div class="form-text">URL pública del calendario a importar</div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="merge_duplicates" id="mergeDuplicates" checked>
+                                <label class="form-check-label" for="mergeDuplicates">
+                                    Fusionar eventos duplicados
+                                </label>
                             </div>
-                        `;
-                    });
-                    $('#eventParticipants').html(participantsHtml);
-                    $('#eventParticipantsContainer').show();
-                } else {
-                    $('#eventParticipantsContainer').hide();
-                }
-                
-                // Recordatorio
-                if (event.reminder) {
-                    $('#eventReminder').text(event.reminder_text);
-                    $('#eventReminderContainer').show();
-                } else {
-                    $('#eventReminderContainer').hide();
-                }
-                
-                // Guardar ID del evento para edición/eliminación
-                $('#edit_event_id').val(event.id);
-                $('#delete_event_id').val(event.id);
-                $('#deleteEventTitle').text(event.title);
-                
-                // Resaltar evento en el calendario
-                var calEvent = calendar.getEventById(event.id);
-                if (calEvent) {
-                    calendar.gotoDate(calEvent.start);
-                    setTimeout(function() {
-                        calEvent.setProp('display', 'auto');
-                    }, 100);
-                }
-            } else {
-                alert('Error al cargar los datos del evento: ' + response.message);
-            }
-        },
-        error: function() {
-            alert('Error de conexión al cargar los datos del evento');
-        }
-    });
-});
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-download me-1"></i>
+                        Importar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
-// Inicializar calendario
-calendar.render();
-});
-</script>
+<!-- Event Details Modal -->
+<div class="modal fade" id="eventDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventDetailsTitle">Detalles del Evento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="eventDetailsContent">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Available Slots Modal -->
+<div class="modal fade" id="availableSlotsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Mi Disponibilidad</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Próximos 7 días</h6>
+                        <div id="availabilityGrid">
+                            <!-- Dynamic content -->
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Configuración de Disponibilidad</h6>
+                        <form>
+                            <div class="mb-3">
+                                <label class="form-label">Horario de Trabajo</label>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <input type="time" class="form-control" value="09:00">
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="time" class="form-control" value="18:00">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Duración de reuniones por defecto</label>
+                                <select class="form-select">
+                                    <option>30 minutos</option>
+                                    <option selected>60 minutos</option>
+                                    <option>90 minutos</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
-{% endblock content %}
+{% block extra_js %}
+<script src="{{ url_for('static', filename='vendor/fullcalendar/fullcalendar.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/flatpickr/flatpickr.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/colorpicker/colorpicker.js') }}"></script>
+<script src="{{ url_for('static', filename='dist/js/calendar.js') }}"></script>
+<script>
+let calendar, miniCalendar;
+let currentFilters = {
+    categories: {{ event_categories|map(attribute='id')|list|tojson }},
+    dateFrom: null,
+    dateTo: null,
+    priority: null,
+    locationType: null
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize main calendar
+    initializeCalendar();
+    
+    // Initialize mini calendar
+    initializeMiniCalendar();
+    
+    // Initialize search
+    initializeSearch();
+    
+    // Initialize filters
+    initializeFilters();
+    
+    // Initialize form handlers
+    initializeFormHandlers();
+    
+    // Initialize WebSocket for real-time updates
+    initializeWebSocket();
+    
+    // Auto-sync every 15 minutes
+    setInterval(syncGoogleCalendar, 900000);
+});
+
+function initializeCalendar() {
+    const calendarEl = document.getElementById('fullCalendar');
+    
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'es',
+        height: 'auto',
+        headerToolbar: {
+            left: 'prev,next',
+            center: 'title',
+            right: ''
+        },
+        businessHours: {
+            daysOfWeek: [1, 2, 3, 4, 5], // Monday - Friday
+            startTime: '09:00',
+            endTime: '18:00'
+        },
+        events: function(fetchInfo, successCallback, failureCallback) {
+            fetch(`{{ url_for('api.v1.calendar.events') }}?start=${fetchInfo.startStr}&end=${fetchInfo.endStr}&${getFilterParams()}`)
+                .then(response => response.json())
+                .then(data => {
+                    successCallback(data.events);
+                })
+                .catch(error => {
+                    console.error('Error loading events:', error);
+                    failureCallback(error);
+                });
+        },
+        eventDidMount: function(info) {
+            // Add custom styling based on event properties
+            if (info.event.extendedProps.priority === 'urgent') {
+                info.el.classList.add('event-urgent');
+            }
+            if (info.event.extendedProps.hasConflicts) {
+                info.el.classList.add('event-conflict');
+            }
+            
+            // Add tooltip
+            const tooltip = `
+                <strong>${info.event.title}</strong><br>
+                ${info.event.start.toLocaleString()}<br>
+                ${info.event.extendedProps.location || 'Sin ubicación'}
+            `;
+            info.el.setAttribute('title', tooltip);
+        },
+        eventClick: function(info) {
+            viewEventDetails(info.event.id);
+        },
+        selectable: true,
+        selectMirror: true,
+        select: function(info) {
+            createEventAtDate(info.startStr, info.endStr);
+        },
+        editable: true,
+        eventDrop: function(info) {
+            updateEventDateTime(info.event.id, info.event.start, info.event.end);
+        },
+        eventResize: function(info) {
+            updateEventDateTime(info.event.id, info.event.start, info.event.end);
+        },
+        dayMaxEvents: true,
+        moreLinkClick: 'popover',
+        eventDisplay: 'block',
+        nowIndicator: true,
+        slotMinTime: '06:00:00',
+        slotMaxTime: '22:00:00',
+        allDaySlot: true,
+        weekNumbers: true,
+        weekText: 'S',
+        eventColor: '#007bff',
+        eventTextColor: '#ffffff',
+        buttonText: {
+            today: 'Hoy',
+            month: 'Mes',
+            week: 'Semana',
+            day: 'Día',
+            list: 'Lista'
+        }
+    });
+    
+    calendar.render();
+    
+    // Handle view change buttons
+    document.querySelectorAll('[data-calendar-view]').forEach(button => {
+        button.addEventListener('click', function() {
+            document.querySelector('[data-calendar-view].active').classList.remove('active');
+            this.classList.add('active');
+            calendar.changeView(this.dataset.calendarView);
+        });
+    });
+}
+
+function initializeMiniCalendar() {
+    const miniCalendarEl = document.getElementById('miniCalendar');
+    
+    miniCalendar = new FullCalendar.Calendar(miniCalendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'es',
+        height: 300,
+        headerToolbar: {
+            left: 'prev',
+            center: 'title',
+            right: 'next'
+        },
+        dayMaxEvents: false,
+        events: function(fetchInfo, successCallback, failureCallback) {
+            // Load only event counts for performance
+            fetch(`{{ url_for('api.v1.calendar.event_counts') }}?start=${fetchInfo.startStr}&end=${fetchInfo.endStr}`)
+                .then(response => response.json())
+                .then(data => {
+                    const events = Object.entries(data).map(([date, count]) => ({
+                        id: `count-${date}`,
+                        title: `${count} eventos`,
+                        start: date,
+                        display: 'background',
+                        backgroundColor: count > 3 ? '#dc3545' : count > 1 ? '#ffc107' : '#28a745',
+                        classNames: ['event-count']
+                    }));
+                    successCallback(events);
+                });
+        },
+        dateClick: function(info) {
+            calendar.gotoDate(info.date);
+            if (calendar.view.type !== 'timeGridDay') {
+                calendar.changeView('timeGridDay');
+                document.querySelector('[data-calendar-view].active').classList.remove('active');
+                document.querySelector('[data-calendar-view="timeGridDay"]').classList.add('active');
+            }
+        }
+    });
+    
+    miniCalendar.render();
+}
+
+function initializeSearch() {
+    const searchInput = document.getElementById('eventSearch');
+    let searchTimeout;
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            searchEvents(this.value);
+        }, 300);
+    });
+}
+
+function initializeFilters() {
+    // Quick filters in sidebar
+    document.querySelectorAll('.calendar-filters input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                currentFilters.categories.push(parseInt(this.value));
+            } else {
+                const index = currentFilters.categories.indexOf(parseInt(this.value));
+                if (index > -1) {
+                    currentFilters.categories.splice(index, 1);
+                }
+            }
+            calendar.refetchEvents();
+        });
+    });
+}
+
+function initializeFormHandlers() {
+    // Event form submission
+    document.getElementById('eventForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveEvent();
+    });
+    
+    // Recurrence type change
+    document.querySelector('select[name="recurrence_type"]').addEventListener('change', function() {
+        const recurrenceEndDiv = document.getElementById('recurrenceEndDiv');
+        recurrenceEndDiv.style.display = this.value ? 'block' : 'none';
+    });
+    
+    // All day checkbox
+    document.querySelector('input[name="all_day"]').addEventListener('change', function() {
+        const timeInputs = document.querySelectorAll('input[type="time"]');
+        timeInputs.forEach(input => {
+            input.disabled = this.checked;
+            input.required = !this.checked;
+        });
+    });
+    
+    // Import form
+    document.getElementById('importForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        importCalendar();
+    });
+}
+
+function initializeWebSocket() {
+    if (typeof io !== 'undefined') {
+        const socket = io('/calendar');
+        
+        socket.on('event_updated', function(data) {
+            calendar.refetchEvents();
+            showNotification('Evento actualizado: ' + data.title, 'info');
+        });
+        
+        socket.on('event_created', function(data) {
+            calendar.refetchEvents();
+            showNotification('Nuevo evento creado: ' + data.title, 'success');
+        });
+        
+        socket.on('sync_completed', function(data) {
+            calendar.refetchEvents();
+            updateSyncStatus('synced');
+            showNotification('Calendario sincronizado exitosamente', 'success');
+        });
+        
+        socket.on('conflict_detected', function(data) {
+            showNotification('Conflicto de horario detectado en: ' + data.title, 'warning');
+            highlightConflicts(data.conflicts);
+        });
+    }
+}
+
+// Event Management Functions
+function createEventAtDate(startDate, endDate) {
+    document.getElementById('eventModalTitle').textContent = 'Nuevo Evento';
+    document.getElementById('eventId').value = '';
+    document.getElementById('deleteEventBtn').style.display = 'none';
+    document.getElementById('saveEventBtn').innerHTML = '<i class="fas fa-save me-1"></i>Guardar Evento';
+    
+    // Set default values
+    if (startDate) {
+        const start = new Date(startDate);
+        document.querySelector('input[name="start_date"]').value = start.toISOString().split('T')[0];
+        if (endDate) {
+            const end = new Date(endDate);
+            document.querySelector('input[name="end_date"]').value = end.toISOString().split('T')[0];
+        }
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('createEventModal'));
+    modal.show();
+}
+
+function viewEventDetails(eventId) {
+    fetch(`{{ url_for('api.v1.calendar.event_details', id='') }}${eventId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('eventDetailsTitle').textContent = data.title;
+            document.getElementById('eventDetailsContent').innerHTML = data.html;
+            
+            const modal = new bootstrap.Modal(document.getElementById('eventDetailsModal'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Error loading event details:', error);
+            showNotification('Error al cargar detalles del evento', 'error');
+        });
+}
+
+function editEvent(eventId) {
+    fetch(`{{ url_for('api.v1.calendar.event', id='') }}${eventId}`)
+        .then(response => response.json())
+        .then(data => {
+            populateEventForm(data);
+            document.getElementById('eventModalTitle').textContent = 'Editar Evento';
+            document.getElementById('deleteEventBtn').style.display = 'block';
+            document.getElementById('saveEventBtn').innerHTML = '<i class="fas fa-save me-1"></i>Actualizar Evento';
+            
+            const modal = new bootstrap.Modal(document.getElementById('createEventModal'));
+            modal.show();
+        });
+}
+
+function populateEventForm(eventData) {
+    document.getElementById('eventId').value = eventData.id;
+    document.querySelector('input[name="title"]').value = eventData.title;
+    document.querySelector('select[name="category_id"]').value = eventData.category_id;
+    document.querySelector('textarea[name="description"]').value = eventData.description || '';
+    
+    if (eventData.start_time) {
+        const start = new Date(eventData.start_time);
+        document.querySelector('input[name="start_date"]').value = start.toISOString().split('T')[0];
+        document.querySelector('input[name="start_time"]').value = start.toTimeString().slice(0, 5);
+    }
+    
+    if (eventData.end_time) {
+        const end = new Date(eventData.end_time);
+        document.querySelector('input[name="end_date"]').value = end.toISOString().split('T')[0];
+        document.querySelector('input[name="end_time"]').value = end.toTimeString().slice(0, 5);
+    }
+    
+    document.querySelector('input[name="all_day"]').checked = eventData.all_day || false;
+    document.querySelector('input[name="location"]').value = eventData.location || '';
+    document.querySelector('select[name="location_type"]').value = eventData.location_type || 'physical';
+    document.querySelector('input[name="color"]').value = eventData.color || '#007bff';
+    document.querySelector('select[name="priority"]').value = eventData.priority || 'medium';
+    document.querySelector('select[name="visibility"]').value = eventData.visibility || 'private';
+    document.querySelector('select[name="recurrence_type"]').value = eventData.recurrence_type || '';
+    
+    if (eventData.attendees) {
+        document.querySelector('input[name="attendees_emails"]').value = eventData.attendees.map(a => a.email).join(', ');
+    }
+}
+
+function saveEvent() {
+    const form = document.getElementById('eventForm');
+    const formData = new FormData(form);
+    const eventId = formData.get('event_id');
+    
+    const url = eventId ? 
+        `{{ url_for('api.v1.calendar.update_event', id='') }}${eventId}` :
+        `{{ url_for('api.v1.calendar.create_event') }}`;
+    
+    const method = eventId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        body: formData,
+        headers: {
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            calendar.refetchEvents();
+            bootstrap.Modal.getInstance(document.getElementById('createEventModal')).hide();
+            showNotification(eventId ? 'Evento actualizado' : 'Evento creado', 'success');
+            form.reset();
+        } else {
+            showNotification('Error: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving event:', error);
+        showNotification('Error al guardar el evento', 'error');
+    });
+}
+
+function deleteEvent() {
+    const eventId = document.getElementById('eventId').value;
+    
+    if (!eventId || !confirm('¿Estás seguro de que quieres eliminar este evento?')) {
+        return;
+    }
+    
+    fetch(`{{ url_for('api.v1.calendar.delete_event', id='') }}${eventId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            calendar.refetchEvents();
+            bootstrap.Modal.getInstance(document.getElementById('createEventModal')).hide();
+            showNotification('Evento eliminado', 'success');
+        } else {
+            showNotification('Error al eliminar evento', 'error');
+        }
+    });
+}
+
+function updateEventDateTime(eventId, newStart, newEnd) {
+    fetch(`{{ url_for('api.v1.calendar.update_event_time', id='') }}${eventId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            start_time: newStart.toISOString(),
+            end_time: newEnd ? newEnd.toISOString() : null
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Evento actualizado', 'success');
+            if (data.conflicts && data.conflicts.length > 0) {
+                showNotification('Advertencia: Se detectaron conflictos de horario', 'warning');
+            }
+        } else {
+            calendar.refetchEvents(); // Revert changes
+            showNotification('Error al actualizar evento', 'error');
+        }
+    });
+}
+
+// Filter and Search Functions
+function getFilterParams() {
+    const params = new URLSearchParams();
+    
+    if (currentFilters.categories.length > 0) {
+        params.append('categories', currentFilters.categories.join(','));
+    }
+    if (currentFilters.dateFrom) {
+        params.append('date_from', currentFilters.dateFrom);
+    }
+    if (currentFilters.dateTo) {
+        params.append('date_to', currentFilters.dateTo);
+    }
+    if (currentFilters.priority) {
+        params.append('priority', currentFilters.priority);
+    }
+    if (currentFilters.locationType) {
+        params.append('location_type', currentFilters.locationType);
+    }
+    
+    return params.toString();
+}
+
+function searchEvents(query) {
+    if (query.length < 2) {
+        calendar.refetchEvents();
+        return;
+    }
+    
+    fetch(`{{ url_for('api.v1.calendar.search_events') }}?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            calendar.removeAllEvents();
+            calendar.addEventSource(data.events);
+        });
+}
+
+function applyFilters() {
+    const form = document.getElementById('filtersForm');
+    const formData = new FormData(form);
+    
+    // Update current filters
+    currentFilters.categories = Array.from(form.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.value));
+    currentFilters.dateFrom = formData.get('date_from');
+    currentFilters.dateTo = formData.get('date_to');
+    currentFilters.priority = formData.get('priority');
+    currentFilters.locationType = formData.get('location_type');
+    
+    calendar.refetchEvents();
+    bootstrap.Modal.getInstance(document.getElementById('calendarFiltersModal')).hide();
+}
+
+function clearFilters() {
+    currentFilters = {
+        categories: {{ event_categories|map(attribute='id')|list|tojson }},
+        dateFrom: null,
+        dateTo: null,
+        priority: null,
+        locationType: null
+    };
+    
+    document.getElementById('filtersForm').reset();
+    document.querySelectorAll('#filtersForm input[type="checkbox"]').forEach(cb => cb.checked = true);
+    calendar.refetchEvents();
+}
+
+// Sync and Import Functions
+function syncGoogleCalendar() {
+    updateSyncStatus('syncing');
+    
+    fetch(`{{ url_for('api.v1.calendar.sync_google') }}`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateSyncStatus('synced');
+            calendar.refetchEvents();
+            showNotification(`Sincronización completada. ${data.events_synced} eventos sincronizados.`, 'success');
+        } else {
+            updateSyncStatus('error');
+            showNotification('Error en la sincronización: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        updateSyncStatus('error');
+        showNotification('Error de conexión durante la sincronización', 'error');
+    });
+}
+
+function updateSyncStatus(status) {
+    const statusElement = document.querySelector('.sync-status');
+    statusElement.className = `sync-status ${status}`;
+    
+    const statusTexts = {
+        synced: 'Sincronizado',
+        syncing: 'Sincronizando...',
+        error: 'Error de sincronización'
+    };
+    
+    const statusIcons = {
+        synced: 'check',
+        syncing: 'sync',
+        error: 'exclamation-triangle'
+    };
+    
+    statusElement.innerHTML = `
+        <i class="fas fa-${statusIcons[status]}"></i>
+        ${statusTexts[status]}
+    `;
+}
+
+function exportCalendar() {
+    const format = prompt('Formato de exportación (ics/csv):', 'ics');
+    if (!format) return;
+    
+    window.open(`{{ url_for('api.v1.calendar.export') }}?format=${format}&${getFilterParams()}`, '_blank');
+}
+
+function importCalendar() {
+    const form = document.getElementById('importForm');
+    const formData = new FormData(form);
+    
+    fetch(`{{ url_for('api.v1.calendar.import') }}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            calendar.refetchEvents();
+            bootstrap.Modal.getInstance(document.getElementById('importCalendarModal')).hide();
+            showNotification(`Importación completada. ${data.events_imported} eventos importados.`, 'success');
+            form.reset();
+        } else {
+            showNotification('Error en la importación: ' + data.message, 'error');
+        }
+    });
+}
+
+function toggleImportOptions(source) {
+    const fileDiv = document.getElementById('fileImportDiv');
+    const urlDiv = document.getElementById('urlImportDiv');
+    
+    fileDiv.style.display = source === 'file' ? 'block' : 'none';
+    urlDiv.style.display = source === 'url' ? 'block' : 'none';
+}
+
+// Availability Functions
+function showAvailableSlots() {
+    fetch(`{{ url_for('api.v1.calendar.availability') }}`)
+        .then(response => response.json())
+        .then(data => {
+            const grid = document.getElementById('availabilityGrid');
+            grid.innerHTML = '';
+            
+            data.availability.forEach(day => {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'mb-3';
+                dayDiv.innerHTML = `
+                    <h6>${day.date}</h6>
+                    ${day.slots.map(slot => `
+                        <div class="time-slot ${slot.available ? 'available' : 'busy'}">
+                            ${slot.time} - ${slot.available ? 'Disponible' : 'Ocupado'}
+                        </div>
+                    `).join('')}
+                `;
+                grid.appendChild(dayDiv);
+            });
+            
+            const modal = new bootstrap.Modal(document.getElementById('availableSlotsModal'));
+            modal.show();
+        });
+}
+
+// Utility Functions
+function showNotification(message, type = 'info') {
+    const alertTypes = {
+        'success': 'alert-success',
+        'error': 'alert-danger',
+        'warning': 'alert-warning',
+        'info': 'alert-info'
+    };
+    
+    const notification = document.createElement('div');
+    notification.className = `alert ${alertTypes[type]} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
+function highlightConflicts(conflicts) {
+    conflicts.forEach(eventId => {
+        const eventElement = document.querySelector(`[data-event-id="${eventId}"]`);
+        if (eventElement) {
+            eventElement.classList.add('event-conflict');
+        }
+    });
+}
+
+// Global event handlers
+window.editEvent = editEvent;
+window.viewEventDetails = viewEventDetails;
+window.deleteEvent = deleteEvent;
+window.syncGoogleCalendar = syncGoogleCalendar;
+window.exportCalendar = exportCalendar;
+window.showAvailableSlots = showAvailableSlots;
+window.toggleImportOptions = toggleImportOptions;
+window.applyFilters = applyFilters;
+window.clearFilters = clearFilters;
+</script>
+{% endblock %}

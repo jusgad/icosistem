@@ -1,376 +1,1653 @@
-{% extends "base.html" %}
-
-{% block title %}Mis Emprendedores | Panel de Aliado{% endblock %}
-
-{% block content %}
-<div class="container-fluid mt-4">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Mis Emprendedores Asignados</h5>
-                    <div>
-                        <input type="text" id="searchEntrepreneur" class="form-control form-control-sm" 
-                               placeholder="Buscar por nombre o sector...">
-                    </div>
-                </div>
-                <div class="card-body">
-                    {% if entrepreneurs %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Emprendedor</th>
-                                    <th>Emprendimiento</th>
-                                    <th>Sector</th>
-                                    <th>Fecha de asignación</th>
-                                    <th>Última interacción</th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for relationship in relationships %}
-                                <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <img src="{{ relationship.entrepreneur.profile_image or url_for('static', filename='images/default-profile.png') }}" 
-                                                 alt="Foto de perfil" class="rounded-circle me-2" width="40" height="40">
-                                            <div>
-                                                <div>{{ relationship.entrepreneur.user.full_name }}</div>
-                                                <small class="text-muted">{{ relationship.entrepreneur.user.email }}</small>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>{{ relationship.entrepreneur.business_name }}</td>
-                                    <td>{{ relationship.entrepreneur.sector }}</td>
-                                    <td>{{ relationship.created_at.strftime('%d/%m/%Y') }}</td>
-                                    <td>
-                                        {% if relationship.last_interaction %}
-                                            {{ relationship.last_interaction.strftime('%d/%m/%Y') }}
-                                        {% else %}
-                                            <span class="text-muted">Sin interacciones</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if relationship.status == 'active' %}
-                                            <span class="badge bg-success">Activo</span>
-                                        {% elif relationship.status == 'inactive' %}
-                                            <span class="badge bg-secondary">Inactivo</span>
-                                        {% elif relationship.status == 'paused' %}
-                                            <span class="badge bg-warning">Pausado</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <a href="{{ url_for('ally.entrepreneurs.detail', entrepreneur_id=relationship.entrepreneur.id) }}" 
-                                               class="btn btn-sm btn-outline-primary" title="Ver detalle">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
-                                            <a href="{{ url_for('ally.messages.chat', user_id=relationship.entrepreneur.user.id) }}" 
-                                               class="btn btn-sm btn-outline-info" title="Enviar mensaje">
-                                                <i class="bi bi-chat"></i>
-                                            </a>
-                                            <button type="button" class="btn btn-sm btn-outline-success"
-                                                    data-bs-toggle="modal" data-bs-target="#scheduleMeetingModal"
-                                                    data-entrepreneur-id="{{ relationship.entrepreneur.id }}"
-                                                    data-entrepreneur-name="{{ relationship.entrepreneur.user.full_name }}"
-                                                    title="Agendar reunión">
-                                                <i class="bi bi-calendar-plus"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary"
-                                                    data-bs-toggle="modal" data-bs-target="#registerHoursModal"
-                                                    data-entrepreneur-id="{{ relationship.entrepreneur.id }}"
-                                                    data-entrepreneur-name="{{ relationship.entrepreneur.user.full_name }}"
-                                                    title="Registrar horas">
-                                                <i class="bi bi-clock"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="mt-3">
-                        <nav aria-label="Navegación de páginas">
-                            <ul class="pagination justify-content-center">
-                                {% if pagination.has_prev %}
-                                <li class="page-item">
-                                    <a class="page-link" href="{{ url_for('ally.entrepreneurs.list', page=pagination.prev_num) }}">Anterior</a>
-                                </li>
-                                {% else %}
-                                <li class="page-item disabled">
-                                    <span class="page-link">Anterior</span>
-                                </li>
-                                {% endif %}
-                                
-                                {% for page in pagination.iter_pages() %}
-                                    {% if page %}
-                                        {% if page != pagination.page %}
-                                        <li class="page-item">
-                                            <a class="page-link" href="{{ url_for('ally.entrepreneurs.list', page=page) }}">{{ page }}</a>
-                                        </li>
-                                        {% else %}
-                                        <li class="page-item active">
-                                            <span class="page-link">{{ page }}</span>
-                                        </li>
-                                        {% endif %}
-                                    {% else %}
-                                        <li class="page-item disabled">
-                                            <span class="page-link">...</span>
-                                        </li>
-                                    {% endif %}
-                                {% endfor %}
-                                
-                                {% if pagination.has_next %}
-                                <li class="page-item">
-                                    <a class="page-link" href="{{ url_for('ally.entrepreneurs.list', page=pagination.next_num) }}">Siguiente</a>
-                                </li>
-                                {% else %}
-                                <li class="page-item disabled">
-                                    <span class="page-link">Siguiente</span>
-                                </li>
-                                {% endif %}
-                            </ul>
-                        </nav>
-                    </div>
-                    
-                    {% else %}
-                    <div class="text-center py-5">
-                        <i class="bi bi-people display-4 text-muted"></i>
-                        <h5 class="mt-3">No tienes emprendedores asignados</h5>
-                        <p class="text-muted">Cuando se te asignen emprendedores, aparecerán en esta lista.</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Emprendedores - Panel de Aliados</title>
     
-    <!-- Estadísticas rápidas -->
-    <div class="row mt-4">
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="card-title">Total de horas este mes</h6>
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-clock-history text-primary fs-1 me-3"></i>
-                        <div>
-                            <h3 class="mb-0">{{ stats.monthly_hours }}</h3>
-                            {% if stats.hours_trend > 0 %}
-                            <small class="text-success">
-                                <i class="bi bi-arrow-up"></i> {{ stats.hours_trend }}% vs. mes anterior
-                            </small>
-                            {% elif stats.hours_trend < 0 %}
-                            <small class="text-danger">
-                                <i class="bi bi-arrow-down"></i> {{ stats.hours_trend|abs }}% vs. mes anterior
-                            </small>
-                            {% else %}
-                            <small class="text-muted">Sin cambios vs. mes anterior</small>
-                            {% endif %}
-                        </div>
-                    </div>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #1a237e;
+            --secondary-color: #3f51b5;
+            --accent-color: #00bcd4;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --info-color: #2196f3;
+            --light-bg: #f8f9fa;
+            --dark-text: #263238;
+            --border-radius: 15px;
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            color: var(--dark-text);
+        }
+
+        .entrepreneurs-header {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .entrepreneurs-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="network" width="40" height="40" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="2" fill="white" opacity="0.1"/><line x1="20" y1="20" x2="60" y2="20" stroke="white" stroke-width="0.5" opacity="0.1"/><line x1="20" y1="20" x2="20" y2="60" stroke="white" stroke-width="0.5" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23network)"/></svg>');
+        }
+
+        .entrepreneurs-header .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .stats-overview {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            color: var(--dark-text);
+            box-shadow: var(--card-shadow);
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            border-radius: 25px;
+            padding-left: 3rem;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 188, 212, 0.25);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+
+        .filter-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .filter-tag {
+            background: var(--gradient-accent);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .filter-tag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+        }
+
+        .filter-tag.active {
+            background: var(--primary-color);
+        }
+
+        .entrepreneur-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .entrepreneur-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--gradient-accent);
+        }
+
+        .entrepreneur-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .entrepreneur-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .entrepreneur-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--gradient-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-right: 1.5rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .entrepreneur-info h4 {
+            margin: 0;
+            font-weight: 700;
+            color: var(--dark-text);
+        }
+
+        .entrepreneur-info .company-name {
+            color: var(--accent-color);
+            font-weight: 600;
+            margin: 0.25rem 0;
+        }
+
+        .entrepreneur-info .location {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .entrepreneur-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .entrepreneur-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-weight: 600;
+        }
+
+        .badge-sector {
+            background: rgba(79, 172, 254, 0.1);
+            color: var(--accent-color);
+        }
+
+        .badge-stage {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--success-color);
+        }
+
+        .badge-funding {
+            background: rgba(255, 152, 0, 0.1);
+            color: var(--warning-color);
+        }
+
+        .entrepreneur-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        .entrepreneur-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .last-interaction {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-custom {
+            border-radius: 25px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 0.85rem;
+        }
+
+        .btn-primary-custom {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-accent-custom {
+            background: var(--gradient-accent);
+            color: white;
+        }
+
+        .btn-accent-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-outline-custom {
+            border: 2px solid var(--secondary-color);
+            color: var(--secondary-color);
+            background: transparent;
+        }
+
+        .btn-outline-custom:hover {
+            background: var(--secondary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .pipeline-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .pipeline-stage {
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .pipeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .pipeline-title {
+            font-weight: 700;
+            color: var(--dark-text);
+        }
+
+        .pipeline-count {
+            background: var(--accent-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .opportunity-item {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .opportunity-item:hover {
+            border-color: var(--accent-color);
+            transform: translateX(5px);
+        }
+
+        .opportunity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .opportunity-amount {
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .view-toggle {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .entrepreneur-detail-sidebar {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            z-index: 1050;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .entrepreneur-detail-sidebar.open {
+            right: 0;
+        }
+
+        .sidebar-header {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 2rem;
+        }
+
+        .sidebar-content {
+            padding: 2rem;
+        }
+
+        .interaction-timeline {
+            margin-top: 2rem;
+        }
+
+        .timeline-item {
+            display: flex;
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+            position: relative;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.5rem;
+            width: 10px;
+            height: 10px;
+            background: var(--accent-color);
+            border-radius: 50%;
+        }
+
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 1rem;
+            width: 2px;
+            height: calc(100% + 0.5rem);
+            background: #e9ecef;
+        }
+
+        .timeline-item:last-child::after {
+            display: none;
+        }
+
+        .notes-section {
+            margin-top: 2rem;
+        }
+
+        .note-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .note-date {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .performance-indicator {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .performance-indicator.positive {
+            color: var(--success-color);
+        }
+
+        .performance-indicator.negative {
+            color: var(--danger-color);
+        }
+
+        .performance-indicator.neutral {
+            color: var(--warning-color);
+        }
+
+        @media (max-width: 768px) {
+            .entrepreneurs-header {
+                padding: 1rem 0;
+            }
+            
+            .entrepreneur-card {
+                padding: 1.5rem;
+            }
+            
+            .entrepreneur-avatar {
+                width: 60px;
+                height: 60px;
+                font-size: 1.4rem;
+                margin-right: 1rem;
+            }
+            
+            .entrepreneur-metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .entrepreneur-detail-sidebar {
+                width: 100%;
+                right: -100%;
+            }
+            
+            .filter-section {
+                padding: 1rem;
+            }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .investment-status {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+        }
+
+        .status-invested {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--success-color);
+        }
+
+        .status-considering {
+            background: rgba(255, 152, 0, 0.1);
+            color: var(--warning-color);
+        }
+
+        .status-passed {
+            background: rgba(244, 67, 54, 0.1);
+            color: var(--danger-color);
+        }
+
+        .status-watching {
+            background: rgba(33, 150, 243, 0.1);
+            color: var(--info-color);
+        }
+
+        .connection-strength {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .strength-strong { color: var(--success-color); }
+        .strength-medium { color: var(--warning-color); }
+        .strength-weak { color: #999; }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay d-none" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Header -->
+    <div class="entrepreneurs-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="mb-3"><i class="fas fa-users me-3"></i>Red de Emprendedores</h1>
+                    <p class="mb-0 lead">Gestiona y desarrolla relaciones estratégicas con emprendedores e innovadores</p>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="card-title">Reuniones agendadas</h6>
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-calendar-check text-success fs-1 me-3"></i>
-                        <div>
-                            <h3 class="mb-0">{{ stats.upcoming_meetings }}</h3>
-                            <small class="text-muted">Próximos 7 días</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="card-title">Mensajes no leídos</h6>
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-chat-dots text-info fs-1 me-3"></i>
-                        <div>
-                            <h3 class="mb-0">{{ stats.unread_messages }}</h3>
-                            <small class="text-muted">De {{ stats.unread_message_sources }} emprendedor(es)</small>
+                <div class="col-lg-4">
+                    <div class="stats-overview">
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="stat-box">
+                                    <div class="stat-number" id="totalEntrepreneurs">47</div>
+                                    <div class="stat-label">Total</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-box">
+                                    <div class="stat-number" id="activeInvestments">12</div>
+                                    <div class="stat-label">Invertidas</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-box">
+                                    <div class="stat-number" id="pipelineOpportunities">8</div>
+                                    <div class="stat-label">Pipeline</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Modal para agendar reunión -->
-<div class="modal fade" id="scheduleMeetingModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Agendar reunión</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="container">
+        <!-- Filtros y Búsqueda -->
+        <div class="filter-section">
+            <div class="row align-items-center mb-3">
+                <div class="col-lg-6">
+                    <div class="search-box">
+                        <input type="text" class="form-control form-control-lg" id="searchEntrepreneurs" 
+                               placeholder="Buscar emprendedores, empresas o sectores...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <select class="form-select" id="filterSector" onchange="applyFilters()">
+                                <option value="">Todos los sectores</option>
+                                <option value="fintech">Fintech</option>
+                                <option value="saas">SaaS</option>
+                                <option value="ecommerce">E-commerce</option>
+                                <option value="ai">Inteligencia Artificial</option>
+                                <option value="healthtech">Healthtech</option>
+                                <option value="edtech">Edtech</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" id="filterStage" onchange="applyFilters()">
+                                <option value="">Todas las etapas</option>
+                                <option value="idea">Idea</option>
+                                <option value="mvp">MVP</option>
+                                <option value="seed">Seed</option>
+                                <option value="series-a">Serie A</option>
+                                <option value="growth">Crecimiento</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" id="filterStatus" onchange="applyFilters()">
+                                <option value="">Todos los estados</option>
+                                <option value="invested">Invertido</option>
+                                <option value="considering">Considerando</option>
+                                <option value="watching">Observando</option>
+                                <option value="passed">Pasado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <form id="scheduleMeetingForm" method="POST" action="{{ url_for('ally.calendar.schedule_meeting') }}">
+            
+            <div class="filter-tags" id="filterTags">
+                <span class="filter-tag active" onclick="filterByTag('all')">Todos</span>
+                <span class="filter-tag" onclick="filterByTag('recent')">Contacto Reciente</span>
+                <span class="filter-tag" onclick="filterByTag('high-potential')">Alto Potencial</span>
+                <span class="filter-tag" onclick="filterByTag('needs-follow-up')">Seguimiento</span>
+                <span class="filter-tag" onclick="filterByTag('meeting-scheduled')">Reunión Programada</span>
+                <span class="filter-tag" onclick="filterByTag('portfolio')">Portfolio</span>
+            </div>
+        </div>
+
+        <!-- Toggle de Vista -->
+        <div class="view-toggle">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="me-3">Vista:</span>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary active" id="cardView" onclick="switchView('card')">
+                            <i class="fas fa-th-large me-2"></i>Tarjetas
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="listView" onclick="switchView('list')">
+                            <i class="fas fa-list me-2"></i>Lista
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="pipelineView" onclick="switchView('pipeline')">
+                            <i class="fas fa-sitemap me-2"></i>Pipeline
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <button class="btn btn-accent-custom btn-custom" onclick="addNewEntrepreneur()">
+                        <i class="fas fa-user-plus me-2"></i>Agregar Emprendedor
+                    </button>
+                    <button class="btn btn-outline-custom btn-custom" onclick="exportData()">
+                        <i class="fas fa-download me-2"></i>Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vista de Tarjetas -->
+        <div id="cardViewContainer">
+            <div class="row" id="entrepreneursList">
+                <!-- Los emprendedores se cargarán aquí dinámicamente -->
+            </div>
+        </div>
+
+        <!-- Vista de Pipeline -->
+        <div id="pipelineViewContainer" class="d-none">
+            <div class="row">
+                <div class="col-lg-3">
+                    <div class="pipeline-stage">
+                        <div class="pipeline-header">
+                            <h6 class="pipeline-title">Prospects</h6>
+                            <span class="pipeline-count" id="prospectsCount">15</span>
+                        </div>
+                        <div id="prospectsStage">
+                            <!-- Opportunities will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3">
+                    <div class="pipeline-stage">
+                        <div class="pipeline-header">
+                            <h6 class="pipeline-title">En Evaluación</h6>
+                            <span class="pipeline-count" id="evaluationCount">8</span>
+                        </div>
+                        <div id="evaluationStage">
+                            <!-- Opportunities will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3">
+                    <div class="pipeline-stage">
+                        <div class="pipeline-header">
+                            <h6 class="pipeline-title">Due Diligence</h6>
+                            <span class="pipeline-count" id="dueDiligenceCount">5</span>
+                        </div>
+                        <div id="dueDiligenceStage">
+                            <!-- Opportunities will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3">
+                    <div class="pipeline-stage">
+                        <div class="pipeline-header">
+                            <h6 class="pipeline-title">Negociación</h6>
+                            <span class="pipeline-count" id="negotiationCount">3</span>
+                        </div>
+                        <div id="negotiationStage">
+                            <!-- Opportunities will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar de Detalle del Emprendedor -->
+    <div class="entrepreneur-detail-sidebar" id="entrepreneurSidebar">
+        <div class="sidebar-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 id="sidebarEntrepreneurName">-</h4>
+                    <p id="sidebarCompanyName" class="mb-0">-</p>
+                </div>
+                <button class="btn btn-link text-white" onclick="closeSidebar()">
+                    <i class="fas fa-times fa-lg"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="sidebar-content">
+            <!-- Información Básica -->
+            <div class="mb-4">
+                <h6><i class="fas fa-info-circle me-2"></i>Información Básica</h6>
+                <div id="basicInfo">
+                    <!-- Se cargará dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Métricas de Empresa -->
+            <div class="mb-4">
+                <h6><i class="fas fa-chart-bar me-2"></i>Métricas de Empresa</h6>
+                <div id="companyMetrics">
+                    <!-- Se cargará dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Estado de Inversión -->
+            <div class="mb-4">
+                <h6><i class="fas fa-handshake me-2"></i>Estado de Relación</h6>
+                <div id="investmentStatus">
+                    <!-- Se cargará dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Timeline de Interacciones -->
+            <div class="interaction-timeline">
+                <h6><i class="fas fa-history me-2"></i>Historial de Interacciones</h6>
+                <div id="interactionTimeline">
+                    <!-- Se cargará dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Notas -->
+            <div class="notes-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6><i class="fas fa-sticky-note me-2"></i>Notas</h6>
+                    <button class="btn btn-outline-custom btn-sm" onclick="addNote()">
+                        <i class="fas fa-plus me-1"></i>Agregar
+                    </button>
+                </div>
+                <div id="notesList">
+                    <!-- Se cargará dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="mt-4">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary-custom" onclick="scheduleCall()">
+                        <i class="fas fa-phone me-2"></i>Programar Llamada
+                    </button>
+                    <button class="btn btn-accent-custom" onclick="sendMessage()">
+                        <i class="fas fa-envelope me-2"></i>Enviar Mensaje
+                    </button>
+                    <button class="btn btn-outline-custom" onclick="viewFullProfile()">
+                        <i class="fas fa-user me-2"></i>Ver Perfil Completo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Agregar Emprendedor -->
+    <div class="modal fade" id="addEntrepreneurModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Agregar Nuevo Emprendedor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
                 <div class="modal-body">
-                    {{ meeting_form.csrf_token }}
-                    {{ meeting_form.entrepreneur_id }}
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Emprendedor</label>
-                        <input type="text" class="form-control" id="entrepreneurName" readonly>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="meetingTitle" class="form-label">Título de la reunión</label>
-                        {{ meeting_form.title(class="form-control", id="meetingTitle") }}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="meetingDate" class="form-label">Fecha</label>
-                        {{ meeting_form.date(class="form-control", id="meetingDate", type="date") }}
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col">
-                            <label for="meetingStartTime" class="form-label">Hora inicio</label>
-                            {{ meeting_form.start_time(class="form-control", id="meetingStartTime", type="time") }}
+                    <form id="addEntrepreneurForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="entrepreneurName" class="form-label">Nombre Completo</label>
+                                <input type="text" class="form-control" id="entrepreneurName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="entrepreneurEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="entrepreneurEmail" required>
+                            </div>
                         </div>
-                        <div class="col">
-                            <label for="meetingEndTime" class="form-label">Hora fin</label>
-                            {{ meeting_form.end_time(class="form-control", id="meetingEndTime", type="time") }}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="companyName" class="form-label">Nombre de la Empresa</label>
+                                <input type="text" class="form-control" id="companyName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="companySector" class="form-label">Sector</label>
+                                <select class="form-select" id="companySector" required>
+                                    <option value="">Seleccionar sector...</option>
+                                    <option value="fintech">Fintech</option>
+                                    <option value="saas">SaaS</option>
+                                    <option value="ecommerce">E-commerce</option>
+                                    <option value="ai">Inteligencia Artificial</option>
+                                    <option value="healthtech">Healthtech</option>
+                                    <option value="edtech">Edtech</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="meetingLocation" class="form-label">Ubicación</label>
-                        {{ meeting_form.location(class="form-control", id="meetingLocation") }}
-                        <div class="form-text">Puede ser física o virtual (enlace)</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="meetingDescription" class="form-label">Descripción / Agenda</label>
-                        {{ meeting_form.description(class="form-control", id="meetingDescription", rows=3) }}
-                    </div>
-                    
-                    <div class="form-check mb-3">
-                        {{ meeting_form.send_notification(class="form-check-input", id="sendNotification") }}
-                        <label class="form-check-label" for="sendNotification">
-                            Enviar notificación al emprendedor
-                        </label>
-                    </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="companyStage" class="form-label">Etapa</label>
+                                <select class="form-select" id="companyStage">
+                                    <option value="idea">Idea</option>
+                                    <option value="mvp">MVP</option>
+                                    <option value="seed">Seed</option>
+                                    <option value="series-a">Serie A</option>
+                                    <option value="growth">Crecimiento</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="fundingNeeded" class="form-label">Financiación Necesaria (€)</label>
+                                <input type="number" class="form-control" id="fundingNeeded">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="relationshipStatus" class="form-label">Estado de Relación</label>
+                                <select class="form-select" id="relationshipStatus">
+                                    <option value="prospect">Prospect</option>
+                                    <option value="considering">Considerando</option>
+                                    <option value="watching">Observando</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="entrepreneurBio" class="form-label">Descripción/Notas</label>
+                            <textarea class="form-control" id="entrepreneurBio" rows="3"></textarea>
+                        </div>
+                    </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Agendar reunión</button>
+                    <button type="button" class="btn btn-primary-custom" onclick="saveEntrepreneur()">
+                        <i class="fas fa-save me-2"></i>Guardar
+                    </button>
                 </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para registrar horas -->
-<div class="modal fade" id="registerHoursModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Registrar horas de acompañamiento</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="registerHoursForm" method="POST" action="{{ url_for('ally.hours.register') }}">
-                <div class="modal-body">
-                    {{ hours_form.csrf_token }}
-                    {{ hours_form.entrepreneur_id }}
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Emprendedor</label>
-                        <input type="text" class="form-control" id="entrepreneurNameHours" readonly>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="hoursDate" class="form-label">Fecha</label>
-                        {{ hours_form.date(class="form-control", id="hoursDate", type="date") }}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="activityType" class="form-label">Tipo de actividad</label>
-                        {{ hours_form.activity_type(class="form-select", id="activityType") }}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="hoursSpent" class="form-label">Horas dedicadas</label>
-                        {{ hours_form.hours(class="form-control", id="hoursSpent", type="number", step="0.5", min="0.5", max="8") }}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="hoursDescription" class="form-label">Descripción de actividades</label>
-                        {{ hours_form.description(class="form-control", id="hoursDescription", rows=3) }}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="outcome" class="form-label">Resultados / Logros</label>
-                        {{ hours_form.outcome(class="form-control", id="outcome", rows=2) }}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="nextSteps" class="form-label">Próximos pasos</label>
-                        {{ hours_form.next_steps(class="form-control", id="nextSteps", rows=2) }}
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Registrar horas</button>
-                </div>
-            </form>
         </div>
     </div>
-</div>
-{% endblock %}
 
-{% block scripts %}
-{{ super() }}
-<script>
-    $(document).ready(function() {
-        // Inicializar búsqueda
-        $('#searchEntrepreneur').on('keyup', function() {
-            var value = $(this).val().toLowerCase();
-            $('tbody tr').filter(function() {
-                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Estado global de la aplicación
+        let entrepreneurs = [];
+        let filteredEntrepreneurs = [];
+        let currentView = 'card';
+        let currentFilter = 'all';
+        let selectedEntrepreneur = null;
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEntrepreneurs();
+            setupEventListeners();
+            updateStats();
+        });
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            document.getElementById('searchEntrepreneurs').addEventListener('input', debounce(applyFilters, 300));
+            
+            // Cerrar sidebar al hacer clic fuera
+            document.addEventListener('click', function(e) {
+                const sidebar = document.getElementById('entrepreneurSidebar');
+                if (!sidebar.contains(e.target) && !e.target.closest('.entrepreneur-card')) {
+                    // No cerrar automáticamente por ahora
+                }
             });
-        });
-        
-        // Configurar modal de reuniones
-        $('#scheduleMeetingModal').on('show.bs.modal', function(event) {
-            var button = $(event.relatedTarget);
-            var entrepreneurId = button.data('entrepreneur-id');
-            var entrepreneurName = button.data('entrepreneur-name');
+        }
+
+        // Cargar emprendedores
+        function loadEntrepreneurs() {
+            entrepreneurs = [
+                {
+                    id: 1,
+                    name: 'Sarah Johnson',
+                    email: 'sarah@techstartai.com',
+                    company: 'TechStart AI',
+                    sector: 'ai',
+                    stage: 'series-a',
+                    location: 'San Francisco, CA',
+                    avatar: 'SJ',
+                    bio: 'CEO y fundadora de TechStart AI, experta en machine learning aplicado a finanzas.',
+                    founded: '2022',
+                    employees: 15,
+                    revenue: 250000,
+                    growth: 125,
+                    fundingRaised: 2500000,
+                    fundingNeeded: 5000000,
+                    status: 'invested',
+                    connectionStrength: 'strong',
+                    lastInteraction: '2025-06-08T14:30:00',
+                    tags: ['high-potential', 'portfolio', 'recent'],
+                    notes: 3,
+                    meetings: 5
+                },
+                {
+                    id: 2,
+                    name: 'Marcus Chen',
+                    email: 'marcus@finflow.com',
+                    company: 'FinFlow Solutions',
+                    sector: 'fintech',
+                    stage: 'seed',
+                    location: 'Nueva York, NY',
+                    avatar: 'MC',
+                    bio: 'Fundador de FinFlow, revolucionando pagos B2B con blockchain.',
+                    founded: '2023',
+                    employees: 8,
+                    revenue: 120000,
+                    growth: 200,
+                    fundingRaised: 500000,
+                    fundingNeeded: 2000000,
+                    status: 'considering',
+                    connectionStrength: 'medium',
+                    lastInteraction: '2025-06-05T09:15:00',
+                    tags: ['needs-follow-up', 'high-potential'],
+                    notes: 2,
+                    meetings: 3
+                },
+                {
+                    id: 3,
+                    name: 'Emma Rodriguez',
+                    email: 'emma@ecomart.com',
+                    company: 'EcoMart',
+                    sector: 'ecommerce',
+                    stage: 'growth',
+                    location: 'Austin, TX',
+                    avatar: 'ER',
+                    bio: 'CEO de EcoMart, marketplace sostenible para productos ecológicos.',
+                    founded: '2020',
+                    employees: 45,
+                    revenue: 1200000,
+                    growth: 75,
+                    fundingRaised: 8000000,
+                    fundingNeeded: 15000000,
+                    status: 'watching',
+                    connectionStrength: 'strong',
+                    lastInteraction: '2025-06-01T16:45:00',
+                    tags: ['portfolio'],
+                    notes: 7,
+                    meetings: 12
+                },
+                {
+                    id: 4,
+                    name: 'David Kim',
+                    email: 'david@healthai.com',
+                    company: 'HealthAI Diagnostics',
+                    sector: 'healthtech',
+                    stage: 'series-a',
+                    location: 'Boston, MA',
+                    avatar: 'DK',
+                    bio: 'CTO y cofundador, desarrollando IA para diagnósticos médicos tempranos.',
+                    founded: '2021',
+                    employees: 22,
+                    revenue: 400000,
+                    growth: 150,
+                    fundingRaised: 4000000,
+                    fundingNeeded: 8000000,
+                    status: 'invested',
+                    connectionStrength: 'medium',
+                    lastInteraction: '2025-06-07T11:20:00',
+                    tags: ['portfolio', 'meeting-scheduled'],
+                    notes: 4,
+                    meetings: 8
+                },
+                {
+                    id: 5,
+                    name: 'Lisa Thompson',
+                    email: 'lisa@edutech.com',
+                    company: 'EduTech Pro',
+                    sector: 'edtech',
+                    stage: 'mvp',
+                    location: 'Seattle, WA',
+                    avatar: 'LT',
+                    bio: 'Fundadora de EduTech Pro, plataforma de aprendizaje personalizado con IA.',
+                    founded: '2024',
+                    employees: 5,
+                    revenue: 50000,
+                    growth: 300,
+                    fundingRaised: 200000,
+                    fundingNeeded: 1000000,
+                    status: 'considering',
+                    connectionStrength: 'weak',
+                    lastInteraction: '2025-05-28T13:10:00',
+                    tags: ['high-potential', 'needs-follow-up'],
+                    notes: 1,
+                    meetings: 2
+                },
+                {
+                    id: 6,
+                    name: 'Roberto Silva',
+                    email: 'roberto@smartpay.com',
+                    company: 'SmartPay Latino',
+                    sector: 'fintech',
+                    stage: 'seed',
+                    location: 'México City, MX',
+                    avatar: 'RS',
+                    bio: 'CEO de SmartPay, soluciones de pago digital para América Latina.',
+                    founded: '2023',
+                    employees: 12,
+                    revenue: 180000,
+                    growth: 180,
+                    fundingRaised: 800000,
+                    fundingNeeded: 3000000,
+                    status: 'passed',
+                    connectionStrength: 'medium',
+                    lastInteraction: '2025-05-15T10:30:00',
+                    tags: [],
+                    notes: 2,
+                    meetings: 1
+                }
+            ];
+
+            filteredEntrepreneurs = [...entrepreneurs];
+            renderEntrepreneurs();
+            renderPipeline();
+        }
+
+        // Renderizar emprendedores
+        function renderEntrepreneurs() {
+            const container = document.getElementById('entrepreneursList');
+            container.innerHTML = '';
+
+            filteredEntrepreneurs.forEach(entrepreneur => {
+                const entrepreneurCard = createEntrepreneurCard(entrepreneur);
+                container.appendChild(entrepreneurCard);
+            });
+        }
+
+        // Crear tarjeta de emprendedor
+        function createEntrepreneurCard(entrepreneur) {
+            const col = document.createElement('div');
+            col.className = 'col-lg-6 col-xl-4';
+
+            const card = document.createElement('div');
+            card.className = 'entrepreneur-card';
+            card.onclick = () => showEntrepreneurDetails(entrepreneur.id);
+
+            const lastInteractionText = formatTimeAgo(entrepreneur.lastInteraction);
+            const performanceIcon = entrepreneur.growth >= 100 ? 
+                '<span class="performance-indicator positive"><i class="fas fa-arrow-up"></i></span>' :
+                entrepreneur.growth >= 50 ? 
+                '<span class="performance-indicator neutral"><i class="fas fa-arrow-right"></i></span>' :
+                '<span class="performance-indicator negative"><i class="fas fa-arrow-down"></i></span>';
+
+            card.innerHTML = `
+                <div class="entrepreneur-header">
+                    <div class="entrepreneur-avatar">${entrepreneur.avatar}</div>
+                    <div class="entrepreneur-info">
+                        <h4>${entrepreneur.name} ${performanceIcon}</h4>
+                        <div class="company-name">${entrepreneur.company}</div>
+                        <div class="location">
+                            <i class="fas fa-map-marker-alt me-1"></i>${entrepreneur.location}
+                        </div>
+                        <div class="entrepreneur-badges">
+                            <span class="entrepreneur-badge badge-sector">${getSectorText(entrepreneur.sector)}</span>
+                            <span class="entrepreneur-badge badge-stage">${getStageText(entrepreneur.stage)}</span>
+                            <span class="investment-status status-${entrepreneur.status}">${getStatusText(entrepreneur.status)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="entrepreneur-metrics">
+                    <div class="metric-item">
+                        <div class="metric-value">€${formatNumber(entrepreneur.revenue)}</div>
+                        <div class="metric-label">Revenue/mes</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">${entrepreneur.employees}</div>
+                        <div class="metric-label">Empleados</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">${entrepreneur.growth}%</div>
+                        <div class="metric-label">Crecimiento</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">€${formatNumber(entrepreneur.fundingNeeded)}</div>
+                        <div class="metric-label">Necesita</div>
+                    </div>
+                </div>
+
+                <div class="entrepreneur-actions">
+                    <div class="last-interaction">
+                        <i class="fas fa-clock me-1"></i>
+                        <span class="connection-strength strength-${entrepreneur.connectionStrength}">
+                            Último contacto: ${lastInteractionText}
+                        </span>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-outline-custom btn-custom" onclick="event.stopPropagation(); contactEntrepreneur(${entrepreneur.id})">
+                            <i class="fas fa-envelope"></i>
+                        </button>
+                        <button class="btn btn-accent-custom btn-custom" onclick="event.stopPropagation(); scheduleEntrepreneurMeeting(${entrepreneur.id})">
+                            <i class="fas fa-calendar"></i>
+                        </button>
+                        <button class="btn btn-primary-custom btn-custom" onclick="event.stopPropagation(); showEntrepreneurDetails(${entrepreneur.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            col.appendChild(card);
+            return col;
+        }
+
+        // Renderizar pipeline
+        function renderPipeline() {
+            const stages = {
+                prospects: entrepreneurs.filter(e => e.status === 'watching' || !['invested', 'considering', 'passed'].includes(e.status)),
+                evaluation: entrepreneurs.filter(e => e.status === 'considering'),
+                dueDiligence: entrepreneurs.filter(e => e.tags.includes('due-diligence')),
+                negotiation: entrepreneurs.filter(e => e.tags.includes('negotiation'))
+            };
+
+            Object.keys(stages).forEach(stage => {
+                const container = document.getElementById(stage + 'Stage');
+                const count = document.getElementById(stage + 'Count');
+                
+                if (container && count) {
+                    container.innerHTML = '';
+                    count.textContent = stages[stage].length;
+
+                    stages[stage].forEach(entrepreneur => {
+                        const opportunity = document.createElement('div');
+                        opportunity.className = 'opportunity-item';
+                        opportunity.onclick = () => showEntrepreneurDetails(entrepreneur.id);
+
+                        opportunity.innerHTML = `
+                            <div class="opportunity-header">
+                                <h6 class="mb-0">${entrepreneur.name}</h6>
+                                <span class="opportunity-amount">€${formatNumber(entrepreneur.fundingNeeded)}</span>
+                            </div>
+                            <small class="text-muted">${entrepreneur.company}</small>
+                            <div class="mt-1">
+                                <span class="entrepreneur-badge badge-sector">${getSectorText(entrepreneur.sector)}</span>
+                            </div>
+                        `;
+
+                        container.appendChild(opportunity);
+                    });
+                }
+            });
+        }
+
+        // Mostrar detalles del emprendedor
+        function showEntrepreneurDetails(entrepreneurId) {
+            selectedEntrepreneur = entrepreneurs.find(e => e.id === entrepreneurId);
+            if (!selectedEntrepreneur) return;
+
+            // Actualizar información del sidebar
+            document.getElementById('sidebarEntrepreneurName').textContent = selectedEntrepreneur.name;
+            document.getElementById('sidebarCompanyName').textContent = selectedEntrepreneur.company;
+
+            // Información básica
+            const basicInfo = document.getElementById('basicInfo');
+            basicInfo.innerHTML = `
+                <div class="info-item mb-2">
+                    <strong>Email:</strong> ${selectedEntrepreneur.email}
+                </div>
+                <div class="info-item mb-2">
+                    <strong>Sector:</strong> ${getSectorText(selectedEntrepreneur.sector)}
+                </div>
+                <div class="info-item mb-2">
+                    <strong>Etapa:</strong> ${getStageText(selectedEntrepreneur.stage)}
+                </div>
+                <div class="info-item mb-2">
+                    <strong>Ubicación:</strong> ${selectedEntrepreneur.location}
+                </div>
+                <div class="info-item">
+                    <strong>Fundada:</strong> ${selectedEntrepreneur.founded}
+                </div>
+            `;
+
+            // Métricas de empresa
+            const companyMetrics = document.getElementById('companyMetrics');
+            companyMetrics.innerHTML = `
+                <div class="row">
+                    <div class="col-6">
+                        <div class="metric-item">
+                            <div class="metric-value">€${formatNumber(selectedEntrepreneur.revenue)}</div>
+                            <div class="metric-label">Revenue Mensual</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="metric-item">
+                            <div class="metric-value">${selectedEntrepreneur.employees}</div>
+                            <div class="metric-label">Empleados</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="metric-item">
+                            <div class="metric-value">${selectedEntrepreneur.growth}%</div>
+                            <div class="metric-label">Crecimiento</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="metric-item">
+                            <div class="metric-value">€${formatNumber(selectedEntrepreneur.fundingRaised)}</div>
+                            <div class="metric-label">Financiación Total</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Estado de inversión
+            const investmentStatus = document.getElementById('investmentStatus');
+            investmentStatus.innerHTML = `
+                <div class="mb-2">
+                    <span class="investment-status status-${selectedEntrepreneur.status}">
+                        ${getStatusText(selectedEntrepreneur.status)}
+                    </span>
+                </div>
+                <div class="connection-strength strength-${selectedEntrepreneur.connectionStrength}">
+                    <strong>Fuerza de conexión:</strong> ${getConnectionStrengthText(selectedEntrepreneur.connectionStrength)}
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        ${selectedEntrepreneur.meetings} reuniones • ${selectedEntrepreneur.notes} notas
+                    </small>
+                </div>
+            `;
+
+            // Timeline de interacciones (simulado)
+            const timeline = document.getElementById('interactionTimeline');
+            timeline.innerHTML = `
+                <div class="timeline-item">
+                    <div>
+                        <strong>Reunión programada</strong>
+                        <div class="text-muted small">Próxima reunión el 15 de junio</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div>
+                        <strong>Email enviado</strong>
+                        <div class="text-muted small">${formatTimeAgo(selectedEntrepreneur.lastInteraction)}</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div>
+                        <strong>Llamada telefónica</strong>
+                        <div class="text-muted small">Hace 2 semanas</div>
+                    </div>
+                </div>
+            `;
+
+            // Notas (simuladas)
+            const notesList = document.getElementById('notesList');
+            notesList.innerHTML = `
+                <div class="note-item">
+                    <div class="note-header">
+                        <strong>Reunión Q2 Review</strong>
+                        <span class="note-date">10 Jun 2025</span>
+                    </div>
+                    <div>Muy impresionado con el crecimiento del Q2. Métricas de retención excelentes.</div>
+                </div>
+                <div class="note-item">
+                    <div class="note-header">
+                        <strong>Due Diligence</strong>
+                        <span class="note-date">5 Jun 2025</span>
+                    </div>
+                    <div>Revisión financiera completada. Todo en orden, listo para siguiente ronda.</div>
+                </div>
+            `;
+
+            // Mostrar sidebar
+            document.getElementById('entrepreneurSidebar').classList.add('open');
+        }
+
+        // Cerrar sidebar
+        function closeSidebar() {
+            document.getElementById('entrepreneurSidebar').classList.remove('open');
+        }
+
+        // Cambiar vista
+        function switchView(view) {
+            currentView = view;
+
+            // Actualizar botones
+            document.querySelectorAll('.view-toggle .btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(view + 'View').classList.add('active');
+
+            // Mostrar/ocultar contenedores
+            document.getElementById('cardViewContainer').classList.toggle('d-none', view !== 'card');
+            document.getElementById('pipelineViewContainer').classList.toggle('d-none', view !== 'pipeline');
+
+            if (view === 'pipeline') {
+                renderPipeline();
+            }
+        }
+
+        // Aplicar filtros
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchEntrepreneurs').value.toLowerCase();
+            const sectorFilter = document.getElementById('filterSector').value;
+            const stageFilter = document.getElementById('filterStage').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+
+            filteredEntrepreneurs = entrepreneurs.filter(entrepreneur => {
+                const matchesSearch = !searchTerm || 
+                    entrepreneur.name.toLowerCase().includes(searchTerm) ||
+                    entrepreneur.company.toLowerCase().includes(searchTerm) ||
+                    entrepreneur.sector.toLowerCase().includes(searchTerm);
+
+                const matchesSector = !sectorFilter || entrepreneur.sector === sectorFilter;
+                const matchesStage = !stageFilter || entrepreneur.stage === stageFilter;
+                const matchesStatus = !statusFilter || entrepreneur.status === statusFilter;
+                const matchesTag = currentFilter === 'all' || entrepreneur.tags.includes(currentFilter);
+
+                return matchesSearch && matchesSector && matchesStage && matchesStatus && matchesTag;
+            });
+
+            renderEntrepreneurs();
+        }
+
+        // Filtrar por tag
+        function filterByTag(tag) {
+            currentFilter = tag;
+
+            // Actualizar tags activos
+            document.querySelectorAll('.filter-tag').forEach(tagEl => {
+                tagEl.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            applyFilters();
+        }
+
+        // Actualizar estadísticas
+        function updateStats() {
+            const total = entrepreneurs.length;
+            const invested = entrepreneurs.filter(e => e.status === 'invested').length;
+            const pipeline = entrepreneurs.filter(e => ['considering', 'watching'].includes(e.status)).length;
+
+            document.getElementById('totalEntrepreneurs').textContent = total;
+            document.getElementById('activeInvestments').textContent = invested;
+            document.getElementById('pipelineOpportunities').textContent = pipeline;
+        }
+
+        // Funciones de acción
+        function contactEntrepreneur(entrepreneurId) {
+            const entrepreneur = entrepreneurs.find(e => e.id === entrepreneurId);
+            showNotification(`Iniciando conversación con ${entrepreneur.name}...`, 'info');
+        }
+
+        function scheduleEntrepreneurMeeting(entrepreneurId) {
+            const entrepreneur = entrepreneurs.find(e => e.id === entrepreneurId);
+            showNotification(`Programando reunión con ${entrepreneur.name}...`, 'info');
+        }
+
+        function scheduleCall() {
+            if (selectedEntrepreneur) {
+                showNotification(`Programando llamada con ${selectedEntrepreneur.name}...`, 'info');
+            }
+        }
+
+        function sendMessage() {
+            if (selectedEntrepreneur) {
+                showNotification(`Enviando mensaje a ${selectedEntrepreneur.name}...`, 'info');
+            }
+        }
+
+        function viewFullProfile() {
+            if (selectedEntrepreneur) {
+                showNotification(`Cargando perfil completo de ${selectedEntrepreneur.name}...`, 'info');
+            }
+        }
+
+        function addNote() {
+            if (selectedEntrepreneur) {
+                showNotification('Agregando nueva nota...', 'info');
+            }
+        }
+
+        // Modales
+        function addNewEntrepreneur() {
+            const modal = new bootstrap.Modal(document.getElementById('addEntrepreneurModal'));
+            modal.show();
+        }
+
+        function saveEntrepreneur() {
+            const formData = new FormData(document.getElementById('addEntrepreneurForm'));
             
-            var modal = $(this);
-            modal.find('#entrepreneurName').val(entrepreneurName);
-            modal.find('input[name="entrepreneur_id"]').val(entrepreneurId);
+            const newEntrepreneur = {
+                id: Date.now(),
+                name: formData.get('entrepreneurName'),
+                email: formData.get('entrepreneurEmail'),
+                company: formData.get('companyName'),
+                sector: formData.get('companySector'),
+                stage: formData.get('companyStage'),
+                fundingNeeded: parseInt(formData.get('fundingNeeded')) || 0,
+                status: formData.get('relationshipStatus'),
+                // ... otros campos por defecto
+            };
+
+            if (!newEntrepreneur.name || !newEntrepreneur.email || !newEntrepreneur.company) {
+                alert('Por favor, completa todos los campos obligatorios.');
+                return;
+            }
+
+            entrepreneurs.push(newEntrepreneur);
+            applyFilters();
+            updateStats();
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addEntrepreneurModal'));
+            modal.hide();
+
+            showNotification('Emprendedor agregado correctamente', 'success');
+        }
+
+        function exportData() {
+            showNotification('Exportando datos de emprendedores...', 'info');
+        }
+
+        // Funciones auxiliares
+        function getSectorText(sector) {
+            const sectors = {
+                'fintech': 'Fintech',
+                'saas': 'SaaS',
+                'ecommerce': 'E-commerce',
+                'ai': 'IA/ML',
+                'healthtech': 'Healthtech',
+                'edtech': 'Edtech'
+            };
+            return sectors[sector] || sector;
+        }
+
+        function getStageText(stage) {
+            const stages = {
+                'idea': 'Idea',
+                'mvp': 'MVP',
+                'seed': 'Seed',
+                'series-a': 'Serie A',
+                'growth': 'Crecimiento'
+            };
+            return stages[stage] || stage;
+        }
+
+        function getStatusText(status) {
+            const statuses = {
+                'invested': 'Invertido',
+                'considering': 'Considerando',
+                'watching': 'Observando',
+                'passed': 'Pasado'
+            };
+            return statuses[status] || status;
+        }
+
+        function getConnectionStrengthText(strength) {
+            const strengths = {
+                'strong': 'Fuerte',
+                'medium': 'Media',
+                'weak': 'Débil'
+            };
+            return strengths[strength] || strength;
+        }
+
+        function formatNumber(number) {
+            if (number >= 1000000) {
+                return (number / 1000000).toFixed(1) + 'M';
+            } else if (number >= 1000) {
+                return (number / 1000).toFixed(0) + 'K';
+            }
+            return number.toLocaleString();
+        }
+
+        function formatTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0) {
+                return 'Hoy';
+            } else if (diffDays === 1) {
+                return 'Ayer';
+            } else if (diffDays < 7) {
+                return `Hace ${diffDays} días`;
+            } else if (diffDays < 30) {
+                const weeks = Math.floor(diffDays / 7);
+                return `Hace ${weeks} semana${weeks > 1 ? 's' : ''}`;
+            } else {
+                const months = Math.floor(diffDays / 30);
+                return `Hace ${months} mes${months > 1 ? 'es' : ''}`;
+            }
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function showNotification(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer') || createToastContainer();
             
-            // Establecer fecha mínima al día actual
-            var today = new Date().toISOString().split('T')[0];
-            $('#meetingDate').attr('min', today);
-        });
-        
-        // Configurar modal de registro de horas
-        $('#registerHoursModal').on('show.bs.modal', function(event) {
-            var button = $(event.relatedTarget);
-            var entrepreneurId = button.data('entrepreneur-id');
-            var entrepreneurName = button.data('entrepreneur-name');
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type === 'info' ? 'primary' : type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
             
-            var modal = $(this);
-            modal.find('#entrepreneurNameHours').val(entrepreneurName);
-            modal.find('input[name="entrepreneur_id"]').val(entrepreneurId);
+            toastContainer.appendChild(toast);
             
-            // Establecer fecha máxima al día actual
-            var today = new Date().toISOString().split('T')[0];
-            $('#hoursDate').attr('max', today);
-        });
-    });
-</script>
-{% endblock %}
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+            });
+        }
+
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+            return container;
+        }
+    </script>
+</body>
+</html>

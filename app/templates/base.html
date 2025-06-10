@@ -1,187 +1,617 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="{{ session.get('locale', 'es') }}" class="h-full">
 <head>
+    <!-- Meta Tags Básicos -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Plataforma de Emprendimiento{% endblock %}</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-    <!-- Estilos personalizados -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    {% block extra_css %}{% endblock %}
+    <!-- SEO Meta Tags -->
+    <title>{% block title %}{{ config.APP_NAME or 'Ecosistema Emprendimiento' }}{% endblock %}</title>
+    <meta name="description" content="{% block description %}Plataforma integral para el ecosistema de emprendimiento, conectando emprendedores, mentores y aliados estratégicos.{% endblock %}">
+    <meta name="keywords" content="{% block keywords %}emprendimiento, startup, mentoria, incubadora, aceleradora, innovacion{% endblock %}">
+    <meta name="author" content="{{ config.APP_NAME or 'Ecosistema Emprendimiento' }}">
+    <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
     
-    <!-- Favicon -->
-    <link rel="shortcut icon" href="{{ url_for('static', filename='images/logo.png') }}">
-</head>
-<body>
-    <!-- Barra de navegación -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('main.index') }}">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" width="30" height="30" class="d-inline-block align-top">
-                Plataforma de Emprendimiento
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    {% if current_user.is_authenticated %}
-                        {% if current_user.role == 'admin' %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('admin.dashboard') }}">Dashboard</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('admin.users') }}">Usuarios</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('admin.entrepreneurs') }}">Emprendedores</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('admin.allies') }}">Aliados</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('admin.settings') }}">Configuración</a>
-                            </li>
-                        {% elif current_user.role == 'entrepreneur' %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('entrepreneur.dashboard') }}">Dashboard</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('entrepreneur.profile') }}">Perfil</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('entrepreneur.messages') }}">Mensajes</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('entrepreneur.calendar') }}">Calendario</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('entrepreneur.documents') }}">Documentos</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('entrepreneur.tasks') }}">Tareas</a>
-                            </li>
-                        {% elif current_user.role == 'ally' %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('ally.dashboard') }}">Dashboard</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('ally.profile') }}">Perfil</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('ally.entrepreneurs') }}">Emprendedores</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('ally.messages') }}">Mensajes</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('ally.calendar') }}">Calendario</a>
-                            </li>
-                        {% elif current_user.role == 'client' %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('client.dashboard') }}">Dashboard</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('client.impact') }}">Impacto</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('client.directory') }}">Directorio</a>
-                            </li>
-                        {% endif %}
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('main.index') }}">Inicio</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('main.about') }}">Acerca de</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('main.contact') }}">Contacto</a>
-                        </li>
-                    {% endif %}
-                </ul>
-                <ul class="navbar-nav">
-                    {% if current_user.is_authenticated %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <img src="{{ current_user.profile_image or url_for('static', filename='images/default-profile.png') }}" alt="Perfil" width="25" height="25" class="rounded-circle me-1">
-                                {{ current_user.name }}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                <li><a class="dropdown-item" href="{{ url_for(current_user.role + '.profile') }}">Mi Perfil</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Cerrar Sesión</a></li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('auth.login') }}">Iniciar Sesión</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('auth.register') }}">Registrarse</a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Contenedor principal -->
-    <main class="container py-4">
-        <!-- Mensajes flash -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <!-- Contenido de la página -->
-        {% block content %}{% endblock %}
-    </main>
-
-    <!-- Pie de página -->
-    <footer class="footer mt-auto py-3 bg-light">
-        <div class="container text-center">
-            <span class="text-muted">© {{ now.year }} Plataforma de Emprendimiento. Todos los derechos reservados.</span>
-        </div>
-    </footer>
-
-    <!-- jQuery -->
-    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-    <!-- Bootstrap JS -->
-    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
-    <!-- Scripts principales -->
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ self.description() }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ url_for('static', filename='dist/img/og-image.jpg', _external=True) }}{% endblock %}">
+    <meta property="og:site_name" content="{{ config.APP_NAME or 'Ecosistema Emprendimiento' }}">
+    <meta property="og:locale" content="{{ session.get('locale', 'es') + '_ES' }}">
     
-    <!-- Socket.IO (solo si se necesita) -->
-    {% if current_user.is_authenticated %}
-        <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
-        <script>
-            // Configuración básica de Socket.IO
-            const socket = io();
-            
-            // Escuchar notificaciones
-            socket.on('notification', function(data) {
-                // Mostrar notificación
-                const notification = `
-                    <div class="alert alert-info alert-dismissible fade show" role="alert">
-                        ${data.message}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                `;
-                document.querySelector('main.container').insertAdjacentHTML('afterbegin', notification);
-            });
-        </script>
+    <!-- LinkedIn -->
+    {% if config.get('LINKEDIN_PAGE_ID') %}
+    <meta property="linkedin:owner" content="{{ config.LINKEDIN_PAGE_ID }}">
     {% endif %}
     
-    <!-- Scripts adicionales específicos de cada página -->
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='dist/img/favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='dist/img/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='dist/img/favicon-16x16.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='dist/img/apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='dist/manifest.json') }}">
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    
+    <!-- CSS Dependencies -->
+    {% block css_dependencies %}
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js (if needed) -->
+    {% if config.get('ENABLE_CHARTS') %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.css">
+    {% endif %}
+    
+    <!-- Select2 (for better selects) -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+    
+    <!-- Toastr for notifications -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='dist/css/main.css') }}">
+    {% endblock %}
+    
+    {% block extra_css %}{% endblock %}
+    
+    <!-- Theme Variables -->
+    <style>
+        :root {
+            --primary-color: {{ config.get('THEME_PRIMARY_COLOR', '#6366f1') }};
+            --secondary-color: {{ config.get('THEME_SECONDARY_COLOR', '#8b5cf6') }};
+            --success-color: {{ config.get('THEME_SUCCESS_COLOR', '#10b981') }};
+            --warning-color: {{ config.get('THEME_WARNING_COLOR', '#f59e0b') }};
+            --danger-color: {{ config.get('THEME_DANGER_COLOR', '#ef4444') }};
+            --info-color: {{ config.get('THEME_INFO_COLOR', '#3b82f6') }};
+            --dark-color: {{ config.get('THEME_DARK_COLOR', '#1f2937') }};
+            --light-color: {{ config.get('THEME_LIGHT_COLOR', '#f8fafc') }};
+            --font-family-sans: {{ config.get('THEME_FONT_FAMILY', "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif") }};
+        }
+        
+        .loading-spinner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+        }
+        
+        .page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9998;
+            transition: opacity 0.3s ease;
+        }
+        
+        .page-loader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+    
+    <!-- Critical inline CSS for above-the-fold content -->
+    {% block critical_css %}{% endblock %}
+</head>
+
+<body class="{% block body_class %}{% endblock %} bg-light" data-bs-theme="{{ session.get('theme', 'light') }}">
+    <!-- Page Loader -->
+    <div id="pageLoader" class="page-loader">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">{{ _('Cargando...') }}</span>
+        </div>
+    </div>
+
+    <!-- Skip to main content (accessibility) -->
+    <a href="#main-content" class="visually-hidden-focusable btn btn-primary position-absolute top-0 start-0 m-3" style="z-index: 10000;">
+        {{ _('Saltar al contenido principal') }}
+    </a>
+
+    <!-- Navigation -->
+    {% block navigation %}
+    {% if current_user.is_authenticated %}
+        {% try %}
+            {% include 'components/navbar.html' %}
+        {% except %}
+            <!-- Fallback navbar -->
+            <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="/">{{ config.get('APP_NAME', 'Ecosistema Emprendimiento') }}</a>
+                    <div class="navbar-nav ms-auto">
+                        <a class="nav-link" href="/logout">{{ _('Cerrar Sesión') }}</a>
+                    </div>
+                </div>
+            </nav>
+        {% endtry %}
+        
+        {% if not request.endpoint or not request.endpoint.startswith('auth.') %}
+            {% try %}
+                {% include 'components/sidebar.html' %}
+            {% except %}
+                <!-- Fallback sidebar placeholder -->
+                <div class="d-none" id="sidebar-placeholder"></div>
+            {% endtry %}
+        {% endif %}
+    {% else %}
+        {% try %}
+            {% include 'components/navbar.html' %}
+        {% except %}
+            <!-- Fallback public navbar -->
+            <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="/">{{ config.get('APP_NAME', 'Ecosistema Emprendimiento') }}</a>
+                    <div class="navbar-nav ms-auto">
+                        <a class="nav-link" href="/login">{{ _('Iniciar Sesión') }}</a>
+                        <a class="nav-link" href="/register">{{ _('Registro') }}</a>
+                    </div>
+                </div>
+            </nav>
+        {% endtry %}
+    {% endif %}
+    {% endblock %}
+
+    <!-- Main Wrapper -->
+    <div id="wrapper" class="{% if current_user.is_authenticated and not (request.endpoint and request.endpoint.startswith('auth.')) %}wrapper-with-sidebar{% endif %}">
+        
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column min-vh-100">
+            
+            <!-- Flash Messages -->
+            {% try %}
+                {% include 'components/flash_messages.html' %}
+            {% except %}
+                <!-- Fallback flash messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="container-fluid mt-3">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            {% endtry %}
+            
+            <!-- Breadcrumb -->
+            {% block breadcrumb %}
+            {% if current_user.is_authenticated and not (request.endpoint and request.endpoint.startswith('auth.')) %}
+            <nav aria-label="breadcrumb" class="bg-white border-bottom mb-3">
+                <div class="container-fluid">
+                    <ol class="breadcrumb mb-0 py-3">
+                        {% set breadcrumb_data = breadcrumb_items() if breadcrumb_items is defined else [] %}
+                        {% if breadcrumb_data %}
+                            {% for item in breadcrumb_data %}
+                            {% if loop.last %}
+                            <li class="breadcrumb-item active" aria-current="page">{{ item.title }}</li>
+                            {% else %}
+                            <li class="breadcrumb-item">
+                                <a href="{{ item.url }}" class="text-decoration-none">{{ item.title }}</a>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <li class="breadcrumb-item active" aria-current="page">{{ _('Inicio') }}</li>
+                        {% endif %}
+                    </ol>
+                </div>
+            </nav>
+            {% endif %}
+            {% endblock %}
+            
+            <!-- Main Content -->
+            <main id="main-content" class="{% block main_class %}container-fluid{% endblock %} flex-grow-1" role="main">
+                {% block content %}
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h1 class="h3 mb-3">{{ _('Contenido principal') }}</h1>
+                                <p class="text-muted">{{ _('Este es el template base. El contenido específico debe definirse en los templates que extienden de este.') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endblock %}
+            </main>
+            
+            <!-- Footer -->
+            {% block footer %}
+            <footer class="bg-dark text-light py-4 mt-auto">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-2">{{ config.get('APP_NAME', 'Ecosistema Emprendimiento') }}</h6>
+                            <p class="small text-muted mb-0">
+                                {{ _('Impulsando el ecosistema de emprendimiento') }}
+                            </p>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <div class="d-flex justify-content-md-end gap-3 small">
+                                <a href="#" onclick="showPrivacyPolicy()" class="text-light text-decoration-none">{{ _('Privacidad') }}</a>
+                                <a href="#" onclick="showTerms()" class="text-light text-decoration-none">{{ _('Términos') }}</a>
+                                <a href="#" onclick="showContact()" class="text-light text-decoration-none">{{ _('Contacto') }}</a>
+                                {% if config.get('ENABLE_API_DOCS') %}
+                                <a href="#" onclick="showApiDocs()" class="text-light text-decoration-none">{{ _('API') }}</a>
+                                {% endif %}
+                            </div>
+                            <div class="small text-muted mt-2">
+                                © <span id="currentYear"></span> {{ config.get('APP_NAME', 'Ecosistema Emprendimiento') }}. {{ _('Todos los derechos reservados.') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            {% endblock %}
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;"></div>
+
+    <!-- WebSocket Status Indicator -->
+    {% if current_user.is_authenticated %}
+    <div id="connectionStatus" class="position-fixed bottom-0 start-0 m-3" style="z-index: 1040;">
+        <div id="connectionIndicator" class="badge bg-success d-none">
+            <i class="fas fa-wifi me-1"></i> {{ _('Conectado') }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Modals Container -->
+    <div id="modalsContainer">
+        {% block modals %}
+        <!-- Global modals can be included here -->
+        {% endblock %}
+    </div>
+
+    <!-- JavaScript Dependencies -->
+    {% block js_dependencies %}
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous"></script>
+    
+    <!-- Moment.js for date handling -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js" integrity="sha512-CryKbMe7sjSCDPl18jtJI5DR5jtkUWxPXWaLCst6QjH8wxDexfRJic2WRmRXmstr2Y8SxDDWuBO6CQC6IE4KTA==" crossorigin="anonymous"></script>
+    {% set current_locale = session.get('locale', 'es') %}
+    {% if current_locale != 'en' %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/locale/{{ current_locale }}.min.js"></script>
+    {% endif %}
+    
+    <!-- Select2 -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <!-- Toastr for notifications -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
+    
+    <!-- Chart.js (if needed) -->
+    {% if config.get('ENABLE_CHARTS') %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
+    {% endif %}
+    
+    <!-- Socket.IO (if WebSockets enabled) -->
+    {% if config.get('ENABLE_WEBSOCKETS') and current_user.is_authenticated %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js" integrity="sha512-zoJXRvW2gC8Z0Xo3lBbao5+AS3g6YWr5ztKqaWqiGAficZWs8zW9WIGFzPiUDjBlcT7wqS6XKbFVtAToAWYB7A==" crossorigin="anonymous"></script>
+    {% endif %}
+    
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='dist/js/main.js') }}"></script>
+    {% endblock %}
+
+    <!-- Global JavaScript Configuration -->
+    <script>
+        // Initialize with safe defaults first
+        window.AppConfig = {
+            name: 'Ecosistema Emprendimiento',
+            version: '1.0.0',
+            locale: 'es',
+            timezone: 'UTC',
+            currency: 'USD',
+            debug: false,
+            csrfToken: '',
+            urls: {
+                api: '/api/v1/',
+                static: '/static/',
+                upload: '#'
+            },
+            user: null,
+            features: {
+                websockets: false,
+                notifications: true,
+                analytics: false,
+                darkMode: true
+            }
+        };
+
+        // Override with server values if available
+        try {
+            {% if config %}
+            {% if config.APP_NAME %}window.AppConfig.name = '{{ config.APP_NAME }}';{% endif %}
+            {% if config.APP_VERSION %}window.AppConfig.version = '{{ config.APP_VERSION }}';{% endif %}
+            {% if config.DEBUG %}window.AppConfig.debug = {{ config.DEBUG | tojson }};{% endif %}
+            {% endif %}
+
+            {% if session and session.locale %}
+            window.AppConfig.locale = '{{ session.locale }}';
+            {% endif %}
+
+            {% if csrf_token %}
+            window.AppConfig.csrfToken = '{{ csrf_token() }}';
+            {% endif %}
+
+            // User configuration
+            {% if current_user and current_user.is_authenticated %}
+            window.AppConfig.user = {
+                id: {{ current_user.id | default(0) }},
+                name: '{% if current_user.full_name %}{{ current_user.full_name }}{% elif current_user.username %}{{ current_user.username }}{% else %}Usuario{% endif %}',
+                email: '{% if current_user.email %}{{ current_user.email }}{% endif %}',
+                role: '{% if current_user.role %}{{ current_user.role }}{% else %}user{% endif %}',
+                avatar: '{% if current_user.avatar_url %}{{ current_user.avatar_url }}{% else %}/static/dist/img/default-avatar.jpg{% endif %}',
+                preferences: {% if current_user.preferences %}{{ current_user.preferences | tojson }}{% else %}{}{% endif %}
+            };
+
+            {% if current_user.timezone %}window.AppConfig.timezone = '{{ current_user.timezone }}';{% endif %}
+            {% if current_user.currency %}window.AppConfig.currency = '{{ current_user.currency }}';{% endif %}
+            {% endif %}
+
+            // Features configuration
+            {% if config %}
+            {% if config.ENABLE_WEBSOCKETS %}window.AppConfig.features.websockets = {{ config.ENABLE_WEBSOCKETS | tojson }};{% endif %}
+            {% if config.ENABLE_NOTIFICATIONS is defined %}window.AppConfig.features.notifications = {{ config.ENABLE_NOTIFICATIONS | tojson }};{% endif %}
+            {% if config.ENABLE_ANALYTICS %}window.AppConfig.features.analytics = {{ config.ENABLE_ANALYTICS | tojson }};{% endif %}
+            {% if config.ENABLE_DARK_MODE is defined %}window.AppConfig.features.darkMode = {{ config.ENABLE_DARK_MODE | tojson }};{% endif %}
+            {% endif %}
+
+        } catch (error) {
+            console.warn('Error loading server configuration, using defaults:', error);
+        }
+
+        // Utility function to safely show notifications
+        window.showNotification = function(type, message) {
+            if (typeof toastr !== 'undefined') {
+                toastr[type](message);
+            } else {
+                console.log(type.toUpperCase() + ': ' + message);
+                // Fallback to browser notification or alert
+                if (type === 'error') {
+                    alert('Error: ' + message);
+                }
+            }
+        };
+
+        // Footer link handlers with safe notification
+        window.showPrivacyPolicy = function() {
+            window.showNotification('info', 'Política de privacidad - Funcionalidad por implementar');
+        };
+
+        window.showTerms = function() {
+            window.showNotification('info', 'Términos y condiciones - Funcionalidad por implementar');
+        };
+
+        window.showContact = function() {
+            window.showNotification('info', 'Información de contacto - Funcionalidad por implementar');
+        };
+
+        window.showApiDocs = function() {
+            window.showNotification('info', 'Documentación de API - Funcionalidad por implementar');
+        };
+
+        // Initialize everything when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                // Set current year if element exists
+                const currentYearElement = document.getElementById('currentYear');
+                if (currentYearElement) {
+                    currentYearElement.textContent = new Date().getFullYear();
+                }
+
+                // Set moment locale if available
+                if (typeof moment !== 'undefined') {
+                    moment.locale(window.AppConfig.locale);
+                }
+
+                // Configure toastr if available
+                if (typeof toastr !== 'undefined') {
+                    toastr.options = {
+                        closeButton: true,
+                        debug: false,
+                        newestOnTop: true,
+                        progressBar: true,
+                        positionClass: 'toast-top-right',
+                        preventDuplicates: true,
+                        showDuration: 300,
+                        hideDuration: 1000,
+                        timeOut: 5000,
+                        extendedTimeOut: 1000,
+                        showEasing: 'swing',
+                        hideEasing: 'linear',
+                        showMethod: 'fadeIn',
+                        hideMethod: 'fadeOut'
+                    };
+                }
+
+                // Initialize Select2 with jQuery check
+                if (typeof $ !== 'undefined' && $.fn.select2) {
+                    $(document).ready(function() {
+                        try {
+                            $('.select2').select2({
+                                theme: 'bootstrap-5',
+                                width: '100%'
+                            });
+                        } catch (e) {
+                            console.warn('Select2 initialization failed:', e);
+                        }
+                    });
+                }
+
+                // CSRF token for AJAX requests
+                if (typeof $ !== 'undefined') {
+                    $.ajaxSetup({
+                        beforeSend: function(xhr, settings) {
+                            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                                xhr.setRequestHeader("X-CSRFToken", window.AppConfig.csrfToken);
+                            }
+                        }
+                    });
+                }
+
+                // Accessibility improvements
+                const skipLinks = document.querySelectorAll('.visually-hidden-focusable');
+                skipLinks.forEach(function(link) {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const target = document.querySelector(this.getAttribute('href'));
+                        if (target) {
+                            target.focus();
+                        }
+                    });
+                });
+
+                // Improve focus indicators
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Tab') {
+                        document.body.classList.add('keyboard-navigation');
+                    }
+                });
+
+                document.addEventListener('mousedown', function() {
+                    document.body.classList.remove('keyboard-navigation');
+                });
+
+            } catch (error) {
+                console.error('Error during DOM initialization:', error);
+            }
+        });
+
+        // Hide page loader when everything is ready
+        window.addEventListener('load', function() {
+            try {
+                const loader = document.getElementById('pageLoader');
+                if (loader) {
+                    loader.classList.add('hidden');
+                    setTimeout(function() {
+                        if (loader.parentNode) {
+                            loader.parentNode.removeChild(loader);
+                        }
+                    }, 300);
+                }
+            } catch (error) {
+                console.error('Error hiding page loader:', error);
+            }
+        });
+
+        // Global error handler
+        window.addEventListener('error', function(e) {
+            console.error('Global error:', e.error);
+            if (window.AppConfig && window.AppConfig.debug) {
+                const errorMessage = 'Error: ' + (e.message || 'Unknown error');
+                if (typeof toastr !== 'undefined') {
+                    toastr.error(errorMessage);
+                } else {
+                    console.error(errorMessage);
+                }
+            }
+        });
+
+        // Global unhandled promise rejection handler
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('Unhandled promise rejection:', e.reason);
+            if (window.AppConfig && window.AppConfig.debug) {
+                const errorMessage = 'Promise Error: ' + (e.reason || 'Unknown promise rejection');
+                if (typeof toastr !== 'undefined') {
+                    toastr.error(errorMessage);
+                } else {
+                    console.error(errorMessage);
+                }
+            }
+        });
+
+    </script>
+
+    <!-- WebSocket Initialization -->
+    {% if config.get('ENABLE_WEBSOCKETS') and current_user.is_authenticated %}
+    <script>
+        $(document).ready(function() {
+            // Initialize WebSocket connection
+            const socket = io('/user', {
+                auth: {
+                    token: '{{ current_user.get_auth_token() if hasattr(current_user, "get_auth_token") else current_user.id }}'
+                }
+            });
+
+            // Connection status handling
+            const connectionIndicator = $('#connectionIndicator');
+            
+            socket.on('connect', function() {
+                console.log('WebSocket connected');
+                connectionIndicator.removeClass('bg-danger').addClass('bg-success').removeClass('d-none');
+                connectionIndicator.html('<i class="fas fa-wifi me-1"></i> {{ _("Conectado") }}');
+            });
+
+            socket.on('disconnect', function() {
+                console.log('WebSocket disconnected');
+                connectionIndicator.removeClass('bg-success').addClass('bg-danger').removeClass('d-none');
+                connectionIndicator.html('<i class="fas fa-wifi-slash me-1"></i> {{ _("Desconectado") }}');
+            });
+
+            // Handle notifications
+            socket.on('notification', function(data) {
+                if (data.type && data.message) {
+                    toastr[data.type](data.message, data.title || '');
+                }
+            });
+
+            // Make socket available globally
+            window.socket = socket;
+        });
+    </script>
+    {% endif %}
+
+    <!-- Analytics -->
+    {% if config.get('GOOGLE_ANALYTICS_ID') and not config.get('DEBUG') %}
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ config.GOOGLE_ANALYTICS_ID }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '{{ config.GOOGLE_ANALYTICS_ID }}', {
+            anonymize_ip: true,
+            cookie_flags: 'secure;samesite=strict'
+        });
+    </script>
+    {% endif %}
+
+    <!-- Custom JavaScript -->
     {% block extra_js %}{% endblock %}
+
+    <!-- Page-specific JavaScript -->
+    {% block page_js %}{% endblock %}
+
 </body>
 </html>

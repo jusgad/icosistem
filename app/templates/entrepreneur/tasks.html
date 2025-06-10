@@ -1,383 +1,925 @@
-{% extends "base.html" %}
-
-{% block title %}Gestión de Tareas | Panel del Emprendedor{% endblock %}
-
-{% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
-{% endblock %}
-
-{% block content %}
-<div class="container-fluid">
-  <div class="row">
-    <!-- Sidebar / Menú lateral -->
-    {% include "entrepreneur/partials/sidebar.html" %}
-
-    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Gestión de Tareas</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-          <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newTaskModal">
-            <i class="fas fa-plus"></i> Nueva Tarea
-          </button>
-          <div class="btn-group ms-2">
-            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-              <i class="fas fa-filter"></i> Filtrar
-            </button>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="#" data-filter="all">Todas</a></li>
-              <li><a class="dropdown-item" href="#" data-filter="pending">Pendientes</a></li>
-              <li><a class="dropdown-item" href="#" data-filter="in-progress">En Progreso</a></li>
-              <li><a class="dropdown-item" href="#" data-filter="completed">Completadas</a></li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <!-- Resumen de tareas -->
-      <div class="row mb-4">
-        <div class="col-md-3">
-          <div class="card text-white bg-primary">
-            <div class="card-body">
-              <h5 class="card-title">Total de tareas</h5>
-              <p class="card-text fs-2">{{ total_tasks }}</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-white bg-warning">
-            <div class="card-body">
-              <h5 class="card-title">Pendientes</h5>
-              <p class="card-text fs-2">{{ pending_tasks }}</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-white bg-info">
-            <div class="card-body">
-              <h5 class="card-title">En progreso</h5>
-              <p class="card-text fs-2">{{ in_progress_tasks }}</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-white bg-success">
-            <div class="card-body">
-              <h5 class="card-title">Completadas</h5>
-              <p class="card-text fs-2">{{ completed_tasks }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tareas próximas a vencer -->
-      <div class="card mb-4">
-        <div class="card-header bg-danger text-white">
-          <h5 class="mb-0">Tareas próximas a vencer</h5>
-        </div>
-        <div class="card-body">
-          {% if upcoming_tasks %}
-            <div class="list-group">
-              {% for task in upcoming_tasks %}
-                <div class="list-group-item list-group-item-action">
-                  <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">{{ task.title }}</h5>
-                    <small class="text-danger"><i class="fas fa-clock"></i> Vence en {{ task.days_left }} días</small>
-                  </div>
-                  <p class="mb-1">{{ task.description }}</p>
-                  <small>Prioridad: 
-                    {% if task.priority == 'high' %}
-                      <span class="badge bg-danger">Alta</span>
-                    {% elif task.priority == 'medium' %}
-                      <span class="badge bg-warning">Media</span>
-                    {% else %}
-                      <span class="badge bg-info">Baja</span>
-                    {% endif %}
-                  </small>
-                </div>
-              {% endfor %}
-            </div>
-          {% else %}
-            <p class="text-muted mb-0">No hay tareas próximas a vencer</p>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- Tabla de tareas -->
-      <div class="card">
-        <div class="card-header">
-          <h5 class="mb-0">Todas las tareas</h5>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-striped table-hover">
-              <thead>
-                <tr>
-                  <th scope="col">Título</th>
-                  <th scope="col">Descripción</th>
-                  <th scope="col">Fecha de vencimiento</th>
-                  <th scope="col">Prioridad</th>
-                  <th scope="col">Estado</th>
-                  <th scope="col">Asignada por</th>
-                  <th scope="col">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for task in tasks %}
-                <tr class="task-row" data-status="{{ task.status }}">
-                  <td>{{ task.title }}</td>
-                  <td>{{ task.description|truncate(50) }}</td>
-                  <td>{{ task.due_date.strftime('%d/%m/%Y') }}</td>
-                  <td>
-                    {% if task.priority == 'high' %}
-                      <span class="badge bg-danger">Alta</span>
-                    {% elif task.priority == 'medium' %}
-                      <span class="badge bg-warning">Media</span>
-                    {% else %}
-                      <span class="badge bg-info">Baja</span>
-                    {% endif %}
-                  </td>
-                  <td>
-                    {% if task.status == 'pending' %}
-                      <span class="badge bg-warning">Pendiente</span>
-                    {% elif task.status == 'in-progress' %}
-                      <span class="badge bg-info">En progreso</span>
-                    {% else %}
-                      <span class="badge bg-success">Completada</span>
-                    {% endif %}
-                  </td>
-                  <td>{{ task.assigned_by.name }}</td>
-                  <td>
-                    <div class="btn-group">
-                      <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewTaskModal" data-task-id="{{ task.id }}">
-                        <i class="fas fa-eye"></i>
-                      </button>
-                      <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editTaskModal" data-task-id="{{ task.id }}">
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      {% if task.status != 'completed' %}
-                      <button class="btn btn-sm btn-success complete-task-btn" data-task-id="{{ task.id }}">
-                        <i class="fas fa-check"></i>
-                      </button>
-                      {% endif %}
-                    </div>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          {% if not tasks %}
-            <p class="text-center text-muted my-4">No hay tareas disponibles</p>
-          {% endif %}
-        </div>
-      </div>
-    </main>
-  </div>
-</div>
-
-<!-- Modal para nueva tarea -->
-<div class="modal fade" id="newTaskModal" tabindex="-1" aria-labelledby="newTaskModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="newTaskModalLabel">Crear Nueva Tarea</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form id="newTaskForm" method="POST" action="{{ url_for('entrepreneur.create_task') }}">
-          {{ form.hidden_tag() }}
-          <div class="mb-3">
-            <label for="title" class="form-label">Título *</label>
-            {{ form.title(class="form-control", id="title", required=true) }}
-          </div>
-          <div class="mb-3">
-            <label for="description" class="form-label">Descripción</label>
-            {{ form.description(class="form-control", id="description", rows=3) }}
-          </div>
-          <div class="mb-3">
-            <label for="due_date" class="form-label">Fecha de vencimiento *</label>
-            {{ form.due_date(class="form-control", id="due_date", type="date", required=true) }}
-          </div>
-          <div class="mb-3">
-            <label for="priority" class="form-label">Prioridad</label>
-            {{ form.priority(class="form-select", id="priority") }}
-          </div>
-          <div class="text-end">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-primary">Guardar</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal para ver detalles de tarea -->
-<div class="modal fade" id="viewTaskModal" tabindex="-1" aria-labelledby="viewTaskModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="viewTaskModalLabel">Detalles de la Tarea</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body" id="taskDetailContent">
-        <!-- Contenido cargado por AJAX -->
-        <div class="text-center">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Cargando...</span>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal para editar tarea -->
-<div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="editTaskModalLabel">Editar Tarea</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form id="editTaskForm" method="POST">
-          {{ form.hidden_tag() }}
-          <input type="hidden" id="edit_task_id" name="task_id">
-          <div class="mb-3">
-            <label for="edit_title" class="form-label">Título *</label>
-            {{ form.title(class="form-control", id="edit_title", required=true) }}
-          </div>
-          <div class="mb-3">
-            <label for="edit_description" class="form-label">Descripción</label>
-            {{ form.description(class="form-control", id="edit_description", rows=3) }}
-          </div>
-          <div class="mb-3">
-            <label for="edit_due_date" class="form-label">Fecha de vencimiento *</label>
-            {{ form.due_date(class="form-control", id="edit_due_date", type="date", required=true) }}
-          </div>
-          <div class="mb-3">
-            <label for="edit_priority" class="form-label">Prioridad</label>
-            {{ form.priority(class="form-select", id="edit_priority") }}
-          </div>
-          <div class="mb-3">
-            <label for="edit_status" class="form-label">Estado</label>
-            {{ form.status(class="form-select", id="edit_status") }}
-          </div>
-          <div class="text-end">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-primary">Guardar cambios</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Filtro de tareas
-    const filterLinks = document.querySelectorAll('[data-filter]');
-    filterLinks.forEach(link => {
-      link.addEventListener('click', function(e) {
-        e.preventDefault();
-        const filter = this.getAttribute('data-filter');
-        const taskRows = document.querySelectorAll('.task-row');
-        
-        taskRows.forEach(row => {
-          if (filter === 'all' || row.getAttribute('data-status') === filter) {
-            row.style.display = '';
-          } else {
-            row.style.display = 'none';
-          }
-        });
-      });
-    });
-
-    // Cargar detalles de tarea
-    const viewTaskModal = document.getElementById('viewTaskModal');
-    if (viewTaskModal) {
-      viewTaskModal.addEventListener('show.bs.modal', function(event) {
-        const button = event.relatedTarget;
-        const taskId = button.getAttribute('data-task-id');
-        const modalBody = this.querySelector('#taskDetailContent');
-        
-        // Cargar los detalles mediante AJAX
-        fetch(`/entrepreneur/tasks/${taskId}/details`)
-          .then(response => response.text())
-          .then(html => {
-            modalBody.innerHTML = html;
-          })
-          .catch(error => {
-            modalBody.innerHTML = `<div class="alert alert-danger">Error al cargar los detalles: ${error}</div>`;
-          });
-      });
-    }
-
-    // Editar tarea
-    const editTaskModal = document.getElementById('editTaskModal');
-    if (editTaskModal) {
-      editTaskModal.addEventListener('show.bs.modal', function(event) {
-        const button = event.relatedTarget;
-        const taskId = button.getAttribute('data-task-id');
-        const form = document.getElementById('editTaskForm');
-        
-        // Actualizar la acción del formulario
-        form.action = `/entrepreneur/tasks/${taskId}/update`;
-        
-        // Rellenar el formulario con los datos de la tarea
-        document.getElementById('edit_task_id').value = taskId;
-        
-        // Cargar datos mediante AJAX
-        fetch(`/entrepreneur/tasks/${taskId}/edit`)
-          .then(response => response.json())
-          .then(data => {
-            document.getElementById('edit_title').value = data.title;
-            document.getElementById('edit_description').value = data.description;
-            document.getElementById('edit_due_date').value = data.due_date;
-            document.getElementById('edit_priority').value = data.priority;
-            document.getElementById('edit_status').value = data.status;
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            alert('Error al cargar los datos de la tarea');
-          });
-      });
-    }
-
-    // Marcar tarea como completada
-    const completeButtons = document.querySelectorAll('.complete-task-btn');
-    completeButtons.forEach(button => {
-      button.addEventListener('click', function() {
-        const taskId = this.getAttribute('data-task-id');
-        if (confirm('¿Estás seguro de que deseas marcar esta tarea como completada?')) {
-          fetch(`/entrepreneur/tasks/${taskId}/complete`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRF-Token': '{{ csrf_token() }}'
-            }
-          })
-          .then(response => {
-            if (response.ok) {
-              window.location.reload();
-            } else {
-              alert('Error al actualizar el estado de la tarea');
-            }
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            alert('Error al conectar con el servidor');
-          });
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Tareas - Dashboard Emprendedor</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --border-radius: 12px;
         }
-      });
-    });
-  });
-</script>
-{% endblock %}
+
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .task-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--secondary-color);
+            transition: all 0.3s ease;
+        }
+
+        .task-card.completed {
+            border-left-color: var(--success-color);
+            opacity: 0.8;
+        }
+
+        .task-card.high-priority {
+            border-left-color: var(--danger-color);
+        }
+
+        .task-card.medium-priority {
+            border-left-color: var(--warning-color);
+        }
+
+        .task-card.low-priority {
+            border-left-color: var(--success-color);
+        }
+
+        .priority-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+        }
+
+        .priority-high {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .priority-medium {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .priority-low {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-custom {
+            border-radius: 25px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            color: white;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+        }
+
+        .progress-ring {
+            width: 60px;
+            height: 60px;
+        }
+
+        .modal-content {
+            border-radius: var(--border-radius);
+            border: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        .filter-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .task-completed {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+
+        .kanban-column {
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            min-height: 300px;
+        }
+
+        .kanban-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            margin: -1rem -1rem 1rem -1rem;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header {
+                padding: 1rem 0;
+            }
+            
+            .stats-card {
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-0"><i class="fas fa-tasks me-3"></i>Gestión de Tareas</h1>
+                    <p class="mb-0 mt-2">Organiza y gestiona tus tareas empresariales</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <button class="btn btn-light btn-custom" onclick="showCreateTaskModal()">
+                        <i class="fas fa-plus me-2"></i>Nueva Tarea
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Estadísticas -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="stats-card text-center">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="text-primary mb-0" id="totalTasks">0</h3>
+                            <p class="text-muted mb-0">Total Tareas</p>
+                        </div>
+                        <i class="fas fa-list-ul fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stats-card text-center">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="text-success mb-0" id="completedTasks">0</h3>
+                            <p class="text-muted mb-0">Completadas</p>
+                        </div>
+                        <i class="fas fa-check-circle fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stats-card text-center">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="text-warning mb-0" id="pendingTasks">0</h3>
+                            <p class="text-muted mb-0">Pendientes</p>
+                        </div>
+                        <i class="fas fa-clock fa-2x text-warning"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stats-card text-center">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="text-danger mb-0" id="overdueTasks">0</h3>
+                            <p class="text-muted mb-0">Vencidas</p>
+                        </div>
+                        <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h5 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Distribución por Estado</h5>
+                    <canvas id="statusChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h5 class="mb-3"><i class="fas fa-chart-bar me-2"></i>Productividad Semanal</h5>
+                    <canvas id="productivityChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filter-section">
+            <div class="row align-items-center">
+                <div class="col-lg-2 col-md-4 mb-2">
+                    <select class="form-select" id="filterStatus">
+                        <option value="">Todos los estados</option>
+                        <option value="pending">Pendiente</option>
+                        <option value="in-progress">En Progreso</option>
+                        <option value="completed">Completada</option>
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-2">
+                    <select class="form-select" id="filterPriority">
+                        <option value="">Todas las prioridades</option>
+                        <option value="high">Alta</option>
+                        <option value="medium">Media</option>
+                        <option value="low">Baja</option>
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-2">
+                    <select class="form-select" id="filterCategory">
+                        <option value="">Todas las categorías</option>
+                        <option value="marketing">Marketing</option>
+                        <option value="ventas">Ventas</option>
+                        <option value="desarrollo">Desarrollo</option>
+                        <option value="administracion">Administración</option>
+                    </select>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-2">
+                    <input type="text" class="form-control" id="searchTask" placeholder="Buscar tareas...">
+                </div>
+                <div class="col-lg-3 col-md-6 mb-2">
+                    <div class="btn-group w-100" role="group">
+                        <button type="button" class="btn btn-outline-primary" id="listView" onclick="switchView('list')">
+                            <i class="fas fa-list"></i> Lista
+                        </button>
+                        <button type="button" class="btn btn-outline-primary active" id="kanbanView" onclick="switchView('kanban')">
+                            <i class="fas fa-columns"></i> Kanban
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vista Kanban -->
+        <div id="kanbanBoard" class="row">
+            <div class="col-lg-4 mb-3">
+                <div class="kanban-column">
+                    <div class="kanban-header">
+                        <i class="fas fa-clock me-2"></i>Pendientes
+                        <span class="badge bg-light text-dark ms-2" id="pendingCount">0</span>
+                    </div>
+                    <div id="pendingColumn" class="task-list"></div>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-3">
+                <div class="kanban-column">
+                    <div class="kanban-header">
+                        <i class="fas fa-spinner me-2"></i>En Progreso
+                        <span class="badge bg-light text-dark ms-2" id="progressCount">0</span>
+                    </div>
+                    <div id="progressColumn" class="task-list"></div>
+                </div>
+            </div>
+            <div class="col-lg-4 mb-3">
+                <div class="kanban-column">
+                    <div class="kanban-header">
+                        <i class="fas fa-check me-2"></i>Completadas
+                        <span class="badge bg-light text-dark ms-2" id="completedCount">0</span>
+                    </div>
+                    <div id="completedColumn" class="task-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vista Lista -->
+        <div id="listBoard" style="display: none;">
+            <div id="tasksList"></div>
+        </div>
+    </div>
+
+    <!-- Modal Crear/Editar Tarea -->
+    <div class="modal fade" id="taskModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taskModalTitle">Nueva Tarea</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="taskForm">
+                        <input type="hidden" id="taskId">
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="taskTitle" class="form-label">Título de la tarea *</label>
+                                <input type="text" class="form-control" id="taskTitle" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="taskPriority" class="form-label">Prioridad *</label>
+                                <select class="form-select" id="taskPriority" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="high">Alta</option>
+                                    <option value="medium">Media</option>
+                                    <option value="low">Baja</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskDescription" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="taskDescription" rows="3"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="taskCategory" class="form-label">Categoría *</label>
+                                <select class="form-select" id="taskCategory" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="marketing">Marketing</option>
+                                    <option value="ventas">Ventas</option>
+                                    <option value="desarrollo">Desarrollo</option>
+                                    <option value="administracion">Administración</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="taskDueDate" class="form-label">Fecha límite</label>
+                                <input type="date" class="form-control" id="taskDueDate">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="taskEstimation" class="form-label">Estimación (horas)</label>
+                                <input type="number" class="form-control" id="taskEstimation" min="0.5" step="0.5">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="taskStatus" class="form-label">Estado</label>
+                                <select class="form-select" id="taskStatus">
+                                    <option value="pending">Pendiente</option>
+                                    <option value="in-progress">En Progreso</option>
+                                    <option value="completed">Completada</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="taskProgress" class="form-label">Progreso (%)</label>
+                                <input type="range" class="form-range" id="taskProgress" min="0" max="100" value="0">
+                                <small class="text-muted">Progreso: <span id="progressValue">0</span>%</small>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary-custom" onclick="saveTask()">
+                        <i class="fas fa-save me-2"></i>Guardar Tarea
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Estado global de la aplicación
+        let tasks = [];
+        let currentView = 'kanban';
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTasks();
+            initializeCharts();
+            setupEventListeners();
+            updateStats();
+        });
+
+        // Event Listeners
+        function setupEventListeners() {
+            // Filtros
+            document.getElementById('filterStatus').addEventListener('change', filterTasks);
+            document.getElementById('filterPriority').addEventListener('change', filterTasks);
+            document.getElementById('filterCategory').addEventListener('change', filterTasks);
+            document.getElementById('searchTask').addEventListener('input', filterTasks);
+
+            // Progreso del modal
+            document.getElementById('taskProgress').addEventListener('input', function() {
+                document.getElementById('progressValue').textContent = this.value;
+                
+                // Auto-cambiar estado basado en progreso
+                const progress = parseInt(this.value);
+                const statusSelect = document.getElementById('taskStatus');
+                
+                if (progress === 0) {
+                    statusSelect.value = 'pending';
+                } else if (progress === 100) {
+                    statusSelect.value = 'completed';
+                } else {
+                    statusSelect.value = 'in-progress';
+                }
+            });
+
+            // Estado cambia progreso
+            document.getElementById('taskStatus').addEventListener('change', function() {
+                const progressSlider = document.getElementById('taskProgress');
+                const progressValue = document.getElementById('progressValue');
+                
+                switch(this.value) {
+                    case 'pending':
+                        progressSlider.value = 0;
+                        progressValue.textContent = '0';
+                        break;
+                    case 'completed':
+                        progressSlider.value = 100;
+                        progressValue.textContent = '100';
+                        break;
+                }
+            });
+        }
+
+        // Cargar tareas (simulado - en producción vendría de la API)
+        function loadTasks() {
+            // Datos de ejemplo
+            tasks = [
+                {
+                    id: 1,
+                    title: "Crear estrategia de marketing digital",
+                    description: "Desarrollar plan completo de marketing digital para Q2",
+                    category: "marketing",
+                    priority: "high",
+                    status: "in-progress",
+                    progress: 60,
+                    dueDate: "2025-06-15",
+                    estimation: 8,
+                    createdAt: "2025-06-01"
+                },
+                {
+                    id: 2,
+                    title: "Análisis de competencia",
+                    description: "Investigar y analizar principales competidores del mercado",
+                    category: "ventas",
+                    priority: "medium",
+                    status: "pending",
+                    progress: 0,
+                    dueDate: "2025-06-12",
+                    estimation: 4,
+                    createdAt: "2025-06-02"
+                },
+                {
+                    id: 3,
+                    title: "Implementar sistema de CRM",
+                    description: "Configurar e implementar nuevo sistema de gestión de clientes",
+                    category: "desarrollo",
+                    priority: "high",
+                    status: "completed",
+                    progress: 100,
+                    dueDate: "2025-06-08",
+                    estimation: 12,
+                    createdAt: "2025-05-28"
+                },
+                {
+                    id: 4,
+                    title: "Revisar contratos proveedores",
+                    description: "Auditar y renegociar contratos con proveedores principales",
+                    category: "administracion",
+                    priority: "low",
+                    status: "pending",
+                    progress: 0,
+                    dueDate: "2025-06-20",
+                    estimation: 6,
+                    createdAt: "2025-06-03"
+                }
+            ];
+            
+            renderTasks();
+            updateStats();
+        }
+
+        // Renderizar tareas
+        function renderTasks() {
+            if (currentView === 'kanban') {
+                renderKanbanView();
+            } else {
+                renderListView();
+            }
+        }
+
+        // Vista Kanban
+        function renderKanbanView() {
+            const pendingColumn = document.getElementById('pendingColumn');
+            const progressColumn = document.getElementById('progressColumn');
+            const completedColumn = document.getElementById('completedColumn');
+
+            pendingColumn.innerHTML = '';
+            progressColumn.innerHTML = '';
+            completedColumn.innerHTML = '';
+
+            const filteredTasks = getFilteredTasks();
+
+            filteredTasks.forEach(task => {
+                const taskElement = createTaskCard(task);
+                
+                switch(task.status) {
+                    case 'pending':
+                        pendingColumn.appendChild(taskElement);
+                        break;
+                    case 'in-progress':
+                        progressColumn.appendChild(taskElement);
+                        break;
+                    case 'completed':
+                        completedColumn.appendChild(taskElement);
+                        break;
+                }
+            });
+
+            updateColumnCounts();
+        }
+
+        // Vista Lista
+        function renderListView() {
+            const tasksList = document.getElementById('tasksList');
+            tasksList.innerHTML = '';
+
+            const filteredTasks = getFilteredTasks();
+
+            filteredTasks.forEach(task => {
+                const taskElement = createTaskCard(task, true);
+                tasksList.appendChild(taskElement);
+            });
+        }
+
+        // Crear tarjeta de tarea
+        function createTaskCard(task, isListView = false) {
+            const taskDiv = document.createElement('div');
+            taskDiv.className = `task-card ${task.priority}-priority ${task.status === 'completed' ? 'completed' : ''}`;
+            
+            const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'completed';
+            const dueDateClass = isOverdue ? 'text-danger' : 'text-muted';
+
+            taskDiv.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="mb-0 ${task.status === 'completed' ? 'task-completed' : ''}">${task.title}</h6>
+                    <div class="d-flex gap-2">
+                        <span class="priority-badge priority-${task.priority}">${getPriorityText(task.priority)}</span>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="editTask(${task.id})">
+                                    <i class="fas fa-edit me-2"></i>Editar</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="toggleTaskStatus(${task.id})">
+                                    <i class="fas fa-${task.status === 'completed' ? 'undo' : 'check'} me-2"></i>
+                                    ${task.status === 'completed' ? 'Marcar pendiente' : 'Marcar completada'}</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteTask(${task.id})">
+                                    <i class="fas fa-trash me-2"></i>Eliminar</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                ${task.description ? `<p class="text-muted small mb-2">${task.description}</p>` : ''}
+                
+                <div class="row align-items-center mb-2">
+                    <div class="col">
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar ${getProgressBarClass(task.status)}" 
+                                 style="width: ${task.progress}%"></div>
+                        </div>
+                        <small class="text-muted">${task.progress}% completado</small>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted">
+                            <i class="fas fa-folder me-1"></i>${getCategoryText(task.category)}
+                        </small>
+                        ${task.estimation ? `<small class="text-muted ms-2">
+                            <i class="fas fa-clock me-1"></i>${task.estimation}h</small>` : ''}
+                    </div>
+                    <div>
+                        ${task.dueDate ? `<small class="${dueDateClass}">
+                            <i class="fas fa-calendar me-1"></i>${formatDate(task.dueDate)}
+                            ${isOverdue ? '<i class="fas fa-exclamation-triangle ms-1"></i>' : ''}
+                        </small>` : ''}
+                    </div>
+                </div>
+            `;
+
+            return taskDiv;
+        }
+
+        // Funciones auxiliares
+        function getPriorityText(priority) {
+            const priorities = { high: 'Alta', medium: 'Media', low: 'Baja' };
+            return priorities[priority] || priority;
+        }
+
+        function getCategoryText(category) {
+            const categories = {
+                marketing: 'Marketing',
+                ventas: 'Ventas',
+                desarrollo: 'Desarrollo',
+                administracion: 'Administración'
+            };
+            return categories[category] || category;
+        }
+
+        function getProgressBarClass(status) {
+            switch(status) {
+                case 'completed': return 'bg-success';
+                case 'in-progress': return 'bg-warning';
+                default: return 'bg-secondary';
+            }
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('es-ES');
+        }
+
+        // Filtrar tareas
+        function getFilteredTasks() {
+            const statusFilter = document.getElementById('filterStatus').value;
+            const priorityFilter = document.getElementById('filterPriority').value;
+            const categoryFilter = document.getElementById('filterCategory').value;
+            const searchTerm = document.getElementById('searchTask').value.toLowerCase();
+
+            return tasks.filter(task => {
+                return (!statusFilter || task.status === statusFilter) &&
+                       (!priorityFilter || task.priority === priorityFilter) &&
+                       (!categoryFilter || task.category === categoryFilter) &&
+                       (!searchTerm || task.title.toLowerCase().includes(searchTerm) || 
+                        task.description.toLowerCase().includes(searchTerm));
+            });
+        }
+
+        function filterTasks() {
+            renderTasks();
+        }
+
+        // Cambiar vista
+        function switchView(view) {
+            currentView = view;
+            
+            document.getElementById('listView').classList.toggle('active', view === 'list');
+            document.getElementById('kanbanView').classList.toggle('active', view === 'kanban');
+            
+            document.getElementById('kanbanBoard').style.display = view === 'kanban' ? 'flex' : 'none';
+            document.getElementById('listBoard').style.display = view === 'list' ? 'block' : 'none';
+            
+            renderTasks();
+        }
+
+        // Actualizar contadores de columnas
+        function updateColumnCounts() {
+            const filteredTasks = getFilteredTasks();
+            
+            document.getElementById('pendingCount').textContent = 
+                filteredTasks.filter(t => t.status === 'pending').length;
+            document.getElementById('progressCount').textContent = 
+                filteredTasks.filter(t => t.status === 'in-progress').length;
+            document.getElementById('completedCount').textContent = 
+                filteredTasks.filter(t => t.status === 'completed').length;
+        }
+
+        // Estadísticas
+        function updateStats() {
+            const total = tasks.length;
+            const completed = tasks.filter(t => t.status === 'completed').length;
+            const pending = tasks.filter(t => t.status === 'pending').length;
+            const overdue = tasks.filter(t => 
+                new Date(t.dueDate) < new Date() && t.status !== 'completed'
+            ).length;
+
+            document.getElementById('totalTasks').textContent = total;
+            document.getElementById('completedTasks').textContent = completed;
+            document.getElementById('pendingTasks').textContent = pending;
+            document.getElementById('overdueTasks').textContent = overdue;
+
+            updateCharts();
+        }
+
+        // Modal de tarea
+        function showCreateTaskModal() {
+            document.getElementById('taskModalTitle').textContent = 'Nueva Tarea';
+            document.getElementById('taskForm').reset();
+            document.getElementById('taskId').value = '';
+            document.getElementById('progressValue').textContent = '0';
+            
+            const modal = new bootstrap.Modal(document.getElementById('taskModal'));
+            modal.show();
+        }
+
+        function editTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            document.getElementById('taskModalTitle').textContent = 'Editar Tarea';
+            document.getElementById('taskId').value = task.id;
+            document.getElementById('taskTitle').value = task.title;
+            document.getElementById('taskDescription').value = task.description || '';
+            document.getElementById('taskCategory').value = task.category;
+            document.getElementById('taskPriority').value = task.priority;
+            document.getElementById('taskStatus').value = task.status;
+            document.getElementById('taskDueDate').value = task.dueDate || '';
+            document.getElementById('taskEstimation').value = task.estimation || '';
+            document.getElementById('taskProgress').value = task.progress;
+            document.getElementById('progressValue').textContent = task.progress;
+
+            const modal = new bootstrap.Modal(document.getElementById('taskModal'));
+            modal.show();
+        }
+
+        function saveTask() {
+            const taskId = document.getElementById('taskId').value;
+            const formData = {
+                title: document.getElementById('taskTitle').value,
+                description: document.getElementById('taskDescription').value,
+                category: document.getElementById('taskCategory').value,
+                priority: document.getElementById('taskPriority').value,
+                status: document.getElementById('taskStatus').value,
+                dueDate: document.getElementById('taskDueDate').value,
+                estimation: parseFloat(document.getElementById('taskEstimation').value) || 0,
+                progress: parseInt(document.getElementById('taskProgress').value)
+            };
+
+            if (!formData.title || !formData.category || !formData.priority) {
+                alert('Por favor, completa todos los campos obligatorios.');
+                return;
+            }
+
+            if (taskId) {
+                // Editar tarea existente
+                const taskIndex = tasks.findIndex(t => t.id === parseInt(taskId));
+                if (taskIndex !== -1) {
+                    tasks[taskIndex] = { ...tasks[taskIndex], ...formData };
+                }
+            } else {
+                // Crear nueva tarea
+                const newTask = {
+                    id: Date.now(),
+                    ...formData,
+                    createdAt: new Date().toISOString().split('T')[0]
+                };
+                tasks.push(newTask);
+            }
+
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('taskModal'));
+            modal.hide();
+
+            // Actualizar vista
+            renderTasks();
+            updateStats();
+        }
+
+        function toggleTaskStatus(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            if (task.status === 'completed') {
+                task.status = 'pending';
+                task.progress = 0;
+            } else {
+                task.status = 'completed';
+                task.progress = 100;
+            }
+
+            renderTasks();
+            updateStats();
+        }
+
+        function deleteTask(taskId) {
+            if (confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
+                tasks = tasks.filter(t => t.id !== taskId);
+                renderTasks();
+                updateStats();
+            }
+        }
+
+        // Gráficos
+        let statusChart, productivityChart;
+
+        function initializeCharts() {
+            // Gráfico de estado
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            statusChart = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pendientes', 'En Progreso', 'Completadas'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#ffc107', '#17a2b8', '#28a745'],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de productividad
+            const productivityCtx = document.getElementById('productivityChart').getContext('2d');
+            productivityChart = new Chart(productivityCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+                    datasets: [{
+                        label: 'Tareas Completadas',
+                        data: [3, 5, 2, 8, 6, 1, 0],
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCharts() {
+            // Actualizar gráfico de estado
+            const pending = tasks.filter(t => t.status === 'pending').length;
+            const inProgress = tasks.filter(t => t.status === 'in-progress').length;
+            const completed = tasks.filter(t => t.status === 'completed').length;
+
+            statusChart.data.datasets[0].data = [pending, inProgress, completed];
+            statusChart.update();
+        }
+    </script>
+</body>
+</html>

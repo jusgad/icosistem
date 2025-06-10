@@ -1,0 +1,2075 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programa de Mentoría - Panel de Aliados</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <!-- FullCalendar -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.global.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.global.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #1a237e;
+            --secondary-color: #3f51b5;
+            --accent-color: #00bcd4;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --info-color: #2196f3;
+            --light-bg: #f8f9fa;
+            --dark-text: #263238;
+            --border-radius: 15px;
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-success: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            color: var(--dark-text);
+        }
+
+        .mentorship-header {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mentorship-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="mentorship-pattern" width="30" height="30" patternUnits="userSpaceOnUse"><circle cx="15" cy="15" r="3" fill="white" opacity="0.1"/><circle cx="5" cy="5" r="1.5" fill="white" opacity="0.05"/><circle cx="25" cy="25" r="1.5" fill="white" opacity="0.05"/><line x1="15" y1="15" x2="5" y2="5" stroke="white" stroke-width="0.5" opacity="0.1"/><line x1="15" y1="15" x2="25" y2="25" stroke="white" stroke-width="0.5" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23mentorship-pattern)"/></svg>');
+        }
+
+        .mentorship-header .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .mentorship-stats {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            color: var(--dark-text);
+            box-shadow: var(--card-shadow);
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .stat-number {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 0.5rem;
+        }
+
+        .stat-change {
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.25rem;
+        }
+
+        .stat-change.positive {
+            color: var(--success-color);
+        }
+
+        .stat-change.negative {
+            color: var(--danger-color);
+        }
+
+        .dashboard-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-section:hover {
+            box-shadow: var(--hover-shadow);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--dark-text);
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title i {
+            margin-right: 0.75rem;
+            color: var(--accent-color);
+        }
+
+        .mentee-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mentee-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--gradient-accent);
+        }
+
+        .mentee-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .mentee-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .mentee-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--gradient-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-right: 1rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .mentee-info h6 {
+            margin: 0;
+            font-weight: 700;
+            color: var(--dark-text);
+        }
+
+        .mentee-info .company {
+            color: var(--accent-color);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .mentee-info .stage {
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        .progress-section {
+            margin: 1rem 0;
+        }
+
+        .progress-item {
+            margin-bottom: 0.75rem;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: between;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .progress-bar-custom {
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-fill.business {
+            background: var(--gradient-primary);
+        }
+
+        .progress-fill.technical {
+            background: var(--gradient-accent);
+        }
+
+        .progress-fill.leadership {
+            background: var(--gradient-success);
+        }
+
+        .session-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid var(--accent-color);
+            transition: all 0.3s ease;
+        }
+
+        .session-card:hover {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .session-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .session-title {
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+
+        .session-time {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .session-status {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-weight: 600;
+        }
+
+        .status-scheduled {
+            background: rgba(33, 150, 243, 0.1);
+            color: var(--info-color);
+        }
+
+        .status-completed {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--success-color);
+        }
+
+        .status-cancelled {
+            background: rgba(244, 67, 54, 0.1);
+            color: var(--danger-color);
+        }
+
+        .resource-item {
+            background: white;
+            border: 2px solid #f0f0f0;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .resource-item:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .resource-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .resource-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: var(--gradient-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            margin-right: 1rem;
+        }
+
+        .resource-category {
+            font-size: 0.8rem;
+            color: var(--accent-color);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .evaluation-form {
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .rating-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .rating-stars {
+            display: flex;
+            gap: 0.25rem;
+            margin-top: 0.5rem;
+        }
+
+        .star {
+            font-size: 1.5rem;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .star.active {
+            color: #ffc107;
+        }
+
+        .star:hover {
+            color: #ffc107;
+        }
+
+        .calendar-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            height: 600px;
+        }
+
+        .btn-custom {
+            border-radius: 25px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary-custom {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-accent-custom {
+            background: var(--gradient-accent);
+            color: white;
+        }
+
+        .btn-accent-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-outline-custom {
+            border: 2px solid var(--secondary-color);
+            color: var(--secondary-color);
+            background: transparent;
+        }
+
+        .btn-outline-custom:hover {
+            background: var(--secondary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .nav-tabs-custom {
+            border-bottom: 2px solid #f0f0f0;
+            margin-bottom: 2rem;
+        }
+
+        .nav-tabs-custom .nav-link {
+            border: none;
+            border-radius: 0;
+            color: #666;
+            font-weight: 600;
+            padding: 1rem 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs-custom .nav-link:hover {
+            color: var(--accent-color);
+            border-color: transparent;
+            background: none;
+        }
+
+        .nav-tabs-custom .nav-link.active {
+            color: var(--accent-color);
+            background: none;
+            border-bottom: 3px solid var(--accent-color);
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .quick-action {
+            background: var(--gradient-accent);
+            color: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .quick-action:hover {
+            color: white;
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .quick-action i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .feedback-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .feedback-rating {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .impact-metric {
+            text-align: center;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+        }
+
+        .impact-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .impact-label {
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .impact-change {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 0.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .mentorship-header {
+                padding: 1rem 0;
+            }
+            
+            .mentee-card {
+                padding: 1rem;
+            }
+            
+            .mentee-avatar {
+                width: 50px;
+                height: 50px;
+                font-size: 1rem;
+            }
+            
+            .dashboard-section {
+                padding: 1rem;
+            }
+            
+            .nav-tabs-custom .nav-link {
+                padding: 0.75rem 1rem;
+            }
+            
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fc-event {
+            border: none !important;
+            background: var(--gradient-accent) !important;
+        }
+
+        .fc-event-title {
+            font-weight: 600 !important;
+        }
+
+        .milestone-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 0.75rem;
+            border: 2px solid #f0f0f0;
+            transition: all 0.3s ease;
+        }
+
+        .milestone-item:hover {
+            border-color: var(--accent-color);
+        }
+
+        .milestone-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 1rem;
+        }
+
+        .milestone-completed {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .milestone-pending {
+            background: #e9ecef;
+            color: #666;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay d-none" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Header -->
+    <div class="mentorship-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="mb-3"><i class="fas fa-graduation-cap me-3"></i>Programa de Mentoría</h1>
+                    <p class="mb-0 lead">Guía y acelera el crecimiento de emprendedores prometedores</p>
+                </div>
+                <div class="col-lg-4">
+                    <div class="mentorship-stats">
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <div class="stat-number" id="activeMentees">15</div>
+                                    <div class="stat-label">Mentees Activos</div>
+                                    <div class="stat-change positive">+3 este mes</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <div class="stat-number" id="totalHours">127</div>
+                                    <div class="stat-label">Horas Mentoría</div>
+                                    <div class="stat-change positive">+18 este mes</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <div class="stat-number" id="successRate">87%</div>
+                                    <div class="stat-label">Tasa de Éxito</div>
+                                    <div class="stat-change positive">+5% vs Q1</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="#" class="quick-action" onclick="scheduleSession()">
+                <i class="fas fa-calendar-plus"></i>
+                <span>Programar Sesión</span>
+            </a>
+            <a href="#" class="quick-action" onclick="addNewMentee()">
+                <i class="fas fa-user-plus"></i>
+                <span>Nuevo Mentee</span>
+            </a>
+            <a href="#" class="quick-action" onclick="viewResources()">
+                <i class="fas fa-book"></i>
+                <span>Recursos</span>
+            </a>
+            <a href="#" class="quick-action" onclick="generateReport()">
+                <i class="fas fa-chart-bar"></i>
+                <span>Generar Reporte</span>
+            </a>
+        </div>
+
+        <!-- Navegación por Pestañas -->
+        <ul class="nav nav-tabs nav-tabs-custom" id="mentorshipTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="mentees-tab" data-bs-toggle="tab" data-bs-target="#mentees" type="button" role="tab">
+                    <i class="fas fa-users me-2"></i>Mis Mentees
+                    <span class="notification-badge" id="menteesNotification">3</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="calendar-tab" data-bs-toggle="tab" data-bs-target="#calendar" type="button" role="tab">
+                    <i class="fas fa-calendar me-2"></i>Calendario
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="progress-tab" data-bs-toggle="tab" data-bs-target="#progress" type="button" role="tab">
+                    <i class="fas fa-chart-line me-2"></i>Progreso
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="resources-tab" data-bs-toggle="tab" data-bs-target="#resources" type="button" role="tab">
+                    <i class="fas fa-library me-2"></i>Recursos
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="evaluation-tab" data-bs-toggle="tab" data-bs-target="#evaluation" type="button" role="tab">
+                    <i class="fas fa-star me-2"></i>Evaluación
+                </button>
+            </li>
+        </ul>
+
+        <!-- Contenido de las Pestañas -->
+        <div class="tab-content" id="mentorshipTabsContent">
+            <!-- Mis Mentees -->
+            <div class="tab-pane fade show active" id="mentees" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <i class="fas fa-users"></i>Mentees Actuales
+                                </h3>
+                                <div class="d-flex gap-2">
+                                    <select class="form-select form-select-sm" style="width: auto;" onchange="filterMentees(this.value)">
+                                        <option value="all">Todos</option>
+                                        <option value="active">Activos</option>
+                                        <option value="needs-attention">Necesita Atención</option>
+                                        <option value="completed">Graduados</option>
+                                    </select>
+                                    <button class="btn btn-accent-custom btn-custom btn-sm" onclick="addNewMentee()">
+                                        <i class="fas fa-plus me-2"></i>Agregar
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div id="menteesList">
+                                <!-- Los mentees se cargarán aquí dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <!-- Próximas Sesiones -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h5 class="section-title">
+                                    <i class="fas fa-clock"></i>Próximas Sesiones
+                                </h5>
+                            </div>
+                            
+                            <div id="upcomingSessions">
+                                <!-- Las sesiones se cargarán aquí -->
+                            </div>
+                        </div>
+                        
+                        <!-- Métricas de Impacto -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h5 class="section-title">
+                                    <i class="fas fa-rocket"></i>Métricas de Impacto
+                                </h5>
+                            </div>
+                            
+                            <div class="impact-metric">
+                                <div class="impact-value">92%</div>
+                                <div class="impact-label">Satisfacción Promedio</div>
+                                <div class="impact-change positive">+8% vs mes anterior</div>
+                            </div>
+                            
+                            <div class="impact-metric">
+                                <div class="impact-value">€2.4M</div>
+                                <div class="impact-label">Financiación Conseguida</div>
+                                <div class="impact-change positive">+45% vs Q1</div>
+                            </div>
+                            
+                            <div class="impact-metric">
+                                <div class="impact-value">8</div>
+                                <div class="impact-label">Empresas Graduadas</div>
+                                <div class="impact-change positive">Meta: 12 en 2025</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendario -->
+            <div class="tab-pane fade" id="calendar" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-9">
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <i class="fas fa-calendar"></i>Calendario de Sesiones
+                                </h3>
+                                <button class="btn btn-primary-custom btn-custom" onclick="scheduleSession()">
+                                    <i class="fas fa-plus me-2"></i>Nueva Sesión
+                                </button>
+                            </div>
+                            
+                            <div class="calendar-section">
+                                <div id="calendar"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-3">
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h5 class="section-title">
+                                    <i class="fas fa-info-circle"></i>Sesión de Hoy
+                                </h5>
+                            </div>
+                            
+                            <div id="todaySession">
+                                <div class="session-card">
+                                    <div class="session-header">
+                                        <div class="session-title">Revisión Q2 - Sarah</div>
+                                        <span class="session-status status-scheduled">Programada</span>
+                                    </div>
+                                    <div class="session-time">
+                                        <i class="fas fa-clock me-1"></i>3:00 PM - 4:00 PM
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">TechStart AI • Estrategia de crecimiento</small>
+                                    </div>
+                                    <div class="mt-3 d-flex gap-2">
+                                        <button class="btn btn-outline-custom btn-sm">
+                                            <i class="fas fa-video me-1"></i>Unirse
+                                        </button>
+                                        <button class="btn btn-outline-custom btn-sm">
+                                            <i class="fas fa-edit me-1"></i>Editar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h5 class="section-title">
+                                    <i class="fas fa-chart-pie"></i>Distribución Semanal
+                                </h5>
+                            </div>
+                            
+                            <canvas id="weeklyDistributionChart" width="300" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progreso -->
+            <div class="tab-pane fade" id="progress" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <i class="fas fa-chart-line"></i>Análisis de Progreso
+                                </h3>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-primary active" onclick="changeProgressPeriod('month')">Mes</button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="changeProgressPeriod('quarter')">Trimestre</button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="changeProgressPeriod('year')">Año</button>
+                                </div>
+                            </div>
+                            
+                            <canvas id="progressChart" height="300"></canvas>
+                        </div>
+                        
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <i class="fas fa-trophy"></i>Hitos Alcanzados
+                                </h3>
+                            </div>
+                            
+                            <div id="milestonesList">
+                                <!-- Los hitos se cargarán aquí -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h5 class="section-title">
+                                    <i class="fas fa-bullseye"></i>Objetivos Q2
+                                </h5>
+                            </div>
+                            
+                            <div class="progress-item">
+                                <div class="progress-label">
+                                    <span>Sesiones de Mentoría</span>
+                                    <span>24/30</span>
+                                </div>
+                                <div class="progress-bar-custom">
+                                    <div class="progress-fill business" style="width: 80%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-item">
+                                <div class="progress-label">
+                                    <span>Nuevos Mentees</span>
+                                    <span>5/8</span>
+                                </div>
+                                <div class="progress-bar-custom">
+                                    <div class="progress-fill technical" style="width: 62%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-item">
+                                <div class="progress-label">
+                                    <span>Empresas Graduadas</span>
+                                    <span>3/5</span>
+                                </div>
+                                <div class="progress-bar-custom">
+                                    <div class="progress-fill leadership" style="width: 60%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h5 class="section-title">
+                                    <i class="fas fa-medal"></i>Reconocimientos
+                                </h5>
+                            </div>
+                            
+                            <div class="text-center">
+                                <div class="mb-3">
+                                    <i class="fas fa-award fa-3x text-warning"></i>
+                                </div>
+                                <h6>Mentor del Mes</h6>
+                                <p class="text-muted small">Mayo 2025</p>
+                                <small class="text-muted">
+                                    Por exceptional impacto en el desarrollo de startups
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recursos -->
+            <div class="tab-pane fade" id="resources" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <i class="fas fa-library"></i>Biblioteca de Recursos
+                                </h3>
+                                <div class="d-flex gap-2">
+                                    <select class="form-select form-select-sm" style="width: auto;" onchange="filterResources(this.value)">
+                                        <option value="all">Todas las categorías</option>
+                                        <option value="business">Estrategia de Negocio</option>
+                                        <option value="technical">Desarrollo Técnico</option>
+                                        <option value="leadership">Liderazgo</option>
+                                        <option value="funding">Financiación</option>
+                                    </select>
+                                    <button class="btn btn-accent-custom btn-custom btn-sm" onclick="uploadResource()">
+                                        <i class="fas fa-upload me-2"></i>Subir Recurso
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div id="resourcesList">
+                                <!-- Los recursos se cargarán aquí -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h5 class="section-title">
+                                    <i class="fas fa-fire"></i>Más Populares
+                                </h5>
+                            </div>
+                            
+                            <div class="resource-item">
+                                <div class="resource-header">
+                                    <div class="resource-icon">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </div>
+                                    <div>
+                                        <div class="resource-category">Estrategia</div>
+                                        <h6 class="mb-0">Lean Startup Methodology</h6>
+                                    </div>
+                                </div>
+                                <small class="text-muted">Descargado 247 veces</small>
+                            </div>
+                            
+                            <div class="resource-item">
+                                <div class="resource-header">
+                                    <div class="resource-icon">
+                                        <i class="fas fa-video"></i>
+                                    </div>
+                                    <div>
+                                        <div class="resource-category">Liderazgo</div>
+                                        <h6 class="mb-0">Building High-Performance Teams</h6>
+                                    </div>
+                                </div>
+                                <small class="text-muted">Visto 189 veces</small>
+                            </div>
+                        </div>
+                        
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h5 class="section-title">
+                                    <i class="fas fa-lightbulb"></i>Plantillas
+                                </h5>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-custom" onclick="downloadTemplate('business-plan')">
+                                    <i class="fas fa-download me-2"></i>Business Plan Template
+                                </button>
+                                <button class="btn btn-outline-custom" onclick="downloadTemplate('pitch-deck')">
+                                    <i class="fas fa-download me-2"></i>Pitch Deck Template
+                                </button>
+                                <button class="btn btn-outline-custom" onclick="downloadTemplate('financial-model')">
+                                    <i class="fas fa-download me-2"></i>Financial Model
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evaluación -->
+            <div class="tab-pane fade" id="evaluation" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <i class="fas fa-star"></i>Evaluaciones Pendientes
+                                </h3>
+                            </div>
+                            
+                            <div id="pendingEvaluations">
+                                <!-- Las evaluaciones pendientes se cargarán aquí -->
+                            </div>
+                        </div>
+                        
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <i class="fas fa-comments"></i>Feedback Recibido
+                                </h3>
+                            </div>
+                            
+                            <div id="feedbackList">
+                                <!-- El feedback se cargará aquí -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h5 class="section-title">
+                                    <i class="fas fa-chart-bar"></i>Resumen de Evaluaciones
+                                </h5>
+                            </div>
+                            
+                            <canvas id="evaluationChart" width="300" height="200"></canvas>
+                            
+                            <div class="mt-4">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Promedio General:</span>
+                                    <strong class="text-success">4.7/5.0</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Evaluaciones Completadas:</span>
+                                    <strong>47</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Tasa de Respuesta:</span>
+                                    <strong>94%</strong>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h5 class="section-title">
+                                    <i class="fas fa-target"></i>Áreas de Mejora
+                                </h5>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <small class="text-muted">Comunicación</small>
+                                <div class="progress-bar-custom">
+                                    <div class="progress-fill business" style="width: 95%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <small class="text-muted">Conocimiento Técnico</small>
+                                <div class="progress-bar-custom">
+                                    <div class="progress-fill technical" style="width: 88%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <small class="text-muted">Disponibilidad</small>
+                                <div class="progress-bar-custom">
+                                    <div class="progress-fill leadership" style="width: 82%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nueva Sesión -->
+    <div class="modal fade" id="newSessionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Programar Nueva Sesión</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newSessionForm">
+                        <div class="mb-3">
+                            <label for="sessionMentee" class="form-label">Mentee</label>
+                            <select class="form-select" id="sessionMentee" required>
+                                <option value="">Seleccionar mentee...</option>
+                                <option value="1">Sarah Johnson - TechStart AI</option>
+                                <option value="2">Marcus Chen - FinFlow</option>
+                                <option value="3">Emma Rodriguez - EcoMart</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="sessionDate" class="form-label">Fecha</label>
+                                <input type="date" class="form-control" id="sessionDate" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="sessionTime" class="form-label">Hora</label>
+                                <input type="time" class="form-control" id="sessionTime" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="sessionDuration" class="form-label">Duración (minutos)</label>
+                            <select class="form-select" id="sessionDuration">
+                                <option value="30">30 minutos</option>
+                                <option value="60" selected>1 hora</option>
+                                <option value="90">1.5 horas</option>
+                                <option value="120">2 horas</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="sessionTopic" class="form-label">Tema/Agenda</label>
+                            <input type="text" class="form-control" id="sessionTopic" placeholder="Ej: Revisión estrategia de marketing Q2">
+                        </div>
+                        <div class="mb-3">
+                            <label for="sessionNotes" class="form-label">Notas Preparatorias</label>
+                            <textarea class="form-control" id="sessionNotes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary-custom" onclick="saveSession()">
+                        <i class="fas fa-save me-2"></i>Programar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Evaluación -->
+    <div class="modal fade" id="evaluationModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Evaluación de Sesión</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="evaluation-form">
+                        <div class="rating-section">
+                            <h6>¿Cómo calificarías esta sesión?</h6>
+                            <div class="rating-stars" data-rating="0">
+                                <span class="star" data-value="1">★</span>
+                                <span class="star" data-value="2">★</span>
+                                <span class="star" data-value="3">★</span>
+                                <span class="star" data-value="4">★</span>
+                                <span class="star" data-value="5">★</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="sessionFeedback" class="form-label">Feedback de la sesión</label>
+                            <textarea class="form-control" id="sessionFeedback" rows="4" placeholder="Comparte tus observaciones sobre el progreso del mentee..."></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="nextSteps" class="form-label">Próximos pasos recomendados</label>
+                            <textarea class="form-control" id="nextSteps" rows="3" placeholder="¿Qué debería enfocar el mentee para la próxima sesión?"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary-custom" onclick="submitEvaluation()">
+                        <i class="fas fa-save me-2"></i>Guardar Evaluación
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Estado global de la aplicación
+        let mentees = [];
+        let sessions = [];
+        let resources = [];
+        let evaluations = [];
+        let calendar;
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMentees();
+            loadSessions();
+            loadResources();
+            loadEvaluations();
+            initializeCalendar();
+            initializeCharts();
+            setupEventListeners();
+        });
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Rating stars
+            document.querySelectorAll('.rating-stars').forEach(ratingContainer => {
+                const stars = ratingContainer.querySelectorAll('.star');
+                stars.forEach((star, index) => {
+                    star.addEventListener('click', () => {
+                        const rating = index + 1;
+                        ratingContainer.setAttribute('data-rating', rating);
+                        updateStars(ratingContainer, rating);
+                    });
+                });
+            });
+        }
+
+        // Cargar mentees
+        function loadMentees() {
+            mentees = [
+                {
+                    id: 1,
+                    name: 'Sarah Johnson',
+                    company: 'TechStart AI',
+                    stage: 'Serie A',
+                    avatar: 'SJ',
+                    startDate: '2025-03-15',
+                    nextSession: '2025-06-15T15:00:00',
+                    status: 'active',
+                    progress: {
+                        business: 85,
+                        technical: 78,
+                        leadership: 92
+                    },
+                    goals: ['Escalar el equipo', 'Preparar Serie B', 'Expandir mercado'],
+                    sessionsCompleted: 12,
+                    totalSessions: 15,
+                    needsAttention: false
+                },
+                {
+                    id: 2,
+                    name: 'Marcus Chen',
+                    company: 'FinFlow Solutions',
+                    stage: 'Seed',
+                    avatar: 'MC',
+                    startDate: '2025-04-01',
+                    nextSession: '2025-06-12T10:00:00',
+                    status: 'active',
+                    progress: {
+                        business: 70,
+                        technical: 88,
+                        leadership: 65
+                    },
+                    goals: ['Product-Market Fit', 'Conseguir primeros clientes', 'Mejorar UX'],
+                    sessionsCompleted: 8,
+                    totalSessions: 12,
+                    needsAttention: true
+                },
+                {
+                    id: 3,
+                    name: 'Emma Rodriguez',
+                    company: 'EcoMart',
+                    stage: 'Growth',
+                    avatar: 'ER',
+                    startDate: '2025-01-10',
+                    nextSession: null,
+                    status: 'completed',
+                    progress: {
+                        business: 95,
+                        technical: 85,
+                        leadership: 90
+                    },
+                    goals: ['Expansión internacional', 'IPO preparation', 'Sostenibilidad'],
+                    sessionsCompleted: 20,
+                    totalSessions: 20,
+                    needsAttention: false
+                }
+            ];
+
+            renderMentees();
+        }
+
+        // Renderizar mentees
+        function renderMentees() {
+            const container = document.getElementById('menteesList');
+            container.innerHTML = '';
+
+            mentees.forEach(mentee => {
+                const menteeCard = createMenteeCard(mentee);
+                container.appendChild(menteeCard);
+            });
+        }
+
+        // Crear card de mentee
+        function createMenteeCard(mentee) {
+            const card = document.createElement('div');
+            card.className = `mentee-card ${mentee.needsAttention ? 'needs-attention' : ''}`;
+
+            const progressPercentage = Math.round((mentee.sessionsCompleted / mentee.totalSessions) * 100);
+            const statusText = mentee.status === 'active' ? 'Activo' : 
+                              mentee.status === 'completed' ? 'Graduado' : 'Inactivo';
+
+            card.innerHTML = `
+                <div class="mentee-header">
+                    <div class="mentee-avatar">${mentee.avatar}</div>
+                    <div class="mentee-info">
+                        <h6>${mentee.name}</h6>
+                        <div class="company">${mentee.company}</div>
+                        <div class="stage">${mentee.stage} • Desde ${formatDate(mentee.startDate)}</div>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-${getStatusColor(mentee.status)}">${statusText}</span>
+                        ${mentee.needsAttention ? '<div class="text-danger small mt-1"><i class="fas fa-exclamation-triangle"></i> Necesita atención</div>' : ''}
+                    </div>
+                </div>
+
+                <div class="progress-section">
+                    <div class="progress-item">
+                        <div class="progress-label">
+                            <span>Estrategia de Negocio</span>
+                            <span>${mentee.progress.business}%</span>
+                        </div>
+                        <div class="progress-bar-custom">
+                            <div class="progress-fill business" style="width: ${mentee.progress.business}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-item">
+                        <div class="progress-label">
+                            <span>Desarrollo Técnico</span>
+                            <span>${mentee.progress.technical}%</span>
+                        </div>
+                        <div class="progress-bar-custom">
+                            <div class="progress-fill technical" style="width: ${mentee.progress.technical}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-item">
+                        <div class="progress-label">
+                            <span>Liderazgo</span>
+                            <span>${mentee.progress.leadership}%</span>
+                        </div>
+                        <div class="progress-bar-custom">
+                            <div class="progress-fill leadership" style="width: ${mentee.progress.leadership}%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted">
+                            Sesiones: ${mentee.sessionsCompleted}/${mentee.totalSessions} (${progressPercentage}%)
+                        </small>
+                        ${mentee.nextSession ? `<div class="small text-primary"><i class="fas fa-clock me-1"></i>Próxima: ${formatDateTime(mentee.nextSession)}</div>` : ''}
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-custom" onclick="viewMenteeProfile(${mentee.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-accent-custom" onclick="scheduleMenteeSession(${mentee.id})">
+                            <i class="fas fa-calendar-plus"></i>
+                        </button>
+                        <button class="btn btn-primary-custom" onclick="sendMenteeMessage(${mentee.id})">
+                            <i class="fas fa-envelope"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Cargar sesiones
+        function loadSessions() {
+            sessions = [
+                {
+                    id: 1,
+                    menteeId: 1,
+                    menteeName: 'Sarah Johnson',
+                    title: 'Revisión Q2 Strategy',
+                    date: '2025-06-15T15:00:00',
+                    duration: 60,
+                    status: 'scheduled',
+                    topic: 'Estrategia de crecimiento Q2'
+                },
+                {
+                    id: 2,
+                    menteeId: 2,
+                    menteeName: 'Marcus Chen',
+                    title: 'Product Development Review',
+                    date: '2025-06-12T10:00:00',
+                    duration: 90,
+                    status: 'scheduled',
+                    topic: 'Roadmap de producto'
+                },
+                {
+                    id: 3,
+                    menteeId: 1,
+                    menteeName: 'Sarah Johnson',
+                    title: 'Team Building Session',
+                    date: '2025-06-08T14:00:00',
+                    duration: 60,
+                    status: 'completed',
+                    topic: 'Construcción de equipos'
+                }
+            ];
+
+            renderUpcomingSessions();
+        }
+
+        // Renderizar próximas sesiones
+        function renderUpcomingSessions() {
+            const container = document.getElementById('upcomingSessions');
+            const upcomingSessions = sessions.filter(s => new Date(s.date) > new Date() && s.status === 'scheduled');
+
+            container.innerHTML = '';
+
+            if (upcomingSessions.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">No hay sesiones programadas</p>';
+                return;
+            }
+
+            upcomingSessions.forEach(session => {
+                const sessionCard = document.createElement('div');
+                sessionCard.className = 'session-card';
+                sessionCard.innerHTML = `
+                    <div class="session-header">
+                        <div class="session-title">${session.title}</div>
+                        <span class="session-status status-${session.status}">Programada</span>
+                    </div>
+                    <div class="session-time">
+                        <i class="fas fa-clock me-1"></i>${formatTime(session.date)} • ${session.duration}min
+                    </div>
+                    <div class="mt-1">
+                        <small class="text-muted">${session.menteeName} • ${session.topic}</small>
+                    </div>
+                `;
+                container.appendChild(sessionCard);
+            });
+        }
+
+        // Cargar recursos
+        function loadResources() {
+            resources = [
+                {
+                    id: 1,
+                    title: 'Startup Fundraising Guide',
+                    category: 'funding',
+                    type: 'pdf',
+                    description: 'Guía completa para conseguir financiación',
+                    downloads: 247,
+                    uploadDate: '2025-05-15'
+                },
+                {
+                    id: 2,
+                    title: 'Building High-Performance Teams',
+                    category: 'leadership',
+                    type: 'video',
+                    description: 'Masterclass sobre construcción de equipos',
+                    downloads: 189,
+                    uploadDate: '2025-05-10'
+                },
+                {
+                    id: 3,
+                    title: 'Technical Architecture Best Practices',
+                    category: 'technical',
+                    type: 'presentation',
+                    description: 'Mejores prácticas de arquitectura técnica',
+                    downloads: 156,
+                    uploadDate: '2025-05-08'
+                }
+            ];
+
+            renderResources();
+        }
+
+        // Renderizar recursos
+        function renderResources() {
+            const container = document.getElementById('resourcesList');
+            container.innerHTML = '';
+
+            resources.forEach(resource => {
+                const resourceCard = document.createElement('div');
+                resourceCard.className = 'resource-item';
+                resourceCard.onclick = () => openResource(resource.id);
+
+                const iconClass = getResourceIcon(resource.type);
+
+                resourceCard.innerHTML = `
+                    <div class="resource-header">
+                        <div class="resource-icon">
+                            <i class="${iconClass}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="resource-category">${getCategoryText(resource.category)}</div>
+                            <h6 class="mb-1">${resource.title}</h6>
+                            <p class="mb-0 text-muted small">${resource.description}</p>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted">${resource.downloads} descargas</small>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(resourceCard);
+            });
+        }
+
+        // Inicializar calendario
+        function initializeCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                locale: 'es',
+                events: sessions.map(session => ({
+                    id: session.id,
+                    title: session.title,
+                    start: session.date,
+                    end: new Date(new Date(session.date).getTime() + session.duration * 60000),
+                    backgroundColor: session.status === 'completed' ? '#4caf50' : '#00bcd4',
+                    borderColor: session.status === 'completed' ? '#4caf50' : '#00bcd4'
+                })),
+                eventClick: function(info) {
+                    showSessionDetails(info.event.id);
+                }
+            });
+            
+            calendar.render();
+        }
+
+        // Inicializar gráficos
+        function initializeCharts() {
+            initProgressChart();
+            initWeeklyDistributionChart();
+            initEvaluationChart();
+        }
+
+        // Gráfico de progreso
+        function initProgressChart() {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Sesiones Completadas',
+                        data: [8, 12, 15, 18, 22, 24],
+                        borderColor: '#4facfe',
+                        backgroundColor: 'rgba(79, 172, 254, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Horas de Mentoría',
+                        data: [12, 18, 22, 27, 33, 36],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfico distribución semanal
+        function initWeeklyDistributionChart() {
+            const ctx = document.getElementById('weeklyDistributionChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'],
+                    datasets: [{
+                        data: [3, 5, 4, 6, 2],
+                        backgroundColor: [
+                            '#4facfe',
+                            '#00f2fe',
+                            '#667eea',
+                            '#764ba2',
+                            '#f093fb'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 10 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfico de evaluaciones
+        function initEvaluationChart() {
+            const ctx = document.getElementById('evaluationChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Comunicación', 'Conocimiento', 'Disponibilidad', 'Impacto'],
+                    datasets: [{
+                        data: [4.8, 4.6, 4.7, 4.9],
+                        backgroundColor: ['#4facfe', '#00f2fe', '#667eea', '#764ba2'],
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 5,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Funciones de acción
+        function scheduleSession() {
+            // Establecer fecha mínima como hoy
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('sessionDate').min = today;
+            
+            const modal = new bootstrap.Modal(document.getElementById('newSessionModal'));
+            modal.show();
+        }
+
+        function saveSession() {
+            const formData = new FormData(document.getElementById('newSessionForm'));
+            
+            const sessionData = {
+                menteeId: parseInt(formData.get('sessionMentee')),
+                date: formData.get('sessionDate') + 'T' + formData.get('sessionTime'),
+                duration: parseInt(formData.get('sessionDuration')),
+                topic: formData.get('sessionTopic'),
+                notes: formData.get('sessionNotes')
+            };
+
+            if (!sessionData.menteeId || !sessionData.date) {
+                alert('Por favor, completa todos los campos obligatorios.');
+                return;
+            }
+
+            // Simular guardado
+            showNotification('Sesión programada correctamente', 'success');
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('newSessionModal'));
+            modal.hide();
+            
+            // Actualizar calendario y lista
+            loadSessions();
+            calendar.refetchEvents();
+        }
+
+        function addNewMentee() {
+            showNotification('Abriendo formulario para agregar nuevo mentee...', 'info');
+        }
+
+        function viewResources() {
+            // Cambiar a la pestaña de recursos
+            const resourcesTab = new bootstrap.Tab(document.getElementById('resources-tab'));
+            resourcesTab.show();
+        }
+
+        function generateReport() {
+            showNotification('Generando reporte de mentoría...', 'info');
+        }
+
+        function viewMenteeProfile(menteeId) {
+            const mentee = mentees.find(m => m.id === menteeId);
+            showNotification(`Abriendo perfil de ${mentee.name}...`, 'info');
+        }
+
+        function scheduleMenteeSession(menteeId) {
+            // Pre-seleccionar el mentee en el modal
+            document.getElementById('sessionMentee').value = menteeId;
+            scheduleSession();
+        }
+
+        function sendMenteeMessage(menteeId) {
+            const mentee = mentees.find(m => m.id === menteeId);
+            showNotification(`Enviando mensaje a ${mentee.name}...`, 'info');
+        }
+
+        function openResource(resourceId) {
+            const resource = resources.find(r => r.id === resourceId);
+            showNotification(`Abriendo recurso: ${resource.title}...`, 'info');
+        }
+
+        function uploadResource() {
+            showNotification('Abriendo formulario de carga de recursos...', 'info');
+        }
+
+        function downloadTemplate(templateType) {
+            showNotification(`Descargando plantilla: ${templateType}...`, 'info');
+        }
+
+        // Funciones de evaluación
+        function updateStars(container, rating) {
+            const stars = container.querySelectorAll('.star');
+            stars.forEach((star, index) => {
+                star.classList.toggle('active', index < rating);
+            });
+        }
+
+        function submitEvaluation() {
+            const rating = document.querySelector('.rating-stars').getAttribute('data-rating');
+            const feedback = document.getElementById('sessionFeedback').value;
+            const nextSteps = document.getElementById('nextSteps').value;
+
+            if (!rating || rating === '0') {
+                alert('Por favor, proporciona una calificación.');
+                return;
+            }
+
+            showNotification('Evaluación guardada correctamente', 'success');
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('evaluationModal'));
+            modal.hide();
+        }
+
+        // Funciones auxiliares
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: 'short'
+            }) + ' ' + date.toLocaleTimeString('es-ES', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleTimeString('es-ES', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'active': 'success',
+                'completed': 'info',
+                'inactive': 'secondary'
+            };
+            return colors[status] || 'secondary';
+        }
+
+        function getResourceIcon(type) {
+            const icons = {
+                'pdf': 'fas fa-file-pdf',
+                'video': 'fas fa-video',
+                'presentation': 'fas fa-file-powerpoint',
+                'document': 'fas fa-file-word'
+            };
+            return icons[type] || 'fas fa-file';
+        }
+
+        function getCategoryText(category) {
+            const categories = {
+                'business': 'Estrategia de Negocio',
+                'technical': 'Desarrollo Técnico',
+                'leadership': 'Liderazgo',
+                'funding': 'Financiación'
+            };
+            return categories[category] || category;
+        }
+
+        function filterMentees(filter) {
+            // Implementar filtrado de mentees
+            console.log('Filtrar mentees por:', filter);
+        }
+
+        function filterResources(filter) {
+            // Implementar filtrado de recursos
+            console.log('Filtrar recursos por:', filter);
+        }
+
+        function changeProgressPeriod(period) {
+            // Actualizar gráfico de progreso
+            document.querySelectorAll('.btn-group .btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            console.log('Cambiar período a:', period);
+        }
+
+        function showSessionDetails(sessionId) {
+            const session = sessions.find(s => s.id == sessionId);
+            if (session) {
+                showNotification(`Mostrando detalles de: ${session.title}`, 'info');
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+            
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type === 'info' ? 'primary' : type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+            });
+        }
+
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+            return container;
+        }
+
+        // Cargar datos adicionales
+        function loadEvaluations() {
+            // Simular carga de evaluaciones
+        }
+
+        // Renderizar hitos
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const milestonesList = document.getElementById('milestonesList');
+                if (milestonesList) {
+                    milestonesList.innerHTML = `
+                        <div class="milestone-item">
+                            <div class="milestone-icon milestone-completed">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Sarah completó estrategia de marketing</h6>
+                                <small class="text-muted">10 Jun 2025 • TechStart AI logró 25% aumento en leads</small>
+                            </div>
+                        </div>
+                        
+                        <div class="milestone-item">
+                            <div class="milestone-icon milestone-completed">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Marcus consiguió primeros clientes</h6>
+                                <small class="text-muted">8 Jun 2025 • FinFlow cerró 5 clientes enterprise</small>
+                            </div>
+                        </div>
+                        
+                        <div class="milestone-item">
+                            <div class="milestone-icon milestone-pending">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Preparación pitch Serie A</h6>
+                                <small class="text-muted">Objetivo: 30 Jun 2025 • En progreso</small>
+                            </div>
+                        </div>
+                    `;
+                }
+            }, 100);
+        });
+
+        // Cargar evaluaciones pendientes
+        setTimeout(() => {
+            const pendingEvaluations = document.getElementById('pendingEvaluations');
+            if (pendingEvaluations) {
+                pendingEvaluations.innerHTML = `
+                    <div class="evaluation-form">
+                        <h6>Sesión con Sarah Johnson - 8 Jun 2025</h6>
+                        <p class="text-muted small mb-3">Team Building & Leadership Development</p>
+                        
+                        <div class="rating-section mb-3">
+                            <label class="form-label">Progreso en objetivos:</label>
+                            <div class="rating-stars" data-rating="0">
+                                <span class="star" data-value="1">★</span>
+                                <span class="star" data-value="2">★</span>
+                                <span class="star" data-value="3">★</span>
+                                <span class="star" data-value="4">★</span>
+                                <span class="star" data-value="5">★</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <textarea class="form-control" rows="3" placeholder="Observaciones de la sesión..."></textarea>
+                        </div>
+                        
+                        <button class="btn btn-primary-custom btn-sm" onclick="submitEvaluation()">
+                            <i class="fas fa-save me-2"></i>Guardar Evaluación
+                        </button>
+                    </div>
+                `;
+            }
+        }, 200);
+
+        // Cargar feedback recibido
+        setTimeout(() => {
+            const feedbackList = document.getElementById('feedbackList');
+            if (feedbackList) {
+                feedbackList.innerHTML = `
+                    <div class="feedback-item">
+                        <div class="feedback-header">
+                            <div>
+                                <h6 class="mb-0">Sarah Johnson</h6>
+                                <small class="text-muted">Sesión del 8 Jun 2025</small>
+                            </div>
+                            <div class="feedback-rating">
+                                <span class="star active">★</span>
+                                <span class="star active">★</span>
+                                <span class="star active">★</span>
+                                <span class="star active">★</span>
+                                <span class="star active">★</span>
+                            </div>
+                        </div>
+                        <p class="mb-0">"Excelente sesión sobre liderazgo. Los consejos sobre gestión de equipos remotos fueron muy valiosos. Alexander tiene una gran capacidad para conectar la teoría con casos prácticos."</p>
+                    </div>
+                    
+                    <div class="feedback-item">
+                        <div class="feedback-header">
+                            <div>
+                                <h6 class="mb-0">Marcus Chen</h6>
+                                <small class="text-muted">Sesión del 5 Jun 2025</small>
+                            </div>
+                            <div class="feedback-rating">
+                                <span class="star active">★</span>
+                                <span class="star active">★</span>
+                                <span class="star active">★</span>
+                                <span class="star active">★</span>
+                                <span class="star">★</span>
+                            </div>
+                        </div>
+                        <p class="mb-0">"Muy útil la revisión del roadmap de producto. Las sugerencias para priorizar features han sido clave para nuestro próximo sprint."</p>
+                    </div>
+                `;
+            }
+        }, 300);
+    </script>
+</body>
+</html>

@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento de Progreso - Dashboard Emprendedor</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --info-color: #17a2b8;
+            --light-bg: #f8f9fa;
+            --dark-text: #2c3e50;
+            --border-radius: 12px;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .progress-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.1;
+        }
+
+        .progress-header .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .metric-label {
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-change {
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            margin-top: 0.5rem;
+        }
+
+        .metric-change.positive {
+            color: var(--success-color);
+        }
+
+        .metric-change.negative {
+            color: var(--danger-color);
+        }
+
+        .metric-change.neutral {
+            color: var(--warning-color);
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark-text);
+            margin: 0;
+        }
+
+        .chart-subtitle {
+            font-size: 0.9rem;
+            color: #666;
+            margin: 0;
+        }
+
+        .progress-ring {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .progress-ring svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            fill: none;
+            stroke-width: 8;
+        }
+
+        .progress-ring-bg {
+            stroke: #e9ecef;
+        }
+
+        .progress-ring-progress {
+            stroke: var(--secondary-color);
+            stroke-linecap: round;
+            transition: stroke-dasharray 0.5s ease;
+        }
+
+        .progress-ring-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .timeline-container {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 3rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--secondary-color), var(--primary-color));
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -3.25rem;
+            top: 1.5rem;
+            width: 12px;
+            height: 12px;
+            background: var(--secondary-color);
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px var(--secondary-color);
+        }
+
+        .timeline-date {
+            font-size: 0.8rem;
+            color: var(--secondary-color);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark-text);
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-description {
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .goal-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .goal-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .goal-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .goal-title {
+            font-weight: 600;
+            color: var(--dark-text);
+            margin: 0;
+        }
+
+        .goal-status {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .goal-status.completed {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .goal-status.in-progress {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .goal-status.pending {
+            background: #6c757d;
+            color: white;
+        }
+
+        .goal-progress {
+            margin-bottom: 1rem;
+        }
+
+        .goal-progress-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .goal-progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, var(--success-color), var(--secondary-color));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .goal-meta {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .filter-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .btn-custom {
+            border-radius: 25px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-outline-custom {
+            border: 2px solid var(--secondary-color);
+            color: var(--secondary-color);
+            background: transparent;
+        }
+
+        .btn-outline-custom:hover {
+            background: var(--secondary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .export-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .comparison-table {
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .comparison-table table {
+            margin: 0;
+        }
+
+        .comparison-table th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 1rem;
+        }
+
+        .comparison-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        .comparison-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .trend-indicator {
+            display: inline-flex;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .trend-up {
+            color: var(--success-color);
+        }
+
+        .trend-down {
+            color: var(--danger-color);
+        }
+
+        .trend-neutral {
+            color: var(--warning-color);
+        }
+
+        .alert-custom {
+            border: none;
+            border-radius: var(--border-radius);
+            border-left: 4px solid;
+            font-weight: 500;
+        }
+
+        .alert-info-custom {
+            background: rgba(23, 162, 184, 0.1);
+            border-left-color: var(--info-color);
+            color: var(--info-color);
+        }
+
+        .alert-success-custom {
+            background: rgba(39, 174, 96, 0.1);
+            border-left-color: var(--success-color);
+            color: var(--success-color);
+        }
+
+        .alert-warning-custom {
+            background: rgba(243, 156, 18, 0.1);
+            border-left-color: var(--warning-color);
+            color: var(--warning-color);
+        }
+
+        @media (max-width: 768px) {
+            .progress-header {
+                padding: 1rem 0;
+            }
+            
+            .metric-card {
+                margin-bottom: 1rem;
+            }
+            
+            .chart-container {
+                padding: 1rem;
+            }
+            
+            .metric-value {
+                font-size: 2rem;
+            }
+            
+            .timeline {
+                padding-left: 2rem;
+            }
+            
+            .timeline-item {
+                padding: 1rem;
+            }
+            
+            .timeline-item::before {
+                left: -2.25rem;
+            }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay d-none" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Header -->
+    <div class="progress-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-0"><i class="fas fa-chart-line me-3"></i>Seguimiento de Progreso</h1>
+                    <p class="mb-0 mt-2">Analiza el rendimiento y crecimiento de tu empresa</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <button class="btn btn-light btn-custom me-2" onclick="refreshData()">
+                        <i class="fas fa-sync-alt me-2"></i>Actualizar
+                    </button>
+                    <button class="btn btn-warning btn-custom" onclick="exportReport()">
+                        <i class="fas fa-download me-2"></i>Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Filtros de Período -->
+        <div class="filter-section">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="mb-3 mb-md-0"><i class="fas fa-filter me-2"></i>Filtros de Análisis</h5>
+                </div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-6">
+                            <select class="form-select" id="periodFilter" onchange="updatePeriod()">
+                                <option value="month">Este Mes</option>
+                                <option value="quarter" selected>Este Trimestre</option>
+                                <option value="year">Este Año</option>
+                                <option value="custom">Personalizado</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <select class="form-select" id="compareFilter" onchange="updateComparison()">
+                                <option value="previous">vs Período Anterior</option>
+                                <option value="year">vs Año Anterior</option>
+                                <option value="none">Sin Comparación</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Métricas Principales -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card text-center">
+                    <div class="metric-value" id="revenueMetric">€125,450</div>
+                    <div class="metric-label">Ingresos Totales</div>
+                    <div class="metric-change positive" id="revenueChange">
+                        <i class="fas fa-arrow-up me-1"></i>+15.3% vs mes anterior
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card text-center">
+                    <div class="metric-value" id="customersMetric">1,247</div>
+                    <div class="metric-label">Clientes Activos</div>
+                    <div class="metric-change positive" id="customersChange">
+                        <i class="fas fa-arrow-up me-1"></i>+8.7% vs mes anterior
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card text-center">
+                    <div class="metric-value" id="conversionMetric">3.2%</div>
+                    <div class="metric-label">Tasa de Conversión</div>
+                    <div class="metric-change negative" id="conversionChange">
+                        <i class="fas fa-arrow-down me-1"></i>-0.5% vs mes anterior
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card text-center">
+                    <div class="metric-value" id="profitMetric">€28,920</div>
+                    <div class="metric-label">Beneficio Neto</div>
+                    <div class="metric-change positive" id="profitChange">
+                        <i class="fas fa-arrow-up me-1"></i>+23.1% vs mes anterior
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alertas y Notificaciones -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-success-custom" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>¡Excelente!</strong> Has superado el objetivo de ingresos mensuales en un 15%.
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos Principales -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div>
+                            <h5 class="chart-title"><i class="fas fa-chart-area me-2"></i>Evolución de Ingresos</h5>
+                            <p class="chart-subtitle">Tendencia de ingresos en los últimos 12 meses</p>
+                        </div>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-custom" onclick="changeChartPeriod('6m')">6M</button>
+                            <button type="button" class="btn btn-outline-custom active" onclick="changeChartPeriod('12m')">12M</button>
+                            <button type="button" class="btn btn-outline-custom" onclick="changeChartPeriod('24m')">24M</button>
+                        </div>
+                    </div>
+                    <canvas id="revenueChart" height="300"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div>
+                            <h5 class="chart-title"><i class="fas fa-chart-pie me-2"></i>Distribución de Ingresos</h5>
+                            <p class="chart-subtitle">Por categorías de producto</p>
+                        </div>
+                    </div>
+                    <canvas id="distributionChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Objetivos y Metas -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div>
+                            <h5 class="chart-title"><i class="fas fa-bullseye me-2"></i>Objetivos del Trimestre</h5>
+                            <p class="chart-subtitle">Progreso hacia las metas establecidas</p>
+                        </div>
+                        <button class="btn btn-outline-custom btn-sm" onclick="showGoalModal()">
+                            <i class="fas fa-plus me-1"></i>Nuevo Objetivo
+                        </button>
+                    </div>
+                    
+                    <div class="row" id="goalsList">
+                        <!-- Los objetivos se cargarán aquí dinámicamente -->
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div>
+                            <h5 class="chart-title"><i class="fas fa-tachometer-alt me-2"></i>Progreso General</h5>
+                            <p class="chart-subtitle">Rendimiento global del negocio</p>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="progress-ring" id="overallProgress">
+                            <svg>
+                                <circle class="progress-ring-circle progress-ring-bg" cx="60" cy="60" r="52"></circle>
+                                <circle class="progress-ring-circle progress-ring-progress" cx="60" cy="60" r="52" 
+                                        stroke-dasharray="0 327" stroke-dashoffset="0"></circle>
+                            </svg>
+                            <div class="progress-ring-text">78%</div>
+                        </div>
+                        <h6 class="mt-3 mb-1">Rendimiento Global</h6>
+                        <p class="text-muted small">Basado en todos los KPIs</p>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="small">Ventas</span>
+                            <span class="small text-success">85%</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: 85%"></div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="small">Marketing</span>
+                            <span class="small text-warning">72%</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 6px;">
+                            <div class="progress-bar bg-warning" style="width: 72%"></div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="small">Operaciones</span>
+                            <span class="small text-info">76%</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 6px;">
+                            <div class="progress-bar bg-info" style="width: 76%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Análisis Comparativo -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="comparison-table">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Métrica</th>
+                                <th>Período Actual</th>
+                                <th>Período Anterior</th>
+                                <th>Cambio</th>
+                                <th>Tendencia</th>
+                                <th>Objetivo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comparisonTableBody">
+                            <!-- Los datos se cargarán dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline de Hitos -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="timeline-container">
+                    <h5 class="mb-4"><i class="fas fa-history me-2"></i>Timeline de Hitos Empresariales</h5>
+                    <div class="timeline" id="milestoneTimeline">
+                        <!-- Los hitos se cargarán dinámicamente -->
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div>
+                            <h5 class="chart-title"><i class="fas fa-users me-2"></i>Crecimiento del Equipo</h5>
+                            <p class="chart-subtitle">Evolución de la plantilla</p>
+                        </div>
+                    </div>
+                    <canvas id="teamGrowthChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exportar Reporte -->
+        <div class="export-section">
+            <h4><i class="fas fa-file-export me-2"></i>Exportar Análisis Completo</h4>
+            <p class="mb-4">Genera reportes detallados de tu progreso empresarial</p>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="btn-group w-100" role="group">
+                        <button type="button" class="btn btn-light" onclick="exportToPDF()">
+                            <i class="fas fa-file-pdf me-2"></i>PDF Ejecutivo
+                        </button>
+                        <button type="button" class="btn btn-light" onclick="exportToExcel()">
+                            <i class="fas fa-file-excel me-2"></i>Excel Detallado
+                        </button>
+                        <button type="button" class="btn btn-light" onclick="exportToPowerPoint()">
+                            <i class="fas fa-file-powerpoint me-2"></i>Presentación
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nuevo Objetivo -->
+    <div class="modal fade" id="goalModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nuevo Objetivo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="goalForm">
+                        <div class="mb-3">
+                            <label for="goalTitle" class="form-label">Título del Objetivo</label>
+                            <input type="text" class="form-control" id="goalTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="goalDescription" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="goalDescription" rows="3"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="goalTarget" class="form-label">Meta</label>
+                                <input type="number" class="form-control" id="goalTarget" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="goalUnit" class="form-label">Unidad</label>
+                                <select class="form-select" id="goalUnit">
+                                    <option value="€">Euros (€)</option>
+                                    <option value="units">Unidades</option>
+                                    <option value="%">Porcentaje (%)</option>
+                                    <option value="custom">Personalizado</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="goalDeadline" class="form-label">Fecha Límite</label>
+                                <input type="date" class="form-control" id="goalDeadline" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="goalPriority" class="form-label">Prioridad</label>
+                                <select class="form-select" id="goalPriority">
+                                    <option value="low">Baja</option>
+                                    <option value="medium" selected>Media</option>
+                                    <option value="high">Alta</option>
+                                    <option value="critical">Crítica</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary-custom" onclick="saveGoal()">
+                        <i class="fas fa-save me-2"></i>Guardar Objetivo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Estado global de la aplicación
+        let currentPeriod = 'quarter';
+        let currentComparison = 'previous';
+        let charts = {};
+        let goals = [];
+        let milestones = [];
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            initializeCharts();
+            loadGoals();
+            loadMilestones();
+            updateProgressRing();
+        });
+
+        // Cargar datos principales
+        function loadData() {
+            // Simular carga de datos
+            showLoading();
+            
+            setTimeout(() => {
+                updateMetrics();
+                updateComparisonTable();
+                hideLoading();
+            }, 1000);
+        }
+
+        // Mostrar/ocultar loading
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.remove('d-none');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('d-none');
+        }
+
+        // Actualizar métricas principales
+        function updateMetrics() {
+            const metrics = {
+                revenue: { value: '€125,450', change: '+15.3%', positive: true },
+                customers: { value: '1,247', change: '+8.7%', positive: true },
+                conversion: { value: '3.2%', change: '-0.5%', positive: false },
+                profit: { value: '€28,920', change: '+23.1%', positive: true }
+            };
+
+            Object.keys(metrics).forEach(key => {
+                const metric = metrics[key];
+                document.getElementById(`${key}Metric`).textContent = metric.value;
+                
+                const changeElement = document.getElementById(`${key}Change`);
+                changeElement.className = `metric-change ${metric.positive ? 'positive' : 'negative'}`;
+                changeElement.innerHTML = `
+                    <i class="fas fa-arrow-${metric.positive ? 'up' : 'down'} me-1"></i>
+                    ${metric.change} vs mes anterior
+                `;
+            });
+        }
+
+        // Inicializar gráficos
+        function initializeCharts() {
+            initRevenueChart();
+            initDistributionChart();
+            initTeamGrowthChart();
+        }
+
+        // Gráfico de ingresos
+        function initRevenueChart() {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            
+            charts.revenue = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                    datasets: [{
+                        label: 'Ingresos 2025',
+                        data: [85000, 92000, 88000, 105000, 98000, 125450, 0, 0, 0, 0, 0, 0],
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }, {
+                        label: 'Ingresos 2024',
+                        data: [75000, 78000, 82000, 85000, 88000, 92000, 95000, 98000, 102000, 105000, 108000, 112000],
+                        borderColor: '#95a5a6',
+                        backgroundColor: 'rgba(149, 165, 166, 0.1)',
+                        tension: 0.4,
+                        fill: false,
+                        borderDash: [5, 5],
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            borderColor: '#3498db',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '€' + (value / 1000) + 'K';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfico de distribución
+        function initDistributionChart() {
+            const ctx = document.getElementById('distributionChart').getContext('2d');
+            
+            charts.distribution = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Productos Digitales', 'Consultoría', 'Formación', 'Licencias', 'Otros'],
+                    datasets: [{
+                        data: [45, 25, 15, 10, 5],
+                        backgroundColor: [
+                            '#3498db',
+                            '#2ecc71',
+                            '#f39c12',
+                            '#e74c3c',
+                            '#9b59b6'
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfico de crecimiento del equipo
+        function initTeamGrowthChart() {
+            const ctx = document.getElementById('teamGrowthChart').getContext('2d');
+            
+            charts.teamGrowth = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                    datasets: [{
+                        label: 'Empleados',
+                        data: [12, 15, 18, 22],
+                        backgroundColor: '#3498db',
+                        borderColor: '#2980b9',
+                        borderWidth: 1,
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 5
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Cargar objetivos
+        function loadGoals() {
+            goals = [
+                {
+                    id: 1,
+                    title: 'Aumentar ingresos mensuales',
+                    description: 'Objetivo de alcanzar €150,000 en ingresos mensuales',
+                    target: 150000,
+                    current: 125450,
+                    unit: '€',
+                    deadline: '2025-09-30',
+                    priority: 'high',
+                    status: 'in-progress'
+                },
+                {
+                    id: 2,
+                    title: 'Conseguir 1,500 clientes activos',
+                    description: 'Ampliar la base de clientes activos hasta 1,500',
+                    target: 1500,
+                    current: 1247,
+                    unit: 'units',
+                    deadline: '2025-12-31',
+                    priority: 'medium',
+                    status: 'in-progress'
+                },
+                {
+                    id: 3,
+                    title: 'Mejorar tasa de conversión',
+                    description: 'Aumentar la tasa de conversión al 5%',
+                    target: 5,
+                    current: 3.2,
+                    unit: '%',
+                    deadline: '2025-08-31',
+                    priority: 'high',
+                    status: 'in-progress'
+                },
+                {
+                    id: 4,
+                    title: 'Lanzar nuevo producto',
+                    description: 'Completar el desarrollo y lanzamiento del nuevo producto',
+                    target: 100,
+                    current: 75,
+                    unit: '%',
+                    deadline: '2025-07-15',
+                    priority: 'critical',
+                    status: 'in-progress'
+                }
+            ];
+
+            renderGoals();
+        }
+
+        // Renderizar objetivos
+        function renderGoals() {
+            const goalsList = document.getElementById('goalsList');
+            goalsList.innerHTML = '';
+
+            goals.forEach(goal => {
+                const progress = Math.min((goal.current / goal.target) * 100, 100);
+                const isOverdue = new Date(goal.deadline) < new Date() && goal.status !== 'completed';
+                
+                const goalElement = document.createElement('div');
+                goalElement.className = 'col-12 mb-3';
+                goalElement.innerHTML = `
+                    <div class="goal-card">
+                        <div class="goal-header">
+                            <h6 class="goal-title">${goal.title}</h6>
+                            <span class="goal-status ${goal.status}">${getStatusText(goal.status)}</span>
+                        </div>
+                        <div class="goal-progress">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>${goal.current} ${getUnitText(goal.unit)}</small>
+                                <small>${goal.target} ${getUnitText(goal.unit)} (${progress.toFixed(1)}%)</small>
+                            </div>
+                            <div class="goal-progress-bar">
+                                <div class="goal-progress-fill" style="width: ${progress}%"></div>
+                            </div>
+                        </div>
+                        <div class="goal-meta">
+                            <span><i class="fas fa-calendar me-1"></i>${formatDate(goal.deadline)}</span>
+                            <span class="badge bg-${getPriorityColor(goal.priority)}">${getPriorityText(goal.priority)}</span>
+                        </div>
+                        ${isOverdue ? '<div class="text-danger small mt-2"><i class="fas fa-exclamation-triangle me-1"></i>Vencido</div>' : ''}
+                    </div>
+                `;
+                goalsList.appendChild(goalElement);
+            });
+        }
+
+        // Cargar hitos
+        function loadMilestones() {
+            milestones = [
+                {
+                    date: '2025-06-10',
+                    title: 'Lanzamiento campaña marketing digital',
+                    description: 'Inicio de la nueva campaña de marketing digital en redes sociales y Google Ads.'
+                },
+                {
+                    date: '2025-05-28',
+                    title: 'Contratación de nuevo equipo',
+                    description: 'Incorporación de 3 nuevos desarrolladores y 1 especialista en marketing.'
+                },
+                {
+                    date: '2025-05-15',
+                    title: 'Superación de objetivo Q1',
+                    description: 'Se ha superado el objetivo de ingresos del primer trimestre en un 12%.'
+                },
+                {
+                    date: '2025-04-20',
+                    title: 'Nuevo partnership estratégico',
+                    description: 'Acuerdo de colaboración firmado con TechPartner Solutions para expandir mercado.'
+                }
+            ];
+
+            renderMilestones();
+        }
+
+        // Renderizar hitos
+        function renderMilestones() {
+            const timeline = document.getElementById('milestoneTimeline');
+            timeline.innerHTML = '';
+
+            milestones.forEach(milestone => {
+                const timelineItem = document.createElement('div');
+                timelineItem.className = 'timeline-item';
+                timelineItem.innerHTML = `
+                    <div class="timeline-date">${formatDate(milestone.date)}</div>
+                    <div class="timeline-title">${milestone.title}</div>
+                    <div class="timeline-description">${milestone.description}</div>
+                `;
+                timeline.appendChild(timelineItem);
+            });
+        }
+
+        // Actualizar tabla comparativa
+        function updateComparisonTable() {
+            const comparisons = [
+                {
+                    metric: 'Ingresos Totales',
+                    current: '€125,450',
+                    previous: '€108,750',
+                    change: '+15.3%',
+                    trend: 'up',
+                    target: '€150,000'
+                },
+                {
+                    metric: 'Clientes Activos',
+                    current: '1,247',
+                    previous: '1,147',
+                    change: '+8.7%',
+                    trend: 'up',
+                    target: '1,500'
+                },
+                {
+                    metric: 'Tasa de Conversión',
+                    current: '3.2%',
+                    previous: '3.7%',
+                    change: '-0.5%',
+                    trend: 'down',
+                    target: '5.0%'
+                },
+                {
+                    metric: 'Coste de Adquisición',
+                    current: '€45',
+                    previous: '€52',
+                    change: '-13.5%',
+                    trend: 'up',
+                    target: '€40'
+                },
+                {
+                    metric: 'Valor Vida Cliente',
+                    current: '€1,250',
+                    previous: '€1,180',
+                    change: '+5.9%',
+                    trend: 'up',
+                    target: '€1,500'
+                }
+            ];
+
+            const tbody = document.getElementById('comparisonTableBody');
+            tbody.innerHTML = '';
+
+            comparisons.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${item.metric}</strong></td>
+                    <td>${item.current}</td>
+                    <td>${item.previous}</td>
+                    <td>
+                        <span class="trend-indicator trend-${item.trend}">
+                            <i class="fas fa-arrow-${item.trend === 'up' ? 'up' : 'down'} me-1"></i>
+                            ${item.change}
+                        </span>
+                    </td>
+                    <td>
+                        <i class="fas fa-chart-line text-${item.trend === 'up' ? 'success' : 'danger'}"></i>
+                    </td>
+                    <td>${item.target}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Actualizar anillo de progreso
+        function updateProgressRing() {
+            const percentage = 78;
+            const circle = document.querySelector('.progress-ring-progress');
+            const radius = 52;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (percentage / 100) * circumference;
+            
+            circle.style.strokeDasharray = `${circumference} ${circumference}`;
+            circle.style.strokeDashoffset = offset;
+        }
+
+        // Funciones de cambio de período
+        function updatePeriod() {
+            currentPeriod = document.getElementById('periodFilter').value;
+            loadData();
+        }
+
+        function updateComparison() {
+            currentComparison = document.getElementById('compareFilter').value;
+            updateComparisonTable();
+        }
+
+        function changeChartPeriod(period) {
+            // Actualizar botones activos
+            document.querySelectorAll('.chart-header .btn-group .btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Actualizar gráfico con nuevos datos
+            // En producción, esto haría una llamada a la API
+            console.log('Cambiando período del gráfico a:', period);
+        }
+
+        // Modal de objetivos
+        function showGoalModal() {
+            document.getElementById('goalForm').reset();
+            
+            // Establecer fecha mínima como hoy
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('goalDeadline').min = today;
+            
+            const modal = new bootstrap.Modal(document.getElementById('goalModal'));
+            modal.show();
+        }
+
+        function saveGoal() {
+            const formData = new FormData(document.getElementById('goalForm'));
+            
+            const newGoal = {
+                id: Date.now(),
+                title: formData.get('goalTitle'),
+                description: formData.get('goalDescription'),
+                target: parseFloat(formData.get('goalTarget')),
+                current: 0,
+                unit: formData.get('goalUnit'),
+                deadline: formData.get('goalDeadline'),
+                priority: formData.get('goalPriority'),
+                status: 'pending'
+            };
+
+            if (!newGoal.title || !newGoal.target || !newGoal.deadline) {
+                alert('Por favor, completa todos los campos obligatorios.');
+                return;
+            }
+
+            goals.push(newGoal);
+            renderGoals();
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('goalModal'));
+            modal.hide();
+            
+            showNotification('Objetivo creado correctamente', 'success');
+        }
+
+        // Funciones de exportación
+        function exportReport() {
+            showNotification('Preparando reporte...', 'info');
+            // Simular generación de reporte
+            setTimeout(() => {
+                showNotification('Reporte generado correctamente', 'success');
+            }, 2000);
+        }
+
+        function exportToPDF() {
+            showNotification('Generando PDF ejecutivo...', 'info');
+            // Implementar exportación a PDF
+        }
+
+        function exportToExcel() {
+            showNotification('Generando Excel detallado...', 'info');
+            // Implementar exportación a Excel
+        }
+
+        function exportToPowerPoint() {
+            showNotification('Generando presentación...', 'info');
+            // Implementar exportación a PowerPoint
+        }
+
+        function refreshData() {
+            showNotification('Actualizando datos...', 'info');
+            loadData();
+        }
+
+        // Funciones auxiliares
+        function getStatusText(status) {
+            const statusTexts = {
+                'pending': 'Pendiente',
+                'in-progress': 'En Progreso',
+                'completed': 'Completado',
+                'overdue': 'Vencido'
+            };
+            return statusTexts[status] || status;
+        }
+
+        function getUnitText(unit) {
+            const unitTexts = {
+                '€': '€',
+                'units': '',
+                '%': '%',
+                'custom': ''
+            };
+            return unitTexts[unit] || unit;
+        }
+
+        function getPriorityText(priority) {
+            const priorityTexts = {
+                'low': 'Baja',
+                'medium': 'Media',
+                'high': 'Alta',
+                'critical': 'Crítica'
+            };
+            return priorityTexts[priority] || priority;
+        }
+
+        function getPriorityColor(priority) {
+            const priorityColors = {
+                'low': 'success',
+                'medium': 'info',
+                'high': 'warning',
+                'critical': 'danger'
+            };
+            return priorityColors[priority] || 'secondary';
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+
+        function showNotification(message, type = 'info') {
+            // Crear notificación toast
+            const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+            
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type === 'info' ? 'primary' : type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+            });
+        }
+
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+            return container;
+        }
+    </script>
+</body>
+</html>

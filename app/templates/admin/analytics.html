@@ -1,0 +1,1740 @@
+{% extends "layouts/admin.html" %}
+
+{% block title %}Analytics y Reportes{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 15px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill-opacity='0.1'%3E%3Cpolygon fill='%23ffffff' points='50 0 60 40 100 50 60 60 50 100 40 60 0 50 40 40'/%3E%3C/g%3E%3C/svg%3E") repeat;
+        animation: floatPattern 20s linear infinite;
+    }
+    
+    @keyframes floatPattern {
+        0% { transform: translateX(0) translateY(0); }
+        100% { transform: translateX(-100px) translateY(-100px); }
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 50%;
+        height: 100%;
+        background: rgba(255,255,255,0.1);
+        transform: skewX(-15deg) translateX(100%);
+        transition: transform 0.6s ease;
+    }
+    
+    .stats-card:hover::before {
+        transform: skewX(-15deg) translateX(-100%);
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
+    }
+    
+    .stats-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        backdrop-filter: blur(10px);
+    }
+    
+    .stats-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .stats-change {
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 20px;
+        background: rgba(255,255,255,0.2);
+        backdrop-filter: blur(10px);
+        position: relative;
+        z-index: 2;
+    }
+    
+    .chart-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        border: none;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .chart-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+    
+    .chart-header {
+        border-bottom: 2px solid #f8f9fa;
+        padding-bottom: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+    
+    .chart-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    
+    .chart-container.large {
+        height: 400px;
+    }
+    
+    .chart-container.small {
+        height: 200px;
+    }
+    
+    .filter-panel {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 2px solid #e9ecef;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        transform: translateY(-1px);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .metric-item {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .metric-item:hover {
+        transform: scale(1.05);
+    }
+    
+    .metric-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+    
+    .metric-label {
+        font-size: 0.85rem;
+        opacity: 0.9;
+    }
+    
+    .progress-ring {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto;
+    }
+    
+    .progress-ring-circle {
+        transition: stroke-dasharray 0.6s ease;
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+    }
+    
+    .data-table {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .data-table th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.875rem;
+        border: none;
+    }
+    
+    .data-table td {
+        border-bottom: 1px solid #f1f3f4;
+        vertical-align: middle;
+        padding: 1rem 0.75rem;
+    }
+    
+    .data-table tbody tr:hover {
+        background: rgba(102, 126, 234, 0.05);
+    }
+    
+    .trend-indicator {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.5rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .trend-up {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+    }
+    
+    .trend-down {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+    
+    .trend-stable {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+    
+    .export-panel {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .quick-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .nav-tabs .nav-link {
+        border-radius: 10px 10px 0 0;
+        border: none;
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+        color: #6c757d;
+        font-weight: 600;
+        margin-right: 0.25rem;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-tabs .nav-link.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .tab-content {
+        background: white;
+        border-radius: 0 15px 15px 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .real-time-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    
+    .real-time-indicator::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        background: #28a745;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+    .comparison-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .comparison-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        transform: translate(30px, -30px);
+    }
+    
+    .donut-chart-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 2rem;
+    }
+    
+    .donut-legend {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        padding: 0.5rem;
+        border-radius: 8px;
+        transition: background 0.2s ease;
+    }
+    
+    .legend-item:hover {
+        background: rgba(102, 126, 234, 0.05);
+    }
+    
+    .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+        margin-right: 0.75rem;
+    }
+    
+    .legend-label {
+        flex: 1;
+        font-weight: 500;
+    }
+    
+    .legend-value {
+        font-weight: 600;
+        color: #667eea;
+    }
+    
+    .heatmap-container {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        overflow-x: auto;
+    }
+    
+    .heatmap-cell {
+        width: 30px;
+        height: 30px;
+        border-radius: 4px;
+        display: inline-block;
+        margin: 1px;
+        transition: all 0.2s ease;
+    }
+    
+    .heatmap-cell:hover {
+        transform: scale(1.2);
+        z-index: 10;
+        position: relative;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(102, 126, 234, 0.3);
+        border-radius: 50%;
+        border-top-color: #667eea;
+        animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header" data-aos="fade-down">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-0">
+                        <i class="fas fa-chart-line me-3"></i>
+                        Analytics y Reportes
+                    </h1>
+                    <nav aria-label="breadcrumb" class="mt-2">
+                        <ol class="breadcrumb text-white-50">
+                            <li class="breadcrumb-item">
+                                <a href="{{ url_for('admin.dashboard') }}" class="text-white-50">
+                                    <i class="fas fa-home"></i> Dashboard
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item active text-white" aria-current="page">
+                                Analytics
+                            </li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="real-time-indicator">
+                        <span>Datos en tiempo real</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Panel -->
+    <div class="filter-panel" data-aos="fade-up">
+        <form id="analyticsFilters">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="dateRange" class="form-label fw-bold">
+                        <i class="fas fa-calendar-alt me-1"></i>Periodo
+                    </label>
+                    <select class="form-select" id="dateRange" name="dateRange">
+                        <option value="7d">Últimos 7 días</option>
+                        <option value="30d" selected>Últimos 30 días</option>
+                        <option value="90d">Últimos 3 meses</option>
+                        <option value="1y">Último año</option>
+                        <option value="custom">Personalizado</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="startDate" class="form-label fw-bold">
+                        <i class="fas fa-calendar-plus me-1"></i>Desde
+                    </label>
+                    <input type="date" class="form-control" id="startDate" name="startDate" disabled>
+                </div>
+                <div class="col-md-2">
+                    <label for="endDate" class="form-label fw-bold">
+                        <i class="fas fa-calendar-minus me-1"></i>Hasta
+                    </label>
+                    <input type="date" class="form-control" id="endDate" name="endDate" disabled>
+                </div>
+                <div class="col-md-2">
+                    <label for="organizationFilter" class="form-label fw-bold">
+                        <i class="fas fa-building me-1"></i>Organización
+                    </label>
+                    <select class="form-select" id="organizationFilter" name="organizationFilter">
+                        <option value="">Todas</option>
+                        {% for org in organizations %}
+                        <option value="{{ org.id }}">{{ org.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="programFilter" class="form-label fw-bold">
+                        <i class="fas fa-rocket me-1"></i>Programa
+                    </label>
+                    <select class="form-select" id="programFilter" name="programFilter">
+                        <option value="">Todos</option>
+                        {% for program in programs %}
+                        <option value="{{ program.id }}">{{ program.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label fw-bold text-transparent">Acciones</label>
+                    <button type="button" class="btn btn-primary w-100" onclick="updateAnalytics()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="quick-stats" data-aos="fade-up" data-aos-delay="100">
+        <div class="stats-card">
+            <div class="stats-icon">
+                <i class="fas fa-users fa-lg"></i>
+            </div>
+            <div class="stats-value" id="totalParticipants">{{ total_participants or 0 }}</div>
+            <div class="stats-label">Total Participantes</div>
+            <div class="stats-change">
+                <i class="fas fa-arrow-up"></i> +12% vs mes anterior
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon">
+                <i class="fas fa-rocket fa-lg"></i>
+            </div>
+            <div class="stats-value" id="activePrograms">{{ active_programs or 0 }}</div>
+            <div class="stats-label">Programas Activos</div>
+            <div class="stats-change">
+                <i class="fas fa-arrow-up"></i> +8% vs mes anterior
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon">
+                <i class="fas fa-building fa-lg"></i>
+            </div>
+            <div class="stats-value" id="totalOrganizations">{{ total_organizations or 0 }}</div>
+            <div class="stats-label">Organizaciones</div>
+            <div class="stats-change">
+                <i class="fas fa-arrow-up"></i> +5% vs mes anterior
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon">
+                <i class="fas fa-trophy fa-lg"></i>
+            </div>
+            <div class="stats-value" id="successRate">{{ success_rate or 0 }}%</div>
+            <div class="stats-label">Tasa de Éxito</div>
+            <div class="stats-change">
+                <i class="fas fa-arrow-up"></i> +3% vs mes anterior
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon">
+                <i class="fas fa-dollar-sign fa-lg"></i>
+            </div>
+            <div class="stats-value" id="totalRevenue">${{ total_revenue or 0 }}</div>
+            <div class="stats-label">Ingresos Totales</div>
+            <div class="stats-change">
+                <i class="fas fa-arrow-up"></i> +15% vs mes anterior
+            </div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon">
+                <i class="fas fa-graduation-cap fa-lg"></i>
+            </div>
+            <div class="stats-value" id="graduatedEntrepreneurs">{{ graduated_entrepreneurs or 0 }}</div>
+            <div class="stats-label">Emprendedores Graduados</div>
+            <div class="stats-change">
+                <i class="fas fa-arrow-up"></i> +20% vs mes anterior
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Tabs -->
+    <div class="row mt-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="analyticsTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                        <i class="fas fa-chart-pie me-2"></i>Resumen General
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="programs-tab" data-bs-toggle="tab" data-bs-target="#programs" type="button" role="tab">
+                        <i class="fas fa-rocket me-2"></i>Programas
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="participants-tab" data-bs-toggle="tab" data-bs-target="#participants" type="button" role="tab">
+                        <i class="fas fa-users me-2"></i>Participantes
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="financial-tab" data-bs-toggle="tab" data-bs-target="#financial" type="button" role="tab">
+                        <i class="fas fa-chart-line me-2"></i>Financiero
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance" type="button" role="tab">
+                        <i class="fas fa-tachometer-alt me-2"></i>Rendimiento
+                    </button>
+                </li>
+            </ul>
+            <div class="tab-content" id="analyticsTabContent">
+                <!-- Overview Tab -->
+                <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                    <div class="row g-4">
+                        <!-- Participation Trends -->
+                        <div class="col-lg-8">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h5 class="chart-title">
+                                        <i class="fas fa-chart-area me-2"></i>Tendencia de Participación
+                                    </h5>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <input type="radio" class="btn-check" name="participationPeriod" id="participation7d" checked>
+                                        <label class="btn btn-outline-primary" for="participation7d">7D</label>
+                                        <input type="radio" class="btn-check" name="participationPeriod" id="participation30d">
+                                        <label class="btn btn-outline-primary" for="participation30d">30D</label>
+                                        <input type="radio" class="btn-check" name="participationPeriod" id="participation90d">
+                                        <label class="btn btn-outline-primary" for="participation90d">90D</label>
+                                    </div>
+                                </div>
+                                <div class="chart-container large">
+                                    <canvas id="participationTrendChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Program Distribution -->
+                        <div class="col-lg-4">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h5 class="chart-title">
+                                        <i class="fas fa-pie-chart me-2"></i>Distribución de Programas
+                                    </h5>
+                                </div>
+                                <div class="donut-chart-container">
+                                    <div class="chart-container small">
+                                        <canvas id="programDistributionChart"></canvas>
+                                    </div>
+                                    <div class="donut-legend">
+                                        <div class="legend-item">
+                                            <div class="legend-color" style="background: #667eea;"></div>
+                                            <span class="legend-label">Incubación</span>
+                                            <span class="legend-value">45%</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <div class="legend-color" style="background: #764ba2;"></div>
+                                            <span class="legend-label">Aceleración</span>
+                                            <span class="legend-value">30%</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <div class="legend-color" style="background: #f093fb;"></div>
+                                            <span class="legend-label">Mentoría</span>
+                                            <span class="legend-value">15%</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <div class="legend-color" style="background: #f5576c;"></div>
+                                            <span class="legend-label">Otros</span>
+                                            <span class="legend-value">10%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Success Metrics -->
+                        <div class="col-lg-6">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h5 class="chart-title">
+                                        <i class="fas fa-trophy me-2"></i>Métricas de Éxito
+                                    </h5>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <div class="text-center">
+                                            <div class="progress-ring">
+                                                <svg width="120" height="120">
+                                                    <circle class="progress-ring-circle" stroke="#e9ecef" stroke-width="8" fill="transparent" r="52" cx="60" cy="60"/>
+                                                    <circle class="progress-ring-circle" stroke="#667eea" stroke-width="8" fill="transparent" r="52" cx="60" cy="60" stroke-dasharray="327" stroke-dashoffset="98"/>
+                                                </svg>
+                                                <div class="position-absolute top-50 start-50 translate-middle">
+                                                    <div class="h4 mb-0 text-primary">70%</div>
+                                                    <small class="text-muted">Graduación</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-center">
+                                            <div class="progress-ring">
+                                                <svg width="120" height="120">
+                                                    <circle class="progress-ring-circle" stroke="#e9ecef" stroke-width="8" fill="transparent" r="52" cx="60" cy="60"/>
+                                                    <circle class="progress-ring-circle" stroke="#28a745" stroke-width="8" fill="transparent" r="52" cx="60" cy="60" stroke-dasharray="327" stroke-dashoffset="131"/>
+                                                </svg>
+                                                <div class="position-absolute top-50 start-50 translate-middle">
+                                                    <div class="h4 mb-0 text-success">60%</div>
+                                                    <small class="text-muted">Retención</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Geographic Distribution -->
+                        <div class="col-lg-6">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h5 class="chart-title">
+                                        <i class="fas fa-globe me-2"></i>Distribución Geográfica
+                                    </h5>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="geographicChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Programs Tab -->
+                <div class="tab-pane fade" id="programs" role="tabpanel">
+                    <div class="row g-4">
+                        <!-- Program Performance -->
+                        <div class="col-lg-8">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h5 class="chart-title">
+                                        <i class="fas fa-chart-bar me-2"></i>Rendimiento de Programas
+                                    </h5>
+                                </div>
+                                <div class="chart-container large">
+                                    <canvas id="programPerformanceChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Top Programs -->
+                        <div class="col-lg-4">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h5 class="chart-title">
+                                        <i class="fas fa-star me-2"></i>Top Programas
+                                    </h5>
+                                </div>
+                                <div class="data-table">
+                                    <table class="table table-hover mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Programa</th>
+                                                <th>Score</th>
+                                                <th>Trend</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <strong>Startup Accelerator</strong><br>
+                                                    <small class="text-muted">Aceleración</small>
+                                                </td>
+                                                <td><strong>9.2</strong></td>
+                                                <td>
+                                                    <span class="trend-indicator trend-up">
+                                                        <i class="fas fa-arrow-up"></i> +5%
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <strong>Tech Incubator</strong><br>
+                                                    <small class="text-muted">Incubación</small>
+                                                </td>
+                                                <td><strong>8.8</strong></td>
+                                                <td>
+                                                    <span class="trend-indicator trend-up">
+                                                        <i class="fas fa-arrow-up"></i> +3%
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <strong>Business Mentorship</strong><br>
+                                                    <small class="text-muted">Mentoría</small>
+                                                </td>
+                                                <td><strong>8.5</strong></td>
+                                                <td>
+                                                    <span class="trend-indicator trend-stable">
+                                                        <i class="fas fa-minus"></i> 0%
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Program Timeline -->
+                        <div class="col-12">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h5 class="chart-title">
+                                        <i class="fas fa-calendar-alt me-2"></i>Cronograma de Programas
+                                    </h5>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="programTimelineChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Participants Tab -->
+                <div class="tab-pane fade" id="participants" role="tabpanel">
+                    <div class="row g-4">
+                        <!-- Participant Growth -->
+                        <div class="col-lg-8">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h5 class="chart-title">
+                                        <i class="fas fa-user-plus me-2"></i>Crecimiento de Participantes
+                                    </h5>
+                                </div>
+                                <div class="chart-container large">
+                                    <canvas id="participantGrowthChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Demographics -->
+                        <div class="col-lg-4">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h5 class="chart-title">
+                                        <i class="fas fa-users me-2"></i>Demografía
+                                    </h5>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <h6>Por Edad</h6>
+                                        <div class="chart-container small">
+                                            <canvas id="ageDistributionChart"></canvas>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <h6>Por Género</h6>
+                                        <div class="row text-center">
+                                            <div class="col-6">
+                                                <div class="metric-item">
+                                                    <div class="metric-value">60%</div>
+                                                    <div class="metric-label">Masculino</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="metric-item">
+                                                    <div class="metric-value">40%</div>
+                                                    <div class="metric-label">Femenino</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Engagement Heatmap -->
+                        <div class="col-12">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h5 class="chart-title">
+                                        <i class="fas fa-fire me-2"></i>Mapa de Calor de Participación
+                                    </h5>
+                                    <small class="text-muted">Actividad por día de la semana y hora</small>
+                                </div>
+                                <div class="heatmap-container">
+                                    <div class="chart-container">
+                                        <canvas id="engagementHeatmapChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial Tab -->
+                <div class="tab-pane fade" id="financial" role="tabpanel">
+                    <div class="row g-4">
+                        <!-- Revenue Trends -->
+                        <div class="col-lg-8">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h5 class="chart-title">
+                                        <i class="fas fa-chart-line me-2"></i>Tendencias de Ingresos
+                                    </h5>
+                                </div>
+                                <div class="chart-container large">
+                                    <canvas id="revenueTrendsChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Financial KPIs -->
+                        <div class="col-lg-4">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h5 class="chart-title">
+                                        <i class="fas fa-dollar-sign me-2"></i>KPIs Financieros
+                                    </h5>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <div class="comparison-card">
+                                            <h6 class="mb-3">Ingresos Mensuales</h6>
+                                            <div class="h3 mb-2">$125,000</div>
+                                            <div class="d-flex align-items-center">
+                                                <span class="trend-indicator trend-up me-2">
+                                                    <i class="fas fa-arrow-up"></i> +15%
+                                                </span>
+                                                <small>vs mes anterior</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="metric-item">
+                                            <div class="metric-value">$85</div>
+                                            <div class="metric-label">Ingreso por Participante</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="metric-item">
+                                            <div class="metric-value">ROI 320%</div>
+                                            <div class="metric-label">Retorno de Inversión</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cost Analysis -->
+                        <div class="col-12">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h5 class="chart-title">
+                                        <i class="fas fa-calculator me-2"></i>Análisis de Costos
+                                    </h5>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="costAnalysisChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Tab -->
+                <div class="tab-pane fade" id="performance" role="tabpanel">
+                    <div class="row g-4">
+                        <!-- System Performance -->
+                        <div class="col-lg-6">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h5 class="chart-title">
+                                        <i class="fas fa-tachometer-alt me-2"></i>Rendimiento del Sistema
+                                    </h5>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <div class="metric-item">
+                                            <div class="metric-value">99.8%</div>
+                                            <div class="metric-label">Uptime</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-item">
+                                            <div class="metric-value">1.2s</div>
+                                            <div class="metric-label">Tiempo Respuesta</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-item">
+                                            <div class="metric-value">15.2k</div>
+                                            <div class="metric-label">Sesiones Activas</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-item">
+                                            <div class="metric-value">0.01%</div>
+                                            <div class="metric-label">Tasa de Error</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Activity -->
+                        <div class="col-lg-6">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h5 class="chart-title">
+                                        <i class="fas fa-mouse-pointer me-2"></i>Actividad de Usuarios
+                                    </h5>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="userActivityChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Performance Metrics -->
+                        <div class="col-12">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h5 class="chart-title">
+                                        <i class="fas fa-chart-area me-2"></i>Métricas de Rendimiento en Tiempo Real
+                                    </h5>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="performanceMetricsChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Panel -->
+    <div class="export-panel mt-4" data-aos="fade-up" data-aos-delay="300">
+        <h5 class="mb-3">
+            <i class="fas fa-download me-2"></i>Exportar Reportes
+        </h5>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <button type="button" class="btn btn-outline-primary w-100" onclick="exportReport('pdf')">
+                    <i class="fas fa-file-pdf me-2"></i>Reporte PDF
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button type="button" class="btn btn-outline-success w-100" onclick="exportReport('excel')">
+                    <i class="fas fa-file-excel me-2"></i>Excel Completo
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button type="button" class="btn btn-outline-info w-100" onclick="exportReport('csv')">
+                    <i class="fas fa-file-csv me-2"></i>Datos CSV
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button type="button" class="btn btn-outline-warning w-100" onclick="shareReport()">
+                    <i class="fas fa-share-alt me-2"></i>Compartir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/es.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// Initialize AOS
+AOS.init({
+    duration: 800,
+    once: true
+});
+
+// Global chart variables
+let charts = {};
+
+// Chart.js default configuration
+Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+Chart.defaults.color = '#6c757d';
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Select2
+    $('.form-select').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
+    });
+
+    // Initialize date pickers
+    flatpickr('#startDate, #endDate', {
+        locale: 'es',
+        dateFormat: 'Y-m-d',
+        allowInput: true
+    });
+
+    // Date range handler
+    document.getElementById('dateRange').addEventListener('change', function() {
+        const isCustom = this.value === 'custom';
+        document.getElementById('startDate').disabled = !isCustom;
+        document.getElementById('endDate').disabled = !isCustom;
+        
+        if (!isCustom) {
+            updateAnalytics();
+        }
+    });
+
+    // Initialize all charts
+    initializeCharts();
+    
+    // Load initial data
+    updateAnalytics();
+    
+    // Auto-refresh every 5 minutes
+    setInterval(updateAnalytics, 300000);
+});
+
+// Initialize all charts
+function initializeCharts() {
+    // Participation Trend Chart
+    const participationCtx = document.getElementById('participationTrendChart').getContext('2d');
+    charts.participationTrend = new Chart(participationCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Nuevos Participantes',
+                data: [],
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                fill: true,
+                tension: 0.4
+            }, {
+                label: 'Participantes Activos',
+                data: [],
+                borderColor: '#764ba2',
+                backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Program Distribution Chart
+    const programCtx = document.getElementById('programDistributionChart').getContext('2d');
+    charts.programDistribution = new Chart(programCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Incubación', 'Aceleración', 'Mentoría', 'Otros'],
+            datasets: [{
+                data: [45, 30, 15, 10],
+                backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#f5576c'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Geographic Chart
+    const geoCtx = document.getElementById('geographicChart').getContext('2d');
+    charts.geographic = new Chart(geoCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Colombia', 'México', 'Argentina', 'Chile', 'Perú'],
+            datasets: [{
+                label: 'Participantes',
+                data: [120, 95, 80, 65, 45],
+                backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                borderColor: '#667eea',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Program Performance Chart
+    const perfCtx = document.getElementById('programPerformanceChart').getContext('2d');
+    charts.programPerformance = new Chart(perfCtx, {
+        type: 'radar',
+        data: {
+            labels: ['Participación', 'Graduación', 'Satisfacción', 'Retención', 'Empleabilidad'],
+            datasets: [{
+                label: 'Startup Accelerator',
+                data: [9, 8, 9, 7, 8],
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                pointBackgroundColor: '#667eea'
+            }, {
+                label: 'Tech Incubator',
+                data: [8, 9, 8, 8, 7],
+                borderColor: '#764ba2',
+                backgroundColor: 'rgba(118, 75, 162, 0.2)',
+                pointBackgroundColor: '#764ba2'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    min: 0,
+                    max: 10
+                }
+            }
+        }
+    });
+
+    // Program Timeline Chart
+    const timelineCtx = document.getElementById('programTimelineChart').getContext('2d');
+    charts.programTimeline = new Chart(timelineCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Programas Iniciados',
+                data: [3, 2, 4, 1, 3, 2],
+                backgroundColor: 'rgba(102, 126, 234, 0.8)'
+            }, {
+                label: 'Programas Finalizados',
+                data: [2, 3, 2, 4, 1, 3],
+                backgroundColor: 'rgba(118, 75, 162, 0.8)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Participant Growth Chart
+    const growthCtx = document.getElementById('participantGrowthChart').getContext('2d');
+    charts.participantGrowth = new Chart(growthCtx, {
+        type: 'line',
+        data: {
+            labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Crecimiento Acumulado',
+                data: [100, 150, 220, 280, 350, 420],
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Age Distribution Chart
+    const ageCtx = document.getElementById('ageDistributionChart').getContext('2d');
+    charts.ageDistribution = new Chart(ageCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['18-25', '26-35', '36-45', '46+'],
+            datasets: [{
+                data: [35, 40, 20, 5],
+                backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#f5576c']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Engagement Heatmap Chart
+    const heatmapCtx = document.getElementById('engagementHeatmapChart').getContext('2d');
+    charts.engagementHeatmap = new Chart(heatmapCtx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Actividad',
+                data: generateHeatmapData(),
+                backgroundColor: function(context) {
+                    const value = context.parsed.y;
+                    const alpha = value / 24;
+                    return `rgba(102, 126, 234, ${alpha})`;
+                },
+                pointRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    min: 0,
+                    max: 6,
+                    ticks: {
+                        callback: function(value) {
+                            const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+                            return days[value];
+                        }
+                    }
+                },
+                y: {
+                    min: 0,
+                    max: 23,
+                    ticks: {
+                        callback: function(value) {
+                            return value + ':00';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Revenue Trends Chart
+    const revenueCtx = document.getElementById('revenueTrendsChart').getContext('2d');
+    charts.revenueTrends = new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Ingresos ($)',
+                data: [85000, 92000, 88000, 95000, 110000, 125000],
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Cost Analysis Chart
+    const costCtx = document.getElementById('costAnalysisChart').getContext('2d');
+    charts.costAnalysis = new Chart(costCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Personal', 'Infraestructura', 'Marketing', 'Tecnología', 'Operaciones'],
+            datasets: [{
+                label: 'Costos ($)',
+                data: [45000, 15000, 8000, 12000, 7000],
+                backgroundColor: [
+                    'rgba(102, 126, 234, 0.8)',
+                    'rgba(118, 75, 162, 0.8)',
+                    'rgba(240, 147, 251, 0.8)',
+                    'rgba(245, 87, 108, 0.8)',
+                    'rgba(255, 193, 7, 0.8)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // User Activity Chart
+    const activityCtx = document.getElementById('userActivityChart').getContext('2d');
+    charts.userActivity = new Chart(activityCtx, {
+        type: 'line',
+        data: {
+            labels: generateTimeLabels(),
+            datasets: [{
+                label: 'Usuarios Activos',
+                data: generateActivityData(),
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 0
+            }
+        }
+    });
+
+    // Performance Metrics Chart
+    const performanceCtx = document.getElementById('performanceMetricsChart').getContext('2d');
+    charts.performanceMetrics = new Chart(performanceCtx, {
+        type: 'line',
+        data: {
+            labels: generateTimeLabels(),
+            datasets: [{
+                label: 'Tiempo de Respuesta (ms)',
+                data: generatePerformanceData(),
+                borderColor: '#dc3545',
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                fill: true,
+                yAxisID: 'y'
+            }, {
+                label: 'CPU (%)',
+                data: generateCPUData(),
+                borderColor: '#ffc107',
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                fill: true,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 0
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            }
+        }
+    });
+}
+
+// Generate sample data functions
+function generateHeatmapData() {
+    const data = [];
+    for (let day = 0; day < 7; day++) {
+        for (let hour = 0; hour < 24; hour++) {
+            data.push({
+                x: day,
+                y: hour,
+                v: Math.random() * 100
+            });
+        }
+    }
+    return data;
+}
+
+function generateTimeLabels() {
+    const labels = [];
+    const now = new Date();
+    for (let i = 29; i >= 0; i--) {
+        const date = new Date(now.getTime() - i * 60 * 1000);
+        labels.push(date.toLocaleTimeString('es-ES', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        }));
+    }
+    return labels;
+}
+
+function generateActivityData() {
+    const data = [];
+    for (let i = 0; i < 30; i++) {
+        data.push(Math.floor(Math.random() * 1000) + 500);
+    }
+    return data;
+}
+
+function generatePerformanceData() {
+    const data = [];
+    for (let i = 0; i < 30; i++) {
+        data.push(Math.floor(Math.random() * 500) + 200);
+    }
+    return data;
+}
+
+function generateCPUData() {
+    const data = [];
+    for (let i = 0; i < 30; i++) {
+        data.push(Math.floor(Math.random() * 50) + 10);
+    }
+    return data;
+}
+
+// Update analytics data
+function updateAnalytics() {
+    const formData = new FormData(document.getElementById('analyticsFilters'));
+    const params = new URLSearchParams();
+    
+    for (let [key, value] of formData.entries()) {
+        if (value) params.append(key, value);
+    }
+
+    // Show loading state
+    showLoadingState();
+
+    fetch(`{{ url_for("admin.get_analytics_data") }}?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateChartData(data.data);
+            updateKPIs(data.kpis);
+        } else {
+            console.error('Error loading analytics data:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    })
+    .finally(() => {
+        hideLoadingState();
+    });
+}
+
+// Update chart data
+function updateChartData(data) {
+    // Update participation trend
+    if (charts.participationTrend && data.participationTrend) {
+        charts.participationTrend.data.labels = data.participationTrend.labels;
+        charts.participationTrend.data.datasets[0].data = data.participationTrend.newParticipants;
+        charts.participationTrend.data.datasets[1].data = data.participationTrend.activeParticipants;
+        charts.participationTrend.update();
+    }
+
+    // Update other charts similarly...
+}
+
+// Update KPIs
+function updateKPIs(kpis) {
+    if (kpis) {
+        document.getElementById('totalParticipants').textContent = kpis.totalParticipants || 0;
+        document.getElementById('activePrograms').textContent = kpis.activePrograms || 0;
+        document.getElementById('totalOrganizations').textContent = kpis.totalOrganizations || 0;
+        document.getElementById('successRate').textContent = (kpis.successRate || 0) + '%';
+        document.getElementById('totalRevenue').textContent = '$' + (kpis.totalRevenue || 0).toLocaleString();
+        document.getElementById('graduatedEntrepreneurs').textContent = kpis.graduatedEntrepreneurs || 0;
+    }
+}
+
+// Show loading state
+function showLoadingState() {
+    const loadingElements = document.querySelectorAll('.stats-value');
+    loadingElements.forEach(element => {
+        element.innerHTML = '<div class="loading-spinner"></div>';
+    });
+}
+
+// Hide loading state
+function hideLoadingState() {
+    // Loading will be hidden when KPIs are updated
+}
+
+// Export functions
+function exportReport(format) {
+    const formData = new FormData(document.getElementById('analyticsFilters'));
+    const params = new URLSearchParams();
+    
+    for (let [key, value] of formData.entries()) {
+        if (value) params.append(key, value);
+    }
+    params.append('format', format);
+
+    window.open(`{{ url_for("admin.export_analytics") }}?${params.toString()}`, '_blank');
+}
+
+function shareReport() {
+    Swal.fire({
+        title: 'Compartir Reporte',
+        html: `
+            <div class="mb-3">
+                <label for="shareEmail" class="form-label">Email del destinatario:</label>
+                <input type="email" class="form-control" id="shareEmail" placeholder="usuario@ejemplo.com">
+            </div>
+            <div class="mb-3">
+                <label for="shareMessage" class="form-label">Mensaje (opcional):</label>
+                <textarea class="form-control" id="shareMessage" rows="3" placeholder="Mensaje personalizado..."></textarea>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Enviar',
+        cancelButtonText: 'Cancelar',
+        preConfirm: () => {
+            const email = document.getElementById('shareEmail').value;
+            const message = document.getElementById('shareMessage').value;
+            
+            if (!email) {
+                Swal.showValidationMessage('Por favor ingresa un email válido');
+                return false;
+            }
+            
+            return { email, message };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Send report via email
+            fetch('{{ url_for("admin.share_analytics_report") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    email: result.value.email,
+                    message: result.value.message,
+                    filters: Object.fromEntries(new FormData(document.getElementById('analyticsFilters')))
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('¡Enviado!', 'El reporte ha sido enviado correctamente.', 'success');
+                } else {
+                    Swal.fire('Error', 'No se pudo enviar el reporte.', 'error');
+                }
+            });
+        }
+    });
+}
+
+// Real-time updates for performance metrics
+setInterval(() => {
+    if (charts.userActivity && charts.performanceMetrics) {
+        // Add new data point
+        const now = new Date();
+        const timeLabel = now.toLocaleTimeString('es-ES', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        
+        // User activity
+        charts.userActivity.data.labels.push(timeLabel);
+        charts.userActivity.data.datasets[0].data.push(Math.floor(Math.random() * 1000) + 500);
+        
+        // Keep only last 30 points
+        if (charts.userActivity.data.labels.length > 30) {
+            charts.userActivity.data.labels.shift();
+            charts.userActivity.data.datasets[0].data.shift();
+        }
+        
+        charts.userActivity.update('none');
+        
+        // Performance metrics
+        charts.performanceMetrics.data.labels.push(timeLabel);
+        charts.performanceMetrics.data.datasets[0].data.push(Math.floor(Math.random() * 500) + 200);
+        charts.performanceMetrics.data.datasets[1].data.push(Math.floor(Math.random() * 50) + 10);
+        
+        if (charts.performanceMetrics.data.labels.length > 30) {
+            charts.performanceMetrics.data.labels.shift();
+            charts.performanceMetrics.data.datasets[0].data.shift();
+            charts.performanceMetrics.data.datasets[1].data.shift();
+        }
+        
+        charts.performanceMetrics.update('none');
+    }
+}, 10000); // Update every 10 seconds
+</script>
+{% endblock %}

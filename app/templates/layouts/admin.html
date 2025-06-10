@@ -1,0 +1,1277 @@
+{% extends "base.html" %}
+
+{# =========================================================================
+   ADMIN LAYOUT - Layout específico para panel administrativo
+   Ecosistema de Emprendimiento
+   ========================================================================= #}
+
+{% block title %}Panel Administrativo - {{ super() }}{% endblock %}
+
+{% block extra_css %}
+{{ super() }}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" rel="stylesheet">
+<style>
+  /* ========================================================================= 
+     ADMIN LAYOUT STYLES
+     ========================================================================= */
+  
+  /* Variables CSS */
+  :root {
+    --admin-sidebar-width: 280px;
+    --admin-sidebar-collapsed-width: 80px;
+    --admin-header-height: 70px;
+    --admin-primary: #2c3e50;
+    --admin-secondary: #34495e;
+    --admin-accent: #3498db;
+    --admin-success: #27ae60;
+    --admin-warning: #f39c12;
+    --admin-danger: #e74c3c;
+    --admin-info: #17a2b8;
+    --admin-light: #ecf0f1;
+    --admin-dark: #2c3e50;
+    --admin-sidebar-bg: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+    --admin-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    --admin-shadow-lg: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Layout Principal */
+  .admin-wrapper {
+    display: flex;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  
+  /* Sidebar */
+  .admin-sidebar {
+    width: var(--admin-sidebar-width);
+    background: var(--admin-sidebar-bg);
+    color: white;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: fixed;
+    height: 100vh;
+    z-index: 1000;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-shadow: var(--admin-shadow-lg);
+  }
+  
+  .admin-sidebar.collapsed {
+    width: var(--admin-sidebar-collapsed-width);
+  }
+  
+  .admin-sidebar::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .admin-sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .admin-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+  }
+  
+  /* Logo del Sidebar */
+  .admin-sidebar-brand {
+    display: flex;
+    align-items: center;
+    padding: 1.5rem 1.25rem;
+    text-decoration: none;
+    color: white;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+  }
+  
+  .admin-sidebar-brand:hover {
+    color: var(--admin-accent);
+    text-decoration: none;
+  }
+  
+  .admin-sidebar-brand .brand-icon {
+    font-size: 2rem;
+    margin-right: 1rem;
+    transition: all 0.3s ease;
+  }
+  
+  .admin-sidebar.collapsed .admin-sidebar-brand .brand-text {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+  }
+  
+  .admin-sidebar.collapsed .admin-sidebar-brand .brand-icon {
+    margin-right: 0;
+  }
+  
+  /* Navegación del Sidebar */
+  .admin-sidebar-nav {
+    padding: 1rem 0;
+  }
+  
+  .admin-nav-section {
+    margin-bottom: 2rem;
+  }
+  
+  .admin-nav-section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 0 1.25rem 0.5rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+  }
+  
+  .admin-sidebar.collapsed .admin-nav-section-title {
+    opacity: 0;
+    height: 0;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .admin-nav-item {
+    position: relative;
+  }
+  
+  .admin-nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.875rem 1.25rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .admin-nav-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    text-decoration: none;
+    transform: translateX(5px);
+  }
+  
+  .admin-nav-link.active {
+    background: var(--admin-accent);
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .admin-nav-link.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: white;
+  }
+  
+  .admin-nav-icon {
+    font-size: 1.125rem;
+    width: 24px;
+    margin-right: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+  
+  .admin-nav-text {
+    flex: 1;
+    transition: all 0.3s ease;
+  }
+  
+  .admin-sidebar.collapsed .admin-nav-text {
+    opacity: 0;
+    width: 0;
+    margin: 0;
+  }
+  
+  .admin-sidebar.collapsed .admin-nav-icon {
+    margin-right: 0;
+  }
+  
+  /* Badge de notificaciones */
+  .admin-nav-badge {
+    background: var(--admin-danger);
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 50px;
+    min-width: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+  
+  .admin-sidebar.collapsed .admin-nav-badge {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    transform: scale(0.8);
+  }
+  
+  /* Dropdown del sidebar */
+  .admin-nav-dropdown {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  
+  .admin-nav-dropdown.show {
+    max-height: 500px;
+  }
+  
+  .admin-nav-dropdown .admin-nav-link {
+    padding-left: 3.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .admin-nav-dropdown-toggle::after {
+    content: '\f107';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    margin-left: auto;
+    transition: transform 0.3s ease;
+  }
+  
+  .admin-nav-dropdown-toggle.collapsed::after {
+    transform: rotate(-90deg);
+  }
+  
+  /* Área principal */
+  .admin-main {
+    flex: 1;
+    margin-left: var(--admin-sidebar-width);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #f8f9fa;
+    min-height: 100vh;
+  }
+  
+  .admin-main.expanded {
+    margin-left: var(--admin-sidebar-collapsed-width);
+  }
+  
+  /* Header del admin */
+  .admin-header {
+    background: white;
+    height: var(--admin-header-height);
+    display: flex;
+    align-items: center;
+    padding: 0 2rem;
+    box-shadow: var(--admin-shadow);
+    position: sticky;
+    top: 0;
+    z-index: 999;
+  }
+  
+  .admin-header-toggle {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: var(--admin-dark);
+    margin-right: 1rem;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.3s ease;
+  }
+  
+  .admin-header-toggle:hover {
+    background: var(--admin-light);
+  }
+  
+  .admin-header-title {
+    flex: 1;
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--admin-dark);
+  }
+  
+  .admin-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  /* Breadcrumb personalizado */
+  .admin-breadcrumb {
+    background: transparent;
+    padding: 1rem 2rem 0;
+    margin-bottom: 0;
+  }
+  
+  .admin-breadcrumb .breadcrumb {
+    background: white;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    box-shadow: var(--admin-shadow);
+    margin-bottom: 0;
+  }
+  
+  /* Contenido principal */
+  .admin-content {
+    padding: 2rem;
+  }
+  
+  /* Stats Cards */
+  .admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .admin-stat-card {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: var(--admin-shadow);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .admin-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--admin-accent), var(--admin-success));
+  }
+  
+  .admin-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--admin-shadow-lg);
+  }
+  
+  .admin-stat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  
+  .admin-stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+  }
+  
+  .admin-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--admin-dark);
+    margin-bottom: 0.5rem;
+  }
+  
+  .admin-stat-label {
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 1rem;
+  }
+  
+  .admin-stat-change {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+  }
+  
+  .admin-stat-change.positive {
+    color: var(--admin-success);
+  }
+  
+  .admin-stat-change.negative {
+    color: var(--admin-danger);
+  }
+  
+  /* Notificaciones flotantes */
+  .admin-notifications {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 9999;
+    max-width: 400px;
+  }
+  
+  .admin-notification {
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: var(--admin-shadow-lg);
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-left: 4px solid var(--admin-info);
+    animation: slideInRight 0.3s ease;
+  }
+  
+  .admin-notification.success {
+    border-left-color: var(--admin-success);
+  }
+  
+  .admin-notification.warning {
+    border-left-color: var(--admin-warning);
+  }
+  
+  .admin-notification.error {
+    border-left-color: var(--admin-danger);
+  }
+  
+  /* Quick Actions */
+  .admin-quick-actions {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 1000;
+  }
+  
+  .admin-quick-action {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--admin-accent);
+    color: white;
+    border: none;
+    box-shadow: var(--admin-shadow-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+  }
+  
+  .admin-quick-action:hover {
+    background: var(--admin-primary);
+    transform: scale(1.1);
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .admin-sidebar {
+      transform: translateX(-100%);
+    }
+    
+    .admin-sidebar.show {
+      transform: translateX(0);
+    }
+    
+    .admin-main {
+      margin-left: 0;
+    }
+    
+    .admin-content {
+      padding: 1rem;
+    }
+    
+    .admin-header {
+      padding: 0 1rem;
+    }
+    
+    .admin-stats-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    
+    .admin-quick-actions {
+      bottom: 1rem;
+      right: 1rem;
+    }
+  }
+  
+  /* Animaciones */
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+  
+  .admin-pulse {
+    animation: pulse 2s infinite;
+  }
+  
+  /* Tema oscuro */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --admin-light: #2d3748;
+      --admin-dark: #e2e8f0;
+    }
+    
+    .admin-main {
+      background: #1a202c;
+    }
+    
+    .admin-header {
+      background: #2d3748;
+      color: #e2e8f0;
+    }
+    
+    .admin-stat-card {
+      background: #2d3748;
+      color: #e2e8f0;
+    }
+    
+    .admin-notification {
+      background: #2d3748;
+      color: #e2e8f0;
+    }
+  }
+  
+  /* Estados de carga */
+  .admin-loading {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .admin-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: loading 1.5s infinite;
+  }
+  
+  @keyframes loading {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block body_class %}admin-layout{% endblock %}
+
+{% block content %}
+<div class="admin-wrapper">
+  <!-- Sidebar -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <!-- Brand -->
+    <a href="{{ url_for('admin.dashboard') }}" class="admin-sidebar-brand">
+      <i class="fas fa-rocket brand-icon"></i>
+      <span class="brand-text">
+        <strong>EcoEmprendimiento</strong>
+        <small class="d-block">Panel Admin</small>
+      </span>
+    </a>
+    
+    <!-- Navigation -->
+    <nav class="admin-sidebar-nav">
+      <!-- Dashboard Section -->
+      <div class="admin-nav-section">
+        <h6 class="admin-nav-section-title">Principal</h6>
+        
+        <div class="admin-nav-item">
+          <a href="{{ url_for('admin.dashboard') }}" class="admin-nav-link {{ 'active' if request.endpoint == 'admin.dashboard' }}">
+            <i class="fas fa-tachometer-alt admin-nav-icon"></i>
+            <span class="admin-nav-text">Dashboard</span>
+          </a>
+        </div>
+        
+        <div class="admin-nav-item">
+          <a href="{{ url_for('admin.analytics') }}" class="admin-nav-link {{ 'active' if request.endpoint == 'admin.analytics' }}">
+            <i class="fas fa-chart-bar admin-nav-icon"></i>
+            <span class="admin-nav-text">Analytics</span>
+          </a>
+        </div>
+      </div>
+      
+      <!-- Users Management Section -->
+      <div class="admin-nav-section">
+        <h6 class="admin-nav-section-title">Gestión de Usuarios</h6>
+        
+        <div class="admin-nav-item">
+          <a href="#" class="admin-nav-link admin-nav-dropdown-toggle" data-bs-toggle="collapse" data-bs-target="#usersDropdown">
+            <i class="fas fa-users admin-nav-icon"></i>
+            <span class="admin-nav-text">Usuarios</span>
+            {% set pending_users = get_pending_users_count() %}
+            {% if pending_users > 0 %}
+              <span class="admin-nav-badge">{{ pending_users }}</span>
+            {% endif %}
+          </a>
+          <div class="admin-nav-dropdown collapse" id="usersDropdown">
+            <a href="{{ url_for('admin.users') }}" class="admin-nav-link">
+              <i class="fas fa-list admin-nav-icon"></i>
+              <span class="admin-nav-text">Todos los Usuarios</span>
+            </a>
+            <a href="{{ url_for('admin.entrepreneurs') }}" class="admin-nav-link">
+              <i class="fas fa-lightbulb admin-nav-icon"></i>
+              <span class="admin-nav-text">Emprendedores</span>
+            </a>
+            <a href="{{ url_for('admin.allies') }}" class="admin-nav-link">
+              <i class="fas fa-handshake admin-nav-icon"></i>
+              <span class="admin-nav-text">Aliados</span>
+            </a>
+            <a href="{{ url_for('admin.clients') }}" class="admin-nav-link">
+              <i class="fas fa-building admin-nav-icon"></i>
+              <span class="admin-nav-text">Clientes</span>
+            </a>
+          </div>
+        </div>
+        
+        <div class="admin-nav-item">
+          <a href="{{ url_for('admin.organizations') }}" class="admin-nav-link {{ 'active' if request.endpoint == 'admin.organizations' }}">
+            <i class="fas fa-sitemap admin-nav-icon"></i>
+            <span class="admin-nav-text">Organizaciones</span>
+          </a>
+        </div>
+      </div>
+      
+      <!-- Content Management Section -->
+      <div class="admin-nav-section">
+        <h6 class="admin-nav-section-title">Gestión de Contenido</h6>
+        
+        <div class="admin-nav-item">
+          <a href="{{ url_for('admin.programs') }}" class="admin-nav-link {{ 'active' if request.endpoint == 'admin.programs' }}">
+            <i class="fas fa-graduation-cap admin-nav-icon"></i>
+            <span class="admin-nav-text">Programas</span>
+          </a>
+        </div>
+        
+        <div class="admin-nav-item">
+          <a href="{{ url_for('admin.projects') }}" class="admin-nav-link {{ 'active' if request.endpoint == 'admin.projects' }}">
+            <i class="fas fa-project-diagram admin-nav-icon"></i>
+            <span class="admin-nav-text">Proyectos</span>
+          </a>
+        </div>
+        
+        <div class="admin-nav-item">
+          <a href="{{ url_for('admin.meetings') }}" class="admin-nav-link {{ 'active' if request.endpoint == 'admin.meetings' }}">
+            <i class="fas fa-calendar-alt admin-nav-icon"></i>
+            <span class="admin-nav-text">Reuniones</span>
+          </a>
+        </div>
+        
+        <div class="admin-nav-item">
+          <a href="{{ url_for('admin.documents') }}" class="admin-nav-link {{ 'active' if request.endpoint == 'admin.documents' }}">
+            <i class="fas fa-file-alt admin-nav-icon"></i>
+            <span class="admin-nav-text">Documentos</span>
+          </a>
+        </div>
+      </div>
+      
+      <!-- Communication Section -->
+      <div class="admin-nav-section">
+        <h6 class="admin-nav-section-title">Comunicación</h6>
+        
+        <div class="admin-nav-item">
+          <a href="{{ url_for('admin.messages') }}" class="admin-nav-link {{ 'active' if request.endpoint == 'admin.messages' }}">
+            <i class="fas fa-envelope admin-nav-icon"></i>
+            <span class="admin-nav-text">Mensajes</span>
+            {% set unread_messages = get_admin_unread_messages_count() %}
+            {% if unread_messages > 0 %}
+              <span class="admin-nav-badge">{{ unread_messages }}</span>
+            {% endif %}
+          </a>
+        </div>
+        
+        <div class="admin-nav-item">
+          <a href="{{ url_for('admin.notifications') }}" class="admin-nav-link {{ 'active' if request.endpoint == 'admin.notifications' }}">
+            <i class="fas fa-bell admin-nav-icon"></i>
+            <span class="admin-nav-text">Notificaciones</span>
+          </a>
+        </div>
+        
+        <div class="admin-nav-item">
+          <a href="{{ url_for('admin.announcements') }}" class="admin-nav-link {{ 'active' if request.endpoint == 'admin.announcements' }}">
+            <i class="fas fa-bullhorn admin-nav-icon"></i>
+            <span class="admin-nav-text">Anuncios</span>
+          </a>
+        </div>
+      </div>
+      
+      <!-- Reports Section -->
+      <div class="admin-nav-section">
+        <h6 class="admin-nav-section-title">Reportes</h6>
+        
+        <div class="admin-nav-item">
+          <a href="{{ url_for('admin.reports') }}" class="admin-nav-link {{ 'active' if request.endpoint == 'admin.reports' }}">
+            <i class="fas fa-chart-line admin-nav-icon"></i>
+            <span class="admin-nav-text">Reportes</span>
+          </a>
+        </div>
+        
+        <div class="admin-nav-item">
+          <a href="{{ url_for('admin.exports') }}" class="admin-nav-link {{ 'active' if request.endpoint == 'admin.exports' }}">
+            <i class="fas fa-download admin-nav-icon"></i>
+            <span class="admin-nav-text">Exportaciones</span>
+          </a>
+        </div>
+        
+        <div class="admin-nav-item">
+          <a href="{{ url_for('admin.logs') }}" class="admin-nav-link {{ 'active' if request.endpoint == 'admin.logs' }}">
+            <i class="fas fa-history admin-nav-icon"></i>
+            <span class="admin-nav-text">Logs del Sistema</span>
+          </a>
+        </div>
+      </div>
+      
+      <!-- System Section -->
+      <div class="admin-nav-section">
+        <h6 class="admin-nav-section-title">Sistema</h6>
+        
+        <div class="admin-nav-item">
+          <a href="{{ url_for('admin.settings') }}" class="admin-nav-link {{ 'active' if request.endpoint == 'admin.settings' }}">
+            <i class="fas fa-cog admin-nav-icon"></i>
+            <span class="admin-nav-text">Configuración</span>
+          </a>
+        </div>
+        
+        <div class="admin-nav-item">
+          <a href="{{ url_for('admin.backups') }}" class="admin-nav-link {{ 'active' if request.endpoint == 'admin.backups' }}">
+            <i class="fas fa-database admin-nav-icon"></i>
+            <span class="admin-nav-text">Respaldos</span>
+          </a>
+        </div>
+        
+        <div class="admin-nav-item">
+          <a href="{{ url_for('admin.maintenance') }}" class="admin-nav-link {{ 'active' if request.endpoint == 'admin.maintenance' }}">
+            <i class="fas fa-tools admin-nav-icon"></i>
+            <span class="admin-nav-text">Mantenimiento</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+  </aside>
+  
+  <!-- Main Content -->
+  <main class="admin-main" id="adminMain">
+    <!-- Header -->
+    <header class="admin-header">
+      <button class="admin-header-toggle" id="sidebarToggle">
+        <i class="fas fa-bars"></i>
+      </button>
+      
+      <h1 class="admin-header-title">
+        {% block admin_title %}Panel Administrativo{% endblock %}
+      </h1>
+      
+      <div class="admin-header-actions">
+        <!-- Search -->
+        <div class="dropdown me-3">
+          <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <i class="fas fa-search me-1"></i>
+            Buscar
+          </button>
+          <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 300px;">
+            <form>
+              <div class="input-group">
+                <input type="text" class="form-control form-control-sm" placeholder="Buscar usuarios, proyectos...">
+                <button class="btn btn-primary btn-sm" type="submit">
+                  <i class="fas fa-search"></i>
+                </button>
+              </div>
+            </form>
+            <div class="dropdown-divider"></div>
+            <h6 class="dropdown-header">Búsquedas recientes</h6>
+            <a class="dropdown-item" href="#">Emprendedores activos</a>
+            <a class="dropdown-item" href="#">Proyectos en desarrollo</a>
+            <a class="dropdown-item" href="#">Reuniones de hoy</a>
+          </div>
+        </div>
+        
+        <!-- Notifications -->
+        <div class="dropdown me-3">
+          <button class="btn btn-outline-secondary btn-sm position-relative" type="button" data-bs-toggle="dropdown">
+            <i class="fas fa-bell"></i>
+            {% set admin_notifications_count = get_admin_notifications_count() %}
+            {% if admin_notifications_count > 0 %}
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                {{ admin_notifications_count }}
+              </span>
+            {% endif %}
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" style="min-width: 350px;">
+            <div class="dropdown-header d-flex justify-content-between align-items-center">
+              <span>Notificaciones</span>
+              <a href="{{ url_for('admin.notifications') }}" class="btn btn-sm btn-outline-primary">Ver todas</a>
+            </div>
+            <div class="dropdown-divider"></div>
+            
+            {% set recent_notifications = get_recent_admin_notifications(5) %}
+            {% for notification in recent_notifications %}
+              <a class="dropdown-item d-flex align-items-start py-2" href="{{ notification.action_url or '#' }}">
+                <div class="me-2">
+                  <i class="{{ notification.icon }} text-{{ notification.type }}"></i>
+                </div>
+                <div class="flex-grow-1">
+                  <h6 class="mb-1 fs-6">{{ notification.title }}</h6>
+                  <p class="mb-1 text-muted small">{{ notification.message[:80] }}{% if notification.message|length > 80 %}...{% endif %}</p>
+                  <small class="text-muted">{{ notification.created_at|timeago }}</small>
+                </div>
+              </a>
+              {% if not loop.last %}<div class="dropdown-divider"></div>{% endif %}
+            {% else %}
+              <div class="dropdown-item text-center text-muted py-3">
+                <i class="fas fa-inbox fa-2x mb-2"></i>
+                <p class="mb-0">No hay notificaciones</p>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        
+        <!-- User Menu -->
+        <div class="dropdown">
+          <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown">
+            {% if current_user.profile_picture %}
+              <img src="{{ current_user.profile_picture }}" alt="{{ current_user.full_name }}" class="rounded-circle me-2" width="24" height="24">
+            {% else %}
+              <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 24px; height: 24px; font-size: 0.75rem;">
+                {{ current_user.first_name[0] }}{{ current_user.last_name[0] if current_user.last_name }}
+              </div>
+            {% endif %}
+            {{ current_user.first_name }}
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><h6 class="dropdown-header">{{ current_user.full_name }}</h6></li>
+            <li><span class="dropdown-item-text small text-muted">{{ current_user.email }}</span></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{{ url_for('main.profile') }}">
+              <i class="fas fa-user me-2"></i>Mi Perfil
+            </a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.settings') }}">
+              <i class="fas fa-cog me-2"></i>Configuración
+            </a></li>
+            <li><a class="dropdown-item" href="{{ url_for('main.dashboard') }}">
+              <i class="fas fa-home me-2"></i>Portal Principal
+            </a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+              <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+            </a></li>
+          </ul>
+        </div>
+      </div>
+    </header>
+    
+    <!-- Breadcrumb -->
+    {% if breadcrumbs %}
+      <div class="admin-breadcrumb">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            {% for breadcrumb in breadcrumbs %}
+              {% if loop.last %}
+                <li class="breadcrumb-item active" aria-current="page">{{ breadcrumb.title }}</li>
+              {% else %}
+                <li class="breadcrumb-item">
+                  <a href="{{ breadcrumb.url }}">{{ breadcrumb.title }}</a>
+                </li>
+              {% endif %}
+            {% endfor %}
+          </ol>
+        </nav>
+      </div>
+    {% endif %}
+    
+    <!-- Stats Overview (solo en dashboard) -->
+    {% if request.endpoint == 'admin.dashboard' %}
+      <div class="admin-content">
+        <div class="admin-stats-grid">
+          {% set stats = get_admin_dashboard_stats() %}
+          
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon bg-primary">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="admin-stat-value">{{ stats.total_users | number_format }}</div>
+            <div class="admin-stat-label">Total Usuarios</div>
+            <div class="admin-stat-change {{ 'positive' if stats.users_change >= 0 else 'negative' }}">
+              <i class="fas fa-{{ 'arrow-up' if stats.users_change >= 0 else 'arrow-down' }} me-1"></i>
+              {{ "{:+.1f}".format(stats.users_change) }}% este mes
+            </div>
+          </div>
+          
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon bg-success">
+              <i class="fas fa-project-diagram"></i>
+            </div>
+            <div class="admin-stat-value">{{ stats.active_projects | number_format }}</div>
+            <div class="admin-stat-label">Proyectos Activos</div>
+            <div class="admin-stat-change {{ 'positive' if stats.projects_change >= 0 else 'negative' }}">
+              <i class="fas fa-{{ 'arrow-up' if stats.projects_change >= 0 else 'arrow-down' }} me-1"></i>
+              {{ "{:+.1f}".format(stats.projects_change) }}% este mes
+            </div>
+          </div>
+          
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon bg-info">
+              <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="admin-stat-value">{{ stats.meetings_today | number_format }}</div>
+            <div class="admin-stat-label">Reuniones Hoy</div>
+            <div class="admin-stat-change positive">
+              <i class="fas fa-clock me-1"></i>
+              {{ stats.avg_meeting_duration }}min promedio
+            </div>
+          </div>
+          
+          <div class="admin-stat-card">
+            <div class="admin-stat-icon bg-warning">
+              <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="admin-stat-value">${{ stats.total_funding | number_format }}</div>
+            <div class="admin-stat-label">Financiación Total</div>
+            <div class="admin-stat-change {{ 'positive' if stats.funding_change >= 0 else 'negative' }}">
+              <i class="fas fa-{{ 'arrow-up' if stats.funding_change >= 0 else 'arrow-down' }} me-1"></i>
+              {{ "{:+.1f}".format(stats.funding_change) }}% este mes
+            </div>
+          </div>
+        </div>
+        
+        <!-- Content específico del dashboard -->
+        {% block admin_dashboard_content %}{% endblock %}
+      </div>
+    {% endif %}
+    
+    <!-- Page Content -->
+    <div class="admin-content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+              <i class="fas fa-{{ 'exclamation-triangle' if category == 'warning' else 'check-circle' if category == 'success' else 'info-circle' if category == 'info' else 'times-circle' }} me-2"></i>
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      
+      {% block admin_content %}
+        <!-- Contenido específico de cada página -->
+      {% endblock %}
+    </div>
+  </main>
+</div>
+
+<!-- Quick Actions -->
+<div class="admin-quick-actions">
+  <button class="admin-quick-action" title="Nuevo Usuario" data-bs-toggle="modal" data-bs-target="#quickAddUserModal">
+    <i class="fas fa-user-plus"></i>
+  </button>
+  
+  <button class="admin-quick-action" title="Nuevo Proyecto" data-bs-toggle="modal" data-bs-target="#quickAddProjectModal">
+    <i class="fas fa-plus"></i>
+  </button>
+  
+  <button class="admin-quick-action" title="Subir Documento" data-bs-toggle="modal" data-bs-target="#quickUploadModal">
+    <i class="fas fa-upload"></i>
+  </button>
+</div>
+
+<!-- Notificaciones flotantes -->
+<div class="admin-notifications" id="adminNotifications">
+  <!-- Las notificaciones se insertarán aquí dinámicamente -->
+</div>
+
+<!-- Modales de Quick Actions -->
+{% include 'admin/modals/quick_add_user.html' %}
+{% include 'admin/modals/quick_add_project.html' %}
+{% include 'admin/modals/quick_upload.html' %}
+
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
+
+<script>
+// =========================================================================
+// ADMIN LAYOUT JAVASCRIPT
+// =========================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Elementos del DOM
+  const sidebar = document.getElementById('adminSidebar');
+  const mainContent = document.getElementById('adminMain');
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const notificationsContainer = document.getElementById('adminNotifications');
+  
+  // Estado del sidebar
+  let sidebarCollapsed = localStorage.getItem('admin_sidebar_collapsed') === 'true';
+  
+  // Aplicar estado inicial del sidebar
+  if (sidebarCollapsed) {
+    sidebar.classList.add('collapsed');
+    mainContent.classList.add('expanded');
+  }
+  
+  // Toggle del sidebar
+  sidebarToggle.addEventListener('click', function() {
+    sidebarCollapsed = !sidebarCollapsed;
+    
+    sidebar.classList.toggle('collapsed', sidebarCollapsed);
+    mainContent.classList.toggle('expanded', sidebarCollapsed);
+    
+    // Guardar estado
+    localStorage.setItem('admin_sidebar_collapsed', sidebarCollapsed);
+    
+    // Trigger resize event para gráficos
+    window.dispatchEvent(new Event('resize'));
+  });
+  
+  // Sidebar móvil
+  function toggleMobileSidebar() {
+    if (window.innerWidth <= 768) {
+      sidebar.classList.toggle('show');
+    }
+  }
+  
+  // Auto-collapse en móvil
+  window.addEventListener('resize', function() {
+    if (window.innerWidth <= 768) {
+      sidebar.classList.remove('collapsed');
+      mainContent.classList.remove('expanded');
+    } else {
+      sidebar.classList.remove('show');
+      if (sidebarCollapsed) {
+        sidebar.classList.add('collapsed');
+        mainContent.classList.add('expanded');
+      }
+    }
+  });
+  
+  // Cerrar sidebar móvil al hacer clic en link
+  document.querySelectorAll('.admin-nav-link').forEach(link => {
+    link.addEventListener('click', function() {
+      if (window.innerWidth <= 768) {
+        sidebar.classList.remove('show');
+      }
+    });
+  });
+  
+  // Dropdown navigation
+  document.querySelectorAll('.admin-nav-dropdown-toggle').forEach(toggle => {
+    toggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const target = this.getAttribute('data-bs-target');
+      const dropdown = document.querySelector(target);
+      
+      if (dropdown) {
+        dropdown.classList.toggle('show');
+        this.classList.toggle('collapsed');
+      }
+    });
+  });
+  
+  // Sistema de notificaciones
+  function showNotification(message, type = 'info', duration = 5000) {
+    const notification = document.createElement('div');
+    notification.className = `admin-notification ${type}`;
+    notification.innerHTML = `
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="flex-grow-1">
+          <div class="fw-bold">${getNotificationTitle(type)}</div>
+          <div class="mt-1">${message}</div>
+        </div>
+        <button type="button" class="btn-close btn-close-sm ms-2" onclick="this.parentElement.parentElement.remove()"></button>
+      </div>
+    `;
+    
+    notificationsContainer.appendChild(notification);
+    
+    // Auto-remove después del tiempo especificado
+    setTimeout(() => {
+      if (notification.parentElement) {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+      }
+    }, duration);
+  }
+  
+  function getNotificationTitle(type) {
+    const titles = {
+      'success': 'Éxito',
+      'error': 'Error',
+      'warning': 'Advertencia',
+      'info': 'Información'
+    };
+    return titles[type] || 'Notificación';
+  }
+  
+  // WebSocket para notificaciones en tiempo real
+  if (typeof io !== 'undefined') {
+    const socket = io('/admin');
+    
+    socket.on('admin_notification', function(data) {
+      showNotification(data.message, data.type);
+      
+      // Actualizar contador de notificaciones
+      updateNotificationBadge();
+    });
+    
+    socket.on('user_activity', function(data) {
+      // Manejar actividad de usuarios en tiempo real
+      console.log('User activity:', data);
+    });
+  }
+  
+  // Actualizar badge de notificaciones
+  function updateNotificationBadge() {
+    fetch('/api/v1/admin/notifications/count')
+      .then(response => response.json())
+      .then(data => {
+        const badge = document.querySelector('.admin-header .position-absolute.badge');
+        if (badge) {
+          if (data.count > 0) {
+            badge.textContent = data.count;
+            badge.style.display = 'block';
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+      })
+      .catch(error => console.error('Error updating notification badge:', error));
+  }
+  
+  // Auto-refresh de stats cada 30 segundos
+  setInterval(function() {
+    if (window.location.pathname === '{{ url_for("admin.dashboard") }}') {
+      updateDashboardStats();
+    }
+  }, 30000);
+  
+  function updateDashboardStats() {
+    fetch('/api/v1/admin/dashboard/stats')
+      .then(response => response.json())
+      .then(data => {
+        // Actualizar valores de stats
+        document.querySelectorAll('.admin-stat-card').forEach((card, index) => {
+          const valueElement = card.querySelector('.admin-stat-value');
+          const changeElement = card.querySelector('.admin-stat-change');
+          
+          if (valueElement && data.stats && data.stats[index]) {
+            const stat = data.stats[index];
+            valueElement.textContent = formatNumber(stat.value);
+            
+            if (changeElement && stat.change !== undefined) {
+              changeElement.innerHTML = `
+                <i class="fas fa-${stat.change >= 0 ? 'arrow-up' : 'arrow-down'} me-1"></i>
+                ${stat.change >= 0 ? '+' : ''}${stat.change.toFixed(1)}% este mes
+              `;
+              changeElement.className = `admin-stat-change ${stat.change >= 0 ? 'positive' : 'negative'}`;
+            }
+          }
+        });
+      })
+      .catch(error => console.error('Error updating dashboard stats:', error));
+  }
+  
+  // Formatear números
+  function formatNumber(num) {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toLocaleString();
+  }
+  
+  // Búsqueda global
+  const searchInput = document.querySelector('.admin-header-actions input[type="text"]');
+  if (searchInput) {
+    let searchTimeout;
+    
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      const query = this.value.trim();
+      
+      if (query.length >= 2) {
+        searchTimeout = setTimeout(() => {
+          performGlobalSearch(query);
+        }, 300);
+      }
+    });
+  }
+  
+  function performGlobalSearch(query) {
+    fetch(`/api/v1/admin/search?q=${encodeURIComponent(query)}`)
+      .then(response => response.json())
+      .then(data => {
+        // Mostrar resultados de búsqueda
+        console.log('Search results:', data);
+      })
+      .catch(error => console.error('Search error:', error));
+  }
+  
+  // Inicialización de componentes
+  initializeTooltips();
+  initializeDatePickers();
+  
+  function initializeTooltips() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  }
+  
+  function initializeDatePickers() {
+    $('.datepicker').datepicker({
+      format: 'dd/mm/yyyy',
+      language: 'es',
+      autoclose: true,
+      todayHighlight: true
+    });
+  }
+  
+  // Expose functions globally
+  window.AdminLayout = {
+    showNotification,
+    updateNotificationBadge,
+    updateDashboardStats,
+    toggleMobileSidebar
+  };
+});
+
+// Función para confirmar acciones peligrosas
+function confirmAction(message, callback) {
+  if (confirm(message)) {
+    callback();
+  }
+}
+
+// Función para mostrar loading state
+function showLoading(element) {
+  element.classList.add('admin-loading');
+  element.style.pointerEvents = 'none';
+}
+
+function hideLoading(element) {
+  element.classList.remove('admin-loading');
+  element.style.pointerEvents = 'auto';
+}
+</script>
+
+{% block admin_js %}
+<!-- JavaScript específico de cada página admin -->
+{% endblock %}
+
+{% endblock %}

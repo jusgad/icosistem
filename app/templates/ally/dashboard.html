@@ -1,402 +1,1541 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Aliado Estratégico - Panel de Control</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #1a237e;
+            --secondary-color: #3f51b5;
+            --accent-color: #00bcd4;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --info-color: #2196f3;
+            --light-bg: #f8f9fa;
+            --dark-text: #263238;
+            --border-radius: 15px;
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
 
-{% block title %}Dashboard del Aliado{% endblock %}
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            color: var(--dark-text);
+        }
 
-{% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
-{% endblock %}
+        .ally-header {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
 
-{% block content %}
-<div class="container-fluid">
-  <div class="row">
-    <!-- Sidebar / Menú lateral -->
-    {% include "ally/partials/sidebar.html" %}
+        .ally-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>');
+        }
 
-    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Dashboard del Aliado</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-          <div class="btn-group me-2">
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="downloadReportBtn">
-              <i class="fas fa-download"></i> Descargar reporte
-            </button>
-          </div>
-          <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-            <i class="fas fa-calendar"></i> Periodo
-          </button>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#" data-period="week">Esta semana</a></li>
-            <li><a class="dropdown-item" href="#" data-period="month">Este mes</a></li>
-            <li><a class="dropdown-item" href="#" data-period="quarter">Este trimestre</a></li>
-            <li><a class="dropdown-item" href="#" data-period="year">Este año</a></li>
-          </ul>
-        </div>
-      </div>
+        .ally-header .container {
+            position: relative;
+            z-index: 1;
+        }
 
-      <!-- Tarjetas de resumen -->
-      <div class="row mb-4">
-        <div class="col-md-3">
-          <div class="card text-white bg-primary">
-            <div class="card-body">
-              <h5 class="card-title">Emprendedores asignados</h5>
-              <p class="card-text display-4">{{ stats.total_entrepreneurs }}</p>
-              <p class="card-text"><small>{{ stats.active_entrepreneurs }} activos</small></p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-white bg-success">
-            <div class="card-body">
-              <h5 class="card-title">Horas registradas</h5>
-              <p class="card-text display-4">{{ stats.total_hours }}</p>
-              <p class="card-text"><small>Este mes: {{ stats.month_hours }}</small></p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-white bg-info">
-            <div class="card-body">
-              <h5 class="card-title">Reuniones</h5>
-              <p class="card-text display-4">{{ stats.total_meetings }}</p>
-              <p class="card-text"><small>Próximas: {{ stats.upcoming_meetings }}</small></p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-white bg-warning">
-            <div class="card-body">
-              <h5 class="card-title">Tareas pendientes</h5>
-              <p class="card-text display-4">{{ stats.pending_tasks }}</p>
-              <p class="card-text"><small>Urgentes: {{ stats.urgent_tasks }}</small></p>
-            </div>
-          </div>
-        </div>
-      </div>
+        .welcome-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            color: var(--dark-text);
+            box-shadow: var(--card-shadow);
+        }
 
-      <!-- Actividad reciente y próximos eventos -->
-      <div class="row mb-4">
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-header">
-              <h5 class="mb-0">Actividad reciente</h5>
-            </div>
-            <div class="card-body">
-              <div class="list-group">
-                {% for activity in recent_activities %}
-                <div class="list-group-item list-group-item-action">
-                  <div class="d-flex w-100 justify-content-between">
-                    <h6 class="mb-1">{{ activity.title }}</h6>
-                    <small>{{ activity.date.strftime('%d/%m/%Y %H:%M') }}</small>
-                  </div>
-                  <p class="mb-1">{{ activity.description }}</p>
-                  <small>
-                    {% if activity.type == 'meeting' %}
-                      <i class="fas fa-video text-info"></i>
-                    {% elif activity.type == 'message' %}
-                      <i class="fas fa-comment text-primary"></i>
-                    {% elif activity.type == 'document' %}
-                      <i class="fas fa-file-alt text-success"></i>
-                    {% elif activity.type == 'task' %}
-                      <i class="fas fa-tasks text-warning"></i>
-                    {% endif %}
-                    {{ activity.entrepreneur.name }}
-                  </small>
-                </div>
-                {% endfor %}
-              </div>
-              {% if not recent_activities %}
-              <p class="text-center text-muted my-4">No hay actividad reciente</p>
-              {% endif %}
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-header">
-              <h5 class="mb-0">Próximos eventos</h5>
-            </div>
-            <div class="card-body">
-              <div class="list-group">
-                {% for event in upcoming_events %}
-                <div class="list-group-item list-group-item-action">
-                  <div class="d-flex w-100 justify-content-between">
-                    <h6 class="mb-1">{{ event.title }}</h6>
-                    <small>{{ event.start_time.strftime('%d/%m/%Y %H:%M') }}</small>
-                  </div>
-                  <p class="mb-1">{{ event.description }}</p>
-                  <div class="d-flex justify-content-between align-items-center">
-                    <small>
-                      <i class="fas fa-user text-secondary"></i> {{ event.entrepreneur.name }}
-                    </small>
-                    <div>
-                      <a href="{{ event.meeting_link }}" class="btn btn-sm btn-primary" target="_blank">
-                        <i class="fas fa-video"></i> Unirse
-                      </a>
-                      <a href="{{ url_for('ally.view_event', event_id=event.id) }}" class="btn btn-sm btn-info">
-                        <i class="fas fa-eye"></i> Ver
-                      </a>
+        .portfolio-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .portfolio-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--gradient-accent);
+        }
+
+        .portfolio-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-accent);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .metric-label {
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metric-change {
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 0.75rem;
+        }
+
+        .metric-change.positive {
+            color: var(--success-color);
+        }
+
+        .metric-change.negative {
+            color: var(--danger-color);
+        }
+
+        .metric-change.neutral {
+            color: var(--warning-color);
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .chart-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--dark-text);
+            margin: 0;
+        }
+
+        .chart-subtitle {
+            font-size: 0.9rem;
+            color: #666;
+            margin: 0;
+            margin-top: 0.25rem;
+        }
+
+        .company-item {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .company-item:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .company-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .company-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: var(--gradient-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .company-info h5 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+
+        .company-info p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .company-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .company-metric {
+            text-align: center;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .company-metric-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .company-metric-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        .performance-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .performance-excellent {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .performance-good {
+            background: var(--info-color);
+            color: white;
+        }
+
+        .performance-average {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .performance-poor {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .activity-feed {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: start;
+            padding: 1rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .activity-icon.success {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--success-color);
+        }
+
+        .activity-icon.info {
+            background: rgba(33, 150, 243, 0.1);
+            color: var(--info-color);
+        }
+
+        .activity-icon.warning {
+            background: rgba(255, 152, 0, 0.1);
+            color: var(--warning-color);
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            color: var(--dark-text);
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-description {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-time {
+            color: #999;
+            font-size: 0.8rem;
+        }
+
+        .roi-calculator {
+            background: var(--gradient-secondary);
+            color: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .roi-calculator h4 {
+            margin-bottom: 1rem;
+        }
+
+        .roi-calculator .form-control {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--card-shadow);
+            border-left: 4px solid;
+        }
+
+        .alert-card.priority-high {
+            border-left-color: var(--danger-color);
+        }
+
+        .alert-card.priority-medium {
+            border-left-color: var(--warning-color);
+        }
+
+        .alert-card.priority-low {
+            border-left-color: var(--info-color);
+        }
+
+        .btn-custom {
+            border-radius: 25px;
+            padding: 0.7rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary-custom {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-accent-custom {
+            background: var(--gradient-accent);
+            color: white;
+        }
+
+        .btn-accent-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+        }
+
+        .quick-actions {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .quick-action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            color: var(--dark-text);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            height: 120px;
+        }
+
+        .quick-action-btn:hover {
+            background: var(--gradient-accent);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .quick-action-btn i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .notification-dropdown {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            padding: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.3s ease;
+        }
+
+        .notification-item:hover {
+            background: #f8f9fa;
+        }
+
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+
+        .notification-unread {
+            background: rgba(33, 150, 243, 0.05);
+            border-left: 3px solid var(--info-color);
+        }
+
+        @media (max-width: 768px) {
+            .ally-header {
+                padding: 1rem 0;
+            }
+            
+            .metric-card {
+                padding: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .metric-value {
+                font-size: 2rem;
+            }
+            
+            .chart-container {
+                padding: 1rem;
+            }
+            
+            .company-metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .quick-action-btn {
+                height: 100px;
+                padding: 1rem;
+            }
+            
+            .quick-action-btn i {
+                font-size: 1.5rem;
+            }
+        }
+
+        .loading-skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .portfolio-summary {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .portfolio-pie {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="ally-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <div class="welcome-card">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h1 class="mb-2">¡Bienvenido, Alexander!</h1>
+                                <p class="mb-1 text-muted">Aliado Estratégico & Inversor</p>
+                                <p class="mb-0">Gestiona tu portfolio de inversiones y partnerships</p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <div class="d-flex align-items-center justify-content-end">
+                                    <div class="me-3">
+                                        <small class="text-muted">Portfolio Total</small>
+                                        <h4 class="mb-0 text-primary">€2.4M</h4>
+                                    </div>
+                                    <div class="portfolio-pie" style="width: 60px; height: 60px;">
+                                        <canvas id="miniPortfolioChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                  </div>
                 </div>
-                {% endfor %}
-              </div>
-              {% if not upcoming_events %}
-              <p class="text-center text-muted my-4">No hay eventos próximos</p>
-              {% endif %}
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <div class="btn-group me-2">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell me-2"></i>Notificaciones
+                            <span class="badge bg-danger ms-2">3</span>
+                        </button>
+                        <ul class="dropdown-menu notification-dropdown">
+                            <li class="notification-item notification-unread">
+                                <div class="d-flex">
+                                    <i class="fas fa-chart-line text-success me-3 mt-1"></i>
+                                    <div>
+                                        <h6 class="mb-1">TechStart superó objetivos Q2</h6>
+                                        <p class="mb-1 small text-muted">Ingresos aumentaron 25% vs mes anterior</p>
+                                        <small class="text-muted">Hace 2 horas</small>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="notification-item notification-unread">
+                                <div class="d-flex">
+                                    <i class="fas fa-handshake text-info me-3 mt-1"></i>
+                                    <div>
+                                        <h6 class="mb-1">Nuevo partnership EcoSolutions</h6>
+                                        <p class="mb-1 small text-muted">Solicitud de reunión estratégica</p>
+                                        <small class="text-muted">Hace 4 horas</small>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="notification-item">
+                                <div class="d-flex">
+                                    <i class="fas fa-file-alt text-warning me-3 mt-1"></i>
+                                    <div>
+                                        <h6 class="mb-1">Reporte mensual disponible</h6>
+                                        <p class="mb-1 small text-muted">InnovateLab ha publicado su reporte</p>
+                                        <small class="text-muted">Ayer</small>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-accent-custom btn-custom" onclick="showNewInvestmentModal()">
+                        <i class="fas fa-plus me-2"></i>Nueva Inversión
+                    </button>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
+    </div>
 
-      <!-- Gráficos y estadísticas -->
-      <div class="row mb-4">
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-header">
-              <h5 class="mb-0">Distribución de horas por emprendedor</h5>
+    <div class="container">
+        <!-- Métricas Principales -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card">
+                    <div class="metric-value" id="totalInvestment">€2.4M</div>
+                    <div class="metric-label">Inversión Total</div>
+                    <div class="metric-change positive">
+                        <i class="fas fa-arrow-up me-1"></i>+12.5% este trimestre
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-              <canvas id="hoursChart" height="250" 
-                      data-names="{{ entrepreneurs_names|tojson|safe }}"
-                      data-hours="{{ entrepreneurs_hours|tojson|safe }}"></canvas>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card">
+                    <div class="metric-value" id="totalReturn">€890K</div>
+                    <div class="metric-label">Retorno Total</div>
+                    <div class="metric-change positive">
+                        <i class="fas fa-arrow-up me-1"></i>+18.7% vs año anterior
+                    </div>
+                </div>
             </div>
-          </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card">
+                    <div class="metric-value" id="avgROI">37.1%</div>
+                    <div class="metric-label">ROI Promedio</div>
+                    <div class="metric-change positive">
+                        <i class="fas fa-arrow-up me-1"></i>+4.2% vs trimestre anterior
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card">
+                    <div class="metric-value" id="activeCompanies">12</div>
+                    <div class="metric-label">Empresas Activas</div>
+                    <div class="metric-change neutral">
+                        <i class="fas fa-equals me-1"></i>Sin cambios
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-header">
-              <h5 class="mb-0">Progreso de emprendedores</h5>
-            </div>
-            <div class="card-body">
-              <canvas id="progressChart" height="250"
-                      data-names="{{ entrepreneurs_names|tojson|safe }}"
-                      data-progress="{{ entrepreneurs_progress|tojson|safe }}"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Emprendedores asignados -->
-      <div class="card mb-4">
-        <div class="card-header">
-          <h5 class="mb-0">Mis emprendedores</h5>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-striped table-hover">
-              <thead>
-                <tr>
-                  <th scope="col">Nombre</th>
-                  <th scope="col">Emprendimiento</th>
-                  <th scope="col">Etapa</th>
-                  <th scope="col">Horas acumuladas</th>
-                  <th scope="col">Progreso</th>
-                  <th scope="col">Última actividad</th>
-                  <th scope="col">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for entrepreneur in entrepreneurs %}
-                <tr>
-                  <td>
+        <!-- Alertas Importantes -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert-card priority-high">
                     <div class="d-flex align-items-center">
-                      <img src="{{ entrepreneur.profile_image or url_for('static', filename='images/default-profile.png') }}" 
-                           class="rounded-circle me-2" alt="Foto de perfil" width="40" height="40">
-                      <div>
-                        <strong>{{ entrepreneur.name }}</strong>
-                        <div class="small text-muted">{{ entrepreneur.email }}</div>
-                      </div>
+                        <i class="fas fa-exclamation-triangle text-danger me-3"></i>
+                        <div>
+                            <h6 class="mb-1">Acción Requerida: EcoSolutions</h6>
+                            <p class="mb-0 text-muted">La empresa necesita financiación adicional para expandir operaciones. Revisar propuesta adjunta.</p>
+                        </div>
+                        <button class="btn btn-outline-danger btn-sm ms-auto">Revisar</button>
                     </div>
-                  </td>
-                  <td>{{ entrepreneur.business_name }}</td>
-                  <td>
-                    <span class="badge 
-                      {% if entrepreneur.stage == 'ideación' %}
-                        bg-info
-                      {% elif entrepreneur.stage == 'validación' %}
-                        bg-primary
-                      {% elif entrepreneur.stage == 'crecimiento' %}
-                        bg-success
-                      {% elif entrepreneur.stage == 'escalamiento' %}
-                        bg-warning
-                      {% else %}
-                        bg-secondary
-                      {% endif %}
-                    ">
-                      {{ entrepreneur.stage }}
-                    </span>
-                  </td>
-                  <td>{{ entrepreneur.total_hours }} horas</td>
-                  <td>
-                    <div class="progress">
-                      <div class="progress-bar bg-success" role="progressbar" 
-                           style="width: 0%;" 
-                           aria-valuenow="0" 
-                           aria-valuemin="0" aria-valuemax="100"
-                           data-progress="{{ entrepreneur.progress }}">
-                        0%
-                      </div>
-                    </div>
-                  </td>
-                  <td>{{ entrepreneur.last_activity.strftime('%d/%m/%Y %H:%M') if entrepreneur.last_activity else 'N/A' }}</td>
-                  <td>
-                    <div class="btn-group">
-                      <a href="{{ url_for('ally.entrepreneur_detail', entrepreneur_id=entrepreneur.id) }}" class="btn btn-sm btn-primary">
-                        <i class="fas fa-eye"></i>
-                      </a>
-                      <a href="{{ url_for('ally.messages', entrepreneur_id=entrepreneur.id) }}" class="btn btn-sm btn-info">
-                        <i class="fas fa-comment"></i>
-                      </a>
-                      <a href="{{ url_for('ally.register_hours', entrepreneur_id=entrepreneur.id) }}" class="btn btn-sm btn-success">
-                        <i class="fas fa-clock"></i>
-                      </a>
-                    </div>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          {% if not entrepreneurs %}
-          <p class="text-center text-muted my-4">No hay emprendedores asignados</p>
-          {% endif %}
+                </div>
+            </div>
         </div>
-      </div>
-    </main>
-  </div>
-</div>
-{% endblock %}
 
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  // Inicializar las barras de progreso
-  document.querySelectorAll('.progress-bar[data-progress]').forEach(bar => {
-    try {
-      let progress = parseFloat(bar.getAttribute('data-progress'));
-      if (isNaN(progress)) progress = 0;
-      if (progress > 100) progress = 100;
-      if (progress < 0) progress = 0;
-      
-      bar.style.width = progress + '%';
-      bar.setAttribute('aria-valuenow', progress);
-      bar.textContent = Math.round(progress) + '%';
-    } catch (e) {
-      console.error('Error al procesar barra de progreso:', e);
-      bar.style.width = '0%';
-      bar.textContent = '0%';
-    }
-  });
+        <!-- Gráficos de Rendimiento -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div>
+                            <h5 class="chart-title"><i class="fas fa-chart-area me-2"></i>Rendimiento del Portfolio</h5>
+                            <p class="chart-subtitle">Evolución de retornos en los últimos 12 meses</p>
+                        </div>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary" onclick="changePortfolioPeriod('6m')">6M</button>
+                            <button type="button" class="btn btn-outline-primary active" onclick="changePortfolioPeriod('12m')">12M</button>
+                            <button type="button" class="btn btn-outline-primary" onclick="changePortfolioPeriod('24m')">24M</button>
+                        </div>
+                    </div>
+                    <canvas id="portfolioChart" height="300"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="portfolio-summary">
+                    <h5 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Distribución por Sector</h5>
+                    <canvas id="sectorChart" height="250"></canvas>
+                    
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="small">Tecnología</span>
+                            <span class="small fw-bold">45%</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="small">Fintech</span>
+                            <span class="small fw-bold">25%</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="small">E-commerce</span>
+                            <span class="small fw-bold">20%</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="small">Otros</span>
+                            <span class="small fw-bold">10%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-  try {
-    // Gráfico de distribución de horas
-    const hoursChart = document.getElementById('hoursChart');
-    if (hoursChart) {
-      const hoursCtx = hoursChart.getContext('2d');
-      const hoursNames = JSON.parse(hoursChart.dataset.names || '[]');
-      const hoursData = JSON.parse(hoursChart.dataset.hours || '[]');
-      
-      new Chart(hoursCtx, {
-        type: 'pie',
-        data: {
-          labels: hoursNames,
-          datasets: [{
-            data: hoursData,
-            backgroundColor: [
-              '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
-              '#5a5c69', '#6f42c1', '#20c9a6', '#f8f9fc', '#858796'
-            ],
-            hoverOffset: 4
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              position: 'right',
-            },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return context.label + ': ' + context.raw + ' horas';
+        <!-- Portfolio de Empresas -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div>
+                            <h5 class="chart-title"><i class="fas fa-briefcase me-2"></i>Portfolio de Inversiones</h5>
+                            <p class="chart-subtitle">Estado actual de tus inversiones estratégicas</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <select class="form-select form-select-sm" style="width: auto;" onchange="filterPortfolio(this.value)">
+                                <option value="all">Todas las empresas</option>
+                                <option value="tech">Tecnología</option>
+                                <option value="fintech">Fintech</option>
+                                <option value="ecommerce">E-commerce</option>
+                            </select>
+                            <button class="btn btn-outline-primary btn-sm" onclick="refreshPortfolio()">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="row" id="companiesList">
+                        <!-- Las empresas se cargarán dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actividad Reciente y Acciones Rápidas -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="activity-feed">
+                    <h5 class="mb-4"><i class="fas fa-clock me-2"></i>Actividad Reciente</h5>
+                    <div id="activityFeed">
+                        <!-- La actividad se cargará dinámicamente -->
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="quick-actions">
+                    <h5 class="mb-4"><i class="fas fa-bolt me-2"></i>Acciones Rápidas</h5>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <a href="#" class="quick-action-btn" onclick="showReportModal()">
+                                <i class="fas fa-chart-bar"></i>
+                                <span class="small">Reportes</span>
+                            </a>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <a href="#" class="quick-action-btn" onclick="showMeetingModal()">
+                                <i class="fas fa-calendar"></i>
+                                <span class="small">Reuniones</span>
+                            </a>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <a href="#" class="quick-action-btn" onclick="showAnalysisModal()">
+                                <i class="fas fa-analytics"></i>
+                                <span class="small">Análisis</span>
+                            </a>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <a href="#" class="quick-action-btn" onclick="showContactModal()">
+                                <i class="fas fa-envelope"></i>
+                                <span class="small">Contactar</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculadora ROI -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="roi-calculator">
+                    <h4><i class="fas fa-calculator me-2"></i>Calculadora de ROI</h4>
+                    <p class="mb-4">Calcula el retorno de inversión proyectado para nuevas oportunidades</p>
+                    <div class="row justify-content-center">
+                        <div class="col-lg-8">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <input type="number" class="form-control" id="investmentAmount" placeholder="Inversión (€)">
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="number" class="form-control" id="expectedReturn" placeholder="Retorno esperado (€)">
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="number" class="form-control" id="timeframe" placeholder="Plazo (meses)">
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-light btn-custom w-100" onclick="calculateROI()">
+                                        <i class="fas fa-calculator me-2"></i>Calcular
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <h5 id="roiResult" class="mb-0">ROI: -</h5>
+                                <p id="roiDetails" class="mb-0 small">Ingresa los datos para calcular</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nueva Inversión -->
+    <div class="modal fade" id="newInvestmentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nueva Oportunidad de Inversión</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="investmentForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="companyName" class="form-label">Nombre de la Empresa</label>
+                                <input type="text" class="form-control" id="companyName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="sector" class="form-label">Sector</label>
+                                <select class="form-select" id="sector" required>
+                                    <option value="">Seleccionar sector...</option>
+                                    <option value="tech">Tecnología</option>
+                                    <option value="fintech">Fintech</option>
+                                    <option value="ecommerce">E-commerce</option>
+                                    <option value="healthtech">Healthtech</option>
+                                    <option value="edtech">Edtech</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="investmentAmount" class="form-label">Monto de Inversión (€)</label>
+                                <input type="number" class="form-control" id="investmentAmountModal" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="equityPercentage" class="form-label">% de Participación</label>
+                                <input type="number" class="form-control" id="equityPercentage" step="0.1" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="valuation" class="form-label">Valoración (€)</label>
+                                <input type="number" class="form-control" id="valuation" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descripción del Negocio</label>
+                            <textarea class="form-control" id="description" rows="3"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="stage" class="form-label">Etapa de la Empresa</label>
+                                <select class="form-select" id="stage">
+                                    <option value="seed">Seed</option>
+                                    <option value="series-a">Serie A</option>
+                                    <option value="series-b">Serie B</option>
+                                    <option value="growth">Crecimiento</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="expectedReturn" class="form-label">Retorno Esperado (%)</label>
+                                <input type="number" class="form-control" id="expectedReturnModal" step="0.1">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary-custom" onclick="saveInvestment()">
+                        <i class="fas fa-save me-2"></i>Guardar Inversión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Estado global de la aplicación
+        let portfolio = [];
+        let activities = [];
+        let charts = {};
+        let currentFilter = 'all';
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPortfolio();
+            loadActivities();
+            initializeCharts();
+            updateMetrics();
+        });
+
+        // Cargar portfolio
+        function loadPortfolio() {
+            portfolio = [
+                {
+                    id: 1,
+                    name: 'TechStart Innovations',
+                    sector: 'tech',
+                    logo: 'TS',
+                    description: 'Plataforma de desarrollo de aplicaciones móviles',
+                    investment: 250000,
+                    equity: 15,
+                    valuation: 1800000,
+                    currentValue: 320000,
+                    revenue: 85000,
+                    growth: 25,
+                    employees: 12,
+                    stage: 'series-a',
+                    performance: 'excellent',
+                    lastUpdate: '2025-06-10T10:30:00'
+                },
+                {
+                    id: 2,
+                    name: 'EcoSolutions',
+                    sector: 'tech',
+                    logo: 'ES',
+                    description: 'Soluciones sustentables para empresas',
+                    investment: 180000,
+                    equity: 12,
+                    valuation: 1500000,
+                    currentValue: 195000,
+                    revenue: 62000,
+                    growth: 18,
+                    employees: 8,
+                    stage: 'seed',
+                    performance: 'good',
+                    lastUpdate: '2025-06-10T09:15:00'
+                },
+                {
+                    id: 3,
+                    name: 'FinanceFlow',
+                    sector: 'fintech',
+                    logo: 'FF',
+                    description: 'Gestión financiera automatizada',
+                    investment: 320000,
+                    equity: 18,
+                    valuation: 2200000,
+                    currentValue: 445000,
+                    revenue: 125000,
+                    growth: 42,
+                    employees: 15,
+                    stage: 'series-a',
+                    performance: 'excellent',
+                    lastUpdate: '2025-06-10T08:45:00'
+                },
+                {
+                    id: 4,
+                    name: 'ShopSmart',
+                    sector: 'ecommerce',
+                    logo: 'SS',
+                    description: 'E-commerce inteligente con IA',
+                    investment: 150000,
+                    equity: 10,
+                    valuation: 1200000,
+                    currentValue: 142000,
+                    revenue: 45000,
+                    growth: -5,
+                    employees: 6,
+                    stage: 'seed',
+                    performance: 'average',
+                    lastUpdate: '2025-06-09T16:20:00'
+                },
+                {
+                    id: 5,
+                    name: 'InnovateLab',
+                    sector: 'tech',
+                    logo: 'IL',
+                    description: 'Laboratorio de innovación tecnológica',
+                    investment: 400000,
+                    equity: 22,
+                    valuation: 2800000,
+                    currentValue: 580000,
+                    revenue: 180000,
+                    growth: 35,
+                    employees: 25,
+                    stage: 'series-b',
+                    performance: 'excellent',
+                    lastUpdate: '2025-06-10T11:00:00'
+                },
+                {
+                    id: 6,
+                    name: 'HealthTech Pro',
+                    sector: 'healthtech',
+                    logo: 'HT',
+                    description: 'Tecnología para el sector salud',
+                    investment: 280000,
+                    equity: 16,
+                    valuation: 1900000,
+                    currentValue: 265000,
+                    revenue: 72000,
+                    growth: 8,
+                    employees: 10,
+                    stage: 'series-a',
+                    performance: 'good',
+                    lastUpdate: '2025-06-10T07:30:00'
                 }
-              }
-            }
-          }
+            ];
+
+            renderPortfolio();
         }
-      });
-    }
 
-    // Gráfico de progreso
-    const progressChart = document.getElementById('progressChart');
-    if (progressChart) {
-      const progressCtx = progressChart.getContext('2d');
-      const progressNames = JSON.parse(progressChart.dataset.names || '[]');
-      const progressData = JSON.parse(progressChart.dataset.progress || '[]');
-      
-      new Chart(progressCtx, {
-        type: 'bar',
-        data: {
-          labels: progressNames,
-          datasets: [{
-            label: 'Progreso (%)',
-            data: progressData,
-            backgroundColor: '#1cc88a',
-            borderColor: '#169a6f',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: {
-              beginAtZero: true,
-              max: 100,
-              ticks: {
-                callback: function(value) {
-                  return value + '%';
-                }
-              }
-            }
-          },
-          plugins: {
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return 'Progreso: ' + context.raw + '%';
-                }
-              }
-            }
-          }
+        // Renderizar portfolio
+        function renderPortfolio() {
+            const companiesList = document.getElementById('companiesList');
+            const filteredPortfolio = currentFilter === 'all' ? 
+                portfolio : portfolio.filter(company => company.sector === currentFilter);
+
+            companiesList.innerHTML = '';
+
+            filteredPortfolio.forEach(company => {
+                const roi = ((company.currentValue - company.investment) / company.investment * 100).toFixed(1);
+                const companyElement = document.createElement('div');
+                companyElement.className = 'col-lg-6 mb-3';
+                
+                companyElement.innerHTML = `
+                    <div class="company-item">
+                        <div class="company-header">
+                            <div class="d-flex align-items-center">
+                                <div class="company-logo">${company.logo}</div>
+                                <div class="company-info ms-3">
+                                    <h5>${company.name}</h5>
+                                    <p>${company.description}</p>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="performance-badge performance-${company.performance}">
+                                    ${getPerformanceText(company.performance)}
+                                </span>
+                                <div class="mt-2">
+                                    <small class="text-muted">ROI: </small>
+                                    <strong class="${roi >= 0 ? 'text-success' : 'text-danger'}">${roi}%</strong>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="company-metrics">
+                            <div class="company-metric">
+                                <div class="company-metric-value">€${formatNumber(company.investment)}</div>
+                                <div class="company-metric-label">Inversión</div>
+                            </div>
+                            <div class="company-metric">
+                                <div class="company-metric-value">€${formatNumber(company.currentValue)}</div>
+                                <div class="company-metric-label">Valor Actual</div>
+                            </div>
+                            <div class="company-metric">
+                                <div class="company-metric-value">${company.equity}%</div>
+                                <div class="company-metric-label">Participación</div>
+                            </div>
+                            <div class="company-metric">
+                                <div class="company-metric-value ${company.growth >= 0 ? 'text-success' : 'text-danger'}">
+                                    ${company.growth >= 0 ? '+' : ''}${company.growth}%
+                                </div>
+                                <div class="company-metric-label">Crecimiento</div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div>
+                                <small class="text-muted">
+                                    <i class="fas fa-users me-1"></i>${company.employees} empleados
+                                    <span class="ms-3">
+                                        <i class="fas fa-chart-bar me-1"></i>€${formatNumber(company.revenue)}/mes
+                                    </span>
+                                </small>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="viewCompanyDetails(${company.id})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="contactCompany(${company.id})">
+                                    <i class="fas fa-envelope"></i>
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="scheduleCompanyMeeting(${company.id})">
+                                    <i class="fas fa-calendar"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                companiesList.appendChild(companyElement);
+            });
         }
-      });
-    }
-  } catch (error) {
-    console.error('Error al inicializar los gráficos:', error);
-    document.querySelectorAll('canvas').forEach(canvas => {
-      canvas.parentNode.innerHTML = '<div class="alert alert-danger">Error al cargar el gráfico. Por favor, recargue la página.</div>';
-    });
-  }
 
-  // Manejo del filtro de periodo
-  const periodLinks = document.querySelectorAll('[data-period]');
-  periodLinks.forEach(link => {
-    link.addEventListener('click', function(e) {
-      e.preventDefault();
-      const period = this.getAttribute('data-period');
-      window.location.href = `{{ url_for('ally.dashboard') }}?period=${period}`;
-    });
-  });
+        // Cargar actividades
+        function loadActivities() {
+            activities = [
+                {
+                    type: 'success',
+                    icon: 'fas fa-chart-line',
+                    title: 'TechStart superó objetivos de Q2',
+                    description: 'Ingresos aumentaron 25% comparado con el mes anterior',
+                    time: '2025-06-10T10:30:00',
+                    company: 'TechStart Innovations'
+                },
+                {
+                    type: 'info',
+                    icon: 'fas fa-handshake',
+                    title: 'Nueva partnership estratégica',
+                    description: 'EcoSolutions firmó acuerdo con GreenTech Corp',
+                    time: '2025-06-10T09:15:00',
+                    company: 'EcoSolutions'
+                },
+                {
+                    type: 'success',
+                    icon: 'fas fa-users',
+                    title: 'Expansión del equipo',
+                    description: 'FinanceFlow contrató 3 nuevos desarrolladores',
+                    time: '2025-06-10T08:45:00',
+                    company: 'FinanceFlow'
+                },
+                {
+                    type: 'warning',
+                    icon: 'fas fa-exclamation-triangle',
+                    title: 'Revisión requerida',
+                    description: 'ShopSmart necesita estrategia de marketing actualizada',
+                    time: '2025-06-09T16:20:00',
+                    company: 'ShopSmart'
+                },
+                {
+                    type: 'info',
+                    icon: 'fas fa-file-alt',
+                    title: 'Reporte financiero publicado',
+                    description: 'InnovateLab publicó sus resultados trimestrales',
+                    time: '2025-06-09T14:10:00',
+                    company: 'InnovateLab'
+                }
+            ];
 
-  // Manejo de la descarga de reportes
-  const downloadReportBtn = document.getElementById('downloadReportBtn');
-  if (downloadReportBtn) {
-    downloadReportBtn.addEventListener('click', function() {
-      const period = new URLSearchParams(window.location.search).get('period') || 'month';
-      window.location.href = `{{ url_for('ally.download_report') }}?period=${period}`;
-    });
-  }
-});
-</script>
-{% endblock %}
+            renderActivities();
+        }
+
+        // Renderizar actividades
+        function renderActivities() {
+            const activityFeed = document.getElementById('activityFeed');
+            activityFeed.innerHTML = '';
+
+            activities.forEach(activity => {
+                const activityElement = document.createElement('div');
+                activityElement.className = 'activity-item';
+                activityElement.innerHTML = `
+                    <div class="activity-icon ${activity.type}">
+                        <i class="${activity.icon}"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">${activity.title}</div>
+                        <div class="activity-description">${activity.description}</div>
+                        <div class="activity-time">
+                            <i class="fas fa-building me-1"></i>${activity.company} • ${formatTimeAgo(activity.time)}
+                        </div>
+                    </div>
+                `;
+                activityFeed.appendChild(activityElement);
+            });
+        }
+
+        // Inicializar gráficos
+        function initializeCharts() {
+            initPortfolioChart();
+            initSectorChart();
+            initMiniPortfolioChart();
+        }
+
+        // Gráfico principal del portfolio
+        function initPortfolioChart() {
+            const ctx = document.getElementById('portfolioChart').getContext('2d');
+            
+            charts.portfolio = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                    datasets: [{
+                        label: 'Valor del Portfolio (€)',
+                        data: [2100000, 2150000, 2080000, 2250000, 2320000, 2400000, 0, 0, 0, 0, 0, 0],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }, {
+                        label: 'Inversión Total (€)',
+                        data: [1800000, 1850000, 1900000, 1950000, 2000000, 2050000, 0, 0, 0, 0, 0, 0],
+                        borderColor: '#f093fb',
+                        backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                        tension: 0.4,
+                        fill: false,
+                        borderDash: [5, 5],
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            borderColor: '#667eea',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': €' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return '€' + (value / 1000000).toFixed(1) + 'M';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfico de sectores
+        function initSectorChart() {
+            const ctx = document.getElementById('sectorChart').getContext('2d');
+            
+            charts.sector = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Tecnología', 'Fintech', 'E-commerce', 'Healthtech'],
+                    datasets: [{
+                        data: [45, 25, 20, 10],
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#4facfe',
+                            '#00f2fe'
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Mini gráfico del portfolio en el header
+        function initMiniPortfolioChart() {
+            const ctx = document.getElementById('miniPortfolioChart').getContext('2d');
+            
+            charts.miniPortfolio = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [78, 22],
+                        backgroundColor: ['#4caf50', '#e0e0e0'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Actualizar métricas
+        function updateMetrics() {
+            const totalInvestment = portfolio.reduce((sum, company) => sum + company.investment, 0);
+            const totalCurrentValue = portfolio.reduce((sum, company) => sum + company.currentValue, 0);
+            const totalReturn = totalCurrentValue - totalInvestment;
+            const avgROI = ((totalReturn / totalInvestment) * 100);
+
+            document.getElementById('totalInvestment').textContent = '€' + formatNumber(totalInvestment);
+            document.getElementById('totalReturn').textContent = '€' + formatNumber(totalReturn);
+            document.getElementById('avgROI').textContent = avgROI.toFixed(1) + '%';
+            document.getElementById('activeCompanies').textContent = portfolio.length.toString();
+        }
+
+        // Funciones de filtrado
+        function filterPortfolio(sector) {
+            currentFilter = sector;
+            renderPortfolio();
+        }
+
+        function refreshPortfolio() {
+            showNotification('Actualizando portfolio...', 'info');
+            setTimeout(() => {
+                loadPortfolio();
+                showNotification('Portfolio actualizado', 'success');
+            }, 1000);
+        }
+
+        // Cambiar período del gráfico
+        function changePortfolioPeriod(period) {
+            document.querySelectorAll('.chart-header .btn-group .btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            console.log('Cambiando período del portfolio a:', period);
+            // Aquí se actualizarían los datos del gráfico
+        }
+
+        // Calculadora de ROI
+        function calculateROI() {
+            const investment = parseFloat(document.getElementById('investmentAmount').value);
+            const expectedReturn = parseFloat(document.getElementById('expectedReturn').value);
+            const timeframe = parseFloat(document.getElementById('timeframe').value);
+
+            if (!investment || !expectedReturn || !timeframe) {
+                document.getElementById('roiResult').textContent = 'ROI: -';
+                document.getElementById('roiDetails').textContent = 'Ingresa todos los datos para calcular';
+                return;
+            }
+
+            const roi = ((expectedReturn - investment) / investment * 100);
+            const monthlyROI = (roi / timeframe);
+            const annualROI = (monthlyROI * 12);
+
+            document.getElementById('roiResult').textContent = `ROI: ${roi.toFixed(1)}%`;
+            document.getElementById('roiDetails').textContent = 
+                `ROI mensual: ${monthlyROI.toFixed(1)}% | ROI anual: ${annualROI.toFixed(1)}%`;
+        }
+
+        // Modales
+        function showNewInvestmentModal() {
+            const modal = new bootstrap.Modal(document.getElementById('newInvestmentModal'));
+            modal.show();
+        }
+
+        function saveInvestment() {
+            const formData = new FormData(document.getElementById('investmentForm'));
+            
+            // Validar datos
+            const companyName = formData.get('companyName');
+            const sector = formData.get('sector');
+            const investment = parseFloat(formData.get('investmentAmountModal'));
+            
+            if (!companyName || !sector || !investment) {
+                alert('Por favor, completa todos los campos obligatorios.');
+                return;
+            }
+
+            // Simular guardado
+            showNotification('Inversión guardada correctamente', 'success');
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('newInvestmentModal'));
+            modal.hide();
+        }
+
+        function showReportModal() {
+            showNotification('Generando reporte completo...', 'info');
+        }
+
+        function showMeetingModal() {
+            showNotification('Abriendo calendario de reuniones...', 'info');
+        }
+
+        function showAnalysisModal() {
+            showNotification('Cargando herramientas de análisis...', 'info');
+        }
+
+        function showContactModal() {
+            showNotification('Abriendo centro de mensajes...', 'info');
+        }
+
+        // Acciones de empresas
+        function viewCompanyDetails(companyId) {
+            const company = portfolio.find(c => c.id === companyId);
+            showNotification(`Cargando detalles de ${company.name}...`, 'info');
+        }
+
+        function contactCompany(companyId) {
+            const company = portfolio.find(c => c.id === companyId);
+            showNotification(`Iniciando conversación con ${company.name}...`, 'info');
+        }
+
+        function scheduleCompanyMeeting(companyId) {
+            const company = portfolio.find(c => c.id === companyId);
+            showNotification(`Programando reunión con ${company.name}...`, 'info');
+        }
+
+        // Funciones auxiliares
+        function getPerformanceText(performance) {
+            const performances = {
+                'excellent': 'Excelente',
+                'good': 'Buena',
+                'average': 'Regular',
+                'poor': 'Baja'
+            };
+            return performances[performance] || performance;
+        }
+
+        function formatNumber(number) {
+            if (number >= 1000000) {
+                return (number / 1000000).toFixed(1) + 'M';
+            } else if (number >= 1000) {
+                return (number / 1000).toFixed(0) + 'K';
+            }
+            return number.toLocaleString();
+        }
+
+        function formatTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffHours < 1) {
+                return 'Hace unos minutos';
+            } else if (diffHours < 24) {
+                return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+            } else if (diffDays === 1) {
+                return 'Ayer';
+            } else {
+                return `Hace ${diffDays} días`;
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+            
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type === 'info' ? 'primary' : type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+            });
+        }
+
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+            return container;
+        }
+    </script>
+</body>
+</html>

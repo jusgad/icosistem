@@ -1,507 +1,2757 @@
-{% extends "base.html" %}
+{% extends "layouts/dashboard.html" %}
 
-{% block title %}Mi Perfil | Portal de Emprendimiento{% endblock %}
+{% block title %}Mi Perfil{% endblock %}
 
-{% block styles %}
-{{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+    }
+
+    .profile-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 30px 30px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .profile-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill-opacity='0.1'%3E%3Cpath fill='%23ffffff' d='M30 30c0-11.046-8.954-20-20-20s-20 8.954-20 20 8.954 20 20 20 20-8.954 20-20zm-20-15c8.284 0 15 6.716 15 15s-6.716 15-15 15-15-6.716-15-15 6.716-15 15-15z'/%3E%3C/g%3E%3C/svg%3E") repeat;
+        animation: float 20s linear infinite;
+    }
+
+    @keyframes float {
+        0% { transform: translateX(0) translateY(0); }
+        100% { transform: translateX(-60px) translateY(-60px); }
+    }
+
+    .profile-avatar-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    .profile-avatar {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 6px solid rgba(255,255,255,0.3);
+        object-fit: cover;
+        transition: all 0.3s ease;
+    }
+
+    .avatar-upload-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        cursor: pointer;
+    }
+
+    .profile-avatar-container:hover .avatar-upload-overlay {
+        opacity: 1;
+    }
+
+    .profile-info {
+        position: relative;
+        z-index: 2;
+    }
+
+    .profile-stats {
+        background: rgba(255,255,255,0.1);
+        border-radius: 15px;
+        padding: 1rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        opacity: 0.9;
+    }
+
+    .profile-tabs {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .nav-tabs {
+        border-bottom: none;
+        background: #f8f9fa;
+        padding: 0.5rem 1rem 0;
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        border-radius: 10px 10px 0 0;
+        padding: 1rem 1.5rem;
+        color: #6c757d;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        margin-right: 0.25rem;
+        position: relative;
+    }
+
+    .nav-tabs .nav-link.active {
+        background: white;
+        color: #667eea;
+        transform: translateY(-2px);
+    }
+
+    .nav-tabs .nav-link:hover:not(.active) {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+    }
+
+    .tab-content {
+        padding: 2rem;
+        min-height: 600px;
+    }
+
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 2px solid #e9ecef;
+        transition: border-color 0.3s ease;
+    }
+
+    .form-section:hover {
+        border-color: #667eea;
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-icon {
+        width: 30px;
+        height: 30px;
+        background: var(--primary-gradient);
+        color: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+        padding: 0.75rem 1rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        transform: translateY(-1px);
+    }
+
+    .btn-primary {
+        background: var(--primary-gradient);
+        border: none;
+        border-radius: 10px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .experience-item {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #667eea;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .experience-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    .experience-header {
+        display: flex;
+        justify-content: between;
+        align-items: start;
+        margin-bottom: 0.75rem;
+    }
+
+    .experience-title {
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+    }
+
+    .experience-company {
+        color: #667eea;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .experience-period {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+
+    .experience-description {
+        color: #6c757d;
+        line-height: 1.6;
+    }
+
+    .experience-actions {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .experience-item:hover .experience-actions {
+        opacity: 1;
+    }
+
+    .skill-tag {
+        display: inline-block;
+        background: var(--primary-gradient);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin: 0.25rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .skill-tag:hover {
+        transform: scale(1.05);
+    }
+
+    .skill-tag .remove-skill {
+        margin-left: 0.5rem;
+        cursor: pointer;
+        opacity: 0.7;
+    }
+
+    .skill-tag .remove-skill:hover {
+        opacity: 1;
+    }
+
+    .document-item {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+    .document-item:hover {
+        border-color: #667eea;
+        transform: translateY(-2px);
+    }
+
+    .document-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--info-gradient);
+        color: white;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        margin-right: 1rem;
+    }
+
+    .document-info {
+        flex-grow: 1;
+    }
+
+    .document-name {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+    }
+
+    .document-meta {
+        font-size: 0.8rem;
+        color: #6c757d;
+        display: flex;
+        gap: 1rem;
+    }
+
+    .achievement-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .achievement-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--warning-gradient);
+    }
+
+    .achievement-card:hover {
+        border-color: #f093fb;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(240, 147, 251, 0.3);
+    }
+
+    .achievement-icon {
+        width: 60px;
+        height: 60px;
+        background: var(--warning-gradient);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin: 0 auto 1rem;
+    }
+
+    .achievement-title {
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .achievement-description {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+
+    .achievement-date {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .upload-area:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+        transform: scale(1.02);
+    }
+
+    .upload-area.dragover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+        transform: scale(1.05);
+    }
+
+    .upload-icon {
+        font-size: 3rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+
+    .progress-ring-circle {
+        transition: stroke-dasharray 0.6s ease;
+        stroke-linecap: round;
+    }
+
+    .notification-setting {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 2px solid #e9ecef;
+        transition: border-color 0.3s ease;
+    }
+
+    .notification-setting:hover {
+        border-color: #667eea;
+    }
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .slider {
+        background: var(--primary-gradient);
+    }
+
+    input:checked + .slider:before {
+        transform: translateX(26px);
+    }
+
+    .portfolio-item {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .portfolio-item:hover {
+        border-color: #667eea;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+
+    .portfolio-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+    }
+
+    .portfolio-content {
+        padding: 1.5rem;
+    }
+
+    .portfolio-title {
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .portfolio-description {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .portfolio-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .portfolio-tag {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        padding: 0.25rem 0.5rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .crop-modal .modal-dialog {
+        max-width: 800px;
+    }
+
+    .crop-container {
+        max-height: 400px;
+        overflow: hidden;
+    }
+
+    .validation-feedback {
+        display: block;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: #dc3545;
+    }
+
+    .is-valid {
+        border-color: #28a745;
+    }
+
+    .is-invalid {
+        border-color: #dc3545;
+    }
+
+    .privacy-setting {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        padding: 1rem;
+        background: white;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        border: 2px solid #e9ecef;
+        transition: border-color 0.3s ease;
+    }
+
+    .privacy-setting:hover {
+        border-color: #667eea;
+    }
+
+    .unsaved-indicator {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #ffc107;
+        color: #212529;
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transform: translateX(400px);
+        transition: transform 0.3s ease;
+        z-index: 1000;
+    }
+
+    .unsaved-indicator.show {
+        transform: translateX(0);
+    }
+
+    @media (max-width: 768px) {
+        .profile-header {
+            padding: 1rem 0;
+        }
+        
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .tab-content {
+            padding: 1rem;
+        }
+        
+        .form-section {
+            padding: 1rem;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row">
-        <!-- Sidebar / Profile Photo Section -->
-        <div class="col-md-3">
-            <div class="card mb-4">
-                <div class="card-body text-center">
-                    <div class="profile-image-container mb-3">
-                        {% if entrepreneur.profile_image %}
-                            <img src="{{ url_for('static', filename='uploads/' + entrepreneur.profile_image) }}" 
-                                 alt="Foto de perfil" class="img-fluid rounded-circle profile-image">
+<!-- Profile Header -->
+<div class="profile-header" data-aos="fade-down">
+    <div class="container">
+        <div class="profile-info">
+            <div class="row align-items-center">
+                <div class="col-md-3 text-center">
+                    <div class="profile-avatar-container">
+                        {% if current_user.profile_picture %}
+                        <img src="{{ current_user.profile_picture }}" alt="Avatar" class="profile-avatar" id="profileAvatar">
                         {% else %}
-                            <img src="{{ url_for('static', filename='images/default-profile.png') }}" 
-                                 alt="Foto de perfil por defecto" class="img-fluid rounded-circle profile-image">
+                        <div class="profile-avatar bg-white bg-opacity-25 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-user fa-3x text-white"></i>
+                        </div>
+                        {% endif %}
+                        <div class="avatar-upload-overlay" onclick="openImageCropper()">
+                            <i class="fas fa-camera fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h1 class="mb-2">{{ current_user.full_name }}</h1>
+                    <p class="mb-1 opacity-75">
+                        <i class="fas fa-briefcase me-2"></i>
+                        {{ current_user.current_position or 'Emprendedor' }}
+                    </p>
+                    <p class="mb-3 opacity-75">
+                        <i class="fas fa-map-marker-alt me-2"></i>
+                        {{ current_user.city }}, {{ current_user.country }}
+                    </p>
+                    <div class="d-flex gap-3">
+                        {% if current_user.linkedin_url %}
+                        <a href="{{ current_user.linkedin_url }}" target="_blank" class="text-white opacity-75">
+                            <i class="fab fa-linkedin fa-lg"></i>
+                        </a>
+                        {% endif %}
+                        {% if current_user.twitter_url %}
+                        <a href="{{ current_user.twitter_url }}" target="_blank" class="text-white opacity-75">
+                            <i class="fab fa-twitter fa-lg"></i>
+                        </a>
+                        {% endif %}
+                        {% if current_user.website %}
+                        <a href="{{ current_user.website }}" target="_blank" class="text-white opacity-75">
+                            <i class="fas fa-globe fa-lg"></i>
+                        </a>
                         {% endif %}
                     </div>
-                    <h5 class="card-title">{{ entrepreneur.user.full_name }}</h5>
-                    <p class="text-muted">{{ entrepreneur.business_name }}</p>
-                    
-                    <div class="mt-3">
-                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#updatePhotoModal">
-                            <i class="bi bi-camera"></i> Cambiar foto
+                </div>
+                <div class="col-md-3">
+                    <div class="profile-stats">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <div class="stat-value">{{ user_stats.programs_completed or 3 }}</div>
+                                    <div class="stat-label">Programas</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <div class="stat-value">{{ user_stats.projects_count or 5 }}</div>
+                                    <div class="stat-label">Proyectos</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <div class="stat-value">{{ user_stats.achievements_count or 8 }}</div>
+                                    <div class="stat-label">Logros</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="profile-tabs" data-aos="fade-up">
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" type="button" role="tab">
+                    <i class="fas fa-user me-2"></i>Información Personal
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="experience-tab" data-bs-toggle="tab" data-bs-target="#experience" type="button" role="tab">
+                    <i class="fas fa-briefcase me-2"></i>Experiencia
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="skills-tab" data-bs-toggle="tab" data-bs-target="#skills" type="button" role="tab">
+                    <i class="fas fa-code me-2"></i>Habilidades
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab">
+                    <i class="fas fa-file-alt me-2"></i>Documentos
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="achievements-tab" data-bs-toggle="tab" data-bs-target="#achievements" type="button" role="tab">
+                    <i class="fas fa-trophy me-2"></i>Logros
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="portfolio-tab" data-bs-toggle="tab" data-bs-target="#portfolio" type="button" role="tab">
+                    <i class="fas fa-folder me-2"></i>Portfolio
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab">
+                    <i class="fas fa-cog me-2"></i>Configuración
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="profileTabsContent">
+            <!-- Personal Information Tab -->
+            <div class="tab-pane fade show active" id="personal" role="tabpanel">
+                <form id="personalInfoForm" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="form-section">
+                                <h3 class="section-title">
+                                    <div class="section-icon">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    Información Básica
+                                </h3>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="firstName" class="form-label fw-bold">Nombre *</label>
+                                        <input type="text" class="form-control" id="firstName" name="first_name" 
+                                               value="{{ current_user.first_name }}" required>
+                                        <div class="validation-feedback"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="lastName" class="form-label fw-bold">Apellido *</label>
+                                        <input type="text" class="form-control" id="lastName" name="last_name" 
+                                               value="{{ current_user.last_name }}" required>
+                                        <div class="validation-feedback"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label fw-bold">Email *</label>
+                                        <input type="email" class="form-control" id="email" name="email" 
+                                               value="{{ current_user.email }}" required>
+                                        <div class="validation-feedback"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="phone" class="form-label fw-bold">Teléfono</label>
+                                        <input type="tel" class="form-control" id="phone" name="phone" 
+                                               value="{{ current_user.phone }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="birthDate" class="form-label fw-bold">Fecha de Nacimiento</label>
+                                        <input type="date" class="form-control" id="birthDate" name="birth_date" 
+                                               value="{{ current_user.birth_date.strftime('%Y-%m-%d') if current_user.birth_date }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="gender" class="form-label fw-bold">Género</label>
+                                        <select class="form-select" id="gender" name="gender">
+                                            <option value="">Seleccionar</option>
+                                            <option value="male" {% if current_user.gender == 'male' %}selected{% endif %}>Masculino</option>
+                                            <option value="female" {% if current_user.gender == 'female' %}selected{% endif %}>Femenino</option>
+                                            <option value="other" {% if current_user.gender == 'other' %}selected{% endif %}>Otro</option>
+                                            <option value="prefer_not_to_say" {% if current_user.gender == 'prefer_not_to_say' %}selected{% endif %}>Prefiero no decir</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="bio" class="form-label fw-bold">Biografía</label>
+                                        <textarea class="form-control" id="bio" name="bio" rows="4" 
+                                                  placeholder="Cuéntanos sobre ti, tu experiencia y aspiraciones...">{{ current_user.bio }}</textarea>
+                                        <small class="form-text text-muted">Máximo 500 caracteres</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h3 class="section-title">
+                                    <div class="section-icon">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                    </div>
+                                    Ubicación
+                                </h3>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="country" class="form-label fw-bold">País *</label>
+                                        <select class="form-select" id="country" name="country" required>
+                                            <option value="">Seleccionar país</option>
+                                            <option value="CO" {% if current_user.country == 'CO' %}selected{% endif %}>Colombia</option>
+                                            <option value="MX" {% if current_user.country == 'MX' %}selected{% endif %}>México</option>
+                                            <option value="AR" {% if current_user.country == 'AR' %}selected{% endif %}>Argentina</option>
+                                            <option value="CL" {% if current_user.country == 'CL' %}selected{% endif %}>Chile</option>
+                                            <option value="PE" {% if current_user.country == 'PE' %}selected{% endif %}>Perú</option>
+                                            <option value="ES" {% if current_user.country == 'ES' %}selected{% endif %}>España</option>
+                                            <option value="US" {% if current_user.country == 'US' %}selected{% endif %}>Estados Unidos</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="city" class="form-label fw-bold">Ciudad *</label>
+                                        <input type="text" class="form-control" id="city" name="city" 
+                                               value="{{ current_user.city }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="state" class="form-label fw-bold">Estado/Provincia</label>
+                                        <input type="text" class="form-control" id="state" name="state" 
+                                               value="{{ current_user.state }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="postalCode" class="form-label fw-bold">Código Postal</label>
+                                        <input type="text" class="form-control" id="postalCode" name="postal_code" 
+                                               value="{{ current_user.postal_code }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h3 class="section-title">
+                                    <div class="section-icon">
+                                        <i class="fas fa-link"></i>
+                                    </div>
+                                    Redes Sociales y Enlaces
+                                </h3>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="website" class="form-label fw-bold">
+                                            <i class="fas fa-globe me-1"></i>Sitio Web Personal
+                                        </label>
+                                        <input type="url" class="form-control" id="website" name="website" 
+                                               value="{{ current_user.website }}" placeholder="https://ejemplo.com">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="linkedinUrl" class="form-label fw-bold">
+                                            <i class="fab fa-linkedin me-1"></i>LinkedIn
+                                        </label>
+                                        <input type="url" class="form-control" id="linkedinUrl" name="linkedin_url" 
+                                               value="{{ current_user.linkedin_url }}" placeholder="https://linkedin.com/in/usuario">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="twitterUrl" class="form-label fw-bold">
+                                            <i class="fab fa-twitter me-1"></i>Twitter
+                                        </label>
+                                        <input type="url" class="form-control" id="twitterUrl" name="twitter_url" 
+                                               value="{{ current_user.twitter_url }}" placeholder="https://twitter.com/usuario">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="githubUrl" class="form-label fw-bold">
+                                            <i class="fab fa-github me-1"></i>GitHub
+                                        </label>
+                                        <input type="url" class="form-control" id="githubUrl" name="github_url" 
+                                               value="{{ current_user.github_url }}" placeholder="https://github.com/usuario">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-4">
+                            <div class="form-section">
+                                <h3 class="section-title">
+                                    <div class="section-icon">
+                                        <i class="fas fa-briefcase"></i>
+                                    </div>
+                                    Información Profesional
+                                </h3>
+                                <div class="mb-3">
+                                    <label for="currentPosition" class="form-label fw-bold">Posición Actual</label>
+                                    <input type="text" class="form-control" id="currentPosition" name="current_position" 
+                                           value="{{ current_user.current_position }}" placeholder="CEO, CTO, Founder...">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="company" class="form-label fw-bold">Empresa Actual</label>
+                                    <input type="text" class="form-control" id="company" name="company" 
+                                           value="{{ current_user.company }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="industry" class="form-label fw-bold">Industria</label>
+                                    <select class="form-select" id="industry" name="industry">
+                                        <option value="">Seleccionar industria</option>
+                                        <option value="technology" {% if current_user.industry == 'technology' %}selected{% endif %}>Tecnología</option>
+                                        <option value="healthcare" {% if current_user.industry == 'healthcare' %}selected{% endif %}>Salud</option>
+                                        <option value="finance" {% if current_user.industry == 'finance' %}selected{% endif %}>Finanzas</option>
+                                        <option value="education" {% if current_user.industry == 'education' %}selected{% endif %}>Educación</option>
+                                        <option value="retail" {% if current_user.industry == 'retail' %}selected{% endif %}>Retail/E-commerce</option>
+                                        <option value="food" {% if current_user.industry == 'food' %}selected{% endif %}>Alimentación</option>
+                                        <option value="energy" {% if current_user.industry == 'energy' %}selected{% endif %}>Energía</option>
+                                        <option value="transportation" {% if current_user.industry == 'transportation' %}selected{% endif %}>Transporte</option>
+                                        <option value="other" {% if current_user.industry == 'other' %}selected{% endif %}>Otro</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="experienceYears" class="form-label fw-bold">Años de Experiencia</label>
+                                    <select class="form-select" id="experienceYears" name="experience_years">
+                                        <option value="">Seleccionar</option>
+                                        <option value="0-1" {% if current_user.experience_years == '0-1' %}selected{% endif %}>0-1 años</option>
+                                        <option value="2-5" {% if current_user.experience_years == '2-5' %}selected{% endif %}>2-5 años</option>
+                                        <option value="6-10" {% if current_user.experience_years == '6-10' %}selected{% endif %}>6-10 años</option>
+                                        <option value="11-15" {% if current_user.experience_years == '11-15' %}selected{% endif %}>11-15 años</option>
+                                        <option value="16+" {% if current_user.experience_years == '16+' %}selected{% endif %}>16+ años</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h3 class="section-title">
+                                    <div class="section-icon">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    Progreso Completado
+                                </h3>
+                                <div class="text-center mb-3">
+                                    <svg class="progress-ring" width="120" height="120">
+                                        <circle class="progress-ring-circle" stroke="#e9ecef" stroke-width="8" fill="transparent" r="52" cx="60" cy="60"/>
+                                        <circle class="progress-ring-circle" stroke="url(#gradient)" stroke-width="8" fill="transparent" r="52" cx="60" cy="60" 
+                                                stroke-dasharray="327" stroke-dashoffset="{{ 327 - (327 * (profile_completion or 75) / 100) }}"/>
+                                        <defs>
+                                            <linearGradient id="gradient">
+                                                <stop offset="0%" stop-color="#667eea"/>
+                                                <stop offset="100%" stop-color="#764ba2"/>
+                                            </linearGradient>
+                                        </defs>
+                                    </svg>
+                                    <div class="position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                                        <div class="h4 mb-0 text-primary">{{ profile_completion or 75 }}%</div>
+                                        <small class="text-muted">Completado</small>
+                                    </div>
+                                </div>
+                                <div class="small text-muted">
+                                    <i class="fas fa-lightbulb text-warning me-1"></i>
+                                    Completa tu perfil para obtener mejores oportunidades de mentoría y networking.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-end mt-4">
+                        <button type="button" class="btn btn-outline-secondary me-2" onclick="resetPersonalForm()">
+                            <i class="fas fa-undo me-1"></i>Descartar Cambios
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Guardar Información Personal
                         </button>
                     </div>
-                </div>
-                <div class="list-group list-group-flush">
-                    <a href="#personal-info" class="list-group-item list-group-item-action">Información Personal</a>
-                    <a href="#business-info" class="list-group-item list-group-item-action">Información del Emprendimiento</a>
-                    <a href="#contact-info" class="list-group-item list-group-item-action">Información de Contacto</a>
-                    <a href="#security" class="list-group-item list-group-item-action">Seguridad</a>
-                </div>
+                </form>
             </div>
-            
-            <!-- Ally Information Card (if assigned) -->
-            {% if entrepreneur.allies %}
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Mi Aliado Asignado</h5>
+
+            <!-- Experience Tab -->
+            <div class="tab-pane fade" id="experience" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="section-title mb-0">
+                        <div class="section-icon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        Experiencia Profesional
+                    </h3>
+                    <button type="button" class="btn btn-primary" onclick="addExperience()">
+                        <i class="fas fa-plus me-1"></i>Agregar Experiencia
+                    </button>
                 </div>
-                <div class="card-body">
-                    {% for relationship in entrepreneur.allies %}
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="flex-shrink-0">
-                                {% if relationship.ally.profile_image %}
-                                    <img src="{{ url_for('static', filename='uploads/' + relationship.ally.profile_image) }}" 
-                                         alt="Foto de aliado" class="img-fluid rounded-circle" style="width: 50px; height: 50px;">
-                                {% else %}
-                                    <img src="{{ url_for('static', filename='images/default-profile.png') }}" 
-                                         alt="Foto de aliado por defecto" class="img-fluid rounded-circle" style="width: 50px; height: 50px;">
-                                {% endif %}
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h6 class="mb-0">{{ relationship.ally.user.full_name }}</h6>
-                                <p class="text-muted small mb-0">{{ relationship.ally.specialty }}</p>
-                            </div>
+
+                <div id="experienceList">
+                    {% for experience in user_experience %}
+                    <div class="experience-item" data-experience-id="{{ experience.id }}">
+                        <div class="experience-actions">
+                            <button type="button" class="btn btn-outline-primary btn-sm me-1" onclick="editExperience({{ experience.id }})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteExperience({{ experience.id }})">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
-                        <div class="d-grid gap-2">
-                            <a href="{{ url_for('entrepreneur.messages.chat', ally_id=relationship.ally.id) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-chat-dots"></i> Enviar mensaje
-                            </a>
-                            <a href="{{ url_for('entrepreneur.calendar.schedule', ally_id=relationship.ally.id) }}" class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-calendar-plus"></i> Agendar reunión
-                            </a>
+                        <div class="experience-title">{{ experience.position }}</div>
+                        <div class="experience-company">{{ experience.company }}</div>
+                        <div class="experience-period">
+                            {{ experience.start_date.strftime('%B %Y') }} - 
+                            {% if experience.end_date %}
+                                {{ experience.end_date.strftime('%B %Y') }}
+                            {% else %}
+                                Actualidad
+                            {% endif %}
+                            <span class="text-muted">
+                                ({{ experience.duration or 'Calculando...' }})
+                            </span>
                         </div>
+                        <div class="experience-description">{{ experience.description }}</div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5" id="noExperience">
+                        <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+                        <h5>Agrega tu primera experiencia</h5>
+                        <p class="text-muted">Comparte tu trayectoria profesional para destacar tu perfil</p>
+                        <button type="button" class="btn btn-primary" onclick="addExperience()">
+                            <i class="fas fa-plus me-1"></i>Agregar Experiencia
+                        </button>
+                    </div>
                     {% endfor %}
                 </div>
             </div>
-            {% endif %}
+
+            <!-- Skills Tab -->
+            <div class="tab-pane fade" id="skills" role="tabpanel">
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <div class="section-icon">
+                            <i class="fas fa-code"></i>
+                        </div>
+                        Habilidades y Competencias
+                    </h3>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="skillInput" class="form-label fw-bold">Agregar Habilidad</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="skillInput" placeholder="Escribe una habilidad...">
+                                    <button type="button" class="btn btn-primary" onclick="addSkill()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <small class="form-text text-muted">Ejemplo: JavaScript, Marketing Digital, Liderazgo, etc.</small>
+                            </div>
+                            
+                            <div id="skillsContainer">
+                                {% for skill in user_skills %}
+                                <span class="skill-tag" data-skill-id="{{ skill.id }}">
+                                    {{ skill.name }}
+                                    <span class="remove-skill" onclick="removeSkill({{ skill.id }})">
+                                        <i class="fas fa-times"></i>
+                                    </span>
+                                </span>
+                                {% endfor %}
+                            </div>
+                            
+                            {% if not user_skills %}
+                            <div class="text-center py-4" id="noSkills">
+                                <i class="fas fa-code fa-2x text-muted mb-3"></i>
+                                <p class="text-muted">Aún no has agregado habilidades</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <h5 class="fw-bold mb-3">Habilidades Sugeridas</h5>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addSuggestedSkill('JavaScript')">JavaScript</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addSuggestedSkill('Python')">Python</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addSuggestedSkill('Marketing Digital')">Marketing Digital</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addSuggestedSkill('Liderazgo')">Liderazgo</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addSuggestedSkill('Gestión de Proyectos')">Gestión de Proyectos</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addSuggestedSkill('Análisis de Datos')">Análisis de Datos</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addSuggestedSkill('UX/UI Design')">UX/UI Design</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addSuggestedSkill('Ventas')">Ventas</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents Tab -->
+            <div class="tab-pane fade" id="documents" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="section-title mb-0">
+                        <div class="section-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        Documentos y Certificaciones
+                    </h3>
+                    <button type="button" class="btn btn-primary" onclick="uploadDocument()">
+                        <i class="fas fa-upload me-1"></i>Subir Documento
+                    </button>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="upload-area" onclick="document.getElementById('documentUpload').click()">
+                            <input type="file" id="documentUpload" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style="display: none;" onchange="handleDocumentUpload(this)">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <h5>Arrastra archivos aquí o haz clic para subir</h5>
+                            <p class="text-muted mb-0">PDF, DOC, DOCX, JPG, PNG hasta 10MB cada uno</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="documentsList">
+                    {% for document in user_documents %}
+                    <div class="document-item d-flex align-items-center" data-document-id="{{ document.id }}">
+                        <div class="document-icon">
+                            <i class="fas fa-{{ 'file-pdf' if document.file_type == 'pdf' else 'file-alt' }}"></i>
+                        </div>
+                        <div class="document-info">
+                            <div class="document-name">{{ document.name }}</div>
+                            <div class="document-meta">
+                                <span><i class="fas fa-calendar me-1"></i>{{ document.created_at.strftime('%d/%m/%Y') }}</span>
+                                <span><i class="fas fa-weight me-1"></i>{{ document.file_size }}</span>
+                                <span><i class="fas fa-eye me-1"></i>{{ document.view_count or 0 }} vistas</span>
+                            </div>
+                        </div>
+                        <div class="ms-auto">
+                            <button type="button" class="btn btn-outline-primary btn-sm me-1" onclick="viewDocument({{ document.id }})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-success btn-sm me-1" onclick="downloadDocument({{ document.id }})">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteDocument({{ document.id }})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5" id="noDocuments">
+                        <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                        <h5>No tienes documentos subidos</h5>
+                        <p class="text-muted">Sube tu CV, certificaciones, o documentos importantes</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Achievements Tab -->
+            <div class="tab-pane fade" id="achievements" role="tabpanel">
+                <h3 class="section-title mb-4">
+                    <div class="section-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    Logros y Certificaciones
+                </h3>
+
+                <div class="row">
+                    {% for achievement in user_achievements %}
+                    <div class="col-md-4 mb-4">
+                        <div class="achievement-card">
+                            <div class="achievement-icon">
+                                <i class="{{ achievement.icon or 'fas fa-trophy' }}"></i>
+                            </div>
+                            <div class="achievement-title">{{ achievement.title }}</div>
+                            <div class="achievement-description">{{ achievement.description }}</div>
+                            <div class="achievement-date">{{ achievement.earned_date.strftime('%B %Y') if achievement.earned_date else 'Sin fecha' }}</div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="col-12">
+                        <div class="text-center py-5">
+                            <i class="fas fa-trophy fa-3x text-muted mb-3"></i>
+                            <h5>Tus logros aparecerán aquí</h5>
+                            <p class="text-muted">Completa programas y alcanza hitos para ganar logros</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Portfolio Tab -->
+            <div class="tab-pane fade" id="portfolio" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="section-title mb-0">
+                        <div class="section-icon">
+                            <i class="fas fa-folder"></i>
+                        </div>
+                        Portfolio de Proyectos
+                    </h3>
+                    <button type="button" class="btn btn-primary" onclick="addProject()">
+                        <i class="fas fa-plus me-1"></i>Agregar Proyecto
+                    </button>
+                </div>
+
+                <div class="row">
+                    {% for project in user_projects %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="portfolio-item">
+                            {% if project.image_url %}
+                            <img src="{{ project.image_url }}" alt="{{ project.title }}" class="portfolio-image">
+                            {% else %}
+                            <div class="portfolio-image">
+                                <i class="fas fa-project-diagram"></i>
+                            </div>
+                            {% endif %}
+                            <div class="portfolio-content">
+                                <div class="portfolio-title">{{ project.title }}</div>
+                                <div class="portfolio-description">{{ project.description[:100] }}{% if project.description|length > 100 %}...{% endif %}</div>
+                                <div class="portfolio-tags">
+                                    {% for tag in project.tags %}
+                                    <span class="portfolio-tag">{{ tag }}</span>
+                                    {% endfor %}
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    {% if project.url %}
+                                    <a href="{{ project.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-external-link-alt me-1"></i>Ver Proyecto
+                                    </a>
+                                    {% endif %}
+                                    <div>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm me-1" onclick="editProject({{ project.id }})">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteProject({{ project.id }})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="col-12">
+                        <div class="text-center py-5">
+                            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                            <h5>Muestra tus proyectos</h5>
+                            <p class="text-muted">Agrega proyectos para mostrar tu trabajo y experiencia</p>
+                            <button type="button" class="btn btn-primary" onclick="addProject()">
+                                <i class="fas fa-plus me-1"></i>Agregar Primer Proyecto
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-pane fade" id="settings" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <div class="section-icon">
+                                    <i class="fas fa-bell"></i>
+                                </div>
+                                Notificaciones
+                            </h3>
+                            
+                            <div class="notification-setting">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">Notificaciones por Email</h6>
+                                        <small class="text-muted">Recibir updates importantes por correo</small>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" name="email_notifications" {{ 'checked' if current_user.email_notifications else '' }}>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="notification-setting">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">Recordatorios de Reuniones</h6>
+                                        <small class="text-muted">Avisos antes de tus reuniones programadas</small>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" name="meeting_reminders" {{ 'checked' if current_user.meeting_reminders else '' }}>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="notification-setting">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">Updates de Progreso</h6>
+                                        <small class="text-muted">Notificaciones sobre tu avance en programas</small>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" name="progress_updates" {{ 'checked' if current_user.progress_updates else '' }}>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="notification-setting">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">Newsletter Semanal</h6>
+                                        <small class="text-muted">Resumen semanal de actividades y oportunidades</small>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" name="weekly_newsletter" {{ 'checked' if current_user.weekly_newsletter else '' }}>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <div class="section-icon">
+                                    <i class="fas fa-lock"></i>
+                                </div>
+                                Cambiar Contraseña
+                            </h3>
+                            
+                            <form id="changePasswordForm">
+                                <div class="mb-3">
+                                    <label for="currentPassword" class="form-label fw-bold">Contraseña Actual *</label>
+                                    <input type="password" class="form-control" id="currentPassword" name="current_password" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="newPassword" class="form-label fw-bold">Nueva Contraseña *</label>
+                                    <input type="password" class="form-control" id="newPassword" name="new_password" required>
+                                    <small class="form-text text-muted">Mínimo 8 caracteres, incluye mayúsculas, minúsculas y números</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="confirmPassword" class="form-label fw-bold">Confirmar Nueva Contraseña *</label>
+                                    <input type="password" class="form-control" id="confirmPassword" name="confirm_password" required>
+                                </div>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-key me-1"></i>Cambiar Contraseña
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <div class="section-icon">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                Privacidad
+                            </h3>
+                            
+                            <div class="privacy-setting">
+                                <div>
+                                    <h6 class="mb-1">Perfil Público</h6>
+                                    <small class="text-muted">Permitir que otros vean tu perfil</small>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" name="public_profile" {{ 'checked' if current_user.public_profile else '' }}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="privacy-setting">
+                                <div>
+                                    <h6 class="mb-1">Mostrar Email</h6>
+                                    <small class="text-muted">Visible en tu perfil público</small>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" name="show_email" {{ 'checked' if current_user.show_email else '' }}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="privacy-setting">
+                                <div>
+                                    <h6 class="mb-1">Permitir Contacto</h6>
+                                    <small class="text-muted">Otros emprendedores pueden contactarte</small>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" name="allow_contact" {{ 'checked' if current_user.allow_contact else '' }}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="privacy-setting">
+                                <div>
+                                    <h6 class="mb-1">Mostrar Progreso</h6>
+                                    <small class="text-muted">Compartir tu progreso en programas</small>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" name="show_progress" {{ 'checked' if current_user.show_progress else '' }}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3 class="section-title">
+                                <div class="section-icon">
+                                    <i class="fas fa-download"></i>
+                                </div>
+                                Exportar Datos
+                            </h3>
+                            
+                            <p class="text-muted mb-3">Descarga una copia de todos tus datos almacenados en la plataforma.</p>
+                            
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-primary" onclick="exportData('json')">
+                                    <i class="fas fa-file-code me-1"></i>Exportar JSON
+                                </button>
+                                <button type="button" class="btn btn-outline-success" onclick="exportData('pdf')">
+                                    <i class="fas fa-file-pdf me-1"></i>Exportar PDF
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3 class="section-title text-danger">
+                                <div class="section-icon" style="background: var(--danger-gradient);">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                Zona de Peligro
+                            </h3>
+                            
+                            <p class="text-muted mb-3">Estas acciones son permanentes y no se pueden deshacer.</p>
+                            
+                            <button type="button" class="btn btn-outline-danger" onclick="deleteAccount()">
+                                <i class="fas fa-trash me-1"></i>Eliminar Cuenta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-end mt-4">
+                    <button type="button" class="btn btn-primary" onclick="saveSettings()">
+                        <i class="fas fa-save me-1"></i>Guardar Configuración
+                    </button>
+                </div>
+            </div>
         </div>
-        
-        <!-- Main Content -->
-        <div class="col-md-9">
-            <!-- Alert for success/error messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-            
-            <!-- Personal Information Section -->
-            <div class="card mb-4" id="personal-info">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Información Personal</h5>
-                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editPersonalInfoModal">
-                        <i class="bi bi-pencil"></i> Editar
-                    </button>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <h6 class="text-muted">Nombre Completo</h6>
-                            <p>{{ entrepreneur.user.full_name }}</p>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <h6 class="text-muted">Correo Electrónico</h6>
-                            <p>{{ entrepreneur.user.email }}</p>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <h6 class="text-muted">Fecha de Nacimiento</h6>
-                            <p>{{ entrepreneur.birth_date.strftime('%d/%m/%Y') if entrepreneur.birth_date else 'No especificado' }}</p>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <h6 class="text-muted">Género</h6>
-                            <p>{{ entrepreneur.gender or 'No especificado' }}</p>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <h6 class="text-muted">Documento de Identidad</h6>
-                            <p>{{ entrepreneur.id_type }}: {{ entrepreneur.id_number }}</p>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <h6 class="text-muted">Nivel Educativo</h6>
-                            <p>{{ entrepreneur.education_level or 'No especificado' }}</p>
-                        </div>
-                    </div>
+    </div>
+</div>
+
+<!-- Image Cropper Modal -->
+<div class="modal fade crop-modal" id="imageCropperModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Recortar Imagen de Perfil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="crop-container">
+                    <img id="cropperImage" style="max-width: 100%;">
                 </div>
             </div>
-            
-            <!-- Business Information Section -->
-            <div class="card mb-4" id="business-info">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Información del Emprendimiento</h5>
-                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editBusinessInfoModal">
-                        <i class="bi bi-pencil"></i> Editar
-                    </button>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <h6 class="text-muted">Nombre del Emprendimiento</h6>
-                            <p>{{ entrepreneur.business_name }}</p>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <h6 class="text-muted">Sector</h6>
-                            <p>{{ entrepreneur.business_sector or 'No especificado' }}</p>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <h6 class="text-muted">Etapa</h6>
-                            <p>{{ entrepreneur.business_stage or 'No especificado' }}</p>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <h6 class="text-muted">Año de Fundación</h6>
-                            <p>{{ entrepreneur.founding_year or 'No especificado' }}</p>
-                        </div>
-                        <div class="col-12 mb-3">
-                            <h6 class="text-muted">Descripción</h6>
-                            <p>{{ entrepreneur.business_description or 'No hay descripción disponible.' }}</p>
-                        </div>
-                        <div class="col-12 mb-3">
-                            <h6 class="text-muted">Sitio Web</h6>
-                            <p>
-                                {% if entrepreneur.website %}
-                                    <a href="{{ entrepreneur.website }}" target="_blank">{{ entrepreneur.website }}</a>
-                                {% else %}
-                                    No especificado
-                                {% endif %}
-                            </p>
-                        </div>
-                    </div>
-                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="applyCrop()">Aplicar</button>
             </div>
-            
-            <!-- Contact Information Section -->
-            <div class="card mb-4" id="contact-info">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Información de Contacto</h5>
-                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editContactInfoModal">
-                        <i class="bi bi-pencil"></i> Editar
-                    </button>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <h6 class="text-muted">Teléfono</h6>
-                            <p>{{ entrepreneur.phone or 'No especificado' }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Experience Modal -->
+<div class="modal fade" id="experienceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="experienceModalTitle">Agregar Experiencia</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="experienceForm">
+                <div class="modal-body">
+                    <input type="hidden" id="experienceId" name="experience_id">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="expPosition" class="form-label fw-bold">Posición *</label>
+                            <input type="text" class="form-control" id="expPosition" name="position" required>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <h6 class="text-muted">Dirección</h6>
-                            <p>{{ entrepreneur.address or 'No especificado' }}</p>
+                        <div class="col-md-6">
+                            <label for="expCompany" class="form-label fw-bold">Empresa *</label>
+                            <input type="text" class="form-control" id="expCompany" name="company" required>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <h6 class="text-muted">Ciudad</h6>
-                            <p>{{ entrepreneur.city or 'No especificado' }}</p>
+                        <div class="col-md-6">
+                            <label for="expStartDate" class="form-label fw-bold">Fecha de Inicio *</label>
+                            <input type="date" class="form-control" id="expStartDate" name="start_date" required>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <h6 class="text-muted">País</h6>
-                            <p>{{ entrepreneur.country or 'No especificado' }}</p>
+                        <div class="col-md-6">
+                            <label for="expEndDate" class="form-label fw-bold">Fecha de Fin</label>
+                            <input type="date" class="form-control" id="expEndDate" name="end_date">
+                            <div class="form-check mt-2">
+                                <input type="checkbox" class="form-check-input" id="currentJob" name="current_job">
+                                <label class="form-check-label" for="currentJob">Trabajo actual</label>
+                            </div>
                         </div>
                         <div class="col-12">
-                            <h6 class="text-muted">Redes Sociales</h6>
-                            <div class="social-links">
-                                {% if entrepreneur.linkedin %}
-                                    <a href="{{ entrepreneur.linkedin }}" target="_blank" class="me-2">
-                                        <i class="bi bi-linkedin"></i> LinkedIn
-                                    </a>
-                                {% endif %}
-                                {% if entrepreneur.facebook %}
-                                    <a href="{{ entrepreneur.facebook }}" target="_blank" class="me-2">
-                                        <i class="bi bi-facebook"></i> Facebook
-                                    </a>
-                                {% endif %}
-                                {% if entrepreneur.instagram %}
-                                    <a href="{{ entrepreneur.instagram }}" target="_blank" class="me-2">
-                                        <i class="bi bi-instagram"></i> Instagram
-                                    </a>
-                                {% endif %}
-                                {% if entrepreneur.twitter %}
-                                    <a href="{{ entrepreneur.twitter }}" target="_blank">
-                                        <i class="bi bi-twitter"></i> Twitter
-                                    </a>
-                                {% endif %}
-                                {% if not entrepreneur.linkedin and not entrepreneur.facebook and not entrepreneur.instagram and not entrepreneur.twitter %}
-                                    <p>No hay redes sociales especificadas.</p>
-                                {% endif %}
-                            </div>
+                            <label for="expDescription" class="form-label fw-bold">Descripción</label>
+                            <textarea class="form-control" id="expDescription" name="description" rows="4" 
+                                      placeholder="Describe tus responsabilidades, logros y experiencias en este puesto..."></textarea>
                         </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Security Section -->
-            <div class="card" id="security">
-                <div class="card-header">
-                    <h5 class="mb-0">Seguridad</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <h6 class="text-muted">Contraseña</h6>
-                        <p>********</p>
-                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
-                            <i class="bi bi-key"></i> Cambiar contraseña
-                        </button>
-                    </div>
-                    <div>
-                        <h6 class="text-muted">Último acceso</h6>
-                        <p>{{ entrepreneur.user.last_login.strftime('%d/%m/%Y %H:%M') if entrepreneur.user.last_login else 'No disponible' }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modals -->
-<!-- Update Photo Modal -->
-<div class="modal fade" id="updatePhotoModal" tabindex="-1" aria-labelledby="updatePhotoModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="updatePhotoModalLabel">Actualizar Foto de Perfil</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="{{ url_for('entrepreneur.profile.update_photo') }}" method="post" enctype="multipart/form-data">
-                <div class="modal-body">
-                    {{ photo_form.csrf_token }}
-                    <div class="mb-3">
-                        <label for="profile_image" class="form-label">Seleccionar nueva imagen</label>
-                        {{ photo_form.profile_image(class="form-control") }}
-                        <div class="form-text">La imagen debe ser de formato JPG, PNG o GIF y no exceder 5MB.</div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Experiencia</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Edit Personal Information Modal -->
-<div class="modal fade" id="editPersonalInfoModal" tabindex="-1" aria-labelledby="editPersonalInfoModalLabel" aria-hidden="true">
+<!-- Project Modal -->
+<div class="modal fade" id="projectModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editPersonalInfoModalLabel">Editar Información Personal</h5>
+                <h5 class="modal-title" id="projectModalTitle">Agregar Proyecto</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ url_for('entrepreneur.profile.update_personal_info') }}" method="post">
+            <form id="projectForm" enctype="multipart/form-data">
                 <div class="modal-body">
-                    {{ personal_form.csrf_token }}
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="first_name" class="form-label">Nombre</label>
-                            {{ personal_form.first_name(class="form-control", value=entrepreneur.user.first_name) }}
+                    <input type="hidden" id="projectId" name="project_id">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="projectTitle" class="form-label fw-bold">Título del Proyecto *</label>
+                            <input type="text" class="form-control" id="projectTitle" name="title" required>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="last_name" class="form-label">Apellido</label>
-                            {{ personal_form.last_name(class="form-control", value=entrepreneur.user.last_name) }}
+                        <div class="col-12">
+                            <label for="projectDescription" class="form-label fw-bold">Descripción *</label>
+                            <textarea class="form-control" id="projectDescription" name="description" rows="4" required
+                                      placeholder="Describe tu proyecto, tecnologías utilizadas, objetivos y resultados..."></textarea>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="birth_date" class="form-label">Fecha de Nacimiento</label>
-                            {{ personal_form.birth_date(class="form-control", value=entrepreneur.birth_date) }}
+                        <div class="col-md-6">
+                            <label for="projectUrl" class="form-label fw-bold">URL del Proyecto</label>
+                            <input type="url" class="form-control" id="projectUrl" name="url" placeholder="https://ejemplo.com">
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="gender" class="form-label">Género</label>
-                            {{ personal_form.gender(class="form-select") }}
+                        <div class="col-md-6">
+                            <label for="projectImage" class="form-label fw-bold">Imagen del Proyecto</label>
+                            <input type="file" class="form-control" id="projectImage" name="image" accept="image/*">
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="id_type" class="form-label">Tipo de Documento</label>
-                            {{ personal_form.id_type(class="form-select") }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="id_number" class="form-label">Número de Documento</label>
-                            {{ personal_form.id_number(class="form-control", value=entrepreneur.id_number) }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="education_level" class="form-label">Nivel Educativo</label>
-                            {{ personal_form.education_level(class="form-select") }}
+                        <div class="col-12">
+                            <label for="projectTags" class="form-label fw-bold">Tecnologías/Tags</label>
+                            <input type="text" class="form-control" id="projectTags" name="tags" 
+                                   placeholder="Separa con comas: React, Node.js, MongoDB">
+                            <small class="form-text text-muted">Ejemplo: React, Node.js, MongoDB, APIs</small>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    <button type="submit" class="btn btn-primary">Guardar Proyecto</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Edit Business Information Modal -->
-<div class="modal fade" id="editBusinessInfoModal" tabindex="-1" aria-labelledby="editBusinessInfoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editBusinessInfoModalLabel">Editar Información del Emprendimiento</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="{{ url_for('entrepreneur.profile.update_business_info') }}" method="post">
-                <div class="modal-body">
-                    {{ business_form.csrf_token }}
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="business_name" class="form-label">Nombre del Emprendimiento</label>
-                            {{ business_form.business_name(class="form-control", value=entrepreneur.business_name) }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="business_sector" class="form-label">Sector</label>
-                            {{ business_form.business_sector(class="form-select") }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="business_stage" class="form-label">Etapa</label>
-                            {{ business_form.business_stage(class="form-select") }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="founding_year" class="form-label">Año de Fundación</label>
-                            {{ business_form.founding_year(class="form-control", value=entrepreneur.founding_year) }}
-                        </div>
-                        <div class="col-12 mb-3">
-                            <label for="business_description" class="form-label">Descripción</label>
-                            {{ business_form.business_description(class="form-control", rows=4) }}
-                        </div>
-                        <div class="col-12 mb-3">
-                            <label for="website" class="form-label">Sitio Web</label>
-                            {{ business_form.website(class="form-control", value=entrepreneur.website) }}
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                </div>
-            </form>
-        </div>
-    </div>
+<!-- Unsaved Changes Indicator -->
+<div class="unsaved-indicator" id="unsavedIndicator">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    Tienes cambios sin guardar
+    <button type="button" class="btn btn-sm btn-dark ms-2" onclick="saveCurrentTab()">
+        Guardar
+    </button>
 </div>
 
-<!-- Edit Contact Information Modal -->
-<div class="modal fade" id="editContactInfoModal" tabindex="-1" aria-labelledby="editContactInfoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editContactInfoModalLabel">Editar Información de Contacto</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="{{ url_for('entrepreneur.profile.update_contact_info') }}" method="post">
-                <div class="modal-body">
-                    {{ contact_form.csrf_token }}
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="phone" class="form-label">Teléfono</label>
-                            {{ contact_form.phone(class="form-control", value=entrepreneur.phone) }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="address" class="form-label">Dirección</label>
-                            {{ contact_form.address(class="form-control", value=entrepreneur.address) }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="city" class="form-label">Ciudad</label>
-                            {{ contact_form.city(class="form-control", value=entrepreneur.city) }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="country" class="form-label">País</label>
-                            {{ contact_form.country(class="form-select") }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="linkedin" class="form-label">LinkedIn</label>
-                            {{ contact_form.linkedin(class="form-control", value=entrepreneur.linkedin) }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="facebook" class="form-label">Facebook</label>
-                            {{ contact_form.facebook(class="form-control", value=entrepreneur.facebook) }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="instagram" class="form-label">Instagram</label>
-                            {{ contact_form.instagram(class="form-control", value=entrepreneur.instagram) }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="twitter" class="form-label">Twitter</label>
-                            {{ contact_form.twitter(class="form-control", value=entrepreneur.twitter) }}
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Change Password Modal -->
-<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="changePasswordModalLabel">Cambiar Contraseña</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="{{ url_for('entrepreneur.profile.change_password') }}" method="post">
-                <div class="modal-body">
-                    {{ password_form.csrf_token }}
-                    <div class="mb-3">
-                        <label for="current_password" class="form-label">Contraseña Actual</label>
-                        {{ password_form.current_password(class="form-control") }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="new_password" class="form-label">Nueva Contraseña</label>
-                        {{ password_form.new_password(class="form-control") }}
-                        <div class="form-text">La contraseña debe tener al menos 8 caracteres e incluir letras y números.</div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="confirm_password" class="form-label">Confirmar Nueva Contraseña</label>
-                        {{ password_form.confirm_password(class="form-control") }}
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Cambiar Contraseña</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-{% block scripts %}
-{{ super() }}
-<script>
-    // Initialize date picker for birth date field
-    $(function() {
-        $('#birth_date').datepicker({
-            format: 'dd/mm/yyyy',
-            autoclose: true,
-            todayHighlight: true,
-            language: 'es'
-        });
-    });
-    
-    // Form validation
-    (function() {
-        'use strict'
-        
-        // Fetch all forms we want to apply validation to
-        var forms = document.querySelectorAll('.needs-validation')
-        
-        // Loop over them and prevent submission
-        Array.prototype.slice.call(forms)
-            .forEach(function(form) {
-                form.addEventListener('submit', function(event) {
-                    if (!form.checkValidity()) {
-                        event.preventDefault()
-                        event.stopPropagation()
-                    }
-                    
-                    form.classList.add('was-validated')
-                }, false)
-            })
-    })()
-</script>
+<input type="file" id="avatarUpload" accept="image/*" style="display: none;" onchange="handleAvatarUpload(this)">
 {% endblock %}
 
-{% endblock content %}
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// Initialize AOS
+AOS.init({
+    duration: 800,
+    once: true
+});
+
+// Global variables
+let cropper = null;
+let hasUnsavedChanges = false;
+let currentTab = 'personal';
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Select2
+    $('.form-select').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
+    });
+
+    // Initialize form validation
+    initializeValidation();
+    
+    // Setup change detection
+    setupChangeDetection();
+    
+    // Setup drag and drop
+    setupDragAndDrop();
+    
+    // Tab change handler
+    setupTabHandlers();
+    
+    // Current job checkbox handler
+    document.getElementById('currentJob').addEventListener('change', function() {
+        const endDateInput = document.getElementById('expEndDate');
+        endDateInput.disabled = this.checked;
+        if (this.checked) {
+            endDateInput.value = '';
+        }
+    });
+});
+
+// Initialize form validation
+function initializeValidation() {
+    // Email validation
+    document.getElementById('email').addEventListener('blur', function() {
+        validateEmail(this);
+    });
+    
+    // Phone validation
+    document.getElementById('phone').addEventListener('blur', function() {
+        validatePhone(this);
+    });
+    
+    // Bio character count
+    document.getElementById('bio').addEventListener('input', function() {
+        const maxLength = 500;
+        const currentLength = this.value.length;
+        const remaining = maxLength - currentLength;
+        
+        // Update character count display
+        let counterElement = this.parentElement.querySelector('.char-counter');
+        if (!counterElement) {
+            counterElement = document.createElement('small');
+            counterElement.className = 'char-counter form-text text-muted';
+            this.parentElement.appendChild(counterElement);
+        }
+        
+        counterElement.textContent = `${remaining} caracteres restantes`;
+        
+        if (remaining < 0) {
+            counterElement.classList.add('text-danger');
+            this.classList.add('is-invalid');
+        } else {
+            counterElement.classList.remove('text-danger');
+            this.classList.remove('is-invalid');
+        }
+    });
+}
+
+// Setup change detection
+function setupChangeDetection() {
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        const inputs = form.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('change', function() {
+                markUnsavedChanges();
+            });
+        });
+    });
+}
+
+// Setup drag and drop
+function setupDragAndDrop() {
+    const uploadArea = document.querySelector('.upload-area');
+    if (uploadArea) {
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleDocumentUpload({ files: files });
+            }
+        });
+    }
+}
+
+// Setup tab handlers
+function setupTabHandlers() {
+    const tabButtons = document.querySelectorAll('#profileTabs button[data-bs-toggle="tab"]');
+    tabButtons.forEach(button => {
+        button.addEventListener('shown.bs.tab', function(e) {
+            currentTab = e.target.getAttribute('data-bs-target').replace('#', '');
+            
+            // Save scroll position
+            sessionStorage.setItem('profileScrollPosition', window.scrollY);
+        });
+    });
+}
+
+// Mark unsaved changes
+function markUnsavedChanges() {
+    hasUnsavedChanges = true;
+    document.getElementById('unsavedIndicator').classList.add('show');
+}
+
+// Clear unsaved changes
+function clearUnsavedChanges() {
+    hasUnsavedChanges = false;
+    document.getElementById('unsavedIndicator').classList.remove('show');
+}
+
+// Validate email
+function validateEmail(input) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isValid = emailRegex.test(input.value);
+    
+    if (isValid) {
+        input.classList.remove('is-invalid');
+        input.classList.add('is-valid');
+        input.nextElementSibling.textContent = '';
+    } else {
+        input.classList.remove('is-valid');
+        input.classList.add('is-invalid');
+        input.nextElementSibling.textContent = 'Por favor ingresa un email válido';
+    }
+    
+    return isValid;
+}
+
+// Validate phone
+function validatePhone(input) {
+    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    const isValid = phoneRegex.test(input.value.replace(/\s/g, '')) || input.value === '';
+    
+    if (isValid) {
+        input.classList.remove('is-invalid');
+        input.classList.add('is-valid');
+    } else {
+        input.classList.remove('is-valid');
+        input.classList.add('is-invalid');
+    }
+    
+    return isValid;
+}
+
+// Open image cropper
+function openImageCropper() {
+    document.getElementById('avatarUpload').click();
+}
+
+// Handle avatar upload
+function handleAvatarUpload(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            Swal.fire('Error', 'Por favor selecciona una imagen válida', 'error');
+            return;
+        }
+        
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            Swal.fire('Error', 'La imagen debe ser menor a 5MB', 'error');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('cropperImage').src = e.target.result;
+            const modal = new bootstrap.Modal(document.getElementById('imageCropperModal'));
+            modal.show();
+            
+            // Initialize cropper
+            setTimeout(() => {
+                if (cropper) {
+                    cropper.destroy();
+                }
+                cropper = new Cropper(document.getElementById('cropperImage'), {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 0.8,
+                    scalable: true,
+                    zoomable: true,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true
+                });
+            }, 100);
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// Apply crop
+function applyCrop() {
+    if (cropper) {
+        const canvas = cropper.getCroppedCanvas({
+            width: 300,
+            height: 300,
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high'
+        });
+        
+        canvas.toBlob(function(blob) {
+            const formData = new FormData();
+            formData.append('avatar', blob, 'avatar.jpg');
+            
+            // Show loading
+            Swal.fire({
+                title: 'Subiendo imagen...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            fetch('{{ url_for("entrepreneur.update_avatar") }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update avatar in UI
+                    document.getElementById('profileAvatar').src = data.avatar_url;
+                    
+                    Swal.fire('¡Éxito!', 'Imagen de perfil actualizada', 'success');
+                    
+                    // Close modal
+                    bootstrap.Modal.getInstance(document.getElementById('imageCropperModal')).hide();
+                } else {
+                    Swal.fire('Error', data.message || 'Error al subir la imagen', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Error al procesar la solicitud', 'error');
+            });
+        }, 'image/jpeg', 0.9);
+    }
+}
+
+// Personal form submission
+document.getElementById('personalInfoForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Validate required fields
+    const requiredFields = this.querySelectorAll('[required]');
+    let isValid = true;
+    
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            field.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            field.classList.remove('is-invalid');
+        }
+    });
+    
+    // Validate email
+    const emailField = document.getElementById('email');
+    if (!validateEmail(emailField)) {
+        isValid = false;
+    }
+    
+    if (!isValid) {
+        Swal.fire('Error', 'Por favor completa todos los campos requeridos', 'error');
+        return;
+    }
+    
+    const formData = new FormData(this);
+    
+    // Show loading
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Guardando...';
+    submitBtn.disabled = true;
+    
+    fetch('{{ url_for("entrepreneur.update_profile") }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire('¡Éxito!', 'Perfil actualizado correctamente', 'success');
+            clearUnsavedChanges();
+            
+            // Update header info if name changed
+            if (data.full_name) {
+                document.querySelector('.profile-header h1').textContent = data.full_name;
+            }
+        } else {
+            Swal.fire('Error', data.message || 'Error al actualizar el perfil', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire('Error', 'Error al procesar la solicitud', 'error');
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+});
+
+// Reset personal form
+function resetPersonalForm() {
+    if (hasUnsavedChanges) {
+        Swal.fire({
+            title: '¿Descartar cambios?',
+            text: 'Se perderán todos los cambios no guardados',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, descartar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('personalInfoForm').reset();
+                clearUnsavedChanges();
+                // Reset validation classes
+                document.querySelectorAll('.is-valid, .is-invalid').forEach(element => {
+                    element.classList.remove('is-valid', 'is-invalid');
+                });
+            }
+        });
+    }
+}
+
+// Add experience
+function addExperience() {
+    document.getElementById('experienceModalTitle').textContent = 'Agregar Experiencia';
+    document.getElementById('experienceForm').reset();
+    document.getElementById('experienceId').value = '';
+    const modal = new bootstrap.Modal(document.getElementById('experienceModal'));
+    modal.show();
+}
+
+// Edit experience
+function editExperience(experienceId) {
+    fetch(`{{ url_for("entrepreneur.get_experience", experience_id=0) }}`.replace('0', experienceId))
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const exp = data.experience;
+            document.getElementById('experienceModalTitle').textContent = 'Editar Experiencia';
+            document.getElementById('experienceId').value = exp.id;
+            document.getElementById('expPosition').value = exp.position;
+            document.getElementById('expCompany').value = exp.company;
+            document.getElementById('expStartDate').value = exp.start_date;
+            document.getElementById('expEndDate').value = exp.end_date || '';
+            document.getElementById('currentJob').checked = !exp.end_date;
+            document.getElementById('expDescription').value = exp.description || '';
+            
+            const modal = new bootstrap.Modal(document.getElementById('experienceModal'));
+            modal.show();
+        }
+    });
+}
+
+// Delete experience
+function deleteExperience(experienceId) {
+    Swal.fire({
+        title: '¿Eliminar experiencia?',
+        text: 'Esta acción no se puede deshacer',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#dc3545'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`{{ url_for("entrepreneur.delete_experience", experience_id=0) }}`.replace('0', experienceId), {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.querySelector(`[data-experience-id="${experienceId}"]`).remove();
+                    Swal.fire('¡Eliminado!', 'Experiencia eliminada correctamente', 'success');
+                } else {
+                    Swal.fire('Error', 'No se pudo eliminar la experiencia', 'error');
+                }
+            });
+        }
+    });
+}
+
+// Experience form submission
+document.getElementById('experienceForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const experienceId = document.getElementById('experienceId').value;
+    
+    const url = experienceId ? 
+        `{{ url_for("entrepreneur.update_experience", experience_id=0) }}`.replace('0', experienceId) :
+        '{{ url_for("entrepreneur.add_experience") }}';
+    
+    const method = experienceId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire('¡Éxito!', 'Experiencia guardada correctamente', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('experienceModal')).hide();
+            // Reload experience list or update UI
+            location.reload();
+        } else {
+            Swal.fire('Error', data.message || 'Error al guardar la experiencia', 'error');
+        }
+    });
+});
+
+// Add skill
+function addSkill() {
+    const skillInput = document.getElementById('skillInput');
+    const skillName = skillInput.value.trim();
+    
+    if (!skillName) {
+        skillInput.focus();
+        return;
+    }
+    
+    // Check if skill already exists
+    const existingSkills = Array.from(document.querySelectorAll('.skill-tag')).map(tag => tag.textContent.trim().replace('×', '').trim());
+    if (existingSkills.includes(skillName)) {
+        Swal.fire('Habilidad duplicada', 'Esta habilidad ya está agregada', 'warning');
+        skillInput.value = '';
+        return;
+    }
+    
+    fetch('{{ url_for("entrepreneur.add_skill") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        },
+        body: JSON.stringify({ skill_name: skillName })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Add skill tag to UI
+            const skillsContainer = document.getElementById('skillsContainer');
+            const skillTag = document.createElement('span');
+            skillTag.className = 'skill-tag';
+            skillTag.setAttribute('data-skill-id', data.skill_id);
+            skillTag.innerHTML = `
+                ${skillName}
+                <span class="remove-skill" onclick="removeSkill(${data.skill_id})">
+                    <i class="fas fa-times"></i>
+                </span>
+            `;
+            skillsContainer.appendChild(skillTag);
+            
+            // Clear input
+            skillInput.value = '';
+            
+            // Hide no skills message
+            const noSkills = document.getElementById('noSkills');
+            if (noSkills) {
+                noSkills.style.display = 'none';
+            }
+        } else {
+            Swal.fire('Error', data.message || 'Error al agregar la habilidad', 'error');
+        }
+    });
+}
+
+// Add suggested skill
+function addSuggestedSkill(skillName) {
+    document.getElementById('skillInput').value = skillName;
+    addSkill();
+}
+
+// Remove skill
+function removeSkill(skillId) {
+    fetch(`{{ url_for("entrepreneur.remove_skill", skill_id=0) }}`.replace('0', skillId), {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.querySelector(`[data-skill-id="${skillId}"]`).remove();
+            
+            // Show no skills message if no skills left
+            const skillsContainer = document.getElementById('skillsContainer');
+            if (skillsContainer.children.length === 0) {
+                const noSkills = document.getElementById('noSkills');
+                if (noSkills) {
+                    noSkills.style.display = 'block';
+                }
+            }
+        } else {
+            Swal.fire('Error', 'No se pudo eliminar la habilidad', 'error');
+        }
+    });
+}
+
+// Handle document upload
+function handleDocumentUpload(input) {
+    const files = input.files;
+    if (!files || files.length === 0) return;
+    
+    const formData = new FormData();
+    Array.from(files).forEach(file => {
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            Swal.fire('Error', `El archivo ${file.name} es muy grande. Máximo 10MB.`, 'error');
+            return;
+        }
+        formData.append('documents', file);
+    });
+    
+    // Show upload progress
+    Swal.fire({
+        title: 'Subiendo documentos...',
+        html: '<div class="progress"><div class="progress-bar" role="progressbar" style="width: 0%"></div></div>',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    const xhr = new XMLHttpRequest();
+    
+    // Track upload progress
+    xhr.upload.addEventListener('progress', function(e) {
+        if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            const progressBar = document.querySelector('.progress-bar');
+            if (progressBar) {
+                progressBar.style.width = percentComplete + '%';
+                progressBar.textContent = Math.round(percentComplete) + '%';
+            }
+        }
+    });
+    
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            if (response.success) {
+                Swal.fire('¡Éxito!', `${response.uploaded_count} documento(s) subido(s) correctamente`, 'success');
+                location.reload(); // Reload to show new documents
+            } else {
+                Swal.fire('Error', response.message || 'Error al subir documentos', 'error');
+            }
+        } else {
+            Swal.fire('Error', 'Error de conexión al subir documentos', 'error');
+        }
+    };
+    
+    xhr.onerror = function() {
+        Swal.fire('Error', 'Error de red al subir documentos', 'error');
+    };
+    
+    xhr.open('POST', '{{ url_for("entrepreneur.upload_documents") }}');
+    xhr.setRequestHeader('X-CSRFToken', document.querySelector('meta[name=csrf-token]').getAttribute('content'));
+    xhr.send(formData);
+    
+    // Clear input
+    input.value = '';
+}
+
+// Upload document (button click)
+function uploadDocument() {
+    document.getElementById('documentUpload').click();
+}
+
+// View document
+function viewDocument(documentId) {
+    window.open(`{{ url_for("entrepreneur.view_document", document_id=0) }}`.replace('0', documentId), '_blank');
+}
+
+// Download document
+function downloadDocument(documentId) {
+    window.open(`{{ url_for("entrepreneur.download_document", document_id=0) }}`.replace('0', documentId), '_blank');
+}
+
+// Delete document
+function deleteDocument(documentId) {
+    Swal.fire({
+        title: '¿Eliminar documento?',
+        text: 'Esta acción no se puede deshacer',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#dc3545'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`{{ url_for("entrepreneur.delete_document", document_id=0) }}`.replace('0', documentId), {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.querySelector(`[data-document-id="${documentId}"]`).remove();
+                    Swal.fire('¡Eliminado!', 'Documento eliminado correctamente', 'success');
+                    
+                    // Show no documents message if no documents left
+                    const documentsContainer = document.getElementById('documentsList');
+                    if (documentsContainer.children.length === 0) {
+                        const noDocuments = document.getElementById('noDocuments');
+                        if (noDocuments) {
+                            noDocuments.style.display = 'block';
+                        }
+                    }
+                } else {
+                    Swal.fire('Error', 'No se pudo eliminar el documento', 'error');
+                }
+            });
+        }
+    });
+}
+
+// Add project
+function addProject() {
+    document.getElementById('projectModalTitle').textContent = 'Agregar Proyecto';
+    document.getElementById('projectForm').reset();
+    document.getElementById('projectId').value = '';
+    const modal = new bootstrap.Modal(document.getElementById('projectModal'));
+    modal.show();
+}
+
+// Edit project
+function editProject(projectId) {
+    fetch(`{{ url_for("entrepreneur.get_project", project_id=0) }}`.replace('0', projectId))
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const project = data.project;
+            document.getElementById('projectModalTitle').textContent = 'Editar Proyecto';
+            document.getElementById('projectId').value = project.id;
+            document.getElementById('projectTitle').value = project.title;
+            document.getElementById('projectDescription').value = project.description;
+            document.getElementById('projectUrl').value = project.url || '';
+            document.getElementById('projectTags').value = project.tags ? project.tags.join(', ') : '';
+            
+            const modal = new bootstrap.Modal(document.getElementById('projectModal'));
+            modal.show();
+        }
+    });
+}
+
+// Delete project
+function deleteProject(projectId) {
+    Swal.fire({
+        title: '¿Eliminar proyecto?',
+        text: 'Esta acción no se puede deshacer',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#dc3545'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`{{ url_for("entrepreneur.delete_project", project_id=0) }}`.replace('0', projectId), {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('¡Eliminado!', 'Proyecto eliminado correctamente', 'success');
+                    location.reload();
+                } else {
+                    Swal.fire('Error', 'No se pudo eliminar el proyecto', 'error');
+                }
+            });
+        }
+    });
+}
+
+// Project form submission
+document.getElementById('projectForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const projectId = document.getElementById('projectId').value;
+    
+    // Process tags
+    const tagsInput = document.getElementById('projectTags').value;
+    const tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag);
+    formData.delete('tags');
+    formData.append('tags', JSON.stringify(tags));
+    
+    const url = projectId ? 
+        `{{ url_for("entrepreneur.update_project", project_id=0) }}`.replace('0', projectId) :
+        '{{ url_for("entrepreneur.add_project") }}';
+    
+    const method = projectId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire('¡Éxito!', 'Proyecto guardado correctamente', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('projectModal')).hide();
+            location.reload();
+        } else {
+            Swal.fire('Error', data.message || 'Error al guardar el proyecto', 'error');
+        }
+    });
+});
+
+// Change password form submission
+document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    // Validate passwords
+    if (newPassword !== confirmPassword) {
+        Swal.fire('Error', 'Las contraseñas no coinciden', 'error');
+        return;
+    }
+    
+    if (newPassword.length < 8) {
+        Swal.fire('Error', 'La nueva contraseña debe tener al menos 8 caracteres', 'error');
+        return;
+    }
+    
+    // Check password strength
+    const hasUpper = /[A-Z]/.test(newPassword);
+    const hasLower = /[a-z]/.test(newPassword);
+    const hasNumber = /\d/.test(newPassword);
+    
+    if (!hasUpper || !hasLower || !hasNumber) {
+        Swal.fire('Error', 'La contraseña debe incluir mayúsculas, minúsculas y números', 'error');
+        return;
+    }
+    
+    const formData = new FormData(this);
+    
+    fetch('{{ url_for("entrepreneur.change_password") }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire('¡Éxito!', 'Contraseña cambiada correctamente', 'success');
+            this.reset();
+        } else {
+            Swal.fire('Error', data.message || 'Error al cambiar la contraseña', 'error');
+        }
+    });
+});
+
+// Save settings
+function saveSettings() {
+    const settingsData = {};
+    
+    // Collect notification settings
+    document.querySelectorAll('#settings input[type="checkbox"]').forEach(checkbox => {
+        settingsData[checkbox.name] = checkbox.checked;
+    });
+    
+    fetch('{{ url_for("entrepreneur.save_settings") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        },
+        body: JSON.stringify(settingsData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire('¡Éxito!', 'Configuración guardada correctamente', 'success');
+            clearUnsavedChanges();
+        } else {
+            Swal.fire('Error', data.message || 'Error al guardar la configuración', 'error');
+        }
+    });
+}
+
+// Export data
+function exportData(format) {
+    Swal.fire({
+        title: 'Preparando exportación...',
+        text: 'Esto puede tomar unos momentos',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    fetch(`{{ url_for("entrepreneur.export_data") }}?format=${format}`, {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.blob();
+        }
+        throw new Error('Error en la respuesta del servidor');
+    })
+    .then(blob => {
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `mi_perfil_${new Date().toISOString().split('T')[0]}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        Swal.fire('¡Éxito!', 'Datos exportados correctamente', 'success');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire('Error', 'Error al exportar los datos', 'error');
+    });
+}
+
+// Delete account
+function deleteAccount() {
+    Swal.fire({
+        title: '¿Eliminar cuenta permanentemente?',
+        html: `
+            <div class="text-start">
+                <p class="text-danger fw-bold">⚠️ Esta acción es IRREVERSIBLE</p>
+                <p>Se eliminarán permanentemente:</p>
+                <ul class="text-muted">
+                    <li>Tu perfil y toda la información personal</li>
+                    <li>Documentos y proyectos subidos</li>
+                    <li>Historial de programas y logros</li>
+                    <li>Mensajes y comunicaciones</li>
+                </ul>
+                <p class="mt-3">Para confirmar, escribe: <strong>ELIMINAR MI CUENTA</strong></p>
+                <input type="text" id="deleteConfirmation" class="form-control" placeholder="Escribe la confirmación aquí">
+            </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Eliminar Permanentemente',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#dc3545',
+        focusCancel: true,
+        preConfirm: () => {
+            const confirmation = document.getElementById('deleteConfirmation').value;
+            if (confirmation !== 'ELIMINAR MI CUENTA') {
+                Swal.showValidationMessage('Por favor escribe exactamente: ELIMINAR MI CUENTA');
+                return false;
+            }
+            return true;
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Final confirmation
+            Swal.fire({
+                title: 'Última confirmación',
+                text: '¿Estás absolutamente seguro? Esta acción no se puede deshacer.',
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, eliminar para siempre',
+                cancelButtonText: 'No, conservar mi cuenta',
+                confirmButtonColor: '#dc3545'
+            }).then((finalResult) => {
+                if (finalResult.isConfirmed) {
+                    // Proceed with account deletion
+                    fetch('{{ url_for("entrepreneur.delete_account") }}', {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Cuenta eliminada',
+                                text: 'Tu cuenta ha sido eliminada permanentemente. Serás redirigido al inicio.',
+                                icon: 'success',
+                                showConfirmButton: false,
+                                timer: 3000
+                            }).then(() => {
+                                window.location.href = '{{ url_for("main.index") }}';
+                            });
+                        } else {
+                            Swal.fire('Error', data.message || 'Error al eliminar la cuenta', 'error');
+                        }
+                    });
+                }
+            });
+        }
+    });
+}
+
+// Save current tab
+function saveCurrentTab() {
+    switch(currentTab) {
+        case 'personal':
+            document.getElementById('personalInfoForm').dispatchEvent(new Event('submit'));
+            break;
+        case 'settings':
+            saveSettings();
+            break;
+        default:
+            clearUnsavedChanges();
+    }
+}
+
+// Skill input enter key handler
+document.getElementById('skillInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        addSkill();
+    }
+});
+
+// Auto-save functionality
+let autoSaveTimeout;
+function setupAutoSave() {
+    // Auto-save personal info after 30 seconds of inactivity
+    const personalInputs = document.querySelectorAll('#personalInfoForm input, #personalInfoForm select, #personalInfoForm textarea');
+    
+    personalInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(() => {
+                if (hasUnsavedChanges) {
+                    // Silent auto-save
+                    const formData = new FormData(document.getElementById('personalInfoForm'));
+                    fetch('{{ url_for("entrepreneur.autosave_profile") }}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Show subtle indication
+                            const indicator = document.createElement('div');
+                            indicator.className = 'position-fixed top-0 end-0 m-3 alert alert-success alert-dismissible';
+                            indicator.innerHTML = '<i class="fas fa-check me-1"></i>Cambios guardados automáticamente';
+                            document.body.appendChild(indicator);
+                            
+                            setTimeout(() => {
+                                indicator.remove();
+                            }, 3000);
+                            
+                            clearUnsavedChanges();
+                        }
+                    });
+                }
+            }, 30000); // 30 seconds
+        });
+    });
+}
+
+// Initialize auto-save
+setupAutoSave();
+
+// Progress calculation
+function calculateProfileCompletion() {
+    const fields = [
+        'firstName', 'lastName', 'email', 'phone', 'birthDate', 
+        'country', 'city', 'bio', 'currentPosition', 'industry'
+    ];
+    
+    let completedFields = 0;
+    fields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field && field.value.trim()) {
+            completedFields++;
+        }
+    });
+    
+    // Add points for avatar
+    if (document.getElementById('profileAvatar').src.includes('profile_pictures')) {
+        completedFields++;
+    }
+    
+    // Add points for experience
+    if (document.querySelectorAll('.experience-item').length > 0) {
+        completedFields++;
+    }
+    
+    // Add points for skills
+    if (document.querySelectorAll('.skill-tag').length > 0) {
+        completedFields++;
+    }
+    
+    const totalFields = fields.length + 3; // +3 for avatar, experience, skills
+    const percentage = Math.round((completedFields / totalFields) * 100);
+    
+    // Update progress ring
+    const progressRing = document.querySelector('.progress-ring-circle[stroke="url(#gradient)"]');
+    if (progressRing) {
+        const circumference = 327;
+        const offset = circumference - (circumference * percentage / 100);
+        progressRing.style.strokeDashoffset = offset;
+    }
+    
+    // Update percentage text
+    const percentageText = document.querySelector('.h4.text-primary');
+    if (percentageText) {
+        percentageText.textContent = percentage + '%';
+    }
+    
+    return percentage;
+}
+
+// Recalculate profile completion on form changes
+document.querySelectorAll('#personalInfoForm input, #personalInfoForm select, #personalInfoForm textarea').forEach(input => {
+    input.addEventListener('change', function() {
+        setTimeout(calculateProfileCompletion, 100);
+    });
+});
+
+// Prevent accidental page leaving
+window.addEventListener('beforeunload', function(e) {
+    if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+    }
+});
+
+// Performance optimization: Lazy load tab content
+const tabTriggers = document.querySelectorAll('#profileTabs button[data-bs-toggle="tab"]');
+const loadedTabs = new Set(['personal']); // Personal tab is loaded by default
+
+tabTriggers.forEach(trigger => {
+    trigger.addEventListener('shown.bs.tab', function(e) {
+        const targetId = e.target.getAttribute('data-bs-target').replace('#', '');
+        
+        if (!loadedTabs.has(targetId)) {
+            // Load tab content if not already loaded
+            loadTabContent(targetId);
+            loadedTabs.add(targetId);
+        }
+    });
+});
+
+function loadTabContent(tabId) {
+    // This function can be used to lazy load heavy content
+    switch(tabId) {
+        case 'achievements':
+            // Load achievements if needed
+            break;
+        case 'portfolio':
+            // Load portfolio projects if needed
+            break;
+        default:
+            break;
+    }
+}
+
+// Accessibility improvements
+document.querySelectorAll('.skill-tag').forEach(tag => {
+    tag.setAttribute('role', 'button');
+    tag.setAttribute('tabindex', '0');
+    tag.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            const removeBtn = this.querySelector('.remove-skill');
+            if (removeBtn) {
+                removeBtn.click();
+            }
+        }
+    });
+});
+
+// Initialize tooltips
+const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+});
+
+// Image lazy loading
+const images = document.querySelectorAll('img[data-src]');
+const imageObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const img = entry.target;
+            img.src = img.dataset.src;
+            img.classList.remove('lazy');
+            imageObserver.unobserve(img);
+        }
+    });
+});
+
+images.forEach(img => imageObserver.observe(img));
+
+// Calculate and update profile completion on page load
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(calculateProfileCompletion, 500);
+});
+
+console.log('Perfil del emprendedor inicializado correctamente');
+</script>
+{% endblock %}

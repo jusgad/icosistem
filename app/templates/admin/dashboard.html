@@ -1,699 +1,1228 @@
-{% extends 'base.html' %}
+{% extends "layouts/admin.html" %}
 
-{% block title %}Panel de Administración{% endblock %}
+{% block title %}Dashboard Administrativo - Ecosistema de Emprendimiento{% endblock %}
 
-{% block styles %}
-{{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css" rel="stylesheet">
+<style>
+    :root {
+        --admin-primary: #1e40af;
+        --admin-secondary: #64748b;
+        --admin-success: #059669;
+        --admin-warning: #d97706;
+        --admin-danger: #dc2626;
+        --admin-info: #0284c7;
+        --admin-dark: #0f172a;
+        --admin-light: #f1f5f9;
+        --admin-border: #e2e8f0;
+        --admin-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        --admin-shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+        --admin-gradient: linear-gradient(135deg, var(--admin-primary) 0%, #3b82f6 100%);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .admin-header {
+        background: var(--admin-gradient);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 24px 24px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .admin-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+        opacity: 0.3;
+    }
+
+    .admin-header .container {
+        position: relative;
+        z-index: 1;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: var(--admin-shadow);
+        border: 1px solid var(--admin-border);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--admin-shadow-lg);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--card-color, var(--admin-primary));
+    }
+
+    .stat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        background: var(--card-color, var(--admin-primary));
+    }
+
+    .stat-trend {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .trend-up { color: var(--admin-success); }
+    .trend-down { color: var(--admin-danger); }
+    .trend-neutral { color: var(--admin-secondary); }
+
+    .stat-value {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: var(--admin-dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        color: var(--admin-secondary);
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .chart-card,
+    .activity-card,
+    .users-card,
+    .alerts-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: var(--admin-shadow);
+        border: 1px solid var(--admin-border);
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: between;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--admin-border);
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--admin-dark);
+        margin: 0;
+    }
+
+    .card-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid var(--admin-border);
+        background: white;
+        color: var(--admin-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+        cursor: pointer;
+    }
+
+    .btn-icon:hover {
+        background: var(--admin-light);
+        color: var(--admin-primary);
+        border-color: var(--admin-primary);
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 1rem;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 0.75rem;
+        transition: var(--transition);
+    }
+
+    .activity-item:hover {
+        background: var(--admin-light);
+    }
+
+    .activity-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--admin-primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-title {
+        font-weight: 600;
+        color: var(--admin-dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .activity-description {
+        color: var(--admin-secondary);
+        font-size: 0.875rem;
+    }
+
+    .activity-time {
+        color: var(--admin-secondary);
+        font-size: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .users-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .users-table th,
+    .users-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--admin-border);
+    }
+
+    .users-table th {
+        background: var(--admin-light);
+        font-weight: 600;
+        color: var(--admin-dark);
+        font-size: 0.875rem;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--admin-primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .user-details h6 {
+        margin: 0;
+        font-weight: 600;
+        color: var(--admin-dark);
+    }
+
+    .user-details p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: var(--admin-secondary);
+    }
+
+    .badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .badge-success {
+        background: rgba(5, 150, 105, 0.1);
+        color: var(--admin-success);
+    }
+
+    .badge-warning {
+        background: rgba(217, 119, 6, 0.1);
+        color: var(--admin-warning);
+    }
+
+    .badge-danger {
+        background: rgba(220, 38, 38, 0.1);
+        color: var(--admin-danger);
+    }
+
+    .badge-info {
+        background: rgba(2, 132, 199, 0.1);
+        color: var(--admin-info);
+    }
+
+    .alert-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 0.75rem;
+        border-left: 4px solid var(--alert-color, var(--admin-info));
+        background: var(--alert-bg, rgba(2, 132, 199, 0.05));
+    }
+
+    .alert-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--alert-color, var(--admin-info));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        flex-shrink: 0;
+        margin-top: 0.125rem;
+    }
+
+    .alert-content {
+        flex: 1;
+    }
+
+    .alert-title {
+        font-weight: 600;
+        color: var(--admin-dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .alert-description {
+        color: var(--admin-secondary);
+        font-size: 0.875rem;
+        line-height: 1.4;
+    }
+
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .action-card {
+        background: white;
+        border: 2px solid var(--admin-border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: var(--transition);
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .action-card:hover {
+        border-color: var(--admin-primary);
+        transform: translateY(-2px);
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .action-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--admin-gradient);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin: 0 auto 1rem;
+    }
+
+    .action-title {
+        font-weight: 600;
+        color: var(--admin-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .action-description {
+        color: var(--admin-secondary);
+        font-size: 0.875rem;
+    }
+
+    .system-status {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .status-item {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        border: 1px solid var(--admin-border);
+    }
+
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 0.5rem;
+    }
+
+    .status-online { background: var(--admin-success); }
+    .status-warning { background: var(--admin-warning); }
+    .status-offline { background: var(--admin-danger); }
+
+    .status-label {
+        font-size: 0.875rem;
+        color: var(--admin-secondary);
+        margin-bottom: 0.25rem;
+    }
+
+    .status-value {
+        font-weight: 600;
+        color: var(--admin-dark);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .quick-actions {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .system-status {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .admin-header {
+            padding: 1.5rem 0;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .quick-actions {
+            grid-template-columns: 1fr;
+        }
+        
+        .system-status {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Loading States */
+    .loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
+    .skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+    }
+
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+
+    /* Custom Chart Styles */
+    .chart-legend {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+    }
+
+    /* Animation for counters */
+    .counter {
+        display: inline-block;
+    }
+
+    /* Notification dot */
+    .notification-dot {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        width: 8px;
+        height: 8px;
+        background: var(--admin-danger);
+        border-radius: 50%;
+        border: 2px solid white;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar -->
-        <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
-            <div class="position-sticky pt-3">
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{{ url_for('admin.dashboard') }}">
-                            <i class="bi bi-speedometer2"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.users') }}">
-                            <i class="bi bi-people"></i> Usuarios
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.entrepreneurs') }}">
-                            <i class="bi bi-briefcase"></i> Emprendedores
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.allies') }}">
-                            <i class="bi bi-stars"></i> Aliados
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.assign_ally') }}">
-                            <i class="bi bi-link"></i> Asignar Aliados
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.settings') }}">
-                            <i class="bi bi-gear"></i> Configuración
-                        </a>
-                    </li>
-                </ul>
+<!-- Admin Header -->
+<div class="admin-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="page-title">Dashboard Administrativo</h1>
+                <p class="page-subtitle">Gestiona y monitorea tu ecosistema de emprendimiento</p>
             </div>
-        </nav>
-
-        <!-- Main content -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Panel de Administración</h1>
-                <div class="btn-toolbar mb-2 mb-md-0">
-                    <div class="btn-group me-2">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="refreshDashboard">
-                            <i class="bi bi-arrow-clockwise"></i> Actualizar
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="exportData">
-                            <i class="bi bi-download"></i> Exportar
-                        </button>
-                    </div>
+            <div class="col-md-4 text-end">
+                <div class="d-flex justify-content-end gap-2">
+                    <button class="btn btn-light btn-sm" id="refreshDashboard">
+                        <i class="fas fa-sync-alt me-1"></i> Actualizar
+                    </button>
                     <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="periodDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-calendar3"></i> Últimos 30 días
+                        <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-download me-1"></i> Exportar
                         </button>
-                        <ul class="dropdown-menu" aria-labelledby="periodDropdown">
-                            <li><a class="dropdown-item period-option" href="#" data-days="7">Últimos 7 días</a></li>
-                            <li><a class="dropdown-item period-option" href="#" data-days="30">Últimos 30 días</a></li>
-                            <li><a class="dropdown-item period-option" href="#" data-days="90">Últimos 90 días</a></li>
-                            <li><a class="dropdown-item period-option" href="#" data-days="365">Último año</a></li>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-file-pdf me-2"></i>PDF</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-file-excel me-2"></i>Excel</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-file-csv me-2"></i>CSV</a></li>
                         </ul>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
 
-            <!-- Stats Cards -->
-            <div class="row mb-4">
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-left-primary shadow h-100 py-2">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                        Emprendedores Activos</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.active_entrepreneurs }}</div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="bi bi-briefcase fa-2x text-gray-300"></i>
-                                </div>
-                            </div>
-                            <div class="mt-2 text-xs">
-                                <span class="{% if stats.entrepreneurs_growth >= 0 %}text-success{% else %}text-danger{% endif %} mr-2">
-                                    <i class="bi {% if stats.entrepreneurs_growth >= 0 %}bi-arrow-up{% else %}bi-arrow-down{% endif %}"></i> {{ stats.entrepreneurs_growth|abs }}%
-                                </span>
-                                <span class="text-muted">Desde el mes pasado</span>
-                            </div>
-                        </div>
+<div class="container">
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card" style="--card-color: var(--admin-primary)">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>12%</span>
+                </div>
+            </div>
+            <div class="stat-value counter" data-target="{{ stats.total_users | default(1247) }}">0</div>
+            <div class="stat-label">Usuarios Totales</div>
+        </div>
+
+        <div class="stat-card" style="--card-color: var(--admin-success)">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>8%</span>
+                </div>
+            </div>
+            <div class="stat-value counter" data-target="{{ stats.active_entrepreneurs | default(342) }}">0</div>
+            <div class="stat-label">Emprendedores Activos</div>
+        </div>
+
+        <div class="stat-card" style="--card-color: var(--admin-info)">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-handshake"></i>
+                </div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>5%</span>
+                </div>
+            </div>
+            <div class="stat-value counter" data-target="{{ stats.active_mentors | default(89) }}">0</div>
+            <div class="stat-label">Mentores Activos</div>
+        </div>
+
+        <div class="stat-card" style="--card-color: var(--admin-warning)">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <div class="stat-trend trend-neutral">
+                    <i class="fas fa-minus"></i>
+                    <span>0%</span>
+                </div>
+            </div>
+            <div class="stat-value counter" data-target="{{ stats.active_projects | default(156) }}">0</div>
+            <div class="stat-label">Proyectos Activos</div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <a href="{{ url_for('admin.users') }}" class="action-card">
+            <div class="action-icon">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="action-title">Nuevo Usuario</div>
+            <div class="action-description">Registrar un nuevo usuario en el sistema</div>
+        </a>
+
+        <a href="{{ url_for('admin.programs') }}" class="action-card">
+            <div class="action-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div class="action-title">Crear Programa</div>
+            <div class="action-description">Lanzar un nuevo programa de emprendimiento</div>
+        </a>
+
+        <a href="{{ url_for('admin.organizations') }}" class="action-card">
+            <div class="action-icon">
+                <i class="fas fa-building"></i>
+            </div>
+            <div class="action-title">Añadir Organización</div>
+            <div class="action-description">Registrar nueva organización aliada</div>
+        </a>
+
+        <a href="{{ url_for('admin.analytics') }}" class="action-card">
+            <div class="action-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="action-title">Ver Reportes</div>
+            <div class="action-description">Acceder a analytics detallados</div>
+        </a>
+    </div>
+
+    <!-- Main Dashboard Grid -->
+    <div class="dashboard-grid">
+        <!-- Charts Section -->
+        <div>
+            <!-- User Growth Chart -->
+            <div class="chart-card">
+                <div class="card-header">
+                    <h3 class="card-title">Crecimiento de Usuarios</h3>
+                    <div class="card-actions">
+                        <button class="btn-icon" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Últimos 7 días</a></li>
+                            <li><a class="dropdown-item" href="#">Último mes</a></li>
+                            <li><a class="dropdown-item" href="#">Últimos 3 meses</a></li>
+                        </ul>
                     </div>
                 </div>
-
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-left-success shadow h-100 py-2">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                        Aliados Activos</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.active_allies }}</div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="bi bi-stars fa-2x text-gray-300"></i>
-                                </div>
-                            </div>
-                            <div class="mt-2 text-xs">
-                                <span class="{% if stats.allies_growth >= 0 %}text-success{% else %}text-danger{% endif %} mr-2">
-                                    <i class="bi {% if stats.allies_growth >= 0 %}bi-arrow-up{% else %}bi-arrow-down{% endif %}"></i> {{ stats.allies_growth|abs }}%
-                                </span>
-                                <span class="text-muted">Desde el mes pasado</span>
-                            </div>
-                        </div>
-                    </div>
+                <div class="chart-container">
+                    <canvas id="userGrowthChart"></canvas>
                 </div>
-
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-left-info shadow h-100 py-2">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                        Promedio de Horas de Acompañamiento</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.avg_mentoring_hours }}</div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="bi bi-clock-history fa-2x text-gray-300"></i>
-                                </div>
-                            </div>
-                            <div class="mt-2 text-xs">
-                                <span class="{% if stats.hours_growth >= 0 %}text-success{% else %}text-danger{% endif %} mr-2">
-                                    <i class="bi {% if stats.hours_growth >= 0 %}bi-arrow-up{% else %}bi-arrow-down{% endif %}"></i> {{ stats.hours_growth|abs }}%
-                                </span>
-                                <span class="text-muted">Desde el mes pasado</span>
-                            </div>
-                        </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--admin-primary);"></div>
+                        <span>Emprendedores</span>
                     </div>
-                </div>
-
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card border-left-warning shadow h-100 py-2">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                        Emprendedores Sin Asignar</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.unassigned_entrepreneurs }}</div>
-                                </div>
-                                <div class="col-auto">
-                                    <i class="bi bi-exclamation-circle fa-2x text-gray-300"></i>
-                                </div>
-                            </div>
-                            <div class="mt-2 text-xs">
-                                <a href="{{ url_for('admin.assign_ally') }}" class="text-primary">
-                                    <i class="bi bi-link"></i> Asignar ahora
-                                </a>
-                            </div>
-                        </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--admin-success);"></div>
+                        <span>Mentores</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--admin-info);"></div>
+                        <span>Clientes</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Charts -->
-            <div class="row mb-4">
-                <!-- Activity Timeline Chart -->
-                <div class="col-lg-8 mb-4">
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                            <h6 class="m-0 font-weight-bold text-primary">Actividad por Mes</h6>
-                            <div class="dropdown no-arrow">
-                                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <i class="bi bi-three-dots-vertical text-gray-400"></i>
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-end shadow animated--fade-in"
-                                    aria-labelledby="dropdownMenuLink">
-                                    <div class="dropdown-header">Opciones:</div>
-                                    <a class="dropdown-item" href="#" id="showRegistrations">Mostrar Registros</a>
-                                    <a class="dropdown-item" href="#" id="showMentoringSessions">Mostrar Sesiones</a>
-                                    <a class="dropdown-item" href="#" id="showAll">Mostrar Todo</a>
-                                    <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item" href="#" id="downloadChartData">Descargar Datos</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="chart-area">
-                                <canvas id="activityChart"></canvas>
-                            </div>
-                        </div>
+            <!-- Recent Users Table -->
+            <div class="users-card mt-4">
+                <div class="card-header">
+                    <h3 class="card-title">Usuarios Recientes</h3>
+                    <div class="card-actions">
+                        <a href="{{ url_for('admin.users') }}" class="btn-icon">
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
                     </div>
                 </div>
-
-                <!-- Distribution Pie Chart -->
-                <div class="col-lg-4 mb-4">
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                            <h6 class="m-0 font-weight-bold text-primary">Distribución por Industria</h6>
-                            <div class="dropdown no-arrow">
-                                <a class="dropdown-toggle" href="#" role="button" id="industryDropdown"
-                                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <i class="bi bi-three-dots-vertical text-gray-400"></i>
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-end shadow animated--fade-in"
-                                    aria-labelledby="industryDropdown">
-                                    <div class="dropdown-header">Ver:</div>
-                                    <a class="dropdown-item" href="#" id="showEntrIndustries">Emprendedores</a>
-                                    <a class="dropdown-item" href="#" id="showAllySpecialties">Aliados</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="chart-pie mb-3">
-                                <canvas id="industryChart"></canvas>
-                            </div>
-                            <div class="mt-4 text-center small" id="chartLegend">
-                                <!-- La leyenda se generará dinámicamente via JavaScript -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Activity & Alerts -->
-            <div class="row">
-                <!-- Recent Activity -->
-                <div class="col-lg-6 mb-4">
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Actividad Reciente</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="activity-timeline">
-                                {% for activity in recent_activity %}
-                                <div class="activity-item">
-                                    <div class="activity-icon">
-                                        <i class="bi {{ activity.icon }} {% if activity.type == 'registration' %}text-success{% elif activity.type == 'assignment' %}text-primary{% elif activity.type == 'session' %}text-info{% else %}text-warning{% endif %}"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <h6 class="mb-1">{{ activity.title }}</h6>
-                                        <p class="mb-0">{{ activity.description }}</p>
-                                        <small class="text-muted">{{ activity.time }}</small>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                            <div class="text-center mt-3">
-                                <a href="{{ url_for('admin.activity') }}" class="btn btn-sm btn-primary">Ver toda la actividad</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Alerts & Tasks -->
-                <div class="col-lg-6 mb-4">
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Alertas y Acciones Pendientes</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="alerts-list">
-                                {% for alert in pending_alerts %}
-                                <div class="alert {% if alert.priority == 'high' %}alert-danger{% elif alert.priority == 'medium' %}alert-warning{% else %}alert-info{% endif %} d-flex align-items-center" role="alert">
-                                    <i class="bi {{ alert.icon }} me-2"></i>
-                                    <div>
-                                        <h6 class="alert-heading mb-1">{{ alert.title }}</h6>
-                                        <p class="mb-0">{{ alert.description }}</p>
-                                        {% if alert.action_url %}
-                                        <div class="mt-2">
-                                            <a href="{{ alert.action_url }}" class="btn btn-sm {% if alert.priority == 'high' %}btn-danger{% elif alert.priority == 'medium' %}btn-warning{% else %}btn-info{% endif %}">
-                                                {{ alert.action_text }}
-                                            </a>
+                <div class="table-responsive">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Tipo</th>
+                                <th>Estado</th>
+                                <th>Registro</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in recent_users | default([
+                                {'name': 'María González', 'email': 'maria@startup.com', 'type': 'Emprendedor', 'status': 'Activo', 'created': '2 horas'},
+                                {'name': 'Carlos Mendoza', 'email': 'carlos@mentor.com', 'type': 'Mentor', 'status': 'Activo', 'created': '5 horas'},
+                                {'name': 'Ana Ruiz', 'email': 'ana@company.com', 'type': 'Cliente', 'status': 'Pendiente', 'created': '1 día'},
+                                {'name': 'Pedro Silva', 'email': 'pedro@idea.com', 'type': 'Emprendedor', 'status': 'Activo', 'created': '2 días'}
+                            ]) %}
+                            <tr>
+                                <td>
+                                    <div class="user-info">
+                                        <div class="user-avatar">
+                                            {{ user.name[0] }}
                                         </div>
-                                        {% endif %}
+                                        <div class="user-details">
+                                            <h6>{{ user.name }}</h6>
+                                            <p>{{ user.email }}</p>
+                                        </div>
                                     </div>
-                                </div>
-                                {% endfor %}
-                                
-                                {% if not pending_alerts %}
-                                <div class="alert alert-success" role="alert">
-                                    <i class="bi bi-check-circle me-2"></i>
-                                    <div>No hay alertas pendientes.</div>
-                                </div>
-                                {% endif %}
-                            </div>
+                                </td>
+                                <td>{{ user.type }}</td>
+                                <td>
+                                    <span class="badge badge-{{ 'success' if user.status == 'Activo' else 'warning' }}">
+                                        {{ user.status }}
+                                    </span>
+                                </td>
+                                <td>Hace {{ user.created }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div>
+            <!-- Recent Activity -->
+            <div class="activity-card">
+                <div class="card-header">
+                    <h3 class="card-title">Actividad Reciente</h3>
+                    <div class="card-actions">
+                        <button class="btn-icon position-relative">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-dot"></span>
+                        </button>
+                    </div>
+                </div>
+                <div class="activity-feed">
+                    {% for activity in recent_activities | default([
+                        {'user': 'María G.', 'action': 'creó un nuevo proyecto', 'description': 'EcoApp - Aplicación de reciclaje', 'time': '2 min'},
+                        {'user': 'Carlos M.', 'action': 'completó una mentoría', 'description': 'Sesión de marketing digital', 'time': '15 min'},
+                        {'user': 'Ana R.', 'action': 'se registró como cliente', 'description': 'Corporación XYZ', 'time': '1 h'},
+                        {'user': 'Pedro S.', 'action': 'actualizó su pitch', 'description': 'FoodTech Solutions', 'time': '3 h'},
+                        {'user': 'Sistema', 'action': 'backup completado', 'description': 'Respaldo automático diario', 'time': '6 h'}
+                    ]) %}
+                    <div class="activity-item">
+                        <div class="activity-avatar">{{ activity.user[0] }}</div>
+                        <div class="activity-content">
+                            <div class="activity-title">{{ activity.user }} {{ activity.action }}</div>
+                            <div class="activity-description">{{ activity.description }}</div>
+                        </div>
+                        <div class="activity-time">{{ activity.time }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- System Alerts -->
+            <div class="alerts-card mt-4">
+                <div class="card-header">
+                    <h3 class="card-title">Alertas del Sistema</h3>
+                    <div class="card-actions">
+                        <button class="btn-icon">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="alerts-feed">
+                    <div class="alert-item" style="--alert-color: var(--admin-warning); --alert-bg: rgba(217, 119, 6, 0.05);">
+                        <div class="alert-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="alert-content">
+                            <div class="alert-title">Espacio de almacenamiento</div>
+                            <div class="alert-description">El servidor está al 85% de capacidad. Considera ampliar el almacenamiento.</div>
+                        </div>
+                    </div>
+
+                    <div class="alert-item" style="--alert-color: var(--admin-info); --alert-bg: rgba(2, 132, 199, 0.05);">
+                        <div class="alert-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="alert-content">
+                            <div class="alert-title">Actualización disponible</div>
+                            <div class="alert-description">Nueva versión del sistema disponible. Incluye mejoras de seguridad.</div>
+                        </div>
+                    </div>
+
+                    <div class="alert-item" style="--alert-color: var(--admin-success); --alert-bg: rgba(5, 150, 105, 0.05);">
+                        <div class="alert-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="alert-content">
+                            <div class="alert-title">Backup completado</div>
+                            <div class="alert-description">Respaldo automático realizado exitosamente a las 03:00 AM.</div>
                         </div>
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
+    </div>
+
+    <!-- System Status -->
+    <div class="system-status">
+        <div class="status-item">
+            <div class="status-label">Base de Datos</div>
+            <div class="status-value">
+                <span class="status-indicator status-online"></span>
+                En línea
+            </div>
+        </div>
+        <div class="status-item">
+            <div class="status-label">API Externa</div>
+            <div class="status-value">
+                <span class="status-indicator status-online"></span>
+                Operativa
+            </div>
+        </div>
+        <div class="status-item">
+            <div class="status-label">Email Service</div>
+            <div class="status-value">
+                <span class="status-indicator status-warning"></span>
+                Lento
+            </div>
+        </div>
+        <div class="status-item">
+            <div class="status-label">Storage</div>
+            <div class="status-value">
+                <span class="status-indicator status-online"></span>
+                85% usado
+            </div>
+        </div>
+        <div class="status-item">
+            <div class="status-label">CDN</div>
+            <div class="status-value">
+                <span class="status-indicator status-online"></span>
+                Activo
+            </div>
+        </div>
+        <div class="status-item">
+            <div class="status-label">Monitoring</div>
+            <div class="status-value">
+                <span class="status-indicator status-online"></span>
+                Normal
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
 
-{% block scripts %}
-{{ super() }}
-<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script>
-    // Datos para los gráficos pasados desde el backend
-    const activityData = JSON.parse('{{ activity_data|tojson|safe }}');
-    const industryData = JSON.parse('{{ industry_data|tojson|safe }}');
-    const industryDistribution = JSON.parse('{{ stats.industry_distribution|tojson|safe }}');
-    
-    document.addEventListener('DOMContentLoaded', function() {
-        // Generar la leyenda
-        const chartLegend = document.getElementById('chartLegend');
-        industryDistribution.forEach(industry => {
-            const span = document.createElement('span');
-            span.className = 'mr-2';
-            span.innerHTML = `<i class="fas fa-circle" style="color:${industry.color}"></i> ${industry.name}`;
-            chartLegend.appendChild(span);
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Dashboard
+    const dashboard = new AdminDashboard();
+    dashboard.init();
+});
+
+class AdminDashboard {
+    constructor() {
+        this.charts = {};
+        this.refreshInterval = null;
+    }
+
+    init() {
+        this.initializeCharts();
+        this.animateCounters();
+        this.bindEvents();
+        this.startAutoRefresh();
+    }
+
+    initializeCharts() {
+        // User Growth Chart
+        const ctx = document.getElementById('userGrowthChart').getContext('2d');
+        
+        this.charts.userGrowth = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul'],
+                datasets: [{
+                    label: 'Emprendedores',
+                    data: [120, 145, 180, 220, 260, 310, 342],
+                    borderColor: 'var(--admin-primary)',
+                    backgroundColor: 'rgba(30, 64, 175, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Mentores',
+                    data: [45, 52, 58, 65, 72, 81, 89],
+                    borderColor: 'var(--admin-success)',
+                    backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Clientes',
+                    data: [12, 18, 25, 30, 38, 45, 52],
+                    borderColor: 'var(--admin-info)',
+                    backgroundColor: 'rgba(2, 132, 199, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        titleColor: 'white',
+                        bodyColor: 'white',
+                        borderColor: 'var(--admin-border)',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: 'var(--admin-secondary)'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'var(--admin-border)'
+                        },
+                        ticks: {
+                            color: 'var(--admin-secondary)'
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
+            }
         });
+    }
+
+    animateCounters() {
+        const counters = document.querySelectorAll('.counter');
         
-        // Inicializar gráficos
-        initActivityChart('activityChart', activityData);
-        initIndustryChart('industryChart', industryData);
-        
-        // Configuración de filtros de período
-        document.querySelectorAll('.period-option').forEach(option => {
-            option.addEventListener('click', function(e) {
-                e.preventDefault();
-                const days = this.dataset.days;
-                const periodText = this.textContent;
-                document.getElementById('periodDropdown').textContent = periodText;
+        counters.forEach(counter => {
+            const target = parseInt(counter.getAttribute('data-target'));
+            const increment = target / 100;
+            let current = 0;
+            
+            const timer = setInterval(() => {
+                current += increment;
                 
-                // Actualizar dashboard con el nuevo período (aquí iría el código AJAX)
-                fetchDashboardData(days);
+                if (current >= target) {
+                    counter.textContent = target.toLocaleString();
+                    clearInterval(timer);
+                } else {
+                    counter.textContent = Math.ceil(current).toLocaleString();
+                }
+            }, 20);
+        });
+    }
+
+    bindEvents() {
+        // Refresh Dashboard
+        const refreshBtn = document.getElementById('refreshDashboard');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.refreshDashboard();
+            });
+        }
+
+        // Export functionality
+        document.querySelectorAll('[href="#"]').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Implement export functionality here
+                console.log('Export clicked:', e.target.textContent);
             });
         });
-        
-        // Botón de actualizar
-        document.getElementById('refreshDashboard').addEventListener('click', function() {
-            // Recargar los datos del dashboard
-            location.reload();
-        });
-        
-        // Botón de exportar
-        document.getElementById('exportData').addEventListener('click', function() {
-            window.location.href = "{{ url_for('admin.export_dashboard_data') }}";
-        });
-        
-        // Opciones de gráfico de actividad
-        document.getElementById('showRegistrations').addEventListener('click', function(e) {
-            e.preventDefault();
-            updateActivityChart('registrations');
-        });
-        
-        document.getElementById('showMentoringSessions').addEventListener('click', function(e) {
-            e.preventDefault();
-            updateActivityChart('sessions');
-        });
-        
-        document.getElementById('showAll').addEventListener('click', function(e) {
-            e.preventDefault();
-            updateActivityChart('all');
-        });
-        
-        // Opciones de gráfico de industria
-        document.getElementById('showEntrIndustries').addEventListener('click', function(e) {
-            e.preventDefault();
-            updateIndustryChart('entrepreneurs');
-        });
-        
-        document.getElementById('showAllySpecialties').addEventListener('click', function(e) {
-            e.preventDefault();
-            updateIndustryChart('allies');
-        });
-    });
-    
-    // Función para actualizar datos del dashboard vía AJAX
-    function fetchDashboardData(days) {
-        fetch(`{{ url_for('admin.dashboard_data') }}?days=${days}`)
-            .then(response => response.json())
-            .then(data => {
-                // Actualizar estadísticas
-                updateStats(data.stats);
-                // Actualizar gráficos
-                updateActivityChart('all', data.activity_data);
-                updateIndustryChart('entrepreneurs', data.industry_data);
-                // Actualizar actividad reciente
-                updateRecentActivity(data.recent_activity);
-                // Actualizar alertas
-                updateAlerts(data.pending_alerts);
-            })
-            .catch(error => console.error('Error al actualizar el dashboard:', error));
-    }
-    
-// Funciones para actualizar elementos del dashboard
-function updateStats(stats) {
-    // Actualizar número de emprendedores activos
-    document.querySelector('.card:nth-child(1) .h5').textContent = stats.active_entrepreneurs;
-    
-    // Actualizar el porcentaje de crecimiento de emprendedores
-    const entrGrowthEl = document.querySelector('.card:nth-child(1) .text-xs span:first-child');
-    entrGrowthEl.innerHTML = `<i class="bi ${stats.entrepreneurs_growth >= 0 ? 'bi-arrow-up' : 'bi-arrow-down'}"></i> ${Math.abs(stats.entrepreneurs_growth)}%`;
-    entrGrowthEl.className = `${stats.entrepreneurs_growth >= 0 ? 'text-success' : 'text-danger'} mr-2`;
-    
-    // Actualizar número de aliados activos
-    document.querySelector('.card:nth-child(2) .h5').textContent = stats.active_allies;
-    
-    // Actualizar el porcentaje de crecimiento de aliados
-    const allyGrowthEl = document.querySelector('.card:nth-child(2) .text-xs span:first-child');
-    allyGrowthEl.innerHTML = `<i class="bi ${stats.allies_growth >= 0 ? 'bi-arrow-up' : 'bi-arrow-down'}"></i> ${Math.abs(stats.allies_growth)}%`;
-    allyGrowthEl.className = `${stats.allies_growth >= 0 ? 'text-success' : 'text-danger'} mr-2`;
-    
-    // Actualizar promedio de horas de acompañamiento
-    document.querySelector('.card:nth-child(3) .h5').textContent = stats.avg_mentoring_hours;
-    
-    // Actualizar el porcentaje de crecimiento de horas
-    const hoursGrowthEl = document.querySelector('.card:nth-child(3) .text-xs span:first-child');
-    hoursGrowthEl.innerHTML = `<i class="bi ${stats.hours_growth >= 0 ? 'bi-arrow-up' : 'bi-arrow-down'}"></i> ${Math.abs(stats.hours_growth)}%`;
-    hoursGrowthEl.className = `${stats.hours_growth >= 0 ? 'text-success' : 'text-danger'} mr-2`;
-    
-    // Actualizar emprendedores sin asignar
-    document.querySelector('.card:nth-child(4) .h5').textContent = stats.unassigned_entrepreneurs;
-}
 
-function updateActivityChart(filterType, newData = null) {
-    // Obtener el contexto del canvas
-    const ctx = document.getElementById('activityChart').getContext('2d');
-    
-    // Si hay datos nuevos, usarlos, de lo contrario usar los datos globales
-    const chartData = newData || activityData;
-    
-    // Filtrar datos según el tipo solicitado
-    let datasets = [];
-    
-    if (filterType === 'all' || filterType === 'registrations') {
-        datasets.push({
-            label: 'Nuevos Registros',
-            data: chartData.registrations,
-            borderColor: '#4e73df',
-            backgroundColor: 'rgba(78, 115, 223, 0.1)',
-            borderWidth: 2,
-            pointRadius: 3,
-            fill: true
+        // Chart period selector
+        document.querySelectorAll('.dropdown-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const period = e.target.textContent;
+                this.updateChartData(period);
+            });
         });
     }
-    
-    if (filterType === 'all' || filterType === 'sessions') {
-        datasets.push({
-            label: 'Sesiones de Mentoría',
-            data: chartData.mentoring_sessions,
-            borderColor: '#36b9cc',
-            backgroundColor: 'rgba(54, 185, 204, 0.1)',
-            borderWidth: 2,
-            pointRadius: 3,
-            fill: true
+
+    refreshDashboard() {
+        const refreshBtn = document.getElementById('refreshDashboard');
+        const icon = refreshBtn.querySelector('i');
+        
+        // Add loading state
+        icon.classList.add('fa-spin');
+        refreshBtn.disabled = true;
+        
+        // Simulate API call
+        setTimeout(() => {
+            // Update counters
+            this.animateCounters();
+            
+            // Update charts
+            this.updateChartData();
+            
+            // Update activity feed
+            this.updateActivityFeed();
+            
+            // Remove loading state
+            icon.classList.remove('fa-spin');
+            refreshBtn.disabled = false;
+            
+            // Show success notification
+            this.showNotification('Dashboard actualizado exitosamente', 'success');
+        }, 2000);
+    }
+
+    updateChartData(period = 'Último mes') {
+        // Simulate data update based on period
+        let newData;
+        
+        switch(period) {
+            case 'Últimos 7 días':
+                newData = {
+                    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+                    datasets: [
+                        { data: [15, 18, 22, 19, 25, 20, 24] },
+                        { data: [5, 7, 6, 8, 9, 7, 10] },
+                        { data: [2, 3, 2, 4, 3, 2, 5] }
+                    ]
+                };
+                break;
+            case 'Últimos 3 meses':
+                newData = {
+                    labels: ['May', 'Jun', 'Jul'],
+                    datasets: [
+                        { data: [260, 310, 342] },
+                        { data: [72, 81, 89] },
+                        { data: [38, 45, 52] }
+                    ]
+                };
+                break;
+            default: // Último mes
+                newData = {
+                    labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+                    datasets: [
+                        { data: [310, 322, 335, 342] },
+                        { data: [81, 84, 87, 89] },
+                        { data: [45, 48, 50, 52] }
+                    ]
+                };
+        }
+        
+        // Update chart
+        this.charts.userGrowth.data.labels = newData.labels;
+        this.charts.userGrowth.data.datasets.forEach((dataset, index) => {
+            dataset.data = newData.datasets[index].data;
         });
+        this.charts.userGrowth.update('active');
     }
-    
-    if (filterType === 'all' || filterType === 'assignments') {
-        datasets.push({
-            label: 'Asignaciones',
-            data: chartData.assignments,
-            borderColor: '#1cc88a',
-            backgroundColor: 'rgba(28, 200, 138, 0.1)',
-            borderWidth: 2,
-            pointRadius: 3,
-            fill: true
-        });
-    }
-    
-    // Destruir el gráfico existente si hay uno
-    if (window.activityChartInstance) {
-        window.activityChartInstance.destroy();
-    }
-    
-    // Crear el nuevo gráfico
-    window.activityChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: chartData.labels,
-            datasets: datasets
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: {
-                    grid: {
-                        display: false,
-                        drawBorder: false
-                    }
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: "rgba(0, 0, 0, 0.05)",
-                        zeroLineColor: "rgba(0, 0, 0, 0.1)"
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
-                },
-                tooltip: {
-                    backgroundColor: "rgb(255, 255, 255)",
-                    bodyColor: "#858796",
-                    titleColor: "#6e707e",
-                    titleFontSize: 14,
-                    borderColor: '#dddfeb',
-                    borderWidth: 1,
-                    caretPadding: 10,
-                    displayColors: false
+
+    updateActivityFeed() {
+        // Simulate new activity
+        const activities = [
+            { user: 'Luis P.', action: 'subió un documento', description: 'Plan de negocio actualizado', time: 'Ahora' },
+            { user: 'Carmen S.', action: 'programó una reunión', description: 'Revisión de progreso Q3', time: '1 min' }
+        ];
+        
+        const activityFeed = document.querySelector('.activity-feed');
+        if (activityFeed) {
+            // Add new activities to the top
+            activities.forEach(activity => {
+                const activityHTML = `
+                    <div class="activity-item" style="animation: slideIn 0.3s ease-out;">
+                        <div class="activity-avatar">${activity.user[0]}</div>
+                        <div class="activity-content">
+                            <div class="activity-title">${activity.user} ${activity.action}</div>
+                            <div class="activity-description">${activity.description}</div>
+                        </div>
+                        <div class="activity-time">${activity.time}</div>
+                    </div>
+                `;
+                activityFeed.insertAdjacentHTML('afterbegin', activityHTML);
+            });
+            
+            // Remove old activities if more than 5
+            const activityItems = activityFeed.querySelectorAll('.activity-item');
+            if (activityItems.length > 5) {
+                for (let i = 5; i < activityItems.length; i++) {
+                    activityItems[i].remove();
                 }
             }
         }
-    });
+    }
+
+    startAutoRefresh() {
+        // Auto-refresh every 5 minutes
+        this.refreshInterval = setInterval(() => {
+            this.refreshDashboard();
+        }, 300000);
+    }
+
+    showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} position-fixed`;
+        notification.style.cssText = `
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            animation: slideInRight 0.3s ease-out;
+        `;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close ms-2" aria-label="Close"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+        
+        // Manual close
+        notification.querySelector('.btn-close').addEventListener('click', () => {
+            notification.remove();
+        });
+    }
+
+    destroy() {
+        // Cleanup
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+        }
+        
+        Object.values(this.charts).forEach(chart => {
+            chart.destroy();
+        });
+    }
 }
 
-function updateIndustryChart(chartType, newData = null) {
-    // Obtener el contexto del canvas
-    const ctx = document.getElementById('industryChart').getContext('2d');
-    
-    // Si hay datos nuevos, usarlos, de lo contrario usar los datos globales
-    const chartData = newData || industryData;
-    
-    // Seleccionar el conjunto de datos correcto según el tipo
-    const dataSet = chartType === 'entrepreneurs' ? chartData.entrepreneurs : chartData.allies;
-    
-    // Destruir el gráfico existente si hay uno
-    if (window.industryChartInstance) {
-        window.industryChartInstance.destroy();
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     
-    // Crear el nuevo gráfico
-    window.industryChartInstance = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: dataSet.labels,
-            datasets: [{
-                data: dataSet.values,
-                backgroundColor: dataSet.colors,
-                hoverBackgroundColor: dataSet.colors.map(color => adjustColorBrightness(color, -15)),
-                hoverBorderColor: "rgba(234, 236, 244, 1)"
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false,
-                    position: 'right'
-                },
-                tooltip: {
-                    backgroundColor: "rgb(255, 255, 255)",
-                    bodyColor: "#858796",
-                    titleColor: "#6e707e",
-                    borderColor: '#dddfeb',
-                    borderWidth: 1,
-                    displayColors: false
-                }
-            },
-            cutout: '70%'
-        }
-    });
-    
-    // Actualizar la leyenda debajo del gráfico
-    updateChartLegend(dataSet.labels, dataSet.colors);
-}
-
-// Función auxiliar para ajustar el brillo de un color
-function adjustColorBrightness(hex, percent) {
-    // Convierte el hex a RGB
-    let r = parseInt(hex.slice(1, 3), 16);
-    let g = parseInt(hex.slice(3, 5), 16);
-    let b = parseInt(hex.slice(5, 7), 16);
-    
-    // Ajusta el brillo
-    r = Math.max(0, Math.min(255, r + percent));
-    g = Math.max(0, Math.min(255, g + percent));
-    b = Math.max(0, Math.min(255, b + percent));
-    
-    // Convierte de nuevo a hex
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-}
-
-// Función para actualizar la leyenda del gráfico de industrias
-function updateChartLegend(labels, colors) {
-    const legendContainer = document.getElementById('chartLegend');
-    
-    // Limpiar la leyenda actual
-    legendContainer.innerHTML = '';
-    
-    // Crear la nueva leyenda
-    labels.forEach((label, index) => {
-        const span = document.createElement('span');
-        span.className = 'mr-2';
-        span.innerHTML = `<i class="fas fa-circle" style="color:${colors[index]}"></i> ${label}`;
-        legendContainer.appendChild(span);
-    });
-}
-
-function updateRecentActivity(activities) {
-    const activityContainer = document.querySelector('.activity-timeline');
-    
-    // Limpiar el contenedor actual
-    activityContainer.innerHTML = '';
-    
-    // Añadir las nuevas actividades
-    activities.forEach(activity => {
-        // Determinar la clase de color según el tipo
-        let colorClass = 'text-warning';
-        if (activity.type === 'registration') colorClass = 'text-success';
-        else if (activity.type === 'assignment') colorClass = 'text-primary';
-        else if (activity.type === 'session') colorClass = 'text-info';
-        
-        // Crear el elemento HTML para la actividad
-        const activityHTML = `
-            <div class="activity-item">
-                <div class="activity-icon">
-                    <i class="bi ${activity.icon} ${colorClass}"></i>
-                </div>
-                <div class="activity-content">
-                    <h6 class="mb-1">${activity.title}</h6>
-                    <p class="mb-0">${activity.description}</p>
-                    <small class="text-muted">${activity.time}</small>
-                </div>
-            </div>
-        `;
-        
-        // Añadir al contenedor
-        activityContainer.innerHTML += activityHTML;
-    });
-}
-
-function updateAlerts(alerts) {
-    const alertsContainer = document.querySelector('.alerts-list');
-    
-    // Limpiar el contenedor actual
-    alertsContainer.innerHTML = '';
-    
-    // Si no hay alertas, mostrar mensaje
-    if (!alerts || alerts.length === 0) {
-        alertsContainer.innerHTML = `
-            <div class="alert alert-success" role="alert">
-                <i class="bi bi-check-circle me-2"></i>
-                <div>No hay alertas pendientes.</div>
-            </div>
-        `;
-        return;
+    @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(100%); }
+        to { opacity: 1; transform: translateX(0); }
     }
     
-    // Añadir las nuevas alertas
-    alerts.forEach(alert => {
-        // Determinar la clase de alerta según la prioridad
-        let alertClass = 'alert-info';
-        let btnClass = 'btn-info';
-        if (alert.priority === 'high') {
-            alertClass = 'alert-danger';
-            btnClass = 'btn-danger';
-        } else if (alert.priority === 'medium') {
-            alertClass = 'alert-warning';
-            btnClass = 'btn-warning';
-        }
-        
-        // Crear el botón si hay URL de acción
-        let actionButton = '';
-        if (alert.action_url) {
-            actionButton = `
-                <div class="mt-2">
-                    <a href="${alert.action_url}" class="btn btn-sm ${btnClass}">
-                        ${alert.action_text}
-                    </a>
-                </div>
-            `;
-        }
-        
-        // Crear el elemento HTML para la alerta
-        const alertHTML = `
-            <div class="alert ${alertClass} d-flex align-items-center" role="alert">
-                <i class="bi ${alert.icon} me-2"></i>
-                <div>
-                    <h6 class="alert-heading mb-1">${alert.title}</h6>
-                    <p class="mb-0">${alert.description}</p>
-                    ${actionButton}
-                </div>
-            </div>
-        `;
-        
-        // Añadir al contenedor
-        alertsContainer.innerHTML += alertHTML;
-    });
-}
+    @keyframes slideOutRight {
+        from { opacity: 1; transform: translateX(0); }
+        to { opacity: 0; transform: translateX(100%); }
+    }
+`;
+document.head.appendChild(style);
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (window.adminDashboard) {
+        window.adminDashboard.destroy();
+    }
+});
 </script>
 {% endblock %}

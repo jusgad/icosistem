@@ -1,76 +1,246 @@
+"""
+Views principales del ecosistema de emprendimiento.
+Maneja la cara pública de la plataforma, landing pages, y funcionalidades generales.
+
+Características:
+- Landing page optimizada para conversión
+- Páginas informativas del ecosistema
+- Sistema de contacto y soporte
+- Directorio público de emprendimientos
+- Búsqueda y filtrado avanzado
+- Newsletter y marketing
+- SEO optimizado
+- Analytics integrado
+- Multi-idioma
+- Responsive design
+
+Versión: 1.0
+Autor: Sistema de Emprendimiento
+"""
+
 from flask import (
-    Blueprint,
-    render_template,
-    request,
-    redirect,
-    url_for,
-    flash,
-    current_app,
-    jsonify,
-    abort
+    Blueprint, render_template, request, redirect, url_for, 
+    flash, jsonify, session, current_app, g, abort, make_response
 )
-from flask_login import current_user, login_required
-from app.extensions import db, cache
-from app.models.user import User
-from app.models.entrepreneur import Entrepreneur
-from app.models.ally import Ally
-from app.forms.contact import ContactForm
-from app.utils.email import send_email
-from app.utils.analytics import track_page_view
-from datetime import datetime
+from flask_wtf import FlaskForm
+from flask_babel import _, get_locale, ngettext
+from wtforms import StringField, TextAreaField, SelectField, EmailField, BooleanField
+from wtforms.validators import DataRequired, Email, Length, Optional, ValidationError
+from sqlalchemy import func, or_, and_, desc
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Any, Tuple
+import json
 import logging
+from collections import defaultdict
+from urllib.parse import urlparse, urljoin
 
-# Crear el blueprint para las rutas principales
-main_bp = Blueprint('main', __name__)
+# Importaciones locales
+from app.models.user import User, UserType
+from app.models.entrepreneur import Entrepreneur
+from app.models.project import Project, ProjectStatus, ProjectCategory
+from app.models.organization import Organization
+from app.models.program import Program
+from app.models.testimonial import Testimonial
+from app.models.newsletter_subscription import NewsletterSubscription
+from app.models.contact_message import ContactMessage, MessageType
+from app.models.blog_post import BlogPost, PostStatus
+from app.services.email import EmailService
+from app.services.analytics_service import AnalyticsService
+from app.services.newsletter_service import NewsletterService
+from app.utils.formatters import format_currency, format_datetime, truncate_text
+from app.utils.string_utils import slugify, sanitize_input
+from app.utils.seo import generate_meta_tags, generate_structured_data
+from app.extensions import db, cache
 
-# Configurar logger
 logger = logging.getLogger(__name__)
 
-@main_bp.before_request
-def before_request():
-    """Se ejecuta antes de cada request en las rutas de main."""
-    track_page_view(request.endpoint)
+# Crear blueprint
+main_bp = Blueprint('main', __name__)
 
+# Formularios
+class ContactForm(FlaskForm):
+    """Formulario de contacto."""
+    name = StringField(_('Nombre'), validators=[
+        DataRequired(message=_('El nombre es obligatorio')),
+        Length(min=2, max=100, message=_('El nombre debe tener entre 2 y 100 caracteres'))
+    ])
+    
+    email = EmailField(_('Email'), validators=[
+        DataRequired(message=_('El email es obligatorio')),
+        Email(message=_('Ingresa un email válido'))
+    ])
+    
+    phone = StringField(_('Teléfono'), validators=[
+        Optional(),
+        Length(max=20, message=_('El teléfono no puede tener más de 20 caracteres'))
+    ])
+    
+    company = StringField(_('Empresa/Organización'), validators=[
+        Optional(),
+        Length(max=100, message=_('El nombre de la empresa no puede tener más de 100 caracteres'))
+    ])
+    
+    message_type = SelectField(_('Tipo de consulta'), choices=[
+        ('general', _('Consulta general')),
+        ('entrepreneur', _('Soy emprendedor')),
+        ('mentor', _('Quiero ser mentor')),
+        ('client', _('Soy inversionista/cliente')),
+        ('partnership', _('Alianza estratégica')),
+        ('support', _('Soporte técnico'))
+    ], validators=[DataRequired()])
+    
+    subject = StringField(_('Asunto'), validators=[
+        DataRequired(message=_('El asunto es obligatorio')),
+        Length(min=5, max=200, message=_('El asunto debe tener entre 5 y 200 caracteres'))
+    ])
+    
+    message = TextAreaField(_('Mensaje'), validators=[
+        DataRequired(message=_('El mensaje es obligatorio')),
+        Length(min=10, max=2000, message=_('El mensaje debe tener entre 10 y 2000 caracteres'))
+    ])
+    
+    newsletter = BooleanField(_('Suscribirme al newsletter'))
+    
+    def validate_phone(self, field):
+        """Validación personalizada del teléfono."""
+        if field.data:
+            # Limpiar el teléfono de caracteres no numéricos
+            phone_clean = ''.join(filter(str.isdigit, field.data))
+            if len(phone_clean) < 7:
+                raise ValidationError(_('El teléfono debe tener al menos 7 dígitos'))
+
+class NewsletterForm(FlaskForm):
+    """Formulario de suscripción al newsletter."""
+    email = EmailField(_('Email'), validators=[
+        DataRequired(message=_('El email es obligatorio')),
+        Email(message=_('Ingresa un email válido'))
+    ])
+    
+    interests = SelectField(_('Intereses'), choices=[
+        ('entrepreneur', _('Emprendimiento')),
+        ('mentorship', _('Mentoría')),
+        ('funding', _('Financiamiento')),
+        ('innovation', _('Innovación')),
+        ('all', _('Todos los temas'))
+    ], default='all')
+    
+    def validate_email(self, field):
+        """Validar que el email no esté ya suscrito."""
+        existing = NewsletterSubscription.query.filter_by(
+            email=field.data,
+            is_active=True
+        ).first()
+        if existing:
+            raise ValidationError(_('Este email ya está suscrito al newsletter'))
+
+class SearchForm(FlaskForm):
+    """Formulario de búsqueda."""
+    query = StringField(_('Buscar'), validators=[
+        Optional(),
+        Length(max=100, message=_('La búsqueda no puede tener más de 100 caracteres'))
+    ])
+    
+    category = SelectField(_('Categoría'), choices=[
+        ('all', _('Todas las categorías')),
+        ('projects', _('Proyectos')),
+        ('entrepreneurs', _('Emprendedores')),
+        ('mentors', _('Mentores')),
+        ('organizations', _('Organizaciones'))
+    ], default='all')
+    
+    sector = SelectField(_('Sector'), choices=[
+        ('', _('Todos los sectores')),
+        ('technology', _('Tecnología')),
+        ('health', _('Salud')),
+        ('education', _('Educación')),
+        ('finance', _('Finanzas')),
+        ('retail', _('Comercio')),
+        ('agriculture', _('Agricultura')),
+        ('environment', _('Medio ambiente')),
+        ('social', _('Impacto social'))
+    ], default='')
+
+# Rutas principales
 @main_bp.route('/')
 @cache.cached(timeout=300)  # Cache por 5 minutos
 def index():
-    """Página principal de la aplicación."""
+    """Página de inicio / Landing page."""
     try:
-        # Obtener estadísticas para mostrar
-        stats = {
-            'entrepreneurs_count': Entrepreneur.query.filter_by(is_active=True).count(),
-            'allies_count': Ally.query.filter_by(is_active=True).count(),
-            'success_stories': get_featured_success_stories(),
-            'upcoming_events': get_upcoming_events()
-        }
-
-        # Obtener testimonios destacados
-        testimonials = get_featured_testimonials()
-
-        return render_template('index.html',
-                             stats=stats,
-                             testimonials=testimonials,
-                             current_year=datetime.utcnow().year)
-
+        # Estadísticas para mostrar en el landing
+        stats = _get_landing_stats()
+        
+        # Proyectos destacados
+        featured_projects = _get_featured_projects(limit=6)
+        
+        # Testimonios recientes
+        testimonials = _get_recent_testimonials(limit=3)
+        
+        # Posts del blog
+        recent_posts = _get_recent_blog_posts(limit=3)
+        
+        # Organizaciones aliadas
+        partner_organizations = _get_partner_organizations(limit=8)
+        
+        # Métrica para analytics
+        _track_page_view('landing_page')
+        
+        # Meta tags para SEO
+        meta_tags = generate_meta_tags(
+            title=_('Ecosistema de Emprendimiento - Conectando emprendedores con mentores'),
+            description=_('Plataforma integral para emprendedores que buscan mentoría, financiamiento y conexiones estratégicas. Únete a nuestro ecosistema de innovación.'),
+            keywords='emprendimiento, mentores, startups, financiamiento, innovación, business',
+            og_image=url_for('static', filename='img/landing-og.jpg', _external=True)
+        )
+        
+        return render_template(
+            'main/index.html',
+            stats=stats,
+            featured_projects=featured_projects,
+            testimonials=testimonials,
+            recent_posts=recent_posts,
+            partner_organizations=partner_organizations,
+            meta_tags=meta_tags,
+            structured_data=_generate_landing_structured_data()
+        )
+        
     except Exception as e:
-        logger.error(f"Error en página principal: {str(e)}")
-        return render_template('error/500.html'), 500
+        logger.error(f"Error rendering index page: {str(e)}")
+        # En caso de error, mostrar versión simplificada
+        return render_template('main/index_simple.html')
 
 @main_bp.route('/about')
 @cache.cached(timeout=3600)  # Cache por 1 hora
 def about():
-    """Página Acerca de Nosotros."""
+    """Página acerca de nosotros."""
     try:
-        team_members = get_team_members()
-        platform_stats = get_platform_stats()
+        # Información del equipo
+        team_members = _get_team_members()
         
-        return render_template('about.html',
-                             team_members=team_members,
-                             stats=platform_stats)
-    
+        # Cronología de la empresa
+        milestones = _get_company_milestones()
+        
+        # Estadísticas de impacto
+        impact_stats = _get_impact_statistics()
+        
+        _track_page_view('about_page')
+        
+        meta_tags = generate_meta_tags(
+            title=_('Acerca de Nosotros - Ecosistema de Emprendimiento'),
+            description=_('Conoce nuestra misión de impulsar el emprendimiento a través de la mentoría, la innovación y las conexiones estratégicas.'),
+            keywords='about, empresa, equipo, misión, visión, emprendimiento'
+        )
+        
+        return render_template(
+            'main/about.html',
+            team_members=team_members,
+            milestones=milestones,
+            impact_stats=impact_stats,
+            meta_tags=meta_tags
+        )
+        
     except Exception as e:
-        logger.error(f"Error en página about: {str(e)}")
-        return render_template('error/500.html'), 500
+        logger.error(f"Error rendering about page: {str(e)}")
+        return render_template('main/about.html', error=True)
 
 @main_bp.route('/contact', methods=['GET', 'POST'])
 def contact():
@@ -79,505 +249,762 @@ def contact():
     
     if form.validate_on_submit():
         try:
-            # Enviar email de contacto
-            send_email(
-                subject=f"Nuevo contacto: {form.subject.data}",
-                sender=form.email.data,
-                recipients=[current_app.config['CONTACT_EMAIL']],
-                text_body=render_template('email/contact.txt',
-                                        name=form.name.data,
-                                        email=form.email.data,
-                                        message=form.message.data),
-                html_body=render_template('email/contact.html',
-                                        name=form.name.data,
-                                        email=form.email.data,
-                                        message=form.message.data)
+            # Crear mensaje de contacto
+            contact_message = ContactMessage(
+                name=sanitize_input(form.name.data),
+                email=form.email.data.lower().strip(),
+                phone=sanitize_input(form.phone.data) if form.phone.data else None,
+                company=sanitize_input(form.company.data) if form.company.data else None,
+                message_type=MessageType(form.message_type.data),
+                subject=sanitize_input(form.subject.data),
+                message=sanitize_input(form.message.data),
+                ip_address=request.remote_addr,
+                user_agent=request.user_agent.string
             )
             
-            # Registrar el contacto en la base de datos
-            save_contact_request(form)
+            db.session.add(contact_message)
             
-            flash('Tu mensaje ha sido enviado. Te contactaremos pronto.', 'success')
+            # Suscribir al newsletter si lo solicitó
+            if form.newsletter.data:
+                _subscribe_to_newsletter(form.email.data, 'all')
+            
+            db.session.commit()
+            
+            # Enviar email de notificación al equipo
+            _send_contact_notification(contact_message)
+            
+            # Enviar email de confirmación al usuario
+            _send_contact_confirmation(contact_message)
+            
+            # Trackear evento
+            _track_contact_form_submission(form.message_type.data)
+            
+            flash(_('¡Gracias por contactarnos! Te responderemos pronto.'), 'success')
+            
             return redirect(url_for('main.contact'))
             
         except Exception as e:
-            logger.error(f"Error al procesar formulario de contacto: {str(e)}")
-            flash('Hubo un error al enviar tu mensaje. Por favor intenta más tarde.', 'error')
+            logger.error(f"Error processing contact form: {str(e)}")
+            db.session.rollback()
+            flash(_('Ha ocurrido un error. Por favor intenta nuevamente.'), 'error')
     
-    return render_template('contact.html', form=form)
-
-@main_bp.route('/services')
-def services():
-    """Página de servicios ofrecidos."""
-    services = {
-        'mentoring': {
-            'title': 'Mentoría Personalizada',
-            'description': 'Conexión con mentores expertos en tu industria',
-            'icon': 'mentoring-icon.png'
-        },
-        'networking': {
-            'title': 'Networking',
-            'description': 'Acceso a una red de emprendedores y aliados',
-            'icon': 'networking-icon.png'
-        },
-        'resources': {
-            'title': 'Recursos',
-            'description': 'Acceso a herramientas y recursos exclusivos',
-            'icon': 'resources-icon.png'
-        }
-    }
+    _track_page_view('contact_page')
     
-    return render_template('services.html', services=services)
+    meta_tags = generate_meta_tags(
+        title=_('Contacto - Ecosistema de Emprendimiento'),
+        description=_('Ponte en contacto con nosotros. Estamos aquí para ayudarte a hacer crecer tu emprendimiento.'),
+        keywords='contacto, soporte, ayuda, emprendimiento'
+    )
+    
+    return render_template(
+        'main/contact.html',
+        form=form,
+        meta_tags=meta_tags
+    )
 
-@main_bp.route('/success-stories')
-def success_stories():
-    """Página de casos de éxito."""
+@main_bp.route('/directory')
+def directory():
+    """Directorio público de emprendimientos."""
     try:
-        stories = get_success_stories()
-        return render_template('success_stories.html', stories=stories)
+        # Formulario de búsqueda
+        search_form = SearchForm()
+        
+        # Parámetros de filtrado
+        query = request.args.get('query', '').strip()
+        category = request.args.get('category', 'all')
+        sector = request.args.get('sector', '')
+        page = request.args.get('page', 1, type=int)
+        per_page = 12
+        
+        # Query base de proyectos públicos
+        projects_query = Project.query.filter(
+            Project.status == ProjectStatus.ACTIVE,
+            Project.is_public == True
+        ).join(Entrepreneur).join(User)
+        
+        # Aplicar filtros
+        if query:
+            search_filter = or_(
+                Project.name.ilike(f'%{query}%'),
+                Project.description.ilike(f'%{query}%'),
+                Project.tags.ilike(f'%{query}%'),
+                User.full_name.ilike(f'%{query}%')
+            )
+            projects_query = projects_query.filter(search_filter)
+        
+        if sector:
+            projects_query = projects_query.filter(Project.sector == sector)
+        
+        # Ordenar por fecha de creación
+        projects_query = projects_query.order_by(desc(Project.created_at))
+        
+        # Paginar
+        pagination = projects_query.paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+        
+        # Estadísticas del directorio
+        directory_stats = {
+            'total_projects': Project.query.filter(
+                Project.status == ProjectStatus.ACTIVE,
+                Project.is_public == True
+            ).count(),
+            'total_entrepreneurs': User.query.filter(
+                User.user_type == UserType.ENTREPRENEUR,
+                User.is_active == True
+            ).count(),
+            'sectors_count': db.session.query(
+                func.count(func.distinct(Project.sector))
+            ).filter(
+                Project.status == ProjectStatus.ACTIVE,
+                Project.is_public == True
+            ).scalar()
+        }
+        
+        _track_page_view('directory_page', {'search_query': query, 'sector': sector})
+        
+        meta_tags = generate_meta_tags(
+            title=_('Directorio de Emprendimientos - Descubre Proyectos Innovadores'),
+            description=_('Explora emprendimientos innovadores en nuestro directorio. Encuentra proyectos por sector, etapa y ubicación.'),
+            keywords='directorio, emprendimientos, proyectos, startups, innovación'
+        )
+        
+        return render_template(
+            'main/directory.html',
+            projects=pagination.items,
+            pagination=pagination,
+            search_form=search_form,
+            directory_stats=directory_stats,
+            current_filters={
+                'query': query,
+                'category': category,
+                'sector': sector
+            },
+            meta_tags=meta_tags
+        )
+        
     except Exception as e:
-        logger.error(f"Error al cargar casos de éxito: {str(e)}")
-        return render_template('error/500.html'), 500
+        logger.error(f"Error rendering directory: {str(e)}")
+        return render_template('main/directory.html', error=True)
 
-@main_bp.route('/faq')
-@cache.cached(timeout=3600)
-def faq():
-    """Página de preguntas frecuentes."""
-    faqs = get_faqs_by_category()
-    return render_template('faq.html', faqs=faqs)
+@main_bp.route('/project/<int:project_id>')
+@main_bp.route('/project/<int:project_id>/<slug>')
+def project_detail(project_id, slug=None):
+    """Página de detalle de proyecto público."""
+    try:
+        project = Project.query.filter(
+            Project.id == project_id,
+            Project.status == ProjectStatus.ACTIVE,
+            Project.is_public == True
+        ).first_or_404()
+        
+        # Verificar slug para SEO
+        expected_slug = slugify(project.name)
+        if slug != expected_slug:
+            return redirect(url_for('main.project_detail', 
+                                  project_id=project_id, 
+                                  slug=expected_slug), code=301)
+        
+        # Proyectos relacionados
+        related_projects = _get_related_projects(project, limit=3)
+        
+        # Incrementar vistas
+        project.view_count = (project.view_count or 0) + 1
+        db.session.commit()
+        
+        _track_page_view('project_detail', {
+            'project_id': project_id,
+            'project_name': project.name
+        })
+        
+        meta_tags = generate_meta_tags(
+            title=f"{project.name} - {_('Emprendimiento Innovador')}",
+            description=truncate_text(project.description, 160),
+            keywords=f"{project.name}, emprendimiento, {project.sector}, innovación",
+            og_image=project.image_url if project.image_url else None
+        )
+        
+        structured_data = _generate_project_structured_data(project)
+        
+        return render_template(
+            'main/project_detail.html',
+            project=project,
+            related_projects=related_projects,
+            meta_tags=meta_tags,
+            structured_data=structured_data
+        )
+        
+    except Exception as e:
+        logger.error(f"Error rendering project detail {project_id}: {str(e)}")
+        abort(404)
 
-@main_bp.route('/terms')
-@cache.cached(timeout=86400)  # Cache por 24 horas
-def terms():
-    """Términos y condiciones."""
-    return render_template('legal/terms.html')
-
-@main_bp.route('/privacy')
-@cache.cached(timeout=86400)  # Cache por 24 horas
-def privacy():
-    """Política de privacidad."""
-    return render_template('legal/privacy.html')
+@main_bp.route('/entrepreneurs')
+def entrepreneurs():
+    """Directorio de emprendedores."""
+    try:
+        page = request.args.get('page', 1, type=int)
+        sector = request.args.get('sector', '')
+        search = request.args.get('search', '').strip()
+        per_page = 16
+        
+        # Query de emprendedores activos con proyectos públicos
+        query = User.query.filter(
+            User.user_type == UserType.ENTREPRENEUR,
+            User.is_active == True,
+            User.is_public_profile == True
+        ).join(Entrepreneur).outerjoin(Project).filter(
+            or_(
+                Project.is_public == True,
+                Project.id.is_(None)
+            )
+        ).distinct()
+        
+        # Aplicar filtros
+        if search:
+            query = query.filter(
+                or_(
+                    User.full_name.ilike(f'%{search}%'),
+                    User.bio.ilike(f'%{search}%'),
+                    Entrepreneur.expertise.ilike(f'%{search}%')
+                )
+            )
+        
+        if sector:
+            query = query.join(Project).filter(Project.sector == sector)
+        
+        # Ordenar por actividad reciente
+        query = query.order_by(desc(User.last_login_at))
+        
+        # Paginar
+        pagination = query.paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+        
+        _track_page_view('entrepreneurs_directory', {
+            'search': search,
+            'sector': sector
+        })
+        
+        meta_tags = generate_meta_tags(
+            title=_('Emprendedores - Conecta con Innovadores'),
+            description=_('Conoce a emprendedores innovadores y sus proyectos. Conecta con líderes que están transformando industrias.'),
+            keywords='emprendedores, innovadores, startups, líderes, networking'
+        )
+        
+        return render_template(
+            'main/entrepreneurs.html',
+            entrepreneurs=pagination.items,
+            pagination=pagination,
+            current_filters={'search': search, 'sector': sector},
+            meta_tags=meta_tags
+        )
+        
+    except Exception as e:
+        logger.error(f"Error rendering entrepreneurs directory: {str(e)}")
+        return render_template('main/entrepreneurs.html', error=True)
 
 @main_bp.route('/blog')
 def blog():
     """Blog de la plataforma."""
-    page = request.args.get('page', 1, type=int)
-    posts = get_blog_posts(page)
-    return render_template('blog/index.html', posts=posts)
-
-@main_bp.route('/blog/<slug>')
-def blog_post(slug):
-    """Muestra un post específico del blog."""
-    post = get_blog_post(slug)
-    if not post:
-        abort(404)
-    return render_template('blog/post.html', post=post)
-
-@main_bp.route('/newsletter-signup', methods=['POST'])
-def newsletter_signup():
-    """Endpoint para suscripción al newsletter."""
     try:
-        email = request.form.get('email')
-        if not email:
-            return jsonify({'success': False, 'error': 'Email es requerido'}), 400
+        page = request.args.get('page', 1, type=int)
+        category = request.args.get('category', '')
+        per_page = 9
         
-        # Validar email y agregar a lista de suscriptores
-        subscribe_to_newsletter(email)
+        # Query de posts publicados
+        query = BlogPost.query.filter(
+            BlogPost.status == PostStatus.PUBLISHED,
+            BlogPost.published_at <= datetime.utcnow()
+        )
         
-        return jsonify({
-            'success': True,
-            'message': '¡Gracias por suscribirte a nuestro newsletter!'
-        })
+        if category:
+            query = query.filter(BlogPost.category == category)
+        
+        query = query.order_by(desc(BlogPost.published_at))
+        
+        # Paginar
+        pagination = query.paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+        
+        # Posts destacados
+        featured_posts = BlogPost.query.filter(
+            BlogPost.status == PostStatus.PUBLISHED,
+            BlogPost.is_featured == True
+        ).order_by(desc(BlogPost.published_at)).limit(3).all()
+        
+        # Categorías disponibles
+        categories = db.session.query(
+            BlogPost.category,
+            func.count(BlogPost.id).label('count')
+        ).filter(
+            BlogPost.status == PostStatus.PUBLISHED
+        ).group_by(BlogPost.category).all()
+        
+        _track_page_view('blog_index', {'category': category})
+        
+        meta_tags = generate_meta_tags(
+            title=_('Blog - Recursos para Emprendedores'),
+            description=_('Artículos, consejos y recursos para emprendedores. Aprende de expertos y casos de éxito.'),
+            keywords='blog, emprendimiento, consejos, recursos, casos de éxito'
+        )
+        
+        return render_template(
+            'main/blog.html',
+            posts=pagination.items,
+            pagination=pagination,
+            featured_posts=featured_posts,
+            categories=categories,
+            current_category=category,
+            meta_tags=meta_tags
+        )
         
     except Exception as e:
-        logger.error(f"Error en suscripción newsletter: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': 'Error al procesar la suscripción'
-        }), 500
+        logger.error(f"Error rendering blog: {str(e)}")
+        return render_template('main/blog.html', error=True)
 
-# Funciones auxiliares
-def get_featured_success_stories(limit=3):
-    """Obtiene historias de éxito destacadas."""
-    return Entrepreneur.query.filter_by(
-        is_featured=True,
-        is_active=True
-    ).limit(limit).all()
-
-def get_upcoming_events(limit=5):
-    """Obtiene próximos eventos."""
-    return Event.query.filter(
-        Event.date >= datetime.utcnow()
-    ).order_by(Event.date).limit(limit).all()
-
-def get_featured_testimonials(limit=6):
-    """Obtiene testimonios destacados."""
-    return Testimonial.query.filter_by(
-        is_approved=True,
-        is_featured=True
-    ).limit(limit).all()
-
-def get_team_members():
-    """Obtiene información del equipo."""
-    return [
-        {
-            'name': 'Juan Pérez',
-            'position': 'CEO',
-            'bio': 'Fundador y CEO con más de 15 años de experiencia...',
-            'image': 'juan.jpg'
-        },
-        # Más miembros del equipo...
-    ]
-
-def get_platform_stats():
-    """Obtiene estadísticas de la plataforma."""
-    return {
-        'entrepreneurs': Entrepreneur.query.count(),
-        'allies': Ally.query.count(),
-        'success_stories': SuccessStory.query.count(),
-        'countries': User.query.with_entities(User.country).distinct().count()
-    }
-
-def save_contact_request(form):
-    """Guarda una solicitud de contacto en la base de datos."""
-    contact = ContactRequest(
-        name=form.name.data,
-        email=form.email.data,
-        subject=form.subject.data,
-        message=form.message.data
-    )
-    db.session.add(contact)
-    db.session.commit()
-
-def get_faqs_by_category():
-    """Obtiene FAQs organizadas por categoría."""
-    return {
-        'general': [
-            {
-                'question': '¿Qué es esta plataforma?',
-                'answer': 'Una plataforma de conexión entre emprendedores y mentores...'
-            },
-            # Más FAQs...
-        ],
-        'mentoring': [
-            {
-                'question': '¿Cómo funciona la mentoría?',
-                'answer': 'Los emprendedores son asignados a mentores según su industria...'
-            },
-            # Más FAQs...
-        ]
-    }
-
-def get_blog_posts(page):
-    """Obtiene posts del blog paginados."""
-    return BlogPost.query.filter_by(
-        is_published=True
-    ).order_by(
-        BlogPost.created_at.desc()
-    ).paginate(
-        page=page,
-        per_page=current_app.config['POSTS_PER_PAGE'],
-        error_out=False
-    )
-
-def subscribe_to_newsletter(email):
-    """Procesa la suscripción al newsletter."""
-    if NewsletterSubscription.query.filter_by(email=email).first():
-        raise ValueError('Email ya está suscrito')
+@main_bp.route('/newsletter/subscribe', methods=['POST'])
+def subscribe_newsletter():
+    """Suscripción al newsletter via AJAX."""
+    form = NewsletterForm()
     
-    subscription = NewsletterSubscription(email=email)
-    db.session.add(subscription)
-    db.session.commit()
-    
-    # Enviar email de confirmación
-    send_email(
-        subject='Bienvenido a nuestro Newsletter',
-        sender=current_app.config['MAIL_DEFAULT_SENDER'],
-        recipients=[email],
-        text_body=render_template('email/newsletter_welcome.txt'),
-        html_body=render_template('email/newsletter_welcome.html')
-    )
-
-    # Continuación de app/views/main.py
-    @main_bp.route('/search')
-    def search():
-        """Búsqueda global en la plataforma."""
-        query = request.args.get('q', '')
-        category = request.args.get('category', 'all')
-        page = request.args.get('page', 1, type=int)
-
-        if not query:
-            return render_template('search.html', results=None)
-
+    if form.validate_on_submit():
         try:
-            results = perform_global_search(query, category, page)
-            return render_template('search.html',
-                                results=results,
-                                query=query,
-                                category=category)
-        except Exception as e:
-            logger.error(f"Error en búsqueda: {str(e)}")
-            flash('Error al procesar la búsqueda. Por favor intenta de nuevo.', 'error')
-            return redirect(url_for('main.index'))
-
-    @main_bp.route('/events')
-    def events():
-        """Listado de eventos de la plataforma."""
-        try:
-            # Filtros
-            category = request.args.get('category')
-            date_from = request.args.get('date_from')
-            date_to = request.args.get('date_to')
-            format_type = request.args.get('format', 'all')  # presencial/virtual/híbrido
-            
-            events = get_filtered_events(
-                category=category,
-                date_from=date_from,
-                date_to=date_to,
-                format_type=format_type
+            success = _subscribe_to_newsletter(
+                form.email.data,
+                form.interests.data
             )
             
-            return render_template('events/index.html',
-                                events=events,
-                                categories=get_event_categories(),
-                                current_filters={
-                                    'category': category,
-                                    'date_from': date_from,
-                                    'date_to': date_to,
-                                    'format': format_type
-                                })
+            if success:
+                _track_newsletter_subscription(form.interests.data)
+                return jsonify({
+                    'success': True,
+                    'message': _('¡Gracias por suscribirte! Te enviaremos contenido valioso.')
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': _('Ha ocurrido un error. Por favor intenta nuevamente.')
+                }), 400
+                
         except Exception as e:
-            logger.error(f"Error al cargar eventos: {str(e)}")
-            flash('Error al cargar los eventos. Por favor intenta más tarde.', 'error')
-            return redirect(url_for('main.index'))
-
-    @main_bp.route('/events/<slug>')
-    def event_detail(slug):
-        """Detalle de un evento específico."""
-        event = Event.query.filter_by(slug=slug).first_or_404()
-        
-        # Verificar si el evento es privado y el usuario tiene acceso
-        if event.is_private and not current_user.has_access_to_event(event):
-            abort(403)
-        
-        related_events = get_related_events(event)
-        
-        return render_template('events/detail.html',
-                            event=event,
-                            related_events=related_events)
-
-    @main_bp.route('/directory')
-    def directory():
-        """Directorio público de emprendimientos."""
-        try:
-            # Parámetros de filtrado
-            industry = request.args.get('industry')
-            location = request.args.get('location')
-            stage = request.args.get('stage')
-            sort_by = request.args.get('sort', 'newest')
-            page = request.args.get('page', 1, type=int)
-            
-            # Obtener emprendimientos filtrados
-            entrepreneurs = get_filtered_entrepreneurs(
-                industry=industry,
-                location=location,
-                stage=stage,
-                sort_by=sort_by,
-                page=page
-            )
-            
-            return render_template('directory/index.html',
-                                entrepreneurs=entrepreneurs,
-                                industries=get_industry_list(),
-                                locations=get_location_list(),
-                                stages=get_stage_list(),
-                                current_filters={
-                                    'industry': industry,
-                                    'location': location,
-                                    'stage': stage,
-                                    'sort': sort_by
-                                })
-        except Exception as e:
-            logger.error(f"Error al cargar directorio: {str(e)}")
-            return render_template('error/500.html'), 500
-
-    @main_bp.route('/impact')
-    @cache.cached(timeout=3600)
-    def impact():
-        """Página de impacto y métricas de la plataforma."""
-        try:
-            impact_metrics = calculate_platform_impact()
-            return render_template('impact.html', metrics=impact_metrics)
-        except Exception as e:
-            logger.error(f"Error al cargar métricas de impacto: {str(e)}")
-            return render_template('error/500.html'), 500
-
-    @main_bp.route('/resources')
-    @login_required
-    def resources():
-        """Biblioteca de recursos."""
-        try:
-            category = request.args.get('category', 'all')
-            search = request.args.get('search', '')
-            page = request.args.get('page', 1, type=int)
-            
-            resources = get_filtered_resources(
-                category=category,
-                search=search,
-                page=page
-            )
-            
-            return render_template('resources/index.html',
-                                resources=resources,
-                                categories=get_resource_categories(),
-                                current_filters={
-                                    'category': category,
-                                    'search': search
-                                })
-        except Exception as e:
-            logger.error(f"Error al cargar recursos: {str(e)}")
-            flash('Error al cargar los recursos. Por favor intenta más tarde.', 'error')
-            return redirect(url_for('main.index'))
-
-    @main_bp.route('/download/<token>')
-    @login_required
-    def download_resource(token):
-        """Descarga de recursos protegidos."""
-        try:
-            # Verificar token y obtener recurso
-            resource = verify_download_token(token)
-            if not resource:
-                abort(404)
-            
-            # Verificar permisos
-            if not current_user.can_download_resource(resource):
-                abort(403)
-            
-            # Registrar la descarga
-            log_resource_download(resource, current_user)
-            
-            return send_file(
-                resource.file_path,
-                as_attachment=True,
-                download_name=resource.filename
-            )
-        except Exception as e:
-            logger.error(f"Error en descarga de recurso: {str(e)}")
-            flash('Error al descargar el recurso. Por favor intenta más tarde.', 'error')
-            return redirect(url_for('main.resources'))
-
-    @main_bp.route('/feedback', methods=['POST'])
-    @login_required
-    def submit_feedback():
-        """Envío de feedback sobre la plataforma."""
-        try:
-            data = request.json
-            feedback = PlatformFeedback(
-                user_id=current_user.id,
-                category=data.get('category'),
-                rating=data.get('rating'),
-                comment=data.get('comment')
-            )
-            db.session.add(feedback)
-            db.session.commit()
-            
-            # Notificar a administradores si el rating es bajo
-            if feedback.rating <= 2:
-                notify_admins_low_rating(feedback)
-            
-            return jsonify({'success': True})
-        except Exception as e:
-            logger.error(f"Error al procesar feedback: {str(e)}")
+            logger.error(f"Error subscribing to newsletter: {str(e)}")
             return jsonify({
                 'success': False,
-                'error': 'Error al procesar el feedback'
+                'message': _('Error interno. Por favor intenta más tarde.')
             }), 500
+    
+    # Errores de validación
+    errors = []
+    for field, field_errors in form.errors.items():
+        errors.extend(field_errors)
+    
+    return jsonify({
+        'success': False,
+        'message': errors[0] if errors else _('Datos inválidos')
+    }), 400
 
-    # Funciones auxiliares adicionales
+@main_bp.route('/search/api')
+def search_api():
+    """API de búsqueda para autocompletado."""
+    query = request.args.get('q', '').strip()
+    limit = request.args.get('limit', 10, type=int)
+    
+    if len(query) < 2:
+        return jsonify({'results': []})
+    
+    try:
+        results = []
+        
+        # Buscar proyectos
+        projects = Project.query.filter(
+            Project.name.ilike(f'%{query}%'),
+            Project.status == ProjectStatus.ACTIVE,
+            Project.is_public == True
+        ).limit(limit // 2).all()
+        
+        for project in projects:
+            results.append({
+                'type': 'project',
+                'title': project.name,
+                'description': truncate_text(project.description, 100),
+                'url': url_for('main.project_detail', 
+                              project_id=project.id, 
+                              slug=slugify(project.name)),
+                'image': project.image_url,
+                'sector': project.sector
+            })
+        
+        # Buscar emprendedores
+        entrepreneurs = User.query.filter(
+            User.user_type == UserType.ENTREPRENEUR,
+            User.full_name.ilike(f'%{query}%'),
+            User.is_active == True,
+            User.is_public_profile == True
+        ).limit(limit // 2).all()
+        
+        for entrepreneur in entrepreneurs:
+            results.append({
+                'type': 'entrepreneur',
+                'title': entrepreneur.full_name,
+                'description': entrepreneur.bio or '',
+                'url': url_for('main.entrepreneur_profile', user_id=entrepreneur.id),
+                'image': entrepreneur.avatar_url,
+                'company': entrepreneur.entrepreneur.company_name if entrepreneur.entrepreneur else None
+            })
+        
+        return jsonify({'results': results[:limit]})
+        
+    except Exception as e:
+        logger.error(f"Error in search API: {str(e)}")
+        return jsonify({'results': [], 'error': 'Error interno'}), 500
 
-    def perform_global_search(query, category, page):
-        """Realiza búsqueda global en la plataforma."""
-        results = {
-            'entrepreneurs': [],
-            'events': [],
-            'resources': [],
-            'blog_posts': []
+@main_bp.route('/stats/api')
+@cache.cached(timeout=600)  # Cache por 10 minutos
+def stats_api():
+    """API pública de estadísticas."""
+    try:
+        stats = _get_landing_stats()
+        return jsonify(stats)
+    except Exception as e:
+        logger.error(f"Error getting stats: {str(e)}")
+        return jsonify({'error': 'Error obteniendo estadísticas'}), 500
+
+@main_bp.route('/sitemap.xml')
+@cache.cached(timeout=86400)  # Cache por 24 horas
+def sitemap():
+    """Genera sitemap XML dinámico."""
+    try:
+        urls = []
+        
+        # URLs estáticas
+        static_pages = [
+            ('main.index', 'daily', 1.0),
+            ('main.about', 'monthly', 0.8),
+            ('main.contact', 'monthly', 0.7),
+            ('main.directory', 'daily', 0.9),
+            ('main.entrepreneurs', 'weekly', 0.8),
+            ('main.blog', 'daily', 0.8)
+        ]
+        
+        for endpoint, changefreq, priority in static_pages:
+            urls.append({
+                'loc': url_for(endpoint, _external=True),
+                'changefreq': changefreq,
+                'priority': priority,
+                'lastmod': datetime.utcnow().strftime('%Y-%m-%d')
+            })
+        
+        # Proyectos públicos
+        projects = Project.query.filter(
+            Project.status == ProjectStatus.ACTIVE,
+            Project.is_public == True
+        ).all()
+        
+        for project in projects:
+            urls.append({
+                'loc': url_for('main.project_detail', 
+                              project_id=project.id,
+                              slug=slugify(project.name),
+                              _external=True),
+                'changefreq': 'weekly',
+                'priority': 0.7,
+                'lastmod': project.updated_at.strftime('%Y-%m-%d')
+            })
+        
+        # Posts del blog
+        posts = BlogPost.query.filter(
+            BlogPost.status == PostStatus.PUBLISHED
+        ).all()
+        
+        for post in posts:
+            urls.append({
+                'loc': url_for('main.blog_post', 
+                              post_id=post.id,
+                              slug=slugify(post.title),
+                              _external=True),
+                'changefreq': 'monthly',
+                'priority': 0.6,
+                'lastmod': post.published_at.strftime('%Y-%m-%d')
+            })
+        
+        # Generar XML
+        xml_content = render_template('sitemaps/sitemap.xml', urls=urls)
+        response = make_response(xml_content)
+        response.headers['Content-Type'] = 'application/xml'
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error generating sitemap: {str(e)}")
+        abort(500)
+
+# Funciones auxiliares
+def _get_landing_stats() -> Dict[str, Any]:
+    """Obtiene estadísticas para el landing page."""
+    try:
+        stats = {
+            'total_entrepreneurs': User.query.filter(
+                User.user_type == UserType.ENTREPRENEUR,
+                User.is_active == True
+            ).count(),
+            
+            'total_projects': Project.query.filter(
+                Project.status == ProjectStatus.ACTIVE
+            ).count(),
+            
+            'total_mentors': User.query.filter(
+                User.user_type == UserType.ALLY,
+                User.is_active == True
+            ).count(),
+            
+            'total_funding': db.session.query(
+                func.sum(Project.funding_received)
+            ).filter(
+                Project.status == ProjectStatus.ACTIVE
+            ).scalar() or 0,
+            
+            'success_stories': Project.query.filter(
+                Project.status == ProjectStatus.COMPLETED,
+                Project.is_success_story == True
+            ).count(),
+            
+            'active_programs': Program.query.filter(
+                Program.is_active == True,
+                Program.start_date <= datetime.utcnow(),
+                Program.end_date >= datetime.utcnow()
+            ).count()
         }
         
-        if category in ['all', 'entrepreneurs']:
-            results['entrepreneurs'] = Entrepreneur.query.filter(
-                Entrepreneur.company_name.ilike(f'%{query}%')
-            ).paginate(page=page, per_page=10)
+        return stats
         
-        if category in ['all', 'events']:
-            results['events'] = Event.query.filter(
-                Event.title.ilike(f'%{query}%')
-            ).paginate(page=page, per_page=10)
-        
-        # ... más categorías de búsqueda
-        
-        return results
+    except Exception as e:
+        logger.error(f"Error getting landing stats: {str(e)}")
+        return {}
 
-    def calculate_platform_impact():
-        """Calcula métricas de impacto de la plataforma."""
-        return {
-            'total_entrepreneurs': Entrepreneur.query.count(),
-            'total_mentoring_hours': calculate_total_mentoring_hours(),
-            'jobs_created': calculate_jobs_created(),
-            'total_investment': calculate_total_investment(),
-            'success_rate': calculate_success_rate(),
-            'social_impact': calculate_social_impact_metrics(),
-            'environmental_impact': calculate_environmental_impact()
-        }
+def _get_featured_projects(limit: int = 6) -> List[Project]:
+    """Obtiene proyectos destacados."""
+    try:
+        return Project.query.filter(
+            Project.status == ProjectStatus.ACTIVE,
+            Project.is_public == True,
+            Project.is_featured == True
+        ).order_by(desc(Project.featured_at)).limit(limit).all()
+    except Exception as e:
+        logger.error(f"Error getting featured projects: {str(e)}")
+        return []
 
-    def get_filtered_entrepreneurs(industry=None, location=None, stage=None, 
-                                sort_by='newest', page=1):
-        """Obtiene lista filtrada de emprendimientos."""
-        query = Entrepreneur.query.filter_by(is_public=True)
-        
-        if industry:
-            query = query.filter_by(industry=industry)
-        if location:
-            query = query.filter_by(location=location)
-        if stage:
-            query = query.filter_by(stage=stage)
-        
-        if sort_by == 'newest':
-            query = query.order_by(Entrepreneur.created_at.desc())
-        elif sort_by == 'name':
-            query = query.order_by(Entrepreneur.company_name)
-        
-        return query.paginate(page=page, per_page=12)
+def _get_recent_testimonials(limit: int = 3) -> List[Testimonial]:
+    """Obtiene testimonios recientes."""
+    try:
+        return Testimonial.query.filter(
+            Testimonial.is_active == True,
+            Testimonial.is_approved == True
+        ).order_by(desc(Testimonial.created_at)).limit(limit).all()
+    except Exception as e:
+        logger.error(f"Error getting testimonials: {str(e)}")
+        return []
 
-    def get_filtered_resources(category=None, search=None, page=1):
-        """Obtiene recursos filtrados."""
-        query = Resource.query.filter_by(is_active=True)
+def _get_recent_blog_posts(limit: int = 3) -> List[BlogPost]:
+    """Obtiene posts recientes del blog."""
+    try:
+        return BlogPost.query.filter(
+            BlogPost.status == PostStatus.PUBLISHED,
+            BlogPost.published_at <= datetime.utcnow()
+        ).order_by(desc(BlogPost.published_at)).limit(limit).all()
+    except Exception as e:
+        logger.error(f"Error getting blog posts: {str(e)}")
+        return []
+
+def _get_partner_organizations(limit: int = 8) -> List[Organization]:
+    """Obtiene organizaciones aliadas."""
+    try:
+        return Organization.query.filter(
+            Organization.is_active == True,
+            Organization.is_partner == True,
+            Organization.logo_url.isnot(None)
+        ).order_by(func.random()).limit(limit).all()
+    except Exception as e:
+        logger.error(f"Error getting partner organizations: {str(e)}")
+        return []
+
+def _subscribe_to_newsletter(email: str, interests: str) -> bool:
+    """Suscribe un email al newsletter."""
+    try:
+        # Verificar si ya existe
+        existing = NewsletterSubscription.query.filter_by(email=email).first()
         
-        if category and category != 'all':
-            query = query.filter_by(category=category)
-        
-        if search:
-            query = query.filter(
-                or_(
-                    Resource.title.ilike(f'%{search}%'),
-                    Resource.description.ilike(f'%{search}%')
-                )
+        if existing:
+            if existing.is_active:
+                return True  # Ya está suscrito
+            else:
+                # Reactivar suscripción
+                existing.is_active = True
+                existing.interests = interests
+                existing.subscribed_at = datetime.utcnow()
+        else:
+            # Nueva suscripción
+            subscription = NewsletterSubscription(
+                email=email,
+                interests=interests,
+                source='website',
+                ip_address=request.remote_addr
             )
+            db.session.add(subscription)
         
-        return query.order_by(Resource.created_at.desc()).paginate(
-            page=page, per_page=15
-        )
+        db.session.commit()
+        
+        # Enviar email de bienvenida
+        newsletter_service = NewsletterService()
+        newsletter_service.send_welcome_email(email, interests)
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error subscribing to newsletter: {str(e)}")
+        db.session.rollback()
+        return False
 
-    def notify_admins_low_rating(feedback):
-        """Notifica a administradores sobre feedback negativo."""
-        admin_emails = [u.email for u in User.query.filter_by(role='admin').all()]
+def _track_page_view(page_name: str, additional_data: Dict = None):
+    """Registra vista de página para analytics."""
+    try:
+        analytics_service = AnalyticsService()
+        data = {
+            'page': page_name,
+            'url': request.url,
+            'referrer': request.referrer,
+            'user_agent': request.user_agent.string,
+            'ip': request.remote_addr,
+            'language': get_locale()
+        }
         
-        send_email(
-            subject='Feedback Negativo Recibido',
-            sender=current_app.config['MAIL_DEFAULT_SENDER'],
-            recipients=admin_emails,
-            text_body=render_template('email/low_rating_notification.txt',
-                                    feedback=feedback),
-            html_body=render_template('email/low_rating_notification.html',
-                                    feedback=feedback)
-        )
+        if additional_data:
+            data.update(additional_data)
+        
+        analytics_service.track_page_view(data)
+        
+    except Exception as e:
+        logger.error(f"Error tracking page view: {str(e)}")
+
+def _track_contact_form_submission(message_type: str):
+    """Registra envío de formulario de contacto."""
+    try:
+        analytics_service = AnalyticsService()
+        analytics_service.track_event('contact_form_submission', {
+            'message_type': message_type,
+            'page': 'contact',
+            'ip': request.remote_addr
+        })
+    except Exception as e:
+        logger.error(f"Error tracking contact form: {str(e)}")
+
+def _track_newsletter_subscription(interests: str):
+    """Registra suscripción al newsletter."""
+    try:
+        analytics_service = AnalyticsService()
+        analytics_service.track_event('newsletter_subscription', {
+            'interests': interests,
+            'source': 'website',
+            'ip': request.remote_addr
+        })
+    except Exception as e:
+        logger.error(f"Error tracking newsletter subscription: {str(e)}")
+
+def _send_contact_notification(message: ContactMessage):
+    """Envía notificación de nuevo mensaje de contacto."""
+    try:
+        email_service = EmailService()
+        email_service.send_contact_notification(message)
+    except Exception as e:
+        logger.error(f"Error sending contact notification: {str(e)}")
+
+def _send_contact_confirmation(message: ContactMessage):
+    """Envía confirmación al usuario que envió el mensaje."""
+    try:
+        email_service = EmailService()
+        email_service.send_contact_confirmation(message)
+    except Exception as e:
+        logger.error(f"Error sending contact confirmation: {str(e)}")
+
+def _generate_landing_structured_data() -> str:
+    """Genera datos estructurados para el landing page."""
+    data = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Ecosistema de Emprendimiento",
+        "description": "Plataforma integral para emprendedores que conecta con mentores y recursos",
+        "url": url_for('main.index', _external=True),
+        "logo": url_for('static', filename='img/logo.png', _external=True),
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": current_app.config.get('CONTACT_PHONE', ''),
+            "contactType": "customer service",
+            "email": current_app.config.get('CONTACT_EMAIL', '')
+        },
+        "sameAs": [
+            current_app.config.get('SOCIAL_LINKEDIN', ''),
+            current_app.config.get('SOCIAL_TWITTER', ''),
+            current_app.config.get('SOCIAL_FACEBOOK', '')
+        ]
+    }
+    
+    return json.dumps(data, ensure_ascii=False)
+
+def _generate_project_structured_data(project: Project) -> str:
+    """Genera datos estructurados para un proyecto."""
+    data = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": project.name,
+        "description": project.description,
+        "category": project.sector,
+        "brand": {
+            "@type": "Organization",
+            "name": project.entrepreneur.company_name or project.entrepreneur.user.full_name
+        },
+        "url": url_for('main.project_detail', 
+                      project_id=project.id,
+                      slug=slugify(project.name),
+                      _external=True)
+    }
+    
+    if project.image_url:
+        data["image"] = project.image_url
+    
+    return json.dumps(data, ensure_ascii=False)
+
+# Procesadores de contexto específicos del blueprint
+@main_bp.context_processor
+def inject_main_context():
+    """Inyecta contexto específico para vistas principales."""
+    return {
+        'newsletter_form': NewsletterForm(),
+        'search_form': SearchForm(),
+        'current_year': datetime.utcnow().year,
+        'social_links': {
+            'linkedin': current_app.config.get('SOCIAL_LINKEDIN', ''),
+            'twitter': current_app.config.get('SOCIAL_TWITTER', ''),
+            'facebook': current_app.config.get('SOCIAL_FACEBOOK', ''),
+            'instagram': current_app.config.get('SOCIAL_INSTAGRAM', '')
+        }
+    }
+
+# Manejadores de errores específicos
+@main_bp.errorhandler(404)
+def not_found_error(error):
+    """Maneja errores 404 en el blueprint principal."""
+    _track_page_view('404_error', {'requested_url': request.url})
+    return render_template('errors/404.html'), 404
+
+@main_bp.errorhandler(500)
+def internal_error(error):
+    """Maneja errores 500 en el blueprint principal."""
+    db.session.rollback()
+    _track_page_view('500_error', {'requested_url': request.url})
+    return render_template('errors/500.html'), 500

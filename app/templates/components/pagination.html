@@ -1,0 +1,1119 @@
+<!-- Pagination Component -->
+<div class="pagination-wrapper" id="paginationWrapper">
+    <!-- Results Summary -->
+    <div class="pagination-info">
+        <div class="results-summary">
+            <span class="results-text">
+                {% if pagination.total > 0 %}
+                    {{ _('Mostrando') }} 
+                    <strong>{{ pagination.start_item }}</strong> - 
+                    <strong>{{ pagination.end_item }}</strong> 
+                    {{ _('de') }} 
+                    <strong>{{ pagination.total }}</strong> 
+                    {{ _('resultados') }}
+                {% else %}
+                    {{ _('No se encontraron resultados') }}
+                {% endif %}
+            </span>
+        </div>
+        
+        <!-- Page Size Selector -->
+        <div class="page-size-selector">
+            <label for="pageSizeSelect" class="form-label small text-muted">{{ _('Mostrar:') }}</label>
+            <select id="pageSizeSelect" class="form-select form-select-sm" 
+                    onchange="changePageSize(this.value)" 
+                    {{ 'disabled' if pagination.total == 0 }}>
+                {% set page_sizes = [10, 25, 50, 100] %}
+                {% for size in page_sizes %}
+                    <option value="{{ size }}" {{ 'selected' if pagination.per_page == size }}>
+                        {{ size }} {{ _('por página') }}
+                    </option>
+                {% endfor %}
+                {% if pagination.per_page not in page_sizes %}
+                    <option value="{{ pagination.per_page }}" selected>
+                        {{ pagination.per_page }} {{ _('por página') }}
+                    </option>
+                {% endif %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Main Pagination Controls -->
+    {% if pagination.total > 0 and pagination.pages > 1 %}
+    <nav aria-label="{{ _('Navegación de páginas') }}" class="pagination-nav">
+        <div class="pagination-container">
+            
+            <!-- Mobile Pagination (Simple) -->
+            <div class="pagination-mobile d-md-none">
+                <div class="pagination-mobile-info">
+                    <span class="current-page-info">
+                        {{ _('Página') }} {{ pagination.page }} {{ _('de') }} {{ pagination.pages }}
+                    </span>
+                </div>
+                
+                <div class="pagination-mobile-controls">
+                    <!-- Previous Button -->
+                    <button class="btn btn-outline-primary btn-sm pagination-btn" 
+                            onclick="goToPage({{ pagination.prev_num }})"
+                            {{ 'disabled' if not pagination.has_prev }}
+                            title="{{ _('Página anterior') }}">
+                        <i class="fas fa-chevron-left"></i>
+                        <span class="d-none d-sm-inline ms-1">{{ _('Anterior') }}</span>
+                    </button>
+
+                    <!-- Page Jump Input -->
+                    <div class="page-jump-mobile">
+                        <input type="number" 
+                               class="form-control form-control-sm text-center" 
+                               id="pageJumpMobile"
+                               min="1" 
+                               max="{{ pagination.pages }}" 
+                               value="{{ pagination.page }}"
+                               onchange="goToPage(this.value)"
+                               style="width: 60px;">
+                    </div>
+
+                    <!-- Next Button -->
+                    <button class="btn btn-outline-primary btn-sm pagination-btn" 
+                            onclick="goToPage({{ pagination.next_num }})"
+                            {{ 'disabled' if not pagination.has_next }}
+                            title="{{ _('Página siguiente') }}">
+                        <span class="d-none d-sm-inline me-1">{{ _('Siguiente') }}</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Desktop Pagination (Full) -->
+            <div class="pagination-desktop d-none d-md-flex">
+                <ul class="pagination pagination-custom mb-0">
+                    
+                    <!-- First Page -->
+                    {% if pagination.page > 3 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for(request.endpoint, page=1, **request.view_args, **request.args) }}" 
+                           onclick="return navigateToPage(event, 1)" 
+                           title="{{ _('Primera página') }}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Previous Page -->
+                    <li class="page-item {{ 'disabled' if not pagination.has_prev }}">
+                        {% if pagination.has_prev %}
+                        <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.prev_num, **request.view_args, **request.args) }}" 
+                           onclick="return navigateToPage(event, {{ pagination.prev_num }})" 
+                           title="{{ _('Página anterior') }}">
+                            <i class="fas fa-chevron-left me-1"></i>{{ _('Anterior') }}
+                        </a>
+                        {% else %}
+                        <span class="page-link">
+                            <i class="fas fa-chevron-left me-1"></i>{{ _('Anterior') }}
+                        </span>
+                        {% endif %}
+                    </li>
+
+                    <!-- Page Numbers -->
+                    {% set start_page = [1, pagination.page - 2]|max %}
+                    {% set end_page = [pagination.pages, pagination.page + 2]|min %}
+                    
+                    <!-- Show ellipsis if there's a gap at the beginning -->
+                    {% if start_page > 1 %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for(request.endpoint, page=1, **request.view_args, **request.args) }}" 
+                               onclick="return navigateToPage(event, 1)">1</a>
+                        </li>
+                        {% if start_page > 2 %}
+                        <li class="page-item disabled">
+                            <span class="page-link page-ellipsis" onclick="showPageJump()">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </span>
+                        </li>
+                        {% endif %}
+                    {% endif %}
+
+                    <!-- Visible page numbers -->
+                    {% for page_num in range(start_page, end_page + 1) %}
+                        <li class="page-item {{ 'active' if page_num == pagination.page }}">
+                            {% if page_num == pagination.page %}
+                            <span class="page-link current-page" aria-current="page">
+                                {{ page_num }}
+                            </span>
+                            {% else %}
+                            <a class="page-link" href="{{ url_for(request.endpoint, page=page_num, **request.view_args, **request.args) }}" 
+                               onclick="return navigateToPage(event, {{ page_num }})">
+                                {{ page_num }}
+                            </a>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+
+                    <!-- Show ellipsis if there's a gap at the end -->
+                    {% if end_page < pagination.pages %}
+                        {% if end_page < pagination.pages - 1 %}
+                        <li class="page-item disabled">
+                            <span class="page-link page-ellipsis" onclick="showPageJump()">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </span>
+                        </li>
+                        {% endif %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.pages, **request.view_args, **request.args) }}" 
+                               onclick="return navigateToPage(event, {{ pagination.pages }})">{{ pagination.pages }}</a>
+                        </li>
+                    {% endif %}
+
+                    <!-- Next Page -->
+                    <li class="page-item {{ 'disabled' if not pagination.has_next }}">
+                        {% if pagination.has_next %}
+                        <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.next_num, **request.view_args, **request.args) }}" 
+                           onclick="return navigateToPage(event, {{ pagination.next_num }})" 
+                           title="{{ _('Página siguiente') }}">
+                            {{ _('Siguiente') }}<i class="fas fa-chevron-right ms-1"></i>
+                        </a>
+                        {% else %}
+                        <span class="page-link">
+                            {{ _('Siguiente') }}<i class="fas fa-chevron-right ms-1"></i>
+                        </span>
+                        {% endif %}
+                    </li>
+
+                    <!-- Last Page -->
+                    {% if pagination.page < pagination.pages - 2 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.pages, **request.view_args, **request.args) }}" 
+                           onclick="return navigateToPage(event, {{ pagination.pages }})" 
+                           title="{{ _('Última página') }}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <!-- Page Jump -->
+                <div class="page-jump-desktop">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">{{ _('Ir a:') }}</span>
+                        <input type="number" 
+                               class="form-control text-center" 
+                               id="pageJumpDesktop"
+                               min="1" 
+                               max="{{ pagination.pages }}" 
+                               placeholder="{{ pagination.page }}"
+                               onkeypress="handlePageJumpKeypress(event)"
+                               style="width: 80px;">
+                        <button class="btn btn-outline-secondary" 
+                                type="button" 
+                                onclick="executePageJump()"
+                                title="{{ _('Ir a página') }}">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Loading Overlay -->
+    <div class="pagination-loading" id="paginationLoading" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">{{ _('Cargando...') }}</span>
+            </div>
+            <div class="loading-text">{{ _('Cargando resultados...') }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Page Jump Modal -->
+<div class="modal fade" id="pageJumpModal" tabindex="-1" aria-labelledby="pageJumpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title" id="pageJumpModalLabel">{{ _('Ir a página') }}</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Cerrar') }}"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="pageJumpModalInput" class="form-label">
+                        {{ _('Página (1 - ') }}{{ pagination.pages if pagination else 1 }}{{ _(')') }}
+                    </label>
+                    <input type="number" 
+                           class="form-control text-center" 
+                           id="pageJumpModalInput"
+                           min="1" 
+                           max="{{ pagination.pages if pagination else 1 }}" 
+                           value="{{ pagination.page if pagination else 1 }}">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancelar') }}</button>
+                <button type="button" class="btn btn-primary" onclick="executeModalPageJump()">{{ _('Ir') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination Styles -->
+<style>
+.pagination-wrapper {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border: 1px solid #e9ecef;
+    position: relative;
+}
+
+.pagination-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.results-summary {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.results-text strong {
+    color: #495057;
+    font-weight: 600;
+}
+
+.page-size-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.page-size-selector .form-select {
+    width: auto;
+    min-width: 140px;
+}
+
+/* Mobile Pagination */
+.pagination-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+
+.pagination-mobile-info {
+    text-align: center;
+}
+
+.current-page-info {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.pagination-mobile-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.page-jump-mobile {
+    display: flex;
+    align-items: center;
+}
+
+/* Desktop Pagination */
+.pagination-desktop {
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+}
+
+.pagination-custom {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.pagination-custom .page-item {
+    margin: 0;
+}
+
+.pagination-custom .page-link {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    color: #495057;
+    padding: 0.5rem 0.75rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    min-width: 40px;
+    justify-content: center;
+}
+
+.pagination-custom .page-link:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.pagination-custom .page-item.active .page-link {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.pagination-custom .page-item.disabled .page-link {
+    color: #6c757d;
+    background: #f8f9fa;
+    border-color: #dee2e6;
+    cursor: not-allowed;
+}
+
+.page-ellipsis {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.page-ellipsis:hover {
+    background: #f8f9fa;
+    transform: scale(1.1);
+}
+
+.current-page {
+    font-weight: 700;
+    position: relative;
+}
+
+.current-page::before {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 2px;
+    background: var(--warning-color);
+    border-radius: 1px;
+}
+
+/* Page Jump Controls */
+.page-jump-desktop {
+    flex-shrink: 0;
+}
+
+.page-jump-desktop .input-group {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.page-jump-desktop .input-group-text {
+    background: #f8f9fa;
+    border: none;
+    font-size: 0.85rem;
+    color: #495057;
+    font-weight: 500;
+}
+
+.page-jump-desktop .form-control {
+    border: none;
+    box-shadow: none;
+    font-weight: 600;
+}
+
+.page-jump-desktop .form-control:focus {
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+}
+
+.page-jump-desktop .btn {
+    border: none;
+    background: var(--primary-color);
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.page-jump-desktop .btn:hover {
+    background: var(--secondary-color);
+    transform: scale(1.05);
+}
+
+/* Pagination Buttons */
+.pagination-btn {
+    transition: all 0.3s ease;
+    font-weight: 500;
+    border-radius: 8px;
+    min-width: 100px;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Loading Overlay */
+.pagination-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(5px);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.loading-content {
+    text-align: center;
+}
+
+.loading-text {
+    margin-top: 1rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 576px) {
+    .pagination-wrapper {
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .pagination-info {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+        text-align: center;
+    }
+    
+    .page-size-selector {
+        justify-content: center;
+    }
+    
+    .pagination-mobile-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .pagination-btn {
+        min-width: auto;
+        padding: 0.5rem;
+    }
+    
+    .pagination-btn .d-none {
+        display: none !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .pagination-desktop {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .pagination-custom {
+        justify-content: center;
+    }
+}
+
+/* Dark Theme */
+[data-bs-theme="dark"] .pagination-wrapper {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #e2e8f0;
+}
+
+[data-bs-theme="dark"] .pagination-info {
+    border-color: #4a5568;
+}
+
+[data-bs-theme="dark"] .results-summary {
+    color: #a0aec0;
+}
+
+[data-bs-theme="dark"] .results-text strong {
+    color: #e2e8f0;
+}
+
+[data-bs-theme="dark"] .pagination-custom .page-link {
+    background: #4a5568;
+    border-color: #4a5568;
+    color: #e2e8f0;
+}
+
+[data-bs-theme="dark"] .pagination-custom .page-link:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+[data-bs-theme="dark"] .pagination-custom .page-item.disabled .page-link {
+    background: #2d3748;
+    color: #718096;
+}
+
+[data-bs-theme="dark"] .page-jump-desktop .input-group-text {
+    background: #4a5568;
+    color: #e2e8f0;
+    border-color: #4a5568;
+}
+
+[data-bs-theme="dark"] .page-jump-desktop .form-control {
+    background: #4a5568;
+    border-color: #4a5568;
+    color: #e2e8f0;
+}
+
+/* Accessibility Improvements */
+.pagination-custom .page-link:focus {
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+    outline: none;
+}
+
+.pagination-btn:focus {
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+    outline: none;
+}
+
+/* Animation for page transitions */
+.pagination-transition {
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.pagination-transition.loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Hover effects for better UX */
+.page-size-selector .form-select:hover {
+    border-color: var(--primary-color);
+}
+
+.page-jump-mobile .form-control:hover {
+    border-color: var(--primary-color);
+}
+
+/* Loading shimmer effect */
+@keyframes shimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: calc(200px + 100%) 0; }
+}
+
+.shimmer-loading {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200px 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+/* Print styles */
+@media print {
+    .pagination-wrapper {
+        display: none;
+    }
+}
+</style>
+
+<!-- Pagination JavaScript -->
+<script>
+// Global pagination configuration
+window.PaginationConfig = {
+    currentPage: {{ pagination.page if pagination else 1 }},
+    totalPages: {{ pagination.pages if pagination else 1 }},
+    perPage: {{ pagination.per_page if pagination else 25 }},
+    total: {{ pagination.total if pagination else 0 }},
+    ajaxEnabled: {{ 'true' if config.get('ENABLE_AJAX_PAGINATION', True) else 'false' }},
+    baseUrl: '{{ request.base_url }}',
+    endpoint: '{{ request.endpoint }}',
+    viewArgs: {{ request.view_args | tojson }},
+    queryArgs: {{ request.args.to_dict() | tojson }}
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializePagination();
+});
+
+function initializePagination() {
+    // Initialize keyboard navigation
+    initializeKeyboardNavigation();
+    
+    // Initialize URL state management
+    initializeUrlStateManagement();
+    
+    // Initialize accessibility features
+    initializeAccessibility();
+    
+    // Pre-load adjacent pages for better performance
+    preloadAdjacentPages();
+}
+
+function navigateToPage(event, pageNumber) {
+    if (window.PaginationConfig.ajaxEnabled) {
+        event.preventDefault();
+        loadPageAjax(pageNumber);
+        return false;
+    }
+    return true;
+}
+
+function goToPage(pageNumber) {
+    if (!pageNumber || pageNumber < 1 || pageNumber > window.PaginationConfig.totalPages) {
+        showNotification('error', 'Número de página inválido');
+        return;
+    }
+    
+    if (window.PaginationConfig.ajaxEnabled) {
+        loadPageAjax(pageNumber);
+    } else {
+        window.location.href = buildPageUrl(pageNumber);
+    }
+}
+
+function changePageSize(newSize) {
+    if (window.PaginationConfig.ajaxEnabled) {
+        loadPageAjax(1, { per_page: newSize });
+    } else {
+        const url = buildPageUrl(1, { per_page: newSize });
+        window.location.href = url;
+    }
+}
+
+function buildPageUrl(pageNumber, additionalParams = {}) {
+    const url = new URL(window.location);
+    url.searchParams.set('page', pageNumber);
+    
+    // Add additional parameters
+    Object.keys(additionalParams).forEach(key => {
+        url.searchParams.set(key, additionalParams[key]);
+    });
+    
+    return url.toString();
+}
+
+function loadPageAjax(pageNumber, additionalParams = {}) {
+    showLoadingState();
+    
+    const params = {
+        page: pageNumber,
+        per_page: window.PaginationConfig.perPage,
+        ajax: 1,
+        ...additionalParams
+    };
+    
+    // Preserve existing query parameters
+    Object.keys(window.PaginationConfig.queryArgs).forEach(key => {
+        if (key !== 'page' && key !== 'per_page' && !additionalParams.hasOwnProperty(key)) {
+            params[key] = window.PaginationConfig.queryArgs[key];
+        }
+    });
+    
+    const url = new URL(window.PaginationConfig.baseUrl);
+    Object.keys(params).forEach(key => {
+        url.searchParams.set(key, params[key]);
+    });
+    
+    fetch(url.toString(), {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': window.AppConfig.csrfToken
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            updatePageContent(data);
+            updatePaginationControls(data.pagination);
+            updateUrlWithoutReload(pageNumber, additionalParams);
+            
+            // Scroll to top of content
+            scrollToContent();
+            
+            // Update browser history
+            window.history.pushState(
+                { page: pageNumber, params: additionalParams },
+                '',
+                buildPageUrl(pageNumber, additionalParams)
+            );
+            
+            // Trigger custom event
+            const event = new CustomEvent('pageChanged', {
+                detail: { page: pageNumber, pagination: data.pagination }
+            });
+            document.dispatchEvent(event);
+            
+        } else {
+            throw new Error(data.message || 'Error al cargar la página');
+        }
+    })
+    .catch(error => {
+        console.error('AJAX pagination error:', error);
+        showNotification('error', `Error al cargar la página: ${error.message}`);
+        
+        // Fallback to regular navigation
+        window.location.href = buildPageUrl(pageNumber, additionalParams);
+    })
+    .finally(() => {
+        hideLoadingState();
+    });
+}
+
+function updatePageContent(data) {
+    // Update main content area
+    const contentContainer = document.getElementById('mainContent') || 
+                           document.querySelector('[data-pagination-target]') ||
+                           document.querySelector('.content-main');
+    
+    if (contentContainer && data.html) {
+        contentContainer.innerHTML = data.html;
+        
+        // Re-initialize any JavaScript components in the new content
+        if (typeof window.initializePageComponents === 'function') {
+            window.initializePageComponents();
+        }
+    }
+}
+
+function updatePaginationControls(paginationData) {
+    // Update global config
+    window.PaginationConfig.currentPage = paginationData.page;
+    window.PaginationConfig.totalPages = paginationData.pages;
+    window.PaginationConfig.perPage = paginationData.per_page;
+    window.PaginationConfig.total = paginationData.total;
+    
+    // Update results summary
+    updateResultsSummary(paginationData);
+    
+    // Update page size selector
+    updatePageSizeSelector(paginationData.per_page);
+    
+    // Update page inputs
+    updatePageInputs(paginationData.page, paginationData.pages);
+    
+    // Update button states
+    updateButtonStates(paginationData);
+}
+
+function updateResultsSummary(pagination) {
+    const summaryElement = document.querySelector('.results-text');
+    if (summaryElement) {
+        if (pagination.total > 0) {
+            summaryElement.innerHTML = `
+                Mostrando <strong>${pagination.start_item}</strong> - 
+                <strong>${pagination.end_item}</strong> de 
+                <strong>${pagination.total}</strong> resultados
+            `;
+        } else {
+            summaryElement.textContent = 'No se encontraron resultados';
+        }
+    }
+}
+
+function updatePageSizeSelector(perPage) {
+    const selector = document.getElementById('pageSizeSelect');
+    if (selector) {
+        selector.value = perPage;
+    }
+}
+
+function updatePageInputs(currentPage, totalPages) {
+    const inputs = ['pageJumpMobile', 'pageJumpDesktop', 'pageJumpModalInput'];
+    inputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.max = totalPages;
+            if (id !== 'pageJumpDesktop') {
+                input.value = currentPage;
+            } else {
+                input.placeholder = currentPage;
+            }
+        }
+    });
+}
+
+function updateButtonStates(pagination) {
+    // Update mobile current page info
+    const currentPageInfo = document.querySelector('.current-page-info');
+    if (currentPageInfo) {
+        currentPageInfo.textContent = `Página ${pagination.page} de ${pagination.pages}`;
+    }
+    
+    // Update button disabled states
+    const prevButtons = document.querySelectorAll('[onclick*="prev"]');
+    const nextButtons = document.querySelectorAll('[onclick*="next"]');
+    
+    prevButtons.forEach(btn => {
+        btn.disabled = !pagination.has_prev;
+    });
+    
+    nextButtons.forEach(btn => {
+        btn.disabled = !pagination.has_next;
+    });
+}
+
+function updateUrlWithoutReload(pageNumber, additionalParams = {}) {
+    const url = buildPageUrl(pageNumber, additionalParams);
+    window.history.replaceState(
+        { page: pageNumber, params: additionalParams },
+        '',
+        url
+    );
+}
+
+function showLoadingState() {
+    const loadingOverlay = document.getElementById('paginationLoading');
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'flex';
+    }
+    
+    // Add loading class to pagination wrapper
+    const wrapper = document.getElementById('paginationWrapper');
+    if (wrapper) {
+        wrapper.classList.add('pagination-transition');
+    }
+}
+
+function hideLoadingState() {
+    const loadingOverlay = document.getElementById('paginationLoading');
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+    }
+    
+    // Remove loading class
+    const wrapper = document.getElementById('paginationWrapper');
+    if (wrapper) {
+        wrapper.classList.remove('pagination-transition');
+    }
+}
+
+function scrollToContent() {
+    const contentElement = document.getElementById('mainContent') || 
+                          document.querySelector('[data-pagination-target]') ||
+                          document.querySelector('.content-main');
+    
+    if (contentElement) {
+        const offset = 100; // Account for fixed headers
+        const elementPosition = contentElement.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementPosition - offset;
+        
+        window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+        });
+    }
+}
+
+// Page Jump Functions
+function showPageJump() {
+    const modal = new bootstrap.Modal(document.getElementById('pageJumpModal'));
+    modal.show();
+    
+    // Focus on input when modal is shown
+    setTimeout(() => {
+        const input = document.getElementById('pageJumpModalInput');
+        if (input) {
+            input.select();
+        }
+    }, 300);
+}
+
+function handlePageJumpKeypress(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        executePageJump();
+    }
+}
+
+function executePageJump() {
+    const input = document.getElementById('pageJumpDesktop');
+    const pageNumber = parseInt(input.value);
+    
+    if (pageNumber && pageNumber >= 1 && pageNumber <= window.PaginationConfig.totalPages) {
+        goToPage(pageNumber);
+        input.value = '';
+        input.placeholder = pageNumber;
+    } else {
+        showNotification('warning', 'Por favor ingrese un número de página válido');
+        input.focus();
+    }
+}
+
+function executeModalPageJump() {
+    const input = document.getElementById('pageJumpModalInput');
+    const pageNumber = parseInt(input.value);
+    
+    if (pageNumber && pageNumber >= 1 && pageNumber <= window.PaginationConfig.totalPages) {
+        goToPage(pageNumber);
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('pageJumpModal'));
+        modal.hide();
+    } else {
+        showNotification('warning', 'Por favor ingrese un número de página válido');
+        input.focus();
+    }
+}
+
+// Keyboard Navigation
+function initializeKeyboardNavigation() {
+    document.addEventListener('keydown', function(event) {
+        // Only handle if not in input/textarea
+        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+            return;
+        }
+        
+        const { currentPage, totalPages } = window.PaginationConfig;
+        
+        switch(event.key) {
+            case 'ArrowLeft':
+                if (event.ctrlKey && currentPage > 1) {
+                    event.preventDefault();
+                    goToPage(currentPage - 1);
+                }
+                break;
+                
+            case 'ArrowRight':
+                if (event.ctrlKey && currentPage < totalPages) {
+                    event.preventDefault();
+                    goToPage(currentPage + 1);
+                }
+                break;
+                
+            case 'Home':
+                if (event.ctrlKey && currentPage > 1) {
+                    event.preventDefault();
+                    goToPage(1);
+                }
+                break;
+                
+            case 'End':
+                if (event.ctrlKey && currentPage < totalPages) {
+                    event.preventDefault();
+                    goToPage(totalPages);
+                }
+                break;
+                
+            case 'g':
+                if (event.ctrlKey) {
+                    event.preventDefault();
+                    showPageJump();
+                }
+                break;
+        }
+    });
+}
+
+// URL State Management
+function initializeUrlStateManagement() {
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', function(event) {
+        if (event.state && event.state.page) {
+            if (window.PaginationConfig.ajaxEnabled) {
+                loadPageAjax(event.state.page, event.state.params || {});
+            } else {
+                window.location.reload();
+            }
+        }
+    });
+}
+
+// Accessibility
+function initializeAccessibility() {
+    // Add ARIA live region for screen readers
+    if (!document.getElementById('paginationAnnouncer')) {
+        const announcer = document.createElement('div');
+        announcer.id = 'paginationAnnouncer';
+        announcer.setAttribute('aria-live', 'polite');
+        announcer.setAttribute('aria-atomic', 'true');
+        announcer.style.position = 'absolute';
+        announcer.style.left = '-10000px';
+        announcer.style.width = '1px';
+        announcer.style.height = '1px';
+        announcer.style.overflow = 'hidden';
+        document.body.appendChild(announcer);
+    }
+    
+    // Announce page changes
+    document.addEventListener('pageChanged', function(event) {
+        const announcer = document.getElementById('paginationAnnouncer');
+        if (announcer) {
+            const { page, pagination } = event.detail;
+            announcer.textContent = `Página ${page} de ${pagination.pages} cargada. Mostrando ${pagination.start_item} a ${pagination.end_item} de ${pagination.total} resultados.`;
+        }
+    });
+}
+
+// Performance Optimization
+function preloadAdjacentPages() {
+    if (!window.PaginationConfig.ajaxEnabled) return;
+    
+    const { currentPage, totalPages } = window.PaginationConfig;
+    const pagesToPreload = [];
+    
+    // Preload previous page
+    if (currentPage > 1) {
+        pagesToPreload.push(currentPage - 1);
+    }
+    
+    // Preload next page
+    if (currentPage < totalPages) {
+        pagesToPreload.push(currentPage + 1);
+    }
+    
+    pagesToPreload.forEach(page => {
+        setTimeout(() => preloadPage(page), 1000 + Math.random() * 2000);
+    });
+}
+
+function preloadPage(pageNumber) {
+    const url = buildPageUrl(pageNumber);
+    const link = document.createElement('link');
+    link.rel = 'prefetch';
+    link.href = url;
+    document.head.appendChild(link);
+}
+
+// Utility Functions
+function showNotification(type, message) {
+    if (typeof window.showNotification === 'function') {
+        window.showNotification(type, message);
+    } else {
+        console.log(`${type.toUpperCase()}: ${message}`);
+    }
+}
+
+// Export functions for external use
+window.PaginationUtils = {
+    goToPage,
+    changePageSize,
+    showPageJump,
+    refreshCurrentPage: () => goToPage(window.PaginationConfig.currentPage)
+};
+</script>
+
+<!-- Hidden inputs for form integration -->
+<input type="hidden" id="currentPageInput" name="page" value="{{ pagination.page if pagination else 1 }}">
+<input type="hidden" id="currentPerPageInput" name="per_page" value="{{ pagination.per_page if pagination else 25 }}">

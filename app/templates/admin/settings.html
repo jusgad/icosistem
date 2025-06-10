@@ -1,135 +1,2833 @@
-{% extends "base.html" %}
+{% extends "layouts/admin.html" %}
 
-{% block title %}Configuración del Sistema{% endblock %}
+{% block title %}Configuraciones del Sistema{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material.min.css" rel="stylesheet">
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 15px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill-opacity='0.1'%3E%3Cpath fill='%23ffffff' d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E") repeat;
+        animation: floatSettings 20s linear infinite;
+    }
+    
+    @keyframes floatSettings {
+        0% { transform: translateX(0) translateY(0); }
+        100% { transform: translateX(-60px) translateY(-60px); }
+    }
+    
+    .settings-sidebar {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+        position: sticky;
+        top: 2rem;
+        height: fit-content;
+    }
+    
+    .settings-nav {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .settings-nav li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .settings-nav-link {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-radius: 10px;
+        text-decoration: none;
+        color: #6c757d;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .settings-nav-link:hover {
+        background: rgba(44, 62, 80, 0.05);
+        color: #2c3e50;
+        transform: translateX(5px);
+    }
+    
+    .settings-nav-link.active {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        border-color: #2c3e50;
+        transform: translateX(10px);
+    }
+    
+    .settings-nav-icon {
+        width: 20px;
+        margin-right: 0.75rem;
+        text-align: center;
+    }
+    
+    .settings-content {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        padding: 2rem;
+        min-height: 600px;
+    }
+    
+    .settings-section {
+        display: none;
+    }
+    
+    .settings-section.active {
+        display: block;
+        animation: fadeInSettings 0.5s ease;
+    }
+    
+    @keyframes fadeInSettings {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .section-header {
+        border-bottom: 3px solid #2c3e50;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .section-description {
+        color: #6c757d;
+        margin: 0.5rem 0 0 0;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+        padding: 0.75rem 1rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #2c3e50;
+        box-shadow: 0 0 0 0.2rem rgba(44, 62, 80, 0.25);
+        transform: translateY(-1px);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(44, 62, 80, 0.4);
+    }
+    
+    .setting-group {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .setting-group:hover {
+        border-color: #2c3e50;
+        box-shadow: 0 4px 15px rgba(44, 62, 80, 0.1);
+    }
+    
+    .setting-group-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .setting-group-icon {
+        width: 30px;
+        height: 30px;
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.75rem;
+    }
+    
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+    }
+    
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+    }
+    
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    }
+    
+    input:checked + .slider:before {
+        transform: translateX(26px);
+    }
+    
+    .config-preview {
+        background: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+        display: none;
+    }
+    
+    .config-preview.show {
+        display: block;
+        animation: slideDown 0.3s ease;
+    }
+    
+    @keyframes slideDown {
+        from { height: 0; opacity: 0; }
+        to { height: auto; opacity: 1; }
+    }
+    
+    .file-upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 10px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .file-upload-area:hover {
+        border-color: #2c3e50;
+        background: rgba(44, 62, 80, 0.05);
+    }
+    
+    .file-upload-area.dragover {
+        border-color: #2c3e50;
+        background: rgba(44, 62, 80, 0.1);
+        transform: scale(1.02);
+    }
+    
+    .logo-preview {
+        max-width: 200px;
+        max-height: 100px;
+        border-radius: 8px;
+        margin-top: 1rem;
+    }
+    
+    .integration-card {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .integration-card:hover {
+        border-color: #2c3e50;
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(44, 62, 80, 0.15);
+    }
+    
+    .integration-card.connected {
+        border-color: #28a745;
+        background: rgba(40, 167, 69, 0.05);
+    }
+    
+    .integration-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .integration-card.connected .integration-icon {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+    
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-online {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        border: 2px solid rgba(40, 167, 69, 0.2);
+    }
+    
+    .status-offline {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border: 2px solid rgba(220, 53, 69, 0.2);
+    }
+    
+    .status-warning {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+        border: 2px solid rgba(255, 193, 7, 0.2);
+    }
+    
+    .backup-item {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .backup-item:hover {
+        border-color: #2c3e50;
+        transform: translateX(5px);
+    }
+    
+    .security-meter {
+        height: 10px;
+        background: #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 1rem 0;
+    }
+    
+    .security-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #dc3545 0%, #ffc107 50%, #28a745 100%);
+        transition: width 0.6s ease;
+        border-radius: 10px;
+    }
+    
+    .api-key-container {
+        position: relative;
+    }
+    
+    .api-key-toggle {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 0.5rem;
+    }
+    
+    .api-key-toggle:hover {
+        color: #2c3e50;
+    }
+    
+    .notification-preview {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .notification-preview::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: rgba(255,255,255,0.3);
+    }
+    
+    .color-picker-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .color-preview {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .color-preview:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .unsaved-changes {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: #ffc107;
+        color: #212529;
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        transform: translateY(100px);
+        transition: transform 0.3s ease;
+        z-index: 1000;
+    }
+    
+    .unsaved-changes.show {
+        transform: translateY(0);
+    }
+    
+    .settings-search {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+    
+    .settings-search input {
+        padding-left: 3rem;
+    }
+    
+    .settings-search .fa-search {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+    
+    .CodeMirror {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        height: 300px;
+    }
+    
+    .CodeMirror:focus-within {
+        border-color: #2c3e50;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <h1 class="h2 mb-4">Configuración del Sistema</h1>
-    
-    <div class="card">
-        <div class="card-header">
-            <h5>Configuración General</h5>
-        </div>
-        <div class="card-body">
-            <form method="POST" action="{{ url_for('admin.settings.update') }}">
-                {{ form.csrf_token }}
-                
-                <div class="mb-3">
-                    <label for="site_name" class="form-label">Nombre del Sitio</label>
-                    {{ form.site_name(class="form-control", id="site_name") }}
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-0">
+                        <i class="fas fa-cogs me-3"></i>
+                        Configuraciones del Sistema
+                    </h1>
+                    <nav aria-label="breadcrumb" class="mt-2">
+                        <ol class="breadcrumb text-white-50">
+                            <li class="breadcrumb-item">
+                                <a href="{{ url_for('admin.dashboard') }}" class="text-white-50">
+                                    <i class="fas fa-home"></i> Dashboard
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item active text-white" aria-current="page">
+                                Configuraciones
+                            </li>
+                        </ol>
+                    </nav>
                 </div>
-                
-                <div class="mb-3">
-                    <label for="contact_email" class="form-label">Email de Contacto</label>
-                    {{ form.contact_email(class="form-control", id="contact_email") }}
+                <div class="col-md-4 text-end">
+                    <button type="button" class="btn btn-light" onclick="exportSettings()">
+                        <i class="fas fa-download me-2"></i>Exportar Config
+                    </button>
+                    <button type="button" class="btn btn-outline-light ms-2" onclick="importSettings()">
+                        <i class="fas fa-upload me-2"></i>Importar
+                    </button>
                 </div>
-                
-                <div class="mb-3 form-check">
-                    {{ form.enable_registration(class="form-check-input", id="enable_registration") }}
-                    <label class="form-check-label" for="enable_registration">Permitir Registro de Usuarios</label>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="max_file_size" class="form-label">Tamaño Máximo de Archivo (MB)</label>
-                    {{ form.max_file_size(class="form-control", id="max_file_size") }}
-                </div>
-                
-                <hr>
-                
-                <h5 class="mb-3">Parámetros de Emprendimiento</h5>
-                
-                <div class="mb-3">
-                    <label for="max_entrepreneurs_per_ally" class="form-label">Máximo de Emprendedores por Aliado</label>
-                    {{ form.max_entrepreneurs_per_ally(class="form-control", id="max_entrepreneurs_per_ally") }}
-                </div>
-                
-                <div class="mb-3">
-                    <label for="min_hours_per_month" class="form-label">Mínimo de Horas Mensuales</label>
-                    {{ form.min_hours_per_month(class="form-control", id="min_hours_per_month") }}
-                </div>
-                
-                <hr>
-                
-                <h5 class="mb-3">Notificaciones</h5>
-                
-                <div class="mb-3 form-check">
-                    {{ form.email_notifications(class="form-check-input", id="email_notifications") }}
-                    <label class="form-check-label" for="email_notifications">Notificaciones por Email</label>
-                </div>
-                
-                <div class="mb-3 form-check">
-                    {{ form.system_notifications(class="form-check-input", id="system_notifications") }}
-                    <label class="form-check-label" for="system_notifications">Notificaciones del Sistema</label>
-                </div>
-                
-                <button type="submit" class="btn btn-primary">Guardar Configuración</button>
-            </form>
-        </div>
-    </div>
-    
-    <div class="card mt-4">
-        <div class="card-header">
-            <h5>Respaldo del Sistema</h5>
-        </div>
-        <div class="card-body">
-            <p>Realiza un respaldo de la base de datos y los archivos del sistema.</p>
-            <a href="{{ url_for('admin.settings.backup') }}" class="btn btn-secondary">Generar Respaldo</a>
-        </div>
-    </div>
-    
-    <div class="card mt-4 text-white bg-danger">
-        <div class="card-header">
-            <h5>Zona de Peligro</h5>
-        </div>
-        <div class="card-body">
-            <p>Las siguientes acciones son irreversibles y deben ser usadas con precaución.</p>
-            <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#resetModal">
-                Reiniciar Base de Datos
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de Confirmación -->
-<div class="modal fade" id="resetModal" tabindex="-1" aria-labelledby="resetModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="resetModalLabel">Confirmar Reinicio</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
-            <div class="modal-body">
-                <p class="text-danger">¿Está seguro que desea reiniciar la base de datos? Esta acción eliminará todos los datos y no se puede deshacer.</p>
-                <form id="resetForm" method="POST" action="{{ url_for('admin.settings.reset_database') }}">
-                    <div class="mb-3">
-                        <label for="confirm_text" class="form-label">Para confirmar, escriba "REINICIAR"</label>
-                        <input type="text" class="form-control" id="confirm_text" required>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Settings Sidebar -->
+        <div class="col-lg-3">
+            <div class="settings-sidebar">
+                <div class="settings-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="form-control" placeholder="Buscar configuración..." id="settingsSearch">
+                </div>
+                
+                <ul class="settings-nav">
+                    <li>
+                        <a href="#general" class="settings-nav-link active" data-section="general">
+                            <i class="fas fa-cog settings-nav-icon"></i>
+                            General
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#branding" class="settings-nav-link" data-section="branding">
+                            <i class="fas fa-palette settings-nav-icon"></i>
+                            Marca y Apariencia
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#notifications" class="settings-nav-link" data-section="notifications">
+                            <i class="fas fa-bell settings-nav-icon"></i>
+                            Notificaciones
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#email" class="settings-nav-link" data-section="email">
+                            <i class="fas fa-envelope settings-nav-icon"></i>
+                            Email y SMS
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#integrations" class="settings-nav-link" data-section="integrations">
+                            <i class="fas fa-plug settings-nav-icon"></i>
+                            Integraciones
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#security" class="settings-nav-link" data-section="security">
+                            <i class="fas fa-shield-alt settings-nav-icon"></i>
+                            Seguridad
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#api" class="settings-nav-link" data-section="api">
+                            <i class="fas fa-code settings-nav-icon"></i>
+                            API y Webhooks
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#backup" class="settings-nav-link" data-section="backup">
+                            <i class="fas fa-database settings-nav-icon"></i>
+                            Backup y Datos
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#advanced" class="settings-nav-link" data-section="advanced">
+                            <i class="fas fa-code-branch settings-nav-icon"></i>
+                            Avanzado
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Settings Content -->
+        <div class="col-lg-9">
+            <div class="settings-content">
+                <!-- General Settings -->
+                <div id="general" class="settings-section active">
+                    <div class="section-header">
+                        <h2 class="section-title">Configuración General</h2>
+                        <p class="section-description">Configuraciones básicas de la plataforma y información de la organización</p>
                     </div>
-                    {{ form.csrf_token }}
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger" id="confirmReset" disabled>Confirmar Reinicio</button>
+
+                    <form id="generalSettingsForm">
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">
+                                <div class="setting-group-icon">
+                                    <i class="fas fa-info"></i>
+                                </div>
+                                Información Básica
+                            </h3>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="platformName" class="form-label fw-bold">Nombre de la Plataforma *</label>
+                                    <input type="text" class="form-control" id="platformName" name="platform_name" 
+                                           value="{{ settings.platform_name or 'Ecosistema Emprendimiento' }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="platformVersion" class="form-label fw-bold">Versión</label>
+                                    <input type="text" class="form-control" id="platformVersion" name="platform_version" 
+                                           value="{{ settings.platform_version or '1.0.0' }}" readonly>
+                                </div>
+                                <div class="col-12">
+                                    <label for="platformDescription" class="form-label fw-bold">Descripción</label>
+                                    <textarea class="form-control" id="platformDescription" name="platform_description" rows="3">{{ settings.platform_description or '' }}</textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="defaultLanguage" class="form-label fw-bold">Idioma por Defecto</label>
+                                    <select class="form-select" id="defaultLanguage" name="default_language">
+                                        <option value="es" {% if settings.default_language == 'es' %}selected{% endif %}>Español</option>
+                                        <option value="en" {% if settings.default_language == 'en' %}selected{% endif %}>English</option>
+                                        <option value="pt" {% if settings.default_language == 'pt' %}selected{% endif %}>Português</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="defaultTimezone" class="form-label fw-bold">Zona Horaria por Defecto</label>
+                                    <select class="form-select" id="defaultTimezone" name="default_timezone">
+                                        <option value="America/Bogota" {% if settings.default_timezone == 'America/Bogota' %}selected{% endif %}>Bogotá (UTC-5)</option>
+                                        <option value="America/Mexico_City" {% if settings.default_timezone == 'America/Mexico_City' %}selected{% endif %}>Ciudad de México (UTC-6)</option>
+                                        <option value="America/Argentina/Buenos_Aires" {% if settings.default_timezone == 'America/Argentina/Buenos_Aires' %}selected{% endif %}>Buenos Aires (UTC-3)</option>
+                                        <option value="America/Santiago" {% if settings.default_timezone == 'America/Santiago' %}selected{% endif %}>Santiago (UTC-3)</option>
+                                        <option value="America/Lima" {% if settings.default_timezone == 'America/Lima' %}selected{% endif %}>Lima (UTC-5)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">
+                                <div class="setting-group-icon">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                                Información de la Organización
+                            </h3>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="organizationName" class="form-label fw-bold">Nombre de la Organización *</label>
+                                    <input type="text" class="form-control" id="organizationName" name="organization_name" 
+                                           value="{{ settings.organization_name or '' }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="contactEmail" class="form-label fw-bold">Email de Contacto *</label>
+                                    <input type="email" class="form-control" id="contactEmail" name="contact_email" 
+                                           value="{{ settings.contact_email or '' }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="contactPhone" class="form-label fw-bold">Teléfono de Contacto</label>
+                                    <input type="tel" class="form-control" id="contactPhone" name="contact_phone" 
+                                           value="{{ settings.contact_phone or '' }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="website" class="form-label fw-bold">Sitio Web</label>
+                                    <input type="url" class="form-control" id="website" name="website" 
+                                           value="{{ settings.website or '' }}" placeholder="https://ejemplo.com">
+                                </div>
+                                <div class="col-12">
+                                    <label for="address" class="form-label fw-bold">Dirección</label>
+                                    <textarea class="form-control" id="address" name="address" rows="2">{{ settings.address or '' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">
+                                <div class="setting-group-icon">
+                                    <i class="fas fa-sliders-h"></i>
+                                </div>
+                                Configuraciones de la Plataforma
+                            </h3>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Registro Público</label>
+                                    <div class="d-flex align-items-center">
+                                        <label class="switch me-3">
+                                            <input type="checkbox" id="publicRegistration" name="public_registration" 
+                                                   {% if settings.public_registration %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                        <span class="text-muted">Permitir registro sin invitación</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Verificación de Email</label>
+                                    <div class="d-flex align-items-center">
+                                        <label class="switch me-3">
+                                            <input type="checkbox" id="emailVerification" name="email_verification" 
+                                                   {% if settings.email_verification %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                        <span class="text-muted">Verificar email al registrarse</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Modo Mantenimiento</label>
+                                    <div class="d-flex align-items-center">
+                                        <label class="switch me-3">
+                                            <input type="checkbox" id="maintenanceMode" name="maintenance_mode" 
+                                                   {% if settings.maintenance_mode %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                        <span class="text-muted">Deshabilitar acceso público</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            <button type="button" class="btn btn-outline-secondary me-2" onclick="resetForm('generalSettingsForm')">
+                                <i class="fas fa-undo me-1"></i>Restablecer
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Branding Settings -->
+                <div id="branding" class="settings-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Marca y Apariencia</h2>
+                        <p class="section-description">Personaliza la apariencia visual de tu plataforma</p>
+                    </div>
+
+                    <form id="brandingSettingsForm">
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">
+                                <div class="setting-group-icon">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                                Logos e Imágenes
+                            </h3>
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Logo Principal</label>
+                                    <div class="file-upload-area" onclick="document.getElementById('logoFile').click()">
+                                        <input type="file" id="logoFile" name="logo" accept="image/*" style="display: none;" onchange="previewLogo(this, 'logoPreview')">
+                                        <i class="fas fa-cloud-upload-alt fa-2x mb-2 text-muted"></i>
+                                        <p class="text-muted mb-0">Haz clic para subir o arrastra tu logo aquí</p>
+                                        <small class="text-muted">PNG, JPG hasta 2MB</small>
+                                    </div>
+                                    {% if settings.logo_url %}
+                                    <img src="{{ settings.logo_url }}" alt="Logo actual" class="logo-preview" id="logoPreview">
+                                    {% else %}
+                                    <img src="" alt="Vista previa" class="logo-preview" id="logoPreview" style="display: none;">
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Favicon</label>
+                                    <div class="file-upload-area" onclick="document.getElementById('faviconFile').click()">
+                                        <input type="file" id="faviconFile" name="favicon" accept="image/x-icon,image/png" style="display: none;" onchange="previewLogo(this, 'faviconPreview')">
+                                        <i class="fas fa-star fa-2x mb-2 text-muted"></i>
+                                        <p class="text-muted mb-0">Favicon del sitio</p>
+                                        <small class="text-muted">ICO, PNG 32x32px</small>
+                                    </div>
+                                    {% if settings.favicon_url %}
+                                    <img src="{{ settings.favicon_url }}" alt="Favicon actual" class="logo-preview" id="faviconPreview" style="max-width: 32px;">
+                                    {% else %}
+                                    <img src="" alt="Vista previa favicon" class="logo-preview" id="faviconPreview" style="display: none; max-width: 32px;">
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">
+                                <div class="setting-group-icon">
+                                    <i class="fas fa-palette"></i>
+                                </div>
+                                Colores del Tema
+                            </h3>
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Color Primario</label>
+                                    <div class="color-picker-wrapper">
+                                        <input type="color" class="form-control color-preview" id="primaryColor" name="primary_color" 
+                                               value="{{ settings.primary_color or '#667eea' }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Color Secundario</label>
+                                    <div class="color-picker-wrapper">
+                                        <input type="color" class="form-control color-preview" id="secondaryColor" name="secondary_color" 
+                                               value="{{ settings.secondary_color or '#764ba2' }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Color de Acento</label>
+                                    <div class="color-picker-wrapper">
+                                        <input type="color" class="form-control color-preview" id="accentColor" name="accent_color" 
+                                               value="{{ settings.accent_color or '#28a745' }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Color de Fondo</label>
+                                    <div class="color-picker-wrapper">
+                                        <input type="color" class="form-control color-preview" id="backgroundColor" name="background_color" 
+                                               value="{{ settings.background_color or '#ffffff' }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="config-preview" id="colorPreview">
+                                <h5>Vista Previa del Tema</h5>
+                                <div class="d-flex gap-3">
+                                    <div class="btn btn-primary" style="background: var(--primary-color);">Botón Primario</div>
+                                    <div class="btn btn-secondary" style="background: var(--secondary-color);">Botón Secundario</div>
+                                    <div class="btn btn-success" style="background: var(--accent-color);">Botón Acento</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">
+                                <div class="setting-group-icon">
+                                    <i class="fas fa-font"></i>
+                                </div>
+                                Tipografía
+                            </h3>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="primaryFont" class="form-label fw-bold">Fuente Principal</label>
+                                    <select class="form-select" id="primaryFont" name="primary_font">
+                                        <option value="Inter" {% if settings.primary_font == 'Inter' %}selected{% endif %}>Inter</option>
+                                        <option value="Roboto" {% if settings.primary_font == 'Roboto' %}selected{% endif %}>Roboto</option>
+                                        <option value="Open Sans" {% if settings.primary_font == 'Open Sans' %}selected{% endif %}>Open Sans</option>
+                                        <option value="Lato" {% if settings.primary_font == 'Lato' %}selected{% endif %}>Lato</option>
+                                        <option value="Montserrat" {% if settings.primary_font == 'Montserrat' %}selected{% endif %}>Montserrat</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="headingFont" class="form-label fw-bold">Fuente de Títulos</label>
+                                    <select class="form-select" id="headingFont" name="heading_font">
+                                        <option value="Inter" {% if settings.heading_font == 'Inter' %}selected{% endif %}>Inter</option>
+                                        <option value="Roboto" {% if settings.heading_font == 'Roboto' %}selected{% endif %}>Roboto</option>
+                                        <option value="Poppins" {% if settings.heading_font == 'Poppins' %}selected{% endif %}>Poppins</option>
+                                        <option value="Nunito" {% if settings.heading_font == 'Nunito' %}selected{% endif %}>Nunito</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            <button type="button" class="btn btn-outline-info me-2" onclick="previewTheme()">
+                                <i class="fas fa-eye me-1"></i>Vista Previa
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary me-2" onclick="resetForm('brandingSettingsForm')">
+                                <i class="fas fa-undo me-1"></i>Restablecer
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Notifications Settings -->
+                <div id="notifications" class="settings-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Configuración de Notificaciones</h2>
+                        <p class="section-description">Configura cómo y cuándo se envían las notificaciones</p>
+                    </div>
+
+                    <form id="notificationSettingsForm">
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">
+                                <div class="setting-group-icon">
+                                    <i class="fas fa-bell"></i>
+                                </div>
+                                Notificaciones del Sistema
+                            </h3>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Email de Bienvenida</label>
+                                    <div class="d-flex align-items-center">
+                                        <label class="switch me-3">
+                                            <input type="checkbox" name="welcome_email_enabled" 
+                                                   {% if settings.welcome_email_enabled %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                        <span class="text-muted">Enviar al registrarse</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Recordatorios de Reuniones</label>
+                                    <div class="d-flex align-items-center">
+                                        <label class="switch me-3">
+                                            <input type="checkbox" name="meeting_reminders_enabled" 
+                                                   {% if settings.meeting_reminders_enabled %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                        <span class="text-muted">24h y 1h antes</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Notificaciones de Progreso</label>
+                                    <div class="d-flex align-items-center">
+                                        <label class="switch me-3">
+                                            <input type="checkbox" name="progress_notifications_enabled" 
+                                                   {% if settings.progress_notifications_enabled %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                        <span class="text-muted">Hitos completados</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">
+                                <div class="setting-group-icon">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                Plantillas de Email
+                            </h3>
+                            <div class="mb-3">
+                                <label for="emailTemplate" class="form-label fw-bold">Seleccionar Plantilla</label>
+                                <select class="form-select" id="emailTemplate" name="email_template">
+                                    <option value="welcome">Email de Bienvenida</option>
+                                    <option value="meeting_reminder">Recordatorio de Reunión</option>
+                                    <option value="progress_update">Actualización de Progreso</option>
+                                    <option value="program_completion">Finalización de Programa</option>
+                                </select>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="emailSubject" class="form-label fw-bold">Asunto</label>
+                                    <input type="text" class="form-control" id="emailSubject" name="email_subject" 
+                                           placeholder="Asunto del email">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="emailSender" class="form-label fw-bold">Remitente</label>
+                                    <input type="text" class="form-control" id="emailSender" name="email_sender" 
+                                           placeholder="Nombre del remitente">
+                                </div>
+                                <div class="col-12">
+                                    <label for="emailContent" class="form-label fw-bold">Contenido del Email</label>
+                                    <textarea id="emailContent" name="email_content"></textarea>
+                                </div>
+                            </div>
+                            <div class="notification-preview">
+                                <h6><i class="fas fa-envelope me-2"></i>Vista Previa de Notificación</h6>
+                                <div id="notificationPreviewContent">
+                                    <strong>Asunto:</strong> <span id="previewSubject">Bienvenido a la plataforma</span><br>
+                                    <strong>De:</strong> <span id="previewSender">Ecosistema Emprendimiento</span><br>
+                                    <div class="mt-2" id="previewContent">Contenido del email aparecerá aquí...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            <button type="button" class="btn btn-outline-info me-2" onclick="testNotification()">
+                                <i class="fas fa-paper-plane me-1"></i>Enviar Prueba
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Guardar Plantilla
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Email Settings -->
+                <div id="email" class="settings-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Configuración de Email y SMS</h2>
+                        <p class="section-description">Configura los servicios de email y SMS para comunicaciones</p>
+                    </div>
+
+                    <form id="emailSettingsForm">
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">
+                                <div class="setting-group-icon">
+                                    <i class="fas fa-server"></i>
+                                </div>
+                                Servidor SMTP
+                            </h3>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="smtpHost" class="form-label fw-bold">Servidor SMTP</label>
+                                    <input type="text" class="form-control" id="smtpHost" name="smtp_host" 
+                                           value="{{ settings.smtp_host or '' }}" placeholder="smtp.gmail.com">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="smtpPort" class="form-label fw-bold">Puerto</label>
+                                    <input type="number" class="form-control" id="smtpPort" name="smtp_port" 
+                                           value="{{ settings.smtp_port or 587 }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="smtpUsername" class="form-label fw-bold">Usuario</label>
+                                    <input type="text" class="form-control" id="smtpUsername" name="smtp_username" 
+                                           value="{{ settings.smtp_username or '' }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="smtpPassword" class="form-label fw-bold">Contraseña</label>
+                                    <div class="api-key-container">
+                                        <input type="password" class="form-control" id="smtpPassword" name="smtp_password" 
+                                               value="{{ settings.smtp_password or '' }}">
+                                        <button type="button" class="api-key-toggle" onclick="togglePassword('smtpPassword')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Cifrado</label>
+                                    <select class="form-select" name="smtp_encryption">
+                                        <option value="tls" {% if settings.smtp_encryption == 'tls' %}selected{% endif %}>TLS</option>
+                                        <option value="ssl" {% if settings.smtp_encryption == 'ssl' %}selected{% endif %}>SSL</option>
+                                        <option value="none" {% if settings.smtp_encryption == 'none' %}selected{% endif %}>Sin cifrado</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="emailFromAddress" class="form-label fw-bold">Email de origen</label>
+                                    <input type="email" class="form-control" id="emailFromAddress" name="email_from_address" 
+                                           value="{{ settings.email_from_address or '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">
+                                <div class="setting-group-icon">
+                                    <i class="fas fa-sms"></i>
+                                </div>
+                                Configuración SMS
+                            </h3>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="smsProvider" class="form-label fw-bold">Proveedor de SMS</label>
+                                    <select class="form-select" id="smsProvider" name="sms_provider">
+                                        <option value="">Seleccionar proveedor</option>
+                                        <option value="twilio" {% if settings.sms_provider == 'twilio' %}selected{% endif %}>Twilio</option>
+                                        <option value="nexmo" {% if settings.sms_provider == 'nexmo' %}selected{% endif %}>Nexmo/Vonage</option>
+                                        <option value="aws_sns" {% if settings.sms_provider == 'aws_sns' %}selected{% endif %}>AWS SNS</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="smsFromNumber" class="form-label fw-bold">Número de origen</label>
+                                    <input type="tel" class="form-control" id="smsFromNumber" name="sms_from_number" 
+                                           value="{{ settings.sms_from_number or '' }}" placeholder="+1234567890">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="smsApiKey" class="form-label fw-bold">API Key</label>
+                                    <div class="api-key-container">
+                                        <input type="password" class="form-control" id="smsApiKey" name="sms_api_key" 
+                                               value="{{ settings.sms_api_key or '' }}">
+                                        <button type="button" class="api-key-toggle" onclick="togglePassword('smsApiKey')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="smsApiSecret" class="form-label fw-bold">API Secret</label>
+                                    <div class="api-key-container">
+                                        <input type="password" class="form-control" id="smsApiSecret" name="sms_api_secret" 
+                                               value="{{ settings.sms_api_secret or '' }}">
+                                        <button type="button" class="api-key-toggle" onclick="togglePassword('smsApiSecret')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            <button type="button" class="btn btn-outline-info me-2" onclick="testEmailConnection()">
+                                <i class="fas fa-envelope me-1"></i>Probar Email
+                            </button>
+                            <button type="button" class="btn btn-outline-info me-2" onclick="testSMSConnection()">
+                                <i class="fas fa-sms me-1"></i>Probar SMS
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Guardar Configuración
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Integrations Settings -->
+                <div id="integrations" class="settings-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Integraciones</h2>
+                        <p class="section-description">Conecta servicios externos para ampliar las funcionalidades</p>
+                    </div>
+
+                    <div class="row g-4">
+                        <!-- Google Calendar -->
+                        <div class="col-md-4">
+                            <div class="integration-card {% if settings.google_calendar_enabled %}connected{% endif %}" 
+                                 onclick="configureIntegration('google_calendar')">
+                                <div class="integration-icon">
+                                    <i class="fab fa-google"></i>
+                                </div>
+                                <h5>Google Calendar</h5>
+                                <p class="text-muted">Sincronizar reuniones y eventos</p>
+                                <div class="status-indicator {% if settings.google_calendar_enabled %}status-online{% else %}status-offline{% endif %}">
+                                    <i class="fas fa-circle me-1"></i>
+                                    {% if settings.google_calendar_enabled %}Conectado{% else %}Desconectado{% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Google Meet -->
+                        <div class="col-md-4">
+                            <div class="integration-card {% if settings.google_meet_enabled %}connected{% endif %}" 
+                                 onclick="configureIntegration('google_meet')">
+                                <div class="integration-icon">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                <h5>Google Meet</h5>
+                                <p class="text-muted">Reuniones virtuales automáticas</p>
+                                <div class="status-indicator {% if settings.google_meet_enabled %}status-online{% else %}status-offline{% endif %}">
+                                    <i class="fas fa-circle me-1"></i>
+                                    {% if settings.google_meet_enabled %}Conectado{% else %}Desconectado{% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Zoom -->
+                        <div class="col-md-4">
+                            <div class="integration-card {% if settings.zoom_enabled %}connected{% endif %}" 
+                                 onclick="configureIntegration('zoom')">
+                                <div class="integration-icon">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                <h5>Zoom</h5>
+                                <p class="text-muted">Videoconferencias profesionales</p>
+                                <div class="status-indicator {% if settings.zoom_enabled %}status-online{% else %}status-offline{% endif %}">
+                                    <i class="fas fa-circle me-1"></i>
+                                    {% if settings.zoom_enabled %}Conectado{% else %}Desconectado{% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slack -->
+                        <div class="col-md-4">
+                            <div class="integration-card {% if settings.slack_enabled %}connected{% endif %}" 
+                                 onclick="configureIntegration('slack')">
+                                <div class="integration-icon">
+                                    <i class="fab fa-slack"></i>
+                                </div>
+                                <h5>Slack</h5>
+                                <p class="text-muted">Notificaciones y comunicación</p>
+                                <div class="status-indicator {% if settings.slack_enabled %}status-online{% else %}status-offline{% endif %}">
+                                    <i class="fas fa-circle me-1"></i>
+                                    {% if settings.slack_enabled %}Conectado{% else %}Desconectado{% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mailchimp -->
+                        <div class="col-md-4">
+                            <div class="integration-card {% if settings.mailchimp_enabled %}connected{% endif %}" 
+                                 onclick="configureIntegration('mailchimp')">
+                                <div class="integration-icon">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <h5>Mailchimp</h5>
+                                <p class="text-muted">Email marketing y listas</p>
+                                <div class="status-indicator {% if settings.mailchimp_enabled %}status-online{% else %}status-offline{% endif %}">
+                                    <i class="fas fa-circle me-1"></i>
+                                    {% if settings.mailchimp_enabled %}Conectado{% else %}Desconectado{% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stripe -->
+                        <div class="col-md-4">
+                            <div class="integration-card {% if settings.stripe_enabled %}connected{% endif %}" 
+                                 onclick="configureIntegration('stripe')">
+                                <div class="integration-icon">
+                                    <i class="fab fa-stripe"></i>
+                                </div>
+                                <h5>Stripe</h5>
+                                <p class="text-muted">Procesamiento de pagos</p>
+                                <div class="status-indicator {% if settings.stripe_enabled %}status-online{% else %}status-offline{% endif %}">
+                                    <i class="fas fa-circle me-1"></i>
+                                    {% if settings.stripe_enabled %}Conectado{% else %}Desconectado{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Settings -->
+                <div id="security" class="settings-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Configuración de Seguridad</h2>
+                        <p class="section-description">Protege tu plataforma con configuraciones de seguridad avanzadas</p>
+                    </div>
+
+                    <form id="securitySettingsForm">
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">
+                                <div class="setting-group-icon">
+                                    <i class="fas fa-lock"></i>
+                                </div>
+                                Políticas de Contraseñas
+                            </h3>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="minPasswordLength" class="form-label fw-bold">Longitud Mínima</label>
+                                    <input type="number" class="form-control" id="minPasswordLength" name="min_password_length" 
+                                           min="6" max="32" value="{{ settings.min_password_length or 8 }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="passwordExpireDays" class="form-label fw-bold">Expiración (días)</label>
+                                    <input type="number" class="form-control" id="passwordExpireDays" name="password_expire_days" 
+                                           min="0" max="365" value="{{ settings.password_expire_days or 90 }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Requerir Mayúsculas</label>
+                                    <div class="d-flex align-items-center">
+                                        <label class="switch me-3">
+                                            <input type="checkbox" name="require_uppercase" 
+                                                   {% if settings.require_uppercase %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Requerir Números</label>
+                                    <div class="d-flex align-items-center">
+                                        <label class="switch me-3">
+                                            <input type="checkbox" name="require_numbers" 
+                                                   {% if settings.require_numbers %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Requerir Símbolos</label>
+                                    <div class="d-flex align-items-center">
+                                        <label class="switch me-3">
+                                            <input type="checkbox" name="require_symbols" 
+                                                   {% if settings.require_symbols %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <label class="form-label fw-bold">Nivel de Seguridad</label>
+                                <div class="security-meter">
+                                    <div class="security-fill" id="securityMeter" style="width: 60%;"></div>
+                                </div>
+                                <small class="text-muted">Ajusta las configuraciones para mejorar la seguridad</small>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">
+                                <div class="setting-group-icon">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                Autenticación de Dos Factores
+                            </h3>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Forzar 2FA para Admins</label>
+                                    <div class="d-flex align-items-center">
+                                        <label class="switch me-3">
+                                            <input type="checkbox" name="force_2fa_admin" 
+                                                   {% if settings.force_2fa_admin %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">2FA Opcional para Usuarios</label>
+                                    <div class="d-flex align-items-center">
+                                        <label class="switch me-3">
+                                            <input type="checkbox" name="allow_2fa_users" 
+                                                   {% if settings.allow_2fa_users %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="2faMethod" class="form-label fw-bold">Método Preferido</label>
+                                    <select class="form-select" id="2faMethod" name="two_fa_method">
+                                        <option value="totp" {% if settings.two_fa_method == 'totp' %}selected{% endif %}>TOTP (Google Authenticator)</option>
+                                        <option value="sms" {% if settings.two_fa_method == 'sms' %}selected{% endif %}>SMS</option>
+                                        <option value="email" {% if settings.two_fa_method == 'email' %}selected{% endif %}>Email</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">
+                                <div class="setting-group-icon">
+                                    <i class="fas fa-ban"></i>
+                                </div>
+                                Límites y Bloqueos
+                            </h3>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="maxLoginAttempts" class="form-label fw-bold">Intentos de Login Máximos</label>
+                                    <input type="number" class="form-control" id="maxLoginAttempts" name="max_login_attempts" 
+                                           min="3" max="10" value="{{ settings.max_login_attempts or 5 }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="lockoutDuration" class="form-label fw-bold">Duración de Bloqueo (minutos)</label>
+                                    <input type="number" class="form-control" id="lockoutDuration" name="lockout_duration" 
+                                           min="5" max="1440" value="{{ settings.lockout_duration or 30 }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="sessionTimeout" class="form-label fw-bold">Timeout de Sesión (minutos)</label>
+                                    <input type="number" class="form-control" id="sessionTimeout" name="session_timeout" 
+                                           min="15" max="480" value="{{ settings.session_timeout or 120 }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="maxSessions" class="form-label fw-bold">Sesiones Simultáneas Máximas</label>
+                                    <input type="number" class="form-control" id="maxSessions" name="max_sessions" 
+                                           min="1" max="10" value="{{ settings.max_sessions or 3 }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Guardar Configuración de Seguridad
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- API Settings -->
+                <div id="api" class="settings-section">
+                    <div class="section-header">
+                        <h2 class="section-title">API y Webhooks</h2>
+                        <p class="section-description">Configura el acceso a la API y webhooks para integraciones</p>
+                    </div>
+
+                    <div class="setting-group">
+                        <h3 class="setting-group-title">
+                            <div class="setting-group-icon">
+                                <i class="fas fa-key"></i>
+                            </div>
+                            Claves de API
+                        </h3>
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label for="apiKey" class="form-label fw-bold">Clave de API Principal</label>
+                                <div class="api-key-container">
+                                    <input type="password" class="form-control" id="apiKey" name="api_key" 
+                                           value="{{ settings.api_key or '' }}" readonly>
+                                    <button type="button" class="api-key-toggle" onclick="togglePassword('apiKey')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold text-transparent">Acciones</label>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-warning" onclick="regenerateApiKey()">
+                                        <i class="fas fa-sync-alt"></i> Regenerar
+                                    </button>
+                                    <button type="button" class="btn btn-outline-info" onclick="copyApiKey()">
+                                        <i class="fas fa-copy"></i> Copiar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <h3 class="setting-group-title">
+                            <div class="setting-group-icon">
+                                <i class="fas fa-globe"></i>
+                            </div>
+                            Configuración de Webhooks
+                        </h3>
+                        <div id="webhooksList">
+                            <!-- Webhooks will be loaded here -->
+                            <div class="backup-item">
+                                <div class="row align-items-center">
+                                    <div class="col-md-4">
+                                        <strong>Nuevo Usuario Registrado</strong><br>
+                                        <small class="text-muted">https://api.ejemplo.com/webhooks/user-created</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <span class="status-indicator status-online">
+                                            <i class="fas fa-circle me-1"></i>Activo
+                                        </span>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">Última ejecución:<br>hace 2 horas</small>
+                                    </div>
+                                    <div class="col-md-3 text-end">
+                                        <button type="button" class="btn btn-outline-primary btn-sm me-1" onclick="testWebhook(1)">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm me-1" onclick="editWebhook(1)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteWebhook(1)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary" onclick="addWebhook()">
+                            <i class="fas fa-plus me-1"></i>Agregar Webhook
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Backup Settings -->
+                <div id="backup" class="settings-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Backup y Datos</h2>
+                        <p class="section-description">Configura copias de seguridad automáticas y gestiona los datos</p>
+                    </div>
+
+                    <div class="setting-group">
+                        <h3 class="setting-group-title">
+                            <div class="setting-group-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            Backup Automático
+                        </h3>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Backup Automático</label>
+                                <div class="d-flex align-items-center">
+                                    <label class="switch me-3">
+                                        <input type="checkbox" name="auto_backup_enabled" 
+                                               {% if settings.auto_backup_enabled %}checked{% endif %}>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="backupFrequency" class="form-label fw-bold">Frecuencia</label>
+                                <select class="form-select" id="backupFrequency" name="backup_frequency">
+                                    <option value="daily" {% if settings.backup_frequency == 'daily' %}selected{% endif %}>Diario</option>
+                                    <option value="weekly" {% if settings.backup_frequency == 'weekly' %}selected{% endif %}>Semanal</option>
+                                    <option value="monthly" {% if settings.backup_frequency == 'monthly' %}selected{% endif %}>Mensual</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="backupRetention" class="form-label fw-bold">Retención (días)</label>
+                                <input type="number" class="form-control" id="backupRetention" name="backup_retention" 
+                                       min="7" max="365" value="{{ settings.backup_retention or 30 }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <h3 class="setting-group-title">
+                            <div class="setting-group-icon">
+                                <i class="fas fa-list"></i>
+                            </div>
+                            Backups Recientes
+                        </h3>
+                        <div id="backupsList">
+                            <!-- Recent backups will be loaded here -->
+                            <div class="backup-item">
+                                <div class="row align-items-center">
+                                    <div class="col-md-4">
+                                        <strong>backup_2024_01_15.sql</strong><br>
+                                        <small class="text-muted">Base de datos completa</small>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <span class="badge bg-success">Completo</span>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">1.2 GB</small>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">15 Ene 2024</small>
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <button type="button" class="btn btn-outline-primary btn-sm me-1" onclick="downloadBackup('backup_2024_01_15.sql')">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteBackup('backup_2024_01_15.sql')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-outline-info" onclick="createManualBackup()">
+                                <i class="fas fa-plus me-1"></i>Crear Backup Manual
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Settings -->
+                <div id="advanced" class="settings-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Configuración Avanzada</h2>
+                        <p class="section-description">Configuraciones técnicas y de desarrollo</p>
+                    </div>
+
+                    <form id="advancedSettingsForm">
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">
+                                <div class="setting-group-icon">
+                                    <i class="fas fa-code"></i>
+                                </div>
+                                CSS y JavaScript Personalizado
+                            </h3>
+                            <div class="mb-3">
+                                <label for="customCSS" class="form-label fw-bold">CSS Personalizado</label>
+                                <textarea id="customCSS" name="custom_css">{{ settings.custom_css or '' }}</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="customJS" class="form-label fw-bold">JavaScript Personalizado</label>
+                                <textarea id="customJS" name="custom_js">{{ settings.custom_js or '' }}</textarea>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3 class="setting-group-title">
+                                <div class="setting-group-icon">
+                                    <i class="fas fa-cogs"></i>
+                                </div>
+                                Configuración del Sistema
+                            </h3>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Modo Debug</label>
+                                    <div class="d-flex align-items-center">
+                                        <label class="switch me-3">
+                                            <input type="checkbox" name="debug_mode" 
+                                                   {% if settings.debug_mode %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                        <span class="text-muted">Solo para desarrollo</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Logging Detallado</label>
+                                    <div class="d-flex align-items-center">
+                                        <label class="switch me-3">
+                                            <input type="checkbox" name="verbose_logging" 
+                                                   {% if settings.verbose_logging %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Cache Habilitado</label>
+                                    <div class="d-flex align-items-center">
+                                        <label class="switch me-3">
+                                            <input type="checkbox" name="cache_enabled" 
+                                                   {% if settings.cache_enabled %}checked{% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            <button type="button" class="btn btn-outline-warning me-2" onclick="clearCache()">
+                                <i class="fas fa-broom me-1"></i>Limpiar Cache
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Guardar Configuración Avanzada
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Unsaved Changes Indicator -->
+<div class="unsaved-changes" id="unsavedChanges">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    Tienes cambios sin guardar
+    <button type="button" class="btn btn-sm btn-outline-dark ms-2" onclick="saveAllChanges()">
+        Guardar Todo
+    </button>
+</div>
 {% endblock %}
 
-{% block scripts %}
-{{ super() }}
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-    // Script para habilitar/deshabilitar el botón de confirmación de reinicio
-    document.getElementById('confirm_text').addEventListener('input', function() {
-        const confirmButton = document.getElementById('confirmReset');
-        confirmButton.disabled = this.value !== 'REINICIAR';
+// Global variables
+let hasUnsavedChanges = false;
+let codeEditors = {};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Select2
+    $('.form-select').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
+    });
+
+    // Initialize CodeMirror editors
+    initializeCodeEditors();
+
+    // Settings navigation
+    initializeNavigation();
+
+    // Initialize form change detection
+    initializeChangeDetection();
+
+    // Initialize file upload handlers
+    initializeFileUploads();
+
+    // Initialize search functionality
+    initializeSearch();
+
+    // Color picker change handlers
+    initializeColorPickers();
+});
+
+// Initialize CodeMirror editors
+function initializeCodeEditors() {
+    // Email content editor
+    if (document.getElementById('emailContent')) {
+        codeEditors.emailContent = CodeMirror.fromTextArea(document.getElementById('emailContent'), {
+            mode: 'htmlmixed',
+            theme: 'material',
+            lineNumbers: true,
+            autoCloseTags: true,
+            autoCloseBrackets: true
+        });
+    }
+
+    // Custom CSS editor
+    if (document.getElementById('customCSS')) {
+        codeEditors.customCSS = CodeMirror.fromTextArea(document.getElementById('customCSS'), {
+            mode: 'css',
+            theme: 'material',
+            lineNumbers: true,
+            autoCloseBrackets: true
+        });
+    }
+
+    // Custom JS editor
+    if (document.getElementById('customJS')) {
+        codeEditors.customJS = CodeMirror.fromTextArea(document.getElementById('customJS'), {
+            mode: 'javascript',
+            theme: 'material',
+            lineNumbers: true,
+            autoCloseBrackets: true
+        });
+    }
+}
+
+// Initialize navigation
+function initializeNavigation() {
+    document.querySelectorAll('.settings-nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const sectionId = this.getAttribute('data-section');
+            showSection(sectionId);
+            
+            // Update active navigation
+            document.querySelectorAll('.settings-nav-link').forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+}
+
+// Show specific settings section
+function showSection(sectionId) {
+    // Hide all sections
+    document.querySelectorAll('.settings-section').forEach(section => {
+        section.classList.remove('active');
     });
     
-    // Script para enviar el formulario cuando se confirma el reinicio
-    document.getElementById('confirmReset').addEventListener('click', function() {
-        document.getElementById('resetForm').submit();
+    // Show selected section
+    const targetSection = document.getElementById(sectionId);
+    if (targetSection) {
+        targetSection.classList.add('active');
+    }
+}
+
+// Initialize change detection
+function initializeChangeDetection() {
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        const inputs = form.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('change', function() {
+                markUnsavedChanges();
+            });
+        });
     });
+
+    // CodeMirror change detection
+    Object.values(codeEditors).forEach(editor => {
+        editor.on('change', function() {
+            markUnsavedChanges();
+        });
+    });
+}
+
+// Initialize file uploads
+function initializeFileUploads() {
+    const uploadAreas = document.querySelectorAll('.file-upload-area');
+    uploadAreas.forEach(area => {
+        area.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+
+        area.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+
+        area.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const input = this.querySelector('input[type="file"]');
+                if (input) {
+                    input.files = files;
+                    input.dispatchEvent(new Event('change'));
+                }
+            }
+        });
+    });
+}
+
+// Initialize search
+function initializeSearch() {
+    const searchInput = document.getElementById('settingsSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            const navLinks = document.querySelectorAll('.settings-nav-link');
+            
+            navLinks.forEach(link => {
+                const text = link.textContent.toLowerCase();
+                const listItem = link.parentElement;
+                
+                if (text.includes(query)) {
+                    listItem.style.display = 'block';
+                } else {
+                    listItem.style.display = 'none';
+                }
+            });
+        });
+    }
+}
+
+// Initialize color pickers
+function initializeColorPickers() {
+    const colorInputs = document.querySelectorAll('input[type="color"]');
+    colorInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            updateColorPreview();
+        });
+    });
+}
+
+// Mark unsaved changes
+function markUnsavedChanges() {
+    hasUnsavedChanges = true;
+    document.getElementById('unsavedChanges').classList.add('show');
+}
+
+// Clear unsaved changes
+function clearUnsavedChanges() {
+    hasUnsavedChanges = false;
+    document.getElementById('unsavedChanges').classList.remove('show');
+}
+
+// Preview logo upload
+function previewLogo(input, previewId) {
+    const preview = document.getElementById(previewId);
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Update color preview
+function updateColorPreview() {
+    const primaryColor = document.getElementById('primaryColor').value;
+    const secondaryColor = document.getElementById('secondaryColor').value;
+    const accentColor = document.getElementById('accentColor').value;
+    
+    const preview = document.getElementById('colorPreview');
+    preview.style.setProperty('--primary-color', primaryColor);
+    preview.style.setProperty('--secondary-color', secondaryColor);
+    preview.style.setProperty('--accent-color', accentColor);
+    preview.classList.add('show');
+}
+
+// Toggle password visibility
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    const button = input.nextElementSibling;
+    const icon = button.querySelector('i');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+// Reset form
+function resetForm(formId) {
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: 'Se perderán todos los cambios no guardados en esta sección',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, restablecer',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById(formId).reset();
+            // Refresh any related previews
+            if (formId === 'brandingSettingsForm') {
+                document.getElementById('colorPreview').classList.remove('show');
+            }
+        }
+    });
+}
+
+// Preview theme
+function previewTheme() {
+    const primaryColor = document.getElementById('primaryColor').value;
+    const secondaryColor = document.getElementById('secondaryColor').value;
+    
+    Swal.fire({
+        title: 'Vista Previa del Tema',
+        html: `
+            <div style="padding: 20px;">
+                <div style="background: ${primaryColor}; color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                    <h3>Título con Color Primario</h3>
+                    <p>Este es un ejemplo de cómo se verá tu tema.</p>
+                </div>
+                <div style="background: ${secondaryColor}; color: white; padding: 15px; border-radius: 10px;">
+                    <h4>Título con Color Secundario</h4>
+                    <button style="background: white; color: ${secondaryColor}; border: none; padding: 10px 20px; border-radius: 5px;">Botón de Ejemplo</button>
+                </div>
+            </div>
+        `,
+        width: 600,
+        showCloseButton: true,
+        showConfirmButton: false
+    });
+}
+
+// Test notification
+function testNotification() {
+    const subject = document.getElementById('emailSubject').value || 'Email de prueba';
+    const sender = document.getElementById('emailSender').value || 'Sistema';
+    
+    Swal.fire({
+        title: 'Enviando notificación de prueba...',
+        text: 'Se enviará un email de prueba a tu dirección',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Enviar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Send test notification
+            fetch('{{ url_for("admin.test_notification") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    subject: subject,
+                    sender: sender,
+                    content: codeEditors.emailContent ? codeEditors.emailContent.getValue() : ''
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('¡Enviado!', 'Notificación de prueba enviada correctamente', 'success');
+                } else {
+                    Swal.fire('Error', data.message || 'Error al enviar la notificación', 'error');
+                }
+            });
+        }
+    });
+}
+
+// Test email connection
+function testEmailConnection() {
+    const formData = new FormData(document.getElementById('emailSettingsForm'));
+    
+    Swal.fire({
+        title: 'Probando conexión...',
+        text: 'Verificando la configuración SMTP',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    fetch('{{ url_for("admin.test_email_connection") }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire('¡Conexión exitosa!', 'La configuración SMTP es correcta', 'success');
+        } else {
+            Swal.fire('Error de conexión', data.message || 'No se pudo conectar al servidor SMTP', 'error');
+        }
+    })
+    .catch(error => {
+        Swal.fire('Error', 'Error al probar la conexión', 'error');
+    });
+}
+
+// Test SMS connection
+function testSMSConnection() {
+    Swal.fire({
+        title: 'Enviar SMS de prueba',
+        html: `
+            <div class="mb-3">
+                <label for="testPhoneNumber" class="form-label">Número de teléfono:</label>
+                <input type="tel" class="form-control" id="testPhoneNumber" placeholder="+1234567890">
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Enviar SMS',
+        cancelButtonText: 'Cancelar',
+        preConfirm: () => {
+            const phoneNumber = document.getElementById('testPhoneNumber').value;
+            if (!phoneNumber) {
+                Swal.showValidationMessage('Por favor ingresa un número de teléfono válido');
+                return false;
+            }
+            return phoneNumber;
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const formData = new FormData(document.getElementById('emailSettingsForm'));
+            formData.append('test_phone_number', result.value);
+            
+            Swal.fire({
+                title: 'Enviando SMS...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            fetch('{{ url_for("admin.test_sms_connection") }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('¡SMS enviado!', 'El SMS de prueba se envió correctamente', 'success');
+                } else {
+                    Swal.fire('Error', data.message || 'No se pudo enviar el SMS', 'error');
+                }
+            })
+            .catch(error => {
+                Swal.fire('Error', 'Error al enviar el SMS', 'error');
+            });
+        }
+    });
+}
+
+// Configure integration
+function configureIntegration(integrationName) {
+    let integrationTitle = '';
+    let configFields = '';
+    
+    switch(integrationName) {
+        case 'google_calendar':
+            integrationTitle = 'Google Calendar';
+            configFields = `
+                <div class="mb-3">
+                    <label class="form-label">Client ID:</label>
+                    <input type="text" class="form-control" id="google_client_id" placeholder="Google Client ID">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Client Secret:</label>
+                    <input type="password" class="form-control" id="google_client_secret" placeholder="Google Client Secret">
+                </div>
+            `;
+            break;
+        case 'zoom':
+            integrationTitle = 'Zoom';
+            configFields = `
+                <div class="mb-3">
+                    <label class="form-label">API Key:</label>
+                    <input type="text" class="form-control" id="zoom_api_key" placeholder="Zoom API Key">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">API Secret:</label>
+                    <input type="password" class="form-control" id="zoom_api_secret" placeholder="Zoom API Secret">
+                </div>
+            `;
+            break;
+        case 'slack':
+            integrationTitle = 'Slack';
+            configFields = `
+                <div class="mb-3">
+                    <label class="form-label">Webhook URL:</label>
+                    <input type="url" class="form-control" id="slack_webhook_url" placeholder="https://hooks.slack.com/...">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Canal por defecto:</label>
+                    <input type="text" class="form-control" id="slack_default_channel" placeholder="#general">
+                </div>
+            `;
+            break;
+        default:
+            integrationTitle = integrationName.replace('_', ' ').toUpperCase();
+            configFields = `
+                <div class="mb-3">
+                    <label class="form-label">API Key:</label>
+                    <input type="text" class="form-control" id="${integrationName}_api_key" placeholder="API Key">
+                </div>
+            `;
+    }
+    
+    Swal.fire({
+        title: `Configurar ${integrationTitle}`,
+        html: configFields,
+        showCancelButton: true,
+        confirmButtonText: 'Guardar',
+        cancelButtonText: 'Cancelar',
+        width: 600,
+        preConfirm: () => {
+            const inputs = Swal.getPopup().querySelectorAll('input');
+            const config = {};
+            inputs.forEach(input => {
+                config[input.id] = input.value;
+            });
+            return config;
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Save integration configuration
+            fetch('{{ url_for("admin.configure_integration") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    integration: integrationName,
+                    config: result.value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('¡Configurado!', `${integrationTitle} configurado correctamente`, 'success');
+                    // Update integration card status
+                    updateIntegrationStatus(integrationName, true);
+                } else {
+                    Swal.fire('Error', data.message || 'Error al configurar la integración', 'error');
+                }
+            });
+        }
+    });
+}
+
+// Update integration status
+function updateIntegrationStatus(integrationName, connected) {
+    const cards = document.querySelectorAll('.integration-card');
+    cards.forEach(card => {
+        if (card.onclick.toString().includes(integrationName)) {
+            const statusIndicator = card.querySelector('.status-indicator');
+            const icon = card.querySelector('.integration-icon');
+            
+            if (connected) {
+                card.classList.add('connected');
+                statusIndicator.className = 'status-indicator status-online';
+                statusIndicator.innerHTML = '<i class="fas fa-circle me-1"></i>Conectado';
+                icon.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+            } else {
+                card.classList.remove('connected');
+                statusIndicator.className = 'status-indicator status-offline';
+                statusIndicator.innerHTML = '<i class="fas fa-circle me-1"></i>Desconectado';
+                icon.style.background = 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)';
+            }
+        }
+    });
+}
+
+// Regenerate API key
+function regenerateApiKey() {
+    Swal.fire({
+        title: '¿Regenerar clave de API?',
+        text: 'La clave actual dejará de funcionar. Asegúrate de actualizar todas las integraciones.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, regenerar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#dc3545'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('{{ url_for("admin.regenerate_api_key") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('apiKey').value = data.api_key;
+                    Swal.fire('¡Regenerada!', 'Nueva clave de API generada correctamente', 'success');
+                } else {
+                    Swal.fire('Error', 'No se pudo regenerar la clave de API', 'error');
+                }
+            });
+        }
+    });
+}
+
+// Copy API key
+function copyApiKey() {
+    const apiKeyInput = document.getElementById('apiKey');
+    
+    // Temporarily show the key
+    const wasPassword = apiKeyInput.type === 'password';
+    if (wasPassword) {
+        apiKeyInput.type = 'text';
+    }
+    
+    apiKeyInput.select();
+    document.execCommand('copy');
+    
+    // Hide the key again
+    if (wasPassword) {
+        apiKeyInput.type = 'password';
+    }
+    
+    Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Clave copiada al portapapeles',
+        showConfirmButton: false,
+        timer: 3000
+    });
+}
+
+// Add webhook
+function addWebhook() {
+    Swal.fire({
+        title: 'Agregar Webhook',
+        html: `
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label">Nombre:</label>
+                    <input type="text" class="form-control" id="webhookName" placeholder="Nombre descriptivo">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">URL:</label>
+                    <input type="url" class="form-control" id="webhookUrl" placeholder="https://api.ejemplo.com/webhook">
+                </div>
+                <div class="col-6">
+                    <label class="form-label">Evento:</label>
+                    <select class="form-select" id="webhookEvent">
+                        <option value="user.created">Usuario Creado</option>
+                        <option value="user.updated">Usuario Actualizado</option>
+                        <option value="program.started">Programa Iniciado</option>
+                        <option value="program.completed">Programa Completado</option>
+                        <option value="meeting.scheduled">Reunión Programada</option>
+                    </select>
+                </div>
+                <div class="col-6">
+                    <label class="form-label">Método HTTP:</label>
+                    <select class="form-select" id="webhookMethod">
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="PATCH">PATCH</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Headers (JSON):</label>
+                    <textarea class="form-control" id="webhookHeaders" rows="3" placeholder='{"Authorization": "Bearer token"}'></textarea>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Crear Webhook',
+        cancelButtonText: 'Cancelar',
+        width: 700,
+        preConfirm: () => {
+            const name = document.getElementById('webhookName').value;
+            const url = document.getElementById('webhookUrl').value;
+            const event = document.getElementById('webhookEvent').value;
+            const method = document.getElementById('webhookMethod').value;
+            const headers = document.getElementById('webhookHeaders').value;
+            
+            if (!name || !url) {
+                Swal.showValidationMessage('Nombre y URL son obligatorios');
+                return false;
+            }
+            
+            return { name, url, event, method, headers };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('{{ url_for("admin.create_webhook") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                },
+                body: JSON.stringify(result.value)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('¡Creado!', 'Webhook creado correctamente', 'success');
+                    loadWebhooks();
+                } else {
+                    Swal.fire('Error', data.message || 'Error al crear el webhook', 'error');
+                }
+            });
+        }
+    });
+}
+
+// Edit webhook
+function editWebhook(webhookId) {
+    // Fetch webhook data and show edit form
+    fetch(`{{ url_for("admin.get_webhook", webhook_id=0) }}`.replace('0', webhookId))
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const webhook = data.webhook;
+            Swal.fire({
+                title: 'Editar Webhook',
+                html: `
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Nombre:</label>
+                            <input type="text" class="form-control" id="editWebhookName" value="${webhook.name}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">URL:</label>
+                            <input type="url" class="form-control" id="editWebhookUrl" value="${webhook.url}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Estado:</label>
+                            <select class="form-select" id="editWebhookStatus">
+                                <option value="active" ${webhook.active ? 'selected' : ''}>Activo</option>
+                                <option value="inactive" ${!webhook.active ? 'selected' : ''}>Inactivo</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Método HTTP:</label>
+                            <select class="form-select" id="editWebhookMethod">
+                                <option value="POST" ${webhook.method === 'POST' ? 'selected' : ''}>POST</option>
+                                <option value="PUT" ${webhook.method === 'PUT' ? 'selected' : ''}>PUT</option>
+                                <option value="PATCH" ${webhook.method === 'PATCH' ? 'selected' : ''}>PATCH</option>
+                            </select>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Guardar Cambios',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const updateData = {
+                        name: document.getElementById('editWebhookName').value,
+                        url: document.getElementById('editWebhookUrl').value,
+                        active: document.getElementById('editWebhookStatus').value === 'active',
+                        method: document.getElementById('editWebhookMethod').value
+                    };
+                    
+                    fetch(`{{ url_for("admin.update_webhook", webhook_id=0) }}`.replace('0', webhookId), {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                        },
+                        body: JSON.stringify(updateData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('¡Actualizado!', 'Webhook actualizado correctamente', 'success');
+                            loadWebhooks();
+                        } else {
+                            Swal.fire('Error', data.message || 'Error al actualizar el webhook', 'error');
+                        }
+                    });
+                }
+            });
+        }
+    });
+}
+
+// Test webhook
+function testWebhook(webhookId) {
+    Swal.fire({
+        title: 'Probando webhook...',
+        text: 'Enviando payload de prueba',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    fetch(`{{ url_for("admin.test_webhook", webhook_id=0) }}`.replace('0', webhookId), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire('¡Prueba exitosa!', `Respuesta: ${data.status_code}`, 'success');
+        } else {
+            Swal.fire('Error en la prueba', data.message || 'El webhook no respondió correctamente', 'error');
+        }
+    });
+}
+
+// Delete webhook
+function deleteWebhook(webhookId) {
+    Swal.fire({
+        title: '¿Eliminar webhook?',
+        text: 'Esta acción no se puede deshacer',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#dc3545'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`{{ url_for("admin.delete_webhook", webhook_id=0) }}`.replace('0', webhookId), {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('¡Eliminado!', 'Webhook eliminado correctamente', 'success');
+                    loadWebhooks();
+                } else {
+                    Swal.fire('Error', data.message || 'Error al eliminar el webhook', 'error');
+                }
+            });
+        }
+    });
+}
+
+// Load webhooks list
+function loadWebhooks() {
+    fetch('{{ url_for("admin.get_webhooks") }}')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const webhooksList = document.getElementById('webhooksList');
+            webhooksList.innerHTML = '';
+            
+            data.webhooks.forEach(webhook => {
+                const webhookElement = document.createElement('div');
+                webhookElement.className = 'backup-item';
+                webhookElement.innerHTML = `
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <strong>${webhook.name}</strong><br>
+                            <small class="text-muted">${webhook.url}</small>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="status-indicator ${webhook.active ? 'status-online' : 'status-offline'}">
+                                <i class="fas fa-circle me-1"></i>${webhook.active ? 'Activo' : 'Inactivo'}
+                            </span>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted">Última ejecución:<br>${webhook.last_execution || 'Nunca'}</small>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <button type="button" class="btn btn-outline-primary btn-sm me-1" onclick="testWebhook(${webhook.id})">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm me-1" onclick="editWebhook(${webhook.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteWebhook(${webhook.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                webhooksList.appendChild(webhookElement);
+            });
+        }
+    });
+}
+
+// Download backup
+function downloadBackup(filename) {
+    window.open(`{{ url_for("admin.download_backup") }}?filename=${encodeURIComponent(filename)}`, '_blank');
+}
+
+// Delete backup
+function deleteBackup(filename) {
+    Swal.fire({
+        title: '¿Eliminar backup?',
+        text: `Se eliminará el archivo ${filename}`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#dc3545'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('{{ url_for("admin.delete_backup") }}', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                },
+                body: JSON.stringify({ filename: filename })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('¡Eliminado!', 'Backup eliminado correctamente', 'success');
+                    loadBackups();
+                } else {
+                    Swal.fire('Error', data.message || 'Error al eliminar el backup', 'error');
+                }
+            });
+        }
+    });
+}
+
+// Create manual backup
+function createManualBackup() {
+    Swal.fire({
+        title: 'Crear backup manual',
+        html: `
+            <div class="mb-3">
+                <label class="form-label">Tipo de backup:</label>
+                <select class="form-select" id="backupType">
+                    <option value="full">Completo (Base de datos + archivos)</option>
+                    <option value="database">Solo base de datos</option>
+                    <option value="files">Solo archivos</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Descripción (opcional):</label>
+                <input type="text" class="form-control" id="backupDescription" placeholder="Descripción del backup">
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Crear Backup',
+        cancelButtonText: 'Cancelar',
+        preConfirm: () => {
+            return {
+                type: document.getElementById('backupType').value,
+                description: document.getElementById('backupDescription').value
+            };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Creando backup...',
+                text: 'Este proceso puede tomar varios minutos',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            fetch('{{ url_for("admin.create_manual_backup") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                },
+                body: JSON.stringify(result.value)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('¡Backup creado!', 'El backup se ha creado correctamente', 'success');
+                    loadBackups();
+                } else {
+                    Swal.fire('Error', data.message || 'Error al crear el backup', 'error');
+                }
+            });
+        }
+    });
+}
+
+// Load backups list
+function loadBackups() {
+    fetch('{{ url_for("admin.get_backups") }}')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const backupsList = document.getElementById('backupsList');
+            backupsList.innerHTML = '';
+            
+            data.backups.forEach(backup => {
+                const backupElement = document.createElement('div');
+                backupElement.className = 'backup-item';
+                backupElement.innerHTML = `
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <strong>${backup.filename}</strong><br>
+                            <small class="text-muted">${backup.type}</small>
+                        </div>
+                        <div class="col-md-2">
+                            <span class="badge bg-success">Completo</span>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted">${backup.size}</small>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted">${backup.created_at}</small>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <button type="button" class="btn btn-outline-primary btn-sm me-1" onclick="downloadBackup('${backup.filename}')">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteBackup('${backup.filename}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                backupsList.appendChild(backupElement);
+            });
+        }
+    });
+}
+
+// Clear cache
+function clearCache() {
+    Swal.fire({
+        title: '¿Limpiar cache?',
+        text: 'Se eliminará todo el contenido en cache del sistema',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, limpiar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('{{ url_for("admin.clear_cache") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('¡Cache limpiado!', 'El cache del sistema ha sido limpiado', 'success');
+                } else {
+                    Swal.fire('Error', data.message || 'Error al limpiar el cache', 'error');
+                }
+            });
+        }
+    });
+}
+
+// Save all changes
+function saveAllChanges() {
+    const forms = document.querySelectorAll('form');
+    let savePromises = [];
+    
+    forms.forEach(form => {
+        if (form.checkValidity()) {
+            const formData = new FormData(form);
+            
+            // Include CodeMirror content
+            Object.keys(codeEditors).forEach(editorKey => {
+                if (formData.has(editorKey)) {
+                    formData.set(editorKey, codeEditors[editorKey].getValue());
+                }
+            });
+            
+            const promise = fetch('{{ url_for("admin.save_settings") }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                }
+            });
+            
+            savePromises.push(promise);
+        }
+    });
+    
+    if (savePromises.length > 0) {
+        Swal.fire({
+            title: 'Guardando configuraciones...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        Promise.all(savePromises)
+        .then(responses => Promise.all(responses.map(r => r.json())))
+        .then(results => {
+            const allSuccess = results.every(result => result.success);
+            if (allSuccess) {
+                Swal.fire('¡Guardado!', 'Todas las configuraciones se guardaron correctamente', 'success');
+                clearUnsavedChanges();
+            } else {
+                Swal.fire('Error parcial', 'Algunas configuraciones no se pudieron guardar', 'warning');
+            }
+        })
+        .catch(error => {
+            Swal.fire('Error', 'Error al guardar las configuraciones', 'error');
+        });
+    }
+}
+
+// Export settings
+function exportSettings() {
+    window.open('{{ url_for("admin.export_settings") }}', '_blank');
+}
+
+// Import settings
+function importSettings() {
+    Swal.fire({
+        title: 'Importar Configuraciones',
+        html: `
+            <div class="file-upload-area">
+                <input type="file" id="importFile" accept=".json" style="display: none;">
+                <i class="fas fa-cloud-upload-alt fa-2x mb-2 text-muted"></i>
+                <p class="text-muted mb-0">Selecciona archivo de configuración</p>
+                <small class="text-muted">Solo archivos JSON</small>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Importar',
+        cancelButtonText: 'Cancelar',
+        didOpen: () => {
+            document.querySelector('#importFile').addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    document.querySelector('.file-upload-area p').textContent = this.files[0].name;
+                }
+            });
+            document.querySelector('.file-upload-area').addEventListener('click', function() {
+                document.querySelector('#importFile').click();
+            });
+        },
+        preConfirm: () => {
+            const file = document.querySelector('#importFile').files[0];
+            if (!file) {
+                Swal.showValidationMessage('Por favor selecciona un archivo');
+                return false;
+            }
+            return file;
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const formData = new FormData();
+            formData.append('settings_file', result.value);
+            
+            fetch('{{ url_for("admin.import_settings") }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('¡Importado!', 'Configuraciones importadas correctamente', 'success').then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', data.message || 'Error al importar las configuraciones', 'error');
+                }
+            });
+        }
+    });
+}
+
+// Form submission handlers
+document.addEventListener('DOMContentLoaded', function() {
+    // General settings form
+    document.getElementById('generalSettingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveFormSettings(this, 'general');
+    });
+    
+    // Branding settings form
+    document.getElementById('brandingSettingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveFormSettings(this, 'branding');
+    });
+    
+    // Notification settings form
+    document.getElementById('notificationSettingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveFormSettings(this, 'notifications');
+    });
+    
+    // Email settings form
+    document.getElementById('emailSettingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveFormSettings(this, 'email');
+    });
+    
+    // Security settings form
+    document.getElementById('securitySettingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveFormSettings(this, 'security');
+    });
+    
+    // Advanced settings form
+    document.getElementById('advancedSettingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveFormSettings(this, 'advanced');
+    });
+});
+
+// Save form settings
+function saveFormSettings(form, section) {
+    const formData = new FormData(form);
+    formData.append('section', section);
+    
+    // Include CodeMirror content
+    Object.keys(codeEditors).forEach(editorKey => {
+        if (form.querySelector(`#${editorKey}`)) {
+            formData.set(editorKey, codeEditors[editorKey].getValue());
+        }
+    });
+    
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Guardando...';
+    submitBtn.disabled = true;
+    
+    fetch('{{ url_for("admin.save_settings") }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire('¡Guardado!', 'Configuración guardada correctamente', 'success');
+            clearUnsavedChanges();
+        } else {
+            Swal.fire('Error', data.message || 'Error al guardar la configuración', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire('Error', 'Error al procesar la solicitud', 'error');
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// Load initial data
+document.addEventListener('DOMContentLoaded', function() {
+    loadWebhooks();
+    loadBackups();
+});
+
+// Prevent accidental page leaving with unsaved changes
+window.addEventListener('beforeunload', function(e) {
+    if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+    }
+});
 </script>
 {% endblock %}
