@@ -1,0 +1,2147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mis Reportes - Cliente{% endblock %}</title>
+    
+    <!-- CSS Framework y Librerías -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #06b6d4;
+            --purple-color: #8b5cf6;
+            --dark-color: #1e293b;
+            --light-color: #f8fafc;
+            --white: #ffffff;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --gradient-purple: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--light-color);
+            color: var(--dark-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* LAYOUT PRINCIPAL */
+        .reports-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* HEADER */
+        .reports-header {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-content h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-content p {
+            color: var(--secondary-color);
+            font-size: 1.1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: var(--white);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--secondary-color);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        /* NAVIGATION TABS */
+        .reports-nav {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 8px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            overflow-x: auto;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            min-width: fit-content;
+        }
+
+        .nav-tab {
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: var(--secondary-color);
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-tab.active {
+            background: var(--primary-color);
+            color: var(--white);
+            box-shadow: var(--shadow);
+        }
+
+        .nav-tab:hover:not(.active) {
+            background: var(--light-color);
+            color: var(--dark-color);
+        }
+
+        /* REPORT BUILDER */
+        .report-builder {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .builder-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .builder-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+
+        .builder-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--dark-color);
+            font-size: 14px;
+        }
+
+        .form-select,
+        .form-input {
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: var(--white);
+        }
+
+        .form-select:focus,
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .date-range {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .date-separator {
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
+
+        .builder-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        /* QUICK REPORTS */
+        .quick-reports {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .quick-report-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quick-report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .quick-report-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .quick-report-card.activity::before { background: var(--gradient-success); }
+        .quick-report-card.files::before { background: var(--gradient-warning); }
+        .quick-report-card.collaboration::before { background: var(--gradient-purple); }
+
+        .quick-report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .quick-report-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--white);
+        }
+
+        .quick-report-icon.primary { background: var(--gradient-primary); }
+        .quick-report-icon.success { background: var(--gradient-success); }
+        .quick-report-icon.warning { background: var(--gradient-warning); }
+        .quick-report-icon.purple { background: var(--gradient-purple); }
+
+        .quick-report-meta {
+            text-align: right;
+            font-size: 12px;
+            color: var(--secondary-color);
+        }
+
+        .quick-report-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--dark-color);
+        }
+
+        .quick-report-description {
+            color: var(--secondary-color);
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .quick-report-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--secondary-color);
+        }
+
+        .quick-report-action {
+            width: 100%;
+            padding: 10px;
+            background: var(--light-color);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--primary-color);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quick-report-action:hover {
+            background: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+        }
+
+        /* REPORT HISTORY */
+        .report-history {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .history-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+
+        .history-filters {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-chip {
+            padding: 6px 12px;
+            background: var(--light-color);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--secondary-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-chip.active {
+            background: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+        }
+
+        .filter-chip:hover:not(.active) {
+            background: var(--border-color);
+        }
+
+        .reports-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .reports-table th,
+        .reports-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .reports-table th {
+            background: var(--light-color);
+            font-weight: 600;
+            color: var(--dark-color);
+            font-size: 14px;
+        }
+
+        .reports-table td {
+            font-size: 14px;
+            color: var(--secondary-color);
+        }
+
+        .reports-table tbody tr:hover {
+            background: var(--light-color);
+        }
+
+        .report-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .report-status.completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+
+        .report-status.processing {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+        }
+
+        .report-status.failed {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border-color);
+            background: var(--white);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary-color);
+            transition: all 0.3s ease;
+            font-size: 12px;
+        }
+
+        .action-btn:hover {
+            background: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+        }
+
+        /* ANALYTICS SECTION */
+        .analytics-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chart-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            background: var(--white);
+            color: var(--secondary-color);
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .chart-btn.active {
+            background: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+        }
+
+        .chart-canvas {
+            width: 100%;
+            height: 300px;
+        }
+
+        /* INSIGHTS PANEL */
+        .insights-panel {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .insights-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 20px;
+        }
+
+        .insight-item {
+            padding: 15px;
+            background: var(--light-color);
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .insight-item.positive {
+            border-left-color: var(--success-color);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .insight-item.warning {
+            border-left-color: var(--warning-color);
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .insight-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .insight-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: var(--white);
+        }
+
+        .insight-icon.positive { background: var(--success-color); }
+        .insight-icon.warning { background: var(--warning-color); }
+        .insight-icon.info { background: var(--primary-color); }
+
+        .insight-title {
+            font-weight: 600;
+            color: var(--dark-color);
+            font-size: 14px;
+        }
+
+        .insight-description {
+            font-size: 13px;
+            color: var(--secondary-color);
+            line-height: 1.4;
+        }
+
+        /* EXPORT MODAL */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: var(--shadow-xl);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--secondary-color);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: var(--light-color);
+        }
+
+        .export-options {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .export-option {
+            padding: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .export-option:hover {
+            border-color: var(--primary-color);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .export-option.selected {
+            border-color: var(--primary-color);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .export-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--white);
+        }
+
+        .export-icon.pdf { background: var(--danger-color); }
+        .export-icon.excel { background: var(--success-color); }
+        .export-icon.csv { background: var(--warning-color); }
+        .export-icon.email { background: var(--primary-color); }
+
+        .export-info h3 {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--dark-color);
+        }
+
+        .export-info p {
+            color: var(--secondary-color);
+            font-size: 14px;
+        }
+
+        .export-settings {
+            background: var(--light-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .settings-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--dark-color);
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            accent-color: var(--primary-color);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        /* SCHEDULE MODAL */
+        .schedule-settings {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 1024px) {
+            .analytics-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-reports {
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .reports-container {
+                padding: 15px;
+            }
+            
+            .reports-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .builder-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-reports {
+                grid-template-columns: 1fr;
+            }
+            
+            .reports-table {
+                font-size: 12px;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+        }
+
+        /* ANIMATIONS */
+        .fade-in {
+            animation: fadeInUp 0.6s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* PROGRESS BAR */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="reports-container">
+        <!-- HEADER -->
+        <section class="reports-header fade-in">
+            <div class="header-content">
+                <h1>
+                    <i class="fas fa-chart-bar"></i>
+                    Mis Reportes
+                </h1>
+                <p>Genera y analiza reportes personalizados de tu actividad y productividad</p>
+            </div>
+            
+            <div class="header-actions">
+                <button class="btn btn-secondary" id="scheduleReportBtn">
+                    <i class="fas fa-calendar-plus"></i>
+                    Programar Reporte
+                </button>
+                
+                <button class="btn btn-primary" id="newReportBtn">
+                    <i class="fas fa-plus"></i>
+                    Nuevo Reporte
+                </button>
+            </div>
+        </section>
+
+        <!-- NAVIGATION TABS -->
+        <nav class="reports-nav fade-in">
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-tab="builder">
+                    <i class="fas fa-tools"></i>
+                    Generador
+                </button>
+                <button class="nav-tab" data-tab="quick">
+                    <i class="fas fa-bolt"></i>
+                    Reportes Rápidos
+                </button>
+                <button class="nav-tab" data-tab="history">
+                    <i class="fas fa-history"></i>
+                    Historial
+                </button>
+                <button class="nav-tab" data-tab="analytics">
+                    <i class="fas fa-chart-line"></i>
+                    Análisis
+                </button>
+                <button class="nav-tab" data-tab="scheduled">
+                    <i class="fas fa-calendar-check"></i>
+                    Programados
+                </button>
+            </div>
+        </nav>
+
+        <!-- REPORT BUILDER SECTION -->
+        <section class="report-section" id="builder-section">
+            <div class="report-builder fade-in">
+                <div class="builder-header">
+                    <h2 class="builder-title">Generador de Reportes Personalizado</h2>
+                </div>
+                
+                <form class="builder-form" id="reportForm">
+                    <div class="form-group">
+                        <label class="form-label">Tipo de Reporte</label>
+                        <select class="form-select" id="reportType">
+                            <option value="activity">Reporte de Actividad</option>
+                            <option value="productivity">Reporte de Productividad</option>
+                            <option value="files">Reporte de Archivos</option>
+                            <option value="collaboration">Reporte de Colaboración</option>
+                            <option value="performance">Reporte de Rendimiento</option>
+                            <option value="custom">Reporte Personalizado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Período de Tiempo</label>
+                        <select class="form-select" id="timePeriod">
+                            <option value="last7days">Últimos 7 días</option>
+                            <option value="last30days">Últimos 30 días</option>
+                            <option value="last3months">Últimos 3 meses</option>
+                            <option value="last6months">Últimos 6 meses</option>
+                            <option value="lastyear">Último año</option>
+                            <option value="custom">Período personalizado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Formato de Salida</label>
+                        <select class="form-select" id="outputFormat">
+                            <option value="pdf">PDF</option>
+                            <option value="excel">Excel</option>
+                            <option value="csv">CSV</option>
+                            <option value="email">Enviar por Email</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="customDateRange" style="display: none;">
+                        <label class="form-label">Rango de Fechas</label>
+                        <div class="date-range">
+                            <input type="date" class="form-input" id="startDate">
+                            <span class="date-separator">hasta</span>
+                            <input type="date" class="form-input" id="endDate">
+                        </div>
+                    </div>
+                </form>
+                
+                <div class="builder-actions">
+                    <button class="btn btn-primary" id="generateReportBtn">
+                        <i class="fas fa-cog"></i>
+                        Generar Reporte
+                    </button>
+                    
+                    <button class="btn btn-secondary" id="previewReportBtn">
+                        <i class="fas fa-eye"></i>
+                        Vista Previa
+                    </button>
+                    
+                    <button class="btn btn-secondary" id="saveTemplateBtn">
+                        <i class="fas fa-save"></i>
+                        Guardar Plantilla
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- QUICK REPORTS SECTION -->
+        <section class="report-section" id="quick-section" style="display: none;">
+            <div class="quick-reports fade-in">
+                <div class="quick-report-card" data-type="activity">
+                    <div class="quick-report-header">
+                        <div class="quick-report-icon success">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="quick-report-meta">
+                            <div>Último mes</div>
+                            <div>89 actividades</div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="quick-report-title">Reporte de Actividad</h3>
+                    <p class="quick-report-description">
+                        Resumen completo de todas tus actividades, tareas completadas y tiempo invertido en los últimos 30 días.
+                    </p>
+                    
+                    <div class="quick-report-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">89</div>
+                            <div class="stat-label">Tareas</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">142h</div>
+                            <div class="stat-label">Tiempo</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">94%</div>
+                            <div class="stat-label">Eficiencia</div>
+                        </div>
+                    </div>
+                    
+                    <button class="quick-report-action">
+                        <i class="fas fa-download"></i>
+                        Generar Reporte
+                    </button>
+                </div>
+
+                <div class="quick-report-card files" data-type="files">
+                    <div class="quick-report-header">
+                        <div class="quick-report-icon warning">
+                            <i class="fas fa-folder"></i>
+                        </div>
+                        <div class="quick-report-meta">
+                            <div>Último mes</div>
+                            <div>247 archivos</div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="quick-report-title">Reporte de Archivos</h3>
+                    <p class="quick-report-description">
+                        Análisis detallado de tu gestión de archivos, uploads, descargas y organización de documentos.
+                    </p>
+                    
+                    <div class="quick-report-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">247</div>
+                            <div class="stat-label">Archivos</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">2.8GB</div>
+                            <div class="stat-label">Tamaño</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">15</div>
+                            <div class="stat-label">Carpetas</div>
+                        </div>
+                    </div>
+                    
+                    <button class="quick-report-action">
+                        <i class="fas fa-download"></i>
+                        Generar Reporte
+                    </button>
+                </div>
+
+                <div class="quick-report-card collaboration" data-type="collaboration">
+                    <div class="quick-report-header">
+                        <div class="quick-report-icon purple">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="quick-report-meta">
+                            <div>Último mes</div>
+                            <div>156 interacciones</div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="quick-report-title">Reporte de Colaboración</h3>
+                    <p class="quick-report-description">
+                        Métricas de colaboración, mensajes enviados, archivos compartidos y trabajo en equipo.
+                    </p>
+                    
+                    <div class="quick-report-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">156</div>
+                            <div class="stat-label">Mensajes</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">23</div>
+                            <div class="stat-label">Compartidos</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">8</div>
+                            <div class="stat-label">Colaboradores</div>
+                        </div>
+                    </div>
+                    
+                    <button class="quick-report-action">
+                        <i class="fas fa-download"></i>
+                        Generar Reporte
+                    </button>
+                </div>
+
+                <div class="quick-report-card" data-type="productivity">
+                    <div class="quick-report-header">
+                        <div class="quick-report-icon primary">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <div class="quick-report-meta">
+                            <div>Último mes</div>
+                            <div>87% productividad</div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="quick-report-title">Reporte de Productividad</h3>
+                    <p class="quick-report-description">
+                        Análisis de tu productividad, eficiencia en tareas y optimización del tiempo de trabajo.
+                    </p>
+                    
+                    <div class="quick-report-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">87%</div>
+                            <div class="stat-label">Productividad</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">9.2</div>
+                            <div class="stat-label">Calidad</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">42h</div>
+                            <div class="stat-label">Ahorradas</div>
+                        </div>
+                    </div>
+                    
+                    <button class="quick-report-action">
+                        <i class="fas fa-download"></i>
+                        Generar Reporte
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- HISTORY SECTION -->
+        <section class="report-section" id="history-section" style="display: none;">
+            <div class="report-history fade-in">
+                <div class="history-header">
+                    <h2 class="history-title">Historial de Reportes</h2>
+                    <div class="history-filters">
+                        <button class="filter-chip active" data-filter="all">Todos</button>
+                        <button class="filter-chip" data-filter="completed">Completados</button>
+                        <button class="filter-chip" data-filter="processing">En Proceso</button>
+                        <button class="filter-chip" data-filter="scheduled">Programados</button>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="reports-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre del Reporte</th>
+                                <th>Tipo</th>
+                                <th>Período</th>
+                                <th>Formato</th>
+                                <th>Estado</th>
+                                <th>Creado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportsTableBody">
+                            <!-- Los reportes se cargarán dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ANALYTICS SECTION -->
+        <section class="report-section" id="analytics-section" style="display: none;">
+            <div class="analytics-section fade-in">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Tendencias de Reportes</h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn active" data-metric="generation">Generación</button>
+                            <button class="chart-btn" data-metric="downloads">Descargas</button>
+                            <button class="chart-btn" data-metric="usage">Uso</button>
+                        </div>
+                    </div>
+                    <canvas id="reportsChart" class="chart-canvas"></canvas>
+                </div>
+                
+                <div class="insights-panel">
+                    <h3 class="insights-title">Insights y Recomendaciones</h3>
+                    
+                    <div class="insight-item positive">
+                        <div class="insight-header">
+                            <div class="insight-icon positive">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                            <div class="insight-title">Productividad en Alza</div>
+                        </div>
+                        <div class="insight-description">
+                            Tu productividad ha aumentado un 12% este mes. Los reportes de actividad muestran una mejora constante.
+                        </div>
+                    </div>
+                    
+                    <div class="insight-item warning">
+                        <div class="insight-header">
+                            <div class="insight-icon warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="insight-title">Picos de Actividad</div>
+                        </div>
+                        <div class="insight-description">
+                            Se detectaron picos de actividad los martes y jueves. Considera distribuir mejor la carga de trabajo.
+                        </div>
+                    </div>
+                    
+                    <div class="insight-item">
+                        <div class="insight-header">
+                            <div class="insight-icon info">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <div class="insight-title">Optimización Sugerida</div>
+                        </div>
+                        <div class="insight-description">
+                            Programa reportes automáticos para ahorrar tiempo. Tu patrón de uso sugiere reportes semanales.
+                        </div>
+                    </div>
+                    
+                    <div class="insight-item positive">
+                        <div class="insight-header">
+                            <div class="insight-icon positive">
+                                <i class="fas fa-medal"></i>
+                            </div>
+                            <div class="insight-title">Meta Alcanzada</div>
+                        </div>
+                        <div class="insight-description">
+                            ¡Felicidades! Has superado tu meta de eficiencia mensual en un 7%. Excelente trabajo.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCHEDULED SECTION -->
+        <section class="report-section" id="scheduled-section" style="display: none;">
+            <div class="report-history fade-in">
+                <div class="history-header">
+                    <h2 class="history-title">Reportes Programados</h2>
+                    <button class="btn btn-primary" id="addScheduledReport">
+                        <i class="fas fa-plus"></i>
+                        Nuevo Programado
+                    </button>
+                </div>
+                
+                <div class="quick-reports">
+                    <div class="quick-report-card">
+                        <div class="quick-report-header">
+                            <div class="quick-report-icon success">
+                                <i class="fas fa-calendar-week"></i>
+                            </div>
+                            <div class="quick-report-meta">
+                                <div>Activo</div>
+                                <div>Cada lunes</div>
+                            </div>
+                        </div>
+                        
+                        <h3 class="quick-report-title">Reporte Semanal de Productividad</h3>
+                        <p class="quick-report-description">
+                            Reporte automático enviado cada lunes con las métricas de productividad de la semana anterior.
+                        </p>
+                        
+                        <div class="quick-report-stats">
+                            <div class="stat-item">
+                                <div class="stat-value">12</div>
+                                <div class="stat-label">Enviados</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">PDF</div>
+                                <div class="stat-label">Formato</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">09:00</div>
+                                <div class="stat-label">Hora</div>
+                            </div>
+                        </div>
+                        
+                        <button class="quick-report-action">
+                            <i class="fas fa-cog"></i>
+                            Configurar
+                        </button>
+                    </div>
+
+                    <div class="quick-report-card files">
+                        <div class="quick-report-header">
+                            <div class="quick-report-icon warning">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="quick-report-meta">
+                                <div>Activo</div>
+                                <div>Último día del mes</div>
+                            </div>
+                        </div>
+                        
+                        <h3 class="quick-report-title">Resumen Mensual de Archivos</h3>
+                        <p class="quick-report-description">
+                            Reporte mensual con estadísticas de gestión de archivos, almacenamiento y organización.
+                        </p>
+                        
+                        <div class="quick-report-stats">
+                            <div class="stat-item">
+                                <div class="stat-value">3</div>
+                                <div class="stat-label">Enviados</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">Excel</div>
+                                <div class="stat-label">Formato</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">18:00</div>
+                                <div class="stat-label">Hora</div>
+                            </div>
+                        </div>
+                        
+                        <button class="quick-report-action">
+                            <i class="fas fa-cog"></i>
+                            Configurar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- EXPORT MODAL -->
+    <div class="modal-overlay" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Configurar Exportación</h3>
+                <button class="close-btn" onclick="closeModal('exportModal')">&times;</button>
+            </div>
+            
+            <div class="export-options">
+                <div class="export-option" data-format="pdf">
+                    <div class="export-icon pdf">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <div class="export-info">
+                        <h3>Exportar como PDF</h3>
+                        <p>Documento completo con gráficos y visualizaciones</p>
+                    </div>
+                </div>
+                
+                <div class="export-option" data-format="excel">
+                    <div class="export-icon excel">
+                        <i class="fas fa-file-excel"></i>
+                    </div>
+                    <div class="export-info">
+                        <h3>Exportar como Excel</h3>
+                        <p>Datos tabulares para análisis detallado</p>
+                    </div>
+                </div>
+                
+                <div class="export-option" data-format="csv">
+                    <div class="export-icon csv">
+                        <i class="fas fa-file-csv"></i>
+                    </div>
+                    <div class="export-info">
+                        <h3>Exportar como CSV</h3>
+                        <p>Datos en formato comma-separated values</p>
+                    </div>
+                </div>
+                
+                <div class="export-option" data-format="email">
+                    <div class="export-icon email">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="export-info">
+                        <h3>Enviar por Email</h3>
+                        <p>Recibir el reporte directamente en tu bandeja</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="export-settings">
+                <h4 class="settings-title">Configuraciones Adicionales</h4>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="includeCharts" checked>
+                        <label for="includeCharts">Incluir gráficos</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="includeRawData" checked>
+                        <label for="includeRawData">Incluir datos raw</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="includeSummary" checked>
+                        <label for="includeSummary">Incluir resumen ejecutivo</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="includeRecommendations">
+                        <label for="includeRecommendations">Incluir recomendaciones</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('exportModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="exportReport()">
+                    <i class="fas fa-download"></i>
+                    Exportar Reporte
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCHEDULE MODAL -->
+    <div class="modal-overlay" id="scheduleModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Programar Reporte Automático</h3>
+                <button class="close-btn" onclick="closeModal('scheduleModal')">&times;</button>
+            </div>
+            
+            <div class="schedule-settings">
+                <div class="form-group">
+                    <label class="form-label">Tipo de Reporte</label>
+                    <select class="form-select" id="scheduleReportType">
+                        <option value="activity">Reporte de Actividad</option>
+                        <option value="productivity">Reporte de Productividad</option>
+                        <option value="files">Reporte de Archivos</option>
+                        <option value="collaboration">Reporte de Colaboración</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Frecuencia</label>
+                    <select class="form-select" id="scheduleFrequency">
+                        <option value="daily">Diario</option>
+                        <option value="weekly">Semanal</option>
+                        <option value="monthly">Mensual</option>
+                        <option value="quarterly">Trimestral</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Día de Envío</label>
+                    <select class="form-select" id="scheduleDay">
+                        <option value="monday">Lunes</option>
+                        <option value="tuesday">Martes</option>
+                        <option value="wednesday">Miércoles</option>
+                        <option value="thursday">Jueves</option>
+                        <option value="friday">Viernes</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Hora de Envío</label>
+                    <input type="time" class="form-input" id="scheduleTime" value="09:00">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Email de Destino</label>
+                    <input type="email" class="form-input" id="scheduleEmail" placeholder="tu-email@ejemplo.com">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Formato</label>
+                    <select class="form-select" id="scheduleFormat">
+                        <option value="pdf">PDF</option>
+                        <option value="excel">Excel</option>
+                        <option value="csv">CSV</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('scheduleModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="scheduleReport()">
+                    <i class="fas fa-calendar-plus"></i>
+                    Programar Reporte
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        class ClientReports {
+            constructor() {
+                this.currentTab = 'builder';
+                this.reports = [];
+                this.scheduledReports = [];
+                this.charts = {};
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.loadMockData();
+                this.initializeCharts();
+                this.renderReportsTable();
+            }
+            
+            setupEventListeners() {
+                // Navigation tabs
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        this.switchTab(e.target.dataset.tab);
+                    });
+                });
+                
+                // Report form
+                document.getElementById('timePeriod').addEventListener('change', (e) => {
+                    this.toggleCustomDateRange(e.target.value);
+                });
+                
+                // Buttons
+                document.getElementById('generateReportBtn').addEventListener('click', () => {
+                    this.generateReport();
+                });
+                
+                document.getElementById('previewReportBtn').addEventListener('click', () => {
+                    this.previewReport();
+                });
+                
+                document.getElementById('newReportBtn').addEventListener('click', () => {
+                    this.switchTab('builder');
+                });
+                
+                document.getElementById('scheduleReportBtn').addEventListener('click', () => {
+                    this.showModal('scheduleModal');
+                });
+                
+                // Quick reports
+                document.querySelectorAll('.quick-report-action').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const card = e.target.closest('.quick-report-card');
+                        const type = card.dataset.type;
+                        this.generateQuickReport(type);
+                    });
+                });
+                
+                // History filters
+                document.querySelectorAll('.filter-chip').forEach(chip => {
+                    chip.addEventListener('click', (e) => {
+                        this.setActiveFilter(e.target);
+                    });
+                });
+                
+                // Chart controls
+                document.querySelectorAll('.chart-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.changeChartMetric(e.target);
+                    });
+                });
+                
+                // Export options
+                document.querySelectorAll('.export-option').forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        this.selectExportOption(e.currentTarget);
+                    });
+                });
+                
+                // Modal close events
+                document.querySelectorAll('.modal-overlay').forEach(modal => {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            this.closeModal(modal.id);
+                        }
+                    });
+                });
+            }
+            
+            loadMockData() {
+                this.reports = [
+                    {
+                        id: 1,
+                        name: 'Reporte de Productividad - Noviembre',
+                        type: 'productivity',
+                        period: 'Noviembre 2024',
+                        format: 'PDF',
+                        status: 'completed',
+                        created: '2024-12-01',
+                        size: '2.4 MB'
+                    },
+                    {
+                        id: 2,
+                        name: 'Análisis de Archivos - Último Trimestre',
+                        type: 'files',
+                        period: 'Sep-Nov 2024',
+                        format: 'Excel',
+                        status: 'completed',
+                        created: '2024-11-30',
+                        size: '1.8 MB'
+                    },
+                    {
+                        id: 3,
+                        name: 'Reporte de Colaboración - Semanal',
+                        type: 'collaboration',
+                        period: 'Semana 48',
+                        format: 'PDF',
+                        status: 'processing',
+                        created: '2024-12-10',
+                        size: '- MB'
+                    },
+                    {
+                        id: 4,
+                        name: 'Actividad General - Octubre',
+                        type: 'activity',
+                        period: 'Octubre 2024',
+                        format: 'CSV',
+                        status: 'completed',
+                        created: '2024-11-01',
+                        size: '945 KB'
+                    }
+                ];
+            }
+            
+            switchTab(tabName) {
+                // Update active tab
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+                
+                // Update active section
+                document.querySelectorAll('.report-section').forEach(section => {
+                    section.style.display = 'none';
+                });
+                document.getElementById(`${tabName}-section`).style.display = 'block';
+                
+                this.currentTab = tabName;
+                
+                // Load specific data if needed
+                if (tabName === 'analytics') {
+                    this.updateAnalytics();
+                }
+            }
+            
+            toggleCustomDateRange(value) {
+                const customRange = document.getElementById('customDateRange');
+                if (value === 'custom') {
+                    customRange.style.display = 'block';
+                } else {
+                    customRange.style.display = 'none';
+                }
+            }
+            
+            generateReport() {
+                const formData = this.getFormData();
+                
+                this.showLoading('Generando reporte...');
+                
+                // Simular generación de reporte
+                setTimeout(() => {
+                    this.hideLoading();
+                    
+                    const newReport = {
+                        id: Date.now(),
+                        name: `${this.getReportTypeName(formData.type)} - ${new Date().toLocaleDateString()}`,
+                        type: formData.type,
+                        period: this.getPeriodLabel(formData.period),
+                        format: formData.format.toUpperCase(),
+                        status: 'completed',
+                        created: new Date().toISOString().split('T')[0],
+                        size: this.getRandomSize()
+                    };
+                    
+                    this.reports.unshift(newReport);
+                    this.renderReportsTable();
+                    
+                    if (formData.format === 'email') {
+                        this.showNotification('Reporte enviado por email exitosamente', 'success');
+                    } else {
+                        this.showNotification('Reporte generado exitosamente', 'success');
+                        this.downloadReport(newReport);
+                    }
+                }, 2000);
+            }
+            
+            generateQuickReport(type) {
+                this.showLoading(`Generando reporte de ${this.getReportTypeName(type)}...`);
+                
+                setTimeout(() => {
+                    this.hideLoading();
+                    
+                    const quickReport = {
+                        id: Date.now(),
+                        name: `Reporte Rápido - ${this.getReportTypeName(type)}`,
+                        type: type,
+                        period: 'Último mes',
+                        format: 'PDF',
+                        status: 'completed',
+                        created: new Date().toISOString().split('T')[0],
+                        size: this.getRandomSize()
+                    };
+                    
+                    this.reports.unshift(quickReport);
+                    this.renderReportsTable();
+                    this.downloadReport(quickReport);
+                    this.showNotification('Reporte rápido generado exitosamente', 'success');
+                }, 1500);
+            }
+            
+            previewReport() {
+                const formData = this.getFormData();
+                this.showNotification(`Vista previa del reporte de ${this.getReportTypeName(formData.type)}`, 'info');
+                // Implementar vista previa
+            }
+            
+            getFormData() {
+                return {
+                    type: document.getElementById('reportType').value,
+                    period: document.getElementById('timePeriod').value,
+                    format: document.getElementById('outputFormat').value,
+                    startDate: document.getElementById('startDate').value,
+                    endDate: document.getElementById('endDate').value
+                };
+            }
+            
+            getReportTypeName(type) {
+                const names = {
+                    'activity': 'Actividad',
+                    'productivity': 'Productividad',
+                    'files': 'Archivos',
+                    'collaboration': 'Colaboración',
+                    'performance': 'Rendimiento',
+                    'custom': 'Personalizado'
+                };
+                return names[type] || type;
+            }
+            
+            getPeriodLabel(period) {
+                const labels = {
+                    'last7days': 'Últimos 7 días',
+                    'last30days': 'Últimos 30 días',
+                    'last3months': 'Últimos 3 meses',
+                    'last6months': 'Últimos 6 meses',
+                    'lastyear': 'Último año',
+                    'custom': 'Período personalizado'
+                };
+                return labels[period] || period;
+            }
+            
+            getRandomSize() {
+                const sizes = ['1.2 MB', '2.4 MB', '3.1 MB', '945 KB', '1.8 MB', '2.7 MB'];
+                return sizes[Math.floor(Math.random() * sizes.length)];
+            }
+            
+            renderReportsTable() {
+                const tbody = document.getElementById('reportsTableBody');
+                tbody.innerHTML = this.reports.map(report => `
+                    <tr>
+                        <td>
+                            <div style="font-weight: 600;">${report.name}</div>
+                            <div style="font-size: 12px; color: var(--secondary-color);">${report.size}</div>
+                        </td>
+                        <td>${this.getReportTypeName(report.type)}</td>
+                        <td>${report.period}</td>
+                        <td><span style="font-weight: 600; color: var(--primary-color);">${report.format}</span></td>
+                        <td><span class="report-status ${report.status}">${this.getStatusLabel(report.status)}</span></td>
+                        <td>${this.formatDate(report.created)}</td>
+                        <td>
+                            <div class="report-actions">
+                                <button class="action-btn" onclick="clientReports.downloadReport(${JSON.stringify(report).replace(/"/g, '&quot;')})" title="Descargar">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button class="action-btn" onclick="clientReports.shareReport(${report.id})" title="Compartir">
+                                    <i class="fas fa-share"></i>
+                                </button>
+                                <button class="action-btn" onclick="clientReports.deleteReport(${report.id})" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            
+            getStatusLabel(status) {
+                const labels = {
+                    'completed': 'Completado',
+                    'processing': 'Procesando',
+                    'failed': 'Fallido',
+                    'scheduled': 'Programado'
+                };
+                return labels[status] || status;
+            }
+            
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('es-ES', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                });
+            }
+            
+            downloadReport(report) {
+                this.showNotification(`Descargando ${report.name}...`, 'info');
+                // Simular descarga
+                setTimeout(() => {
+                    this.showNotification(`${report.name} descargado exitosamente`, 'success');
+                }, 1000);
+            }
+            
+            shareReport(reportId) {
+                const report = this.reports.find(r => r.id === reportId);
+                this.showNotification(`Abriendo opciones de compartir para ${report.name}`, 'info');
+                // Implementar compartir
+            }
+            
+            deleteReport(reportId) {
+                const report = this.reports.find(r => r.id === reportId);
+                if (confirm(`¿Estás seguro de que quieres eliminar "${report.name}"?`)) {
+                    this.reports = this.reports.filter(r => r.id !== reportId);
+                    this.renderReportsTable();
+                    this.showNotification('Reporte eliminado exitosamente', 'success');
+                }
+            }
+            
+            setActiveFilter(activeChip) {
+                document.querySelectorAll('.filter-chip').forEach(chip => {
+                    chip.classList.remove('active');
+                });
+                activeChip.classList.add('active');
+                
+                const filter = activeChip.dataset.filter;
+                this.filterReports(filter);
+            }
+            
+            filterReports(filter) {
+                let filteredReports = [...this.reports];
+                
+                if (filter !== 'all') {
+                    filteredReports = this.reports.filter(report => report.status === filter);
+                }
+                
+                // Re-render table with filtered data
+                const tbody = document.getElementById('reportsTableBody');
+                tbody.innerHTML = filteredReports.map(report => `
+                    <tr>
+                        <td>
+                            <div style="font-weight: 600;">${report.name}</div>
+                            <div style="font-size: 12px; color: var(--secondary-color);">${report.size}</div>
+                        </td>
+                        <td>${this.getReportTypeName(report.type)}</td>
+                        <td>${report.period}</td>
+                        <td><span style="font-weight: 600; color: var(--primary-color);">${report.format}</span></td>
+                        <td><span class="report-status ${report.status}">${this.getStatusLabel(report.status)}</span></td>
+                        <td>${this.formatDate(report.created)}</td>
+                        <td>
+                            <div class="report-actions">
+                                <button class="action-btn" onclick="clientReports.downloadReport(${JSON.stringify(report).replace(/"/g, '&quot;')})" title="Descargar">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button class="action-btn" onclick="clientReports.shareReport(${report.id})" title="Compartir">
+                                    <i class="fas fa-share"></i>
+                                </button>
+                                <button class="action-btn" onclick="clientReports.deleteReport(${report.id})" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            
+            initializeCharts() {
+                this.createReportsChart();
+            }
+            
+            createReportsChart() {
+                const ctx = document.getElementById('reportsChart').getContext('2d');
+                this.charts.reports = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                        datasets: [{
+                            label: 'Reportes Generados',
+                            data: [5, 8, 6, 12, 9, 15, 11, 18, 14, 20, 16, 22],
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            changeChartMetric(button) {
+                document.querySelectorAll('.chart-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                button.classList.add('active');
+                
+                const metric = button.dataset.metric;
+                this.updateChart(metric);
+            }
+            
+            updateChart(metric) {
+                const data = {
+                    'generation': {
+                        label: 'Reportes Generados',
+                        data: [5, 8, 6, 12, 9, 15, 11, 18, 14, 20, 16, 22],
+                        color: 'rgb(59, 130, 246)'
+                    },
+                    'downloads': {
+                        label: 'Descargas',
+                        data: [12, 19, 15, 25, 22, 32, 28, 35, 30, 42, 38, 45],
+                        color: 'rgb(16, 185, 129)'
+                    },
+                    'usage': {
+                        label: 'Uso de Reportes',
+                        data: [8, 12, 10, 18, 15, 24, 20, 28, 25, 32, 28, 35],
+                        color: 'rgb(139, 92, 246)'
+                    }
+                };
+                
+                const chartData = data[metric];
+                const chart = this.charts.reports;
+                
+                chart.data.datasets[0].label = chartData.label;
+                chart.data.datasets[0].data = chartData.data;
+                chart.data.datasets[0].borderColor = chartData.color;
+                chart.data.datasets[0].backgroundColor = chartData.color.replace('rgb', 'rgba').replace(')', ', 0.1)');
+                
+                chart.update('smooth');
+            }
+            
+            updateAnalytics() {
+                // Actualizar insights y estadísticas
+                console.log('Actualizando analytics...');
+            }
+            
+            showModal(modalId) {
+                document.getElementById(modalId).style.display = 'flex';
+            }
+            
+            closeModal(modalId) {
+                document.getElementById(modalId).style.display = 'none';
+            }
+            
+            selectExportOption(option) {
+                document.querySelectorAll('.export-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                option.classList.add('selected');
+            }
+            
+            exportReport() {
+                const selectedOption = document.querySelector('.export-option.selected');
+                if (!selectedOption) {
+                    this.showNotification('Selecciona un formato de exportación', 'warning');
+                    return;
+                }
+                
+                const format = selectedOption.dataset.format;
+                this.closeModal('exportModal');
+                
+                this.showLoading(`Exportando reporte en formato ${format.toUpperCase()}...`);
+                
+                setTimeout(() => {
+                    this.hideLoading();
+                    this.showNotification(`Reporte exportado en formato ${format.toUpperCase()} exitosamente`, 'success');
+                }, 2000);
+            }
+            
+            scheduleReport() {
+                const formData = {
+                    type: document.getElementById('scheduleReportType').value,
+                    frequency: document.getElementById('scheduleFrequency').value,
+                    day: document.getElementById('scheduleDay').value,
+                    time: document.getElementById('scheduleTime').value,
+                    email: document.getElementById('scheduleEmail').value,
+                    format: document.getElementById('scheduleFormat').value
+                };
+                
+                if (!formData.email) {
+                    this.showNotification('Ingresa un email de destino', 'warning');
+                    return;
+                }
+                
+                this.closeModal('scheduleModal');
+                this.showNotification('Reporte programado exitosamente', 'success');
+                
+                // Limpiar formulario
+                document.getElementById('scheduleEmail').value = '';
+            }
+            
+            showLoading(message) {
+                // Crear overlay de loading
+                const overlay = document.createElement('div');
+                overlay.id = 'loadingOverlay';
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(255, 255, 255, 0.9);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10001;
+                `;
+                
+                overlay.innerHTML = `
+                    <div class="loading-spinner"></div>
+                    <div style="margin-top: 20px; font-weight: 600; color: var(--dark-color);">${message}</div>
+                    <div class="progress-bar" style="width: 300px; margin-top: 15px;">
+                        <div class="progress-fill" id="loadingProgress" style="width: 0%;"></div>
+                    </div>
+                `;
+                
+                document.body.appendChild(overlay);
+                
+                // Animar progress bar
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 20;
+                    if (progress > 100) progress = 100;
+                    document.getElementById('loadingProgress').style.width = progress + '%';
+                    if (progress >= 100) clearInterval(interval);
+                }, 200);
+            }
+            
+            hideLoading() {
+                const overlay = document.getElementById('loadingOverlay');
+                if (overlay) {
+                    document.body.removeChild(overlay);
+                }
+            }
+            
+            showNotification(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.className = 'notification-toast';
+                
+                const colors = {
+                    'success': '#10b981',
+                    'error': '#ef4444',
+                    'warning': '#f59e0b',
+                    'info': '#3b82f6'
+                };
+                
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: white;
+                    color: ${colors[type]};
+                    padding: 15px 20px;
+                    border-radius: 12px;
+                    box-shadow: var(--shadow-lg);
+                    border-left: 4px solid ${colors[type]};
+                    z-index: 10000;
+                    animation: slideInRight 0.3s ease;
+                    max-width: 350px;
+                `;
+                
+                notification.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-${this.getNotificationIcon(type)}"></i>
+                        <span>${message}</span>
+                    </div>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.style.animation = 'slideOutRight 0.3s ease';
+                    setTimeout(() => {
+                        if (document.body.contains(notification)) {
+                            document.body.removeChild(notification);
+                        }
+                    }, 300);
+                }, 4000);
+            }
+            
+            getNotificationIcon(type) {
+                const icons = {
+                    'success': 'check-circle',
+                    'error': 'exclamation-circle',
+                    'warning': 'exclamation-triangle',
+                    'info': 'info-circle'
+                };
+                return icons[type] || 'info-circle';
+            }
+        }
+        
+        // Funciones globales para eventos
+        function closeModal(modalId) {
+            clientReports.closeModal(modalId);
+        }
+        
+        function exportReport() {
+            clientReports.exportReport();
+        }
+        
+        function scheduleReport() {
+            clientReports.scheduleReport();
+        }
+        
+        // Inicializar aplicación
+        const clientReports = new ClientReports();
+        
+        // Exponer instancia global
+        window.clientReports = clientReports;
+        
+        // CSS adicional para animaciones
+        const additionalStyles = `
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            
+            @keyframes slideOutRight {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = additionalStyles;
+        document.head.appendChild(styleSheet);
+    </script>
+</body>
+</html>

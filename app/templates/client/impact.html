@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mi Impacto - Cliente{% endblock %}</title>
+    
+    <!-- CSS Framework y Librerías -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #06b6d4;
+            --purple-color: #8b5cf6;
+            --dark-color: #1e293b;
+            --light-color: #f8fafc;
+            --white: #ffffff;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --gradient-purple: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            --gradient-info: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--light-color);
+            color: var(--dark-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* LAYOUT PRINCIPAL */
+        .impact-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* HEADER HERO */
+        .hero-section {
+            background: var(--gradient-primary);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            color: var(--white);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .hero-title {
+            flex: 1;
+        }
+
+        .hero-title h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .hero-title p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            display: block;
+        }
+
+        .hero-stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .period-selector {
+            display: flex;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 4px;
+            margin-top: 20px;
+        }
+
+        .period-btn {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: var(--white);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .period-btn.active {
+            background: var(--white);
+            color: var(--primary-color);
+        }
+
+        /* MÉTRICAS PRINCIPALES */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .metric-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .metric-card.success::before { background: var(--gradient-success); }
+        .metric-card.warning::before { background: var(--gradient-warning); }
+        .metric-card.purple::before { background: var(--gradient-purple); }
+        .metric-card.info::before { background: var(--gradient-info); }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .metric-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--white);
+            margin-bottom: 15px;
+        }
+
+        .metric-icon.primary { background: var(--gradient-primary); }
+        .metric-icon.success { background: var(--gradient-success); }
+        .metric-icon.warning { background: var(--gradient-warning); }
+        .metric-icon.purple { background: var(--gradient-purple); }
+        .metric-icon.info { background: var(--gradient-info); }
+
+        .metric-trend {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .metric-trend.up {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+
+        .metric-trend.down {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+
+        .metric-trend.neutral {
+            background: rgba(100, 116, 139, 0.1);
+            color: var(--secondary-color);
+        }
+
+        .metric-content {
+            margin-bottom: 15px;
+        }
+
+        .metric-value {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .metric-unit {
+            font-size: 1rem;
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+
+        .metric-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 5px;
+        }
+
+        .metric-description {
+            font-size: 14px;
+            color: var(--secondary-color);
+            line-height: 1.5;
+        }
+
+        .metric-progress {
+            margin-top: 15px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+
+        .progress-fill.success { background: var(--gradient-success); }
+        .progress-fill.warning { background: var(--gradient-warning); }
+        .progress-fill.purple { background: var(--gradient-purple); }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--secondary-color);
+        }
+
+        /* SECCIÓN DE LOGROS */
+        .achievements-section {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .view-all-btn {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .view-all-btn:hover {
+            color: var(--primary-dark);
+        }
+
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .achievement-card {
+            background: var(--light-color);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .achievement-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+
+        .achievement-card.unlocked {
+            background: var(--white);
+            box-shadow: var(--shadow);
+        }
+
+        .achievement-card.unlocked::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-warning);
+        }
+
+        .achievement-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin: 0 auto 15px;
+            position: relative;
+        }
+
+        .achievement-icon.locked {
+            background: var(--border-color);
+            color: var(--secondary-color);
+        }
+
+        .achievement-icon.unlocked {
+            background: var(--gradient-warning);
+            color: var(--white);
+        }
+
+        .achievement-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 24px;
+            height: 24px;
+            background: var(--success-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: var(--white);
+        }
+
+        .achievement-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--dark-color);
+        }
+
+        .achievement-description {
+            font-size: 14px;
+            color: var(--secondary-color);
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        .achievement-progress {
+            background: var(--border-color);
+            border-radius: 10px;
+            height: 6px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .achievement-progress-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            border-radius: 10px;
+            transition: width 0.8s ease;
+        }
+
+        .achievement-progress-text {
+            font-size: 12px;
+            color: var(--secondary-color);
+        }
+
+        /* GRÁFICOS Y ANÁLISIS */
+        .analytics-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .chart-container {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chart-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            background: var(--white);
+            color: var(--secondary-color);
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .chart-btn.active {
+            background: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+        }
+
+        .chart-canvas {
+            width: 100%;
+            height: 350px;
+        }
+
+        /* RESUMEN DE ACTIVIDAD */
+        .activity-summary {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--white);
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 4px;
+        }
+
+        .activity-description {
+            font-size: 14px;
+            color: var(--secondary-color);
+        }
+
+        .activity-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+
+        /* COMPARATIVA */
+        .comparison-section {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow);
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        .comparison-card {
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            background: var(--light-color);
+        }
+
+        .comparison-title {
+            font-size: 14px;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+
+        .comparison-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 8px;
+        }
+
+        .comparison-change {
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .comparison-change.positive {
+            color: var(--success-color);
+        }
+
+        .comparison-change.negative {
+            color: var(--danger-color);
+        }
+
+        /* GOALS SECTION */
+        .goals-section {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow);
+        }
+
+        .goals-grid {
+            display: grid;
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .goal-card {
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .goal-card:hover {
+            border-color: var(--primary-color);
+        }
+
+        .goal-card.completed {
+            border-color: var(--success-color);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .goal-info h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--dark-color);
+        }
+
+        .goal-info p {
+            font-size: 14px;
+            color: var(--secondary-color);
+        }
+
+        .goal-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .goal-status.completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+
+        .goal-status.in-progress {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary-color);
+        }
+
+        .goal-status.pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+        }
+
+        .goal-progress {
+            margin-bottom: 10px;
+        }
+
+        .goal-progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .goal-progress-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+
+        .goal-progress-fill.completed {
+            background: var(--gradient-success);
+        }
+
+        .goal-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--secondary-color);
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 1024px) {
+            .analytics-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .hero-stats {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .impact-container {
+                padding: 15px;
+            }
+            
+            .hero-section {
+                padding: 30px 20px;
+            }
+            
+            .hero-title h1 {
+                font-size: 2rem;
+            }
+            
+            .hero-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .achievements-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+            
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .period-selector {
+                justify-content: center;
+            }
+        }
+
+        /* ANIMACIONES */
+        .fade-in {
+            animation: fadeInUp 0.6s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* LOADING STATES */
+        .skeleton {
+            background: linear-gradient(90deg, var(--border-color) 25%, transparent 50%, var(--border-color) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* CUSTOM SCROLLBAR */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--light-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="impact-container">
+        <!-- HERO SECTION -->
+        <section class="hero-section fade-in">
+            <div class="hero-content">
+                <div class="hero-header">
+                    <div class="hero-title">
+                        <h1>
+                            <i class="fas fa-chart-line"></i>
+                            Mi Impacto
+                        </h1>
+                        <p>Descubre tu progreso, logros y el valor que has generado</p>
+                    </div>
+                    
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <span class="hero-stat-value">2024</span>
+                            <span class="hero-stat-label">Año Actual</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="hero-stat-value">94%</span>
+                            <span class="hero-stat-label">Objetivos Cumplidos</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="hero-stat-value">15</span>
+                            <span class="hero-stat-label">Logros Desbloqueados</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="period-selector">
+                    <button class="period-btn" data-period="week">Esta Semana</button>
+                    <button class="period-btn active" data-period="month">Este Mes</button>
+                    <button class="period-btn" data-period="quarter">Trimestre</button>
+                    <button class="period-btn" data-period="year">Año</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- MÉTRICAS PRINCIPALES -->
+        <section class="metrics-grid fade-in">
+            <div class="metric-card">
+                <div class="metric-icon primary">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-label">Productividad General</div>
+                    <div class="metric-value">
+                        87<span class="metric-unit">%</span>
+                    </div>
+                    <div class="metric-description">
+                        Tu nivel de productividad ha aumentado significativamente este mes
+                    </div>
+                </div>
+                <div class="metric-trend up">
+                    <i class="fas fa-arrow-up"></i>
+                    +12% vs mes anterior
+                </div>
+                <div class="metric-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 87%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span>87/100</span>
+                        <span>Excelente</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card success">
+                <div class="metric-icon success">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-label">Archivos Procesados</div>
+                    <div class="metric-value">
+                        247<span class="metric-unit">archivos</span>
+                    </div>
+                    <div class="metric-description">
+                        Has gestionado un 23% más de archivos que el promedio
+                    </div>
+                </div>
+                <div class="metric-trend up">
+                    <i class="fas fa-arrow-up"></i>
+                    +23% vs promedio
+                </div>
+                <div class="metric-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill success" style="width: 78%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span>247/315</span>
+                        <span>Meta mensual</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card warning">
+                <div class="metric-icon warning">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-label">Tiempo Ahorrado</div>
+                    <div class="metric-value">
+                        42<span class="metric-unit">horas</span>
+                    </div>
+                    <div class="metric-description">
+                        Tiempo ahorrado gracias a la automatización y eficiencia
+                    </div>
+                </div>
+                <div class="metric-trend up">
+                    <i class="fas fa-arrow-up"></i>
+                    +8 horas vs mes anterior
+                </div>
+                <div class="metric-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill warning" style="width: 84%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span>42/50</span>
+                        <span>Meta mensual</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card purple">
+                <div class="metric-icon purple">
+                    <i class="fas fa-medal"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-label">Puntuación de Calidad</div>
+                    <div class="metric-value">
+                        9.2<span class="metric-unit">/10</span>
+                    </div>
+                    <div class="metric-description">
+                        Tu trabajo mantiene consistentemente alta calidad
+                    </div>
+                </div>
+                <div class="metric-trend up">
+                    <i class="fas fa-arrow-up"></i>
+                    +0.3 puntos
+                </div>
+                <div class="metric-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill purple" style="width: 92%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span>9.2/10</span>
+                        <span>Excelente</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card info">
+                <div class="metric-icon info">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-label">Colaboración</div>
+                    <div class="metric-value">
+                        156<span class="metric-unit">interacciones</span>
+                    </div>
+                    <div class="metric-description">
+                        Has colaborado activamente con tu equipo y clientes
+                    </div>
+                </div>
+                <div class="metric-trend up">
+                    <i class="fas fa-arrow-up"></i>
+                    +31% vs mes anterior
+                </div>
+                <div class="metric-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 89%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span>156/175</span>
+                        <span>Meta mensual</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon primary">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-label">Eficiencia de Procesos</div>
+                    <div class="metric-value">
+                        94<span class="metric-unit">%</span>
+                    </div>
+                    <div class="metric-description">
+                        Tus procesos son altamente eficientes y optimizados
+                    </div>
+                </div>
+                <div class="metric-trend up">
+                    <i class="fas fa-arrow-up"></i>
+                    +7% vs mes anterior
+                </div>
+                <div class="metric-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 94%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span>94/100</span>
+                        <span>Sobresaliente</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN DE LOGROS -->
+        <section class="achievements-section fade-in">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-trophy"></i>
+                    Logros y Badges
+                </h2>
+                <a href="#" class="view-all-btn">
+                    Ver todos
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            
+            <div class="achievements-grid">
+                <div class="achievement-card unlocked">
+                    <div class="achievement-icon unlocked">
+                        <i class="fas fa-star"></i>
+                        <div class="achievement-badge">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <h3 class="achievement-title">Productividad Excepcional</h3>
+                    <p class="achievement-description">Mantén una productividad superior al 85% durante un mes completo</p>
+                    <div class="achievement-progress">
+                        <div class="achievement-progress-fill" style="width: 100%"></div>
+                    </div>
+                    <div class="achievement-progress-text">¡Completado!</div>
+                </div>
+
+                <div class="achievement-card unlocked">
+                    <div class="achievement-icon unlocked">
+                        <i class="fas fa-upload"></i>
+                        <div class="achievement-badge">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <h3 class="achievement-title">Maestro de Archivos</h3>
+                    <p class="achievement-description">Procesa más de 200 archivos en un mes</p>
+                    <div class="achievement-progress">
+                        <div class="achievement-progress-fill" style="width: 100%"></div>
+                    </div>
+                    <div class="achievement-progress-text">247/200 archivos</div>
+                </div>
+
+                <div class="achievement-card unlocked">
+                    <div class="achievement-icon unlocked">
+                        <i class="fas fa-handshake"></i>
+                        <div class="achievement-badge">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <h3 class="achievement-title">Colaborador Estrella</h3>
+                    <p class="achievement-description">Participa en más de 100 interacciones colaborativas</p>
+                    <div class="achievement-progress">
+                        <div class="achievement-progress-fill" style="width: 100%"></div>
+                    </div>
+                    <div class="achievement-progress-text">156/100 interacciones</div>
+                </div>
+
+                <div class="achievement-card">
+                    <div class="achievement-icon locked">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <h3 class="achievement-title">Innovador</h3>
+                    <p class="achievement-description">Implementa 5 mejoras de proceso en un trimestre</p>
+                    <div class="achievement-progress">
+                        <div class="achievement-progress-fill" style="width: 60%"></div>
+                    </div>
+                    <div class="achievement-progress-text">3/5 mejoras implementadas</div>
+                </div>
+
+                <div class="achievement-card">
+                    <div class="achievement-icon locked">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h3 class="achievement-title">Aprendiz Perpetuo</h3>
+                    <p class="achievement-description">Completa 10 cursos de capacitación</p>
+                    <div class="achievement-progress">
+                        <div class="achievement-progress-fill" style="width: 70%"></div>
+                    </div>
+                    <div class="achievement-progress-text">7/10 cursos completados</div>
+                </div>
+
+                <div class="achievement-card">
+                    <div class="achievement-icon locked">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <h3 class="achievement-title">Líder de Excelencia</h3>
+                    <p class="achievement-description">Mantén una calificación promedio de 9.5+ por 3 meses</p>
+                    <div class="achievement-progress">
+                        <div class="achievement-progress-fill" style="width: 33%"></div>
+                    </div>
+                    <div class="achievement-progress-text">1/3 meses completados</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ANÁLISIS Y GRÁFICOS -->
+        <section class="analytics-section fade-in">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Tendencia de Productividad</h3>
+                    <div class="chart-controls">
+                        <button class="chart-btn active" data-metric="productivity">Productividad</button>
+                        <button class="chart-btn" data-metric="quality">Calidad</button>
+                        <button class="chart-btn" data-metric="efficiency">Eficiencia</button>
+                    </div>
+                </div>
+                <canvas id="productivityChart" class="chart-canvas"></canvas>
+            </div>
+            
+            <div class="activity-summary">
+                <div class="section-header" style="margin-bottom: 20px;">
+                    <h3 class="section-title">Resumen de Actividad</h3>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: var(--gradient-success);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Tareas Completadas</div>
+                        <div class="activity-description">Este mes</div>
+                    </div>
+                    <div class="activity-value">89</div>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: var(--gradient-primary);">
+                        <i class="fas fa-file-upload"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Archivos Subidos</div>
+                        <div class="activity-description">Últimos 30 días</div>
+                    </div>
+                    <div class="activity-value">247</div>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: var(--gradient-warning);">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Mensajes Enviados</div>
+                        <div class="activity-description">Comunicación activa</div>
+                    </div>
+                    <div class="activity-value">156</div>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: var(--gradient-purple);">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Calificación Promedio</div>
+                        <div class="activity-description">Feedback recibido</div>
+                    </div>
+                    <div class="activity-value">9.2/10</div>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: var(--gradient-info);">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Tiempo Promedio</div>
+                        <div class="activity-description">Por tarea completada</div>
+                    </div>
+                    <div class="activity-value">2.3h</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- COMPARATIVA TEMPORAL -->
+        <section class="comparison-section fade-in">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    Comparativa Temporal
+                </h2>
+            </div>
+            
+            <div class="comparison-grid">
+                <div class="comparison-card">
+                    <div class="comparison-title">vs. Mes Anterior</div>
+                    <div class="comparison-value">+12%</div>
+                    <div class="comparison-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        Mejora continua
+                    </div>
+                </div>
+                
+                <div class="comparison-card">
+                    <div class="comparison-title">vs. Promedio del Equipo</div>
+                    <div class="comparison-value">+23%</div>
+                    <div class="comparison-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        Sobre el promedio
+                    </div>
+                </div>
+                
+                <div class="comparison-card">
+                    <div class="comparison-title">vs. Trimestre Anterior</div>
+                    <div class="comparison-value">+18%</div>
+                    <div class="comparison-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        Crecimiento sostenido
+                    </div>
+                </div>
+                
+                <div class="comparison-card">
+                    <div class="comparison-title">vs. Objetivo Anual</div>
+                    <div class="comparison-value">94%</div>
+                    <div class="comparison-change positive">
+                        <i class="fas fa-target"></i>
+                        Cerca del objetivo
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- OBJETIVOS Y METAS -->
+        <section class="goals-section fade-in">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-bullseye"></i>
+                    Objetivos y Metas
+                </h2>
+            </div>
+            
+            <div class="goals-grid">
+                <div class="goal-card completed">
+                    <div class="goal-header">
+                        <div class="goal-info">
+                            <h3>Productividad Mensual</h3>
+                            <p>Mantener productividad superior al 85%</p>
+                        </div>
+                        <div class="goal-status completed">Completado</div>
+                    </div>
+                    <div class="goal-progress">
+                        <div class="goal-progress-bar">
+                            <div class="goal-progress-fill completed" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="goal-meta">
+                        <span>100% completado</span>
+                        <span>Meta: 85% | Actual: 87%</span>
+                    </div>
+                </div>
+                
+                <div class="goal-card">
+                    <div class="goal-header">
+                        <div class="goal-info">
+                            <h3>Gestión de Archivos</h3>
+                            <p>Procesar 300 archivos este mes</p>
+                        </div>
+                        <div class="goal-status in-progress">En Progreso</div>
+                    </div>
+                    <div class="goal-progress">
+                        <div class="goal-progress-bar">
+                            <div class="goal-progress-fill" style="width: 82%"></div>
+                        </div>
+                    </div>
+                    <div class="goal-meta">
+                        <span>82% completado</span>
+                        <span>247/300 archivos</span>
+                    </div>
+                </div>
+                
+                <div class="goal-card">
+                    <div class="goal-header">
+                        <div class="goal-info">
+                            <h3>Calificación de Calidad</h3>
+                            <p>Mantener promedio de 9.0+ por trimestre</p>
+                        </div>
+                        <div class="goal-status in-progress">En Progreso</div>
+                    </div>
+                    <div class="goal-progress">
+                        <div class="goal-progress-bar">
+                            <div class="goal-progress-fill" style="width: 92%"></div>
+                        </div>
+                    </div>
+                    <div class="goal-meta">
+                        <span>92% del objetivo</span>
+                        <span>Actual: 9.2/10</span>
+                    </div>
+                </div>
+                
+                <div class="goal-card">
+                    <div class="goal-header">
+                        <div class="goal-info">
+                            <h3>Colaboración Activa</h3>
+                            <p>200 interacciones colaborativas mensuales</p>
+                        </div>
+                        <div class="goal-status pending">Pendiente</div>
+                    </div>
+                    <div class="goal-progress">
+                        <div class="goal-progress-bar">
+                            <div class="goal-progress-fill" style="width: 78%"></div>
+                        </div>
+                    </div>
+                    <div class="goal-meta">
+                        <span>78% completado</span>
+                        <span>156/200 interacciones</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        class ImpactDashboard {
+            constructor() {
+                this.currentPeriod = 'month';
+                this.charts = {};
+                this.animationDelay = 0;
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.initializeCharts();
+                this.animateMetrics();
+                this.setupPerformanceAnimation();
+            }
+            
+            setupEventListeners() {
+                // Period selector
+                document.querySelectorAll('.period-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.changePeriod(e.target.dataset.period);
+                    });
+                });
+                
+                // Chart controls
+                document.querySelectorAll('.chart-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.changeChartMetric(e.target);
+                    });
+                });
+                
+                // Achievement cards animation on scroll
+                this.setupScrollAnimations();
+            }
+            
+            changePeriod(period) {
+                this.currentPeriod = period;
+                
+                // Update active button
+                document.querySelectorAll('.period-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-period="${period}"]`).classList.add('active');
+                
+                // Update metrics based on period
+                this.updateMetricsForPeriod(period);
+                this.updateChartForPeriod(period);
+                
+                this.showNotification(`Datos actualizados para: ${this.getPeriodLabel(period)}`, 'info');
+            }
+            
+            getPeriodLabel(period) {
+                const labels = {
+                    'week': 'Esta Semana',
+                    'month': 'Este Mes',
+                    'quarter': 'Este Trimestre',
+                    'year': 'Este Año'
+                };
+                return labels[period];
+            }
+            
+            updateMetricsForPeriod(period) {
+                // Simular datos diferentes para cada período
+                const mockData = {
+                    'week': {
+                        productivity: 89,
+                        files: 62,
+                        timeSaved: 12,
+                        quality: 9.3,
+                        collaboration: 45,
+                        efficiency: 91
+                    },
+                    'month': {
+                        productivity: 87,
+                        files: 247,
+                        timeSaved: 42,
+                        quality: 9.2,
+                        collaboration: 156,
+                        efficiency: 94
+                    },
+                    'quarter': {
+                        productivity: 85,
+                        files: 720,
+                        timeSaved: 125,
+                        quality: 9.1,
+                        collaboration: 430,
+                        efficiency: 92
+                    },
+                    'year': {
+                        productivity: 84,
+                        files: 2840,
+                        timeSaved: 485,
+                        quality: 9.0,
+                        collaboration: 1650,
+                        efficiency: 90
+                    }
+                };
+                
+                const data = mockData[period];
+                
+                // Animar la actualización de valores
+                this.animateValueUpdate('.metric-card:nth-child(1) .metric-value', data.productivity, '%');
+                this.animateValueUpdate('.metric-card:nth-child(2) .metric-value', data.files, 'archivos');
+                this.animateValueUpdate('.metric-card:nth-child(3) .metric-value', data.timeSaved, 'horas');
+                this.animateValueUpdate('.metric-card:nth-child(4) .metric-value', data.quality, '/10');
+                this.animateValueUpdate('.metric-card:nth-child(5) .metric-value', data.collaboration, 'interacciones');
+                this.animateValueUpdate('.metric-card:nth-child(6) .metric-value', data.efficiency, '%');
+                
+                // Actualizar barras de progreso
+                setTimeout(() => {
+                    document.querySelector('.metric-card:nth-child(1) .progress-fill').style.width = data.productivity + '%';
+                    document.querySelector('.metric-card:nth-child(2) .progress-fill').style.width = (data.files / (period === 'year' ? 3000 : period === 'quarter' ? 800 : period === 'month' ? 315 : 70)) * 100 + '%';
+                    document.querySelector('.metric-card:nth-child(3) .progress-fill').style.width = (data.timeSaved / (period === 'year' ? 500 : period === 'quarter' ? 150 : period === 'month' ? 50 : 15)) * 100 + '%';
+                    document.querySelector('.metric-card:nth-child(4) .progress-fill').style.width = (data.quality / 10) * 100 + '%';
+                    document.querySelector('.metric-card:nth-child(5) .progress-fill').style.width = (data.collaboration / (period === 'year' ? 1800 : period === 'quarter' ? 500 : period === 'month' ? 175 : 50)) * 100 + '%';
+                    document.querySelector('.metric-card:nth-child(6) .progress-fill').style.width = data.efficiency + '%';
+                }, 300);
+            }
+            
+            animateValueUpdate(selector, newValue, unit) {
+                const element = document.querySelector(selector);
+                const currentValue = parseInt(element.textContent);
+                const increment = (newValue - currentValue) / 20;
+                let current = currentValue;
+                
+                const timer = setInterval(() => {
+                    current += increment;
+                    if ((increment > 0 && current >= newValue) || (increment < 0 && current <= newValue)) {
+                        current = newValue;
+                        clearInterval(timer);
+                    }
+                    
+                    if (unit === '/10') {
+                        element.innerHTML = `${current.toFixed(1)}<span class="metric-unit">${unit}</span>`;
+                    } else {
+                        element.innerHTML = `${Math.round(current)}<span class="metric-unit">${unit}</span>`;
+                    }
+                }, 50);
+            }
+            
+            changeChartMetric(button) {
+                // Update active button
+                document.querySelectorAll('.chart-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                button.classList.add('active');
+                
+                const metric = button.dataset.metric;
+                this.updateChart(metric);
+            }
+            
+            initializeCharts() {
+                this.createProductivityChart();
+            }
+            
+            createProductivityChart() {
+                const ctx = document.getElementById('productivityChart').getContext('2d');
+                this.charts.productivity = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+                        datasets: [{
+                            label: 'Productividad',
+                            data: [82, 85, 87, 89],
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: 'rgb(59, 130, 246)',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                min: 70,
+                                max: 100,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        },
+                        elements: {
+                            point: {
+                                hoverRadius: 8
+                            }
+                        }
+                    }
+                });
+            }
+            
+            updateChart(metric) {
+                const data = {
+                    'productivity': {
+                        label: 'Productividad',
+                        data: [82, 85, 87, 89],
+                        color: 'rgb(59, 130, 246)'
+                    },
+                    'quality': {
+                        label: 'Calidad',
+                        data: [8.9, 9.0, 9.1, 9.2],
+                        color: 'rgb(139, 92, 246)'
+                    },
+                    'efficiency': {
+                        label: 'Eficiencia',
+                        data: [88, 90, 92, 94],
+                        color: 'rgb(16, 185, 129)'
+                    }
+                };
+                
+                const chartData = data[metric];
+                const chart = this.charts.productivity;
+                
+                chart.data.datasets[0].label = chartData.label;
+                chart.data.datasets[0].data = chartData.data;
+                chart.data.datasets[0].borderColor = chartData.color;
+                chart.data.datasets[0].backgroundColor = chartData.color.replace('rgb', 'rgba').replace(')', ', 0.1)');
+                chart.data.datasets[0].pointBackgroundColor = chartData.color;
+                
+                if (metric === 'quality') {
+                    chart.options.scales.y.min = 8;
+                    chart.options.scales.y.max = 10;
+                } else {
+                    chart.options.scales.y.min = 70;
+                    chart.options.scales.y.max = 100;
+                }
+                
+                chart.update('smooth');
+            }
+            
+            updateChartForPeriod(period) {
+                // Actualizar datos del gráfico basado en el período
+                const periodData = {
+                    'week': [85, 87, 89, 91],
+                    'month': [82, 85, 87, 89],
+                    'quarter': [78, 82, 85, 87],
+                    'year': [75, 80, 85, 87]
+                };
+                
+                this.charts.productivity.data.datasets[0].data = periodData[period];
+                this.charts.productivity.update('smooth');
+            }
+            
+            animateMetrics() {
+                // Animar métricas principales al cargar
+                const metricCards = document.querySelectorAll('.metric-card');
+                metricCards.forEach((card, index) => {
+                    setTimeout(() => {
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateY(20px)';
+                        card.style.transition = 'all 0.6s ease';
+                        
+                        setTimeout(() => {
+                            card.style.opacity = '1';
+                            card.style.transform = 'translateY(0)';
+                        }, 100);
+                        
+                        // Animar barras de progreso
+                        setTimeout(() => {
+                            const progressBar = card.querySelector('.progress-fill');
+                            if (progressBar) {
+                                const width = progressBar.style.width;
+                                progressBar.style.width = '0%';
+                                setTimeout(() => {
+                                    progressBar.style.width = width;
+                                }, 200);
+                            }
+                        }, 400);
+                    }, index * 150);
+                });
+            }
+            
+            setupScrollAnimations() {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('fade-in');
+                            
+                            // Animar achievement cards
+                            if (entry.target.classList.contains('achievement-card')) {
+                                const progressBar = entry.target.querySelector('.achievement-progress-fill');
+                                if (progressBar) {
+                                    const width = progressBar.style.width;
+                                    progressBar.style.width = '0%';
+                                    setTimeout(() => {
+                                        progressBar.style.width = width;
+                                    }, 300);
+                                }
+                            }
+                        }
+                    });
+                }, { threshold: 0.1 });
+                
+                document.querySelectorAll('.achievement-card, .goal-card').forEach(card => {
+                    observer.observe(card);
+                });
+            }
+            
+            setupPerformanceAnimation() {
+                // Animar elementos cuando sean visibles
+                const animateOnScroll = () => {
+                    const elements = document.querySelectorAll('.metric-progress, .achievement-progress, .goal-progress');
+                    elements.forEach(element => {
+                        const rect = element.getBoundingClientRect();
+                        if (rect.top < window.innerHeight && rect.bottom > 0) {
+                            const progressBar = element.querySelector('.progress-fill, .achievement-progress-fill, .goal-progress-fill');
+                            if (progressBar && !progressBar.classList.contains('animated')) {
+                                progressBar.classList.add('animated');
+                                const width = progressBar.style.width;
+                                progressBar.style.width = '0%';
+                                setTimeout(() => {
+                                    progressBar.style.width = width;
+                                }, 100);
+                            }
+                        }
+                    });
+                };
+                
+                window.addEventListener('scroll', animateOnScroll);
+                animateOnScroll(); // Ejecutar al cargar
+            }
+            
+            showNotification(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.className = 'notification-toast';
+                
+                const colors = {
+                    'success': '#10b981',
+                    'error': '#ef4444',
+                    'warning': '#f59e0b',
+                    'info': '#3b82f6'
+                };
+                
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: white;
+                    color: ${colors[type]};
+                    padding: 15px 20px;
+                    border-radius: 12px;
+                    box-shadow: var(--shadow-lg);
+                    border-left: 4px solid ${colors[type]};
+                    z-index: 10000;
+                    animation: slideInRight 0.3s ease;
+                    max-width: 300px;
+                `;
+                
+                notification.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-${this.getNotificationIcon(type)}"></i>
+                        <span>${message}</span>
+                    </div>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.style.animation = 'slideOutRight 0.3s ease';
+                    setTimeout(() => {
+                        if (document.body.contains(notification)) {
+                            document.body.removeChild(notification);
+                        }
+                    }, 300);
+                }, 3000);
+            }
+            
+            getNotificationIcon(type) {
+                const icons = {
+                    'success': 'check-circle',
+                    'error': 'exclamation-circle',
+                    'warning': 'exclamation-triangle',
+                    'info': 'info-circle'
+                };
+                return icons[type] || 'info-circle';
+            }
+        }
+        
+        // Inicializar dashboard
+        const impactDashboard = new ImpactDashboard();
+        
+        // Exponer instancia global
+        window.impactDashboard = impactDashboard;
+        
+        // CSS adicional para animaciones
+        const additionalStyles = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+            
+            .metric-card {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        `;
+        
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = additionalStyles;
+        document.head.appendChild(styleSheet);
+    </script>
+</body>
+</html>
