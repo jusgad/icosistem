@@ -4,7 +4,7 @@ Authentication Forms
 Formularios de autenticación para el ecosistema de emprendimiento.
 Incluye login, registro, recuperación de contraseña y verificación 2FA.
 
-Author: Senior Developer
+Author: jusga
 Date: 2025
 """
 

@@ -4,7 +4,7 @@ Entrepreneur Forms Module
 Formularios específicos para emprendedores en el ecosistema.
 Incluye perfil, proyectos, pitch decks, business plans y aplicaciones.
 
-Author: Senior Developer
+Author: jusga
 Date: 2025
 """
 

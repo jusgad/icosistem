@@ -1,0 +1,1203 @@
+// ============================================================================
+// _RESET.SCSS - DASHBOARD PROJECT
+// Desarrollado por: jusga
+// Descripción: Reset CSS moderno y completo para dashboard administrativo
+// Versión: 2.0.0
+// Basado en: Normalize.css v8.0.1 + Modern CSS Reset + Custom Dashboard Resets
+// ============================================================================
+
+// ============================================================================
+// 1. DOCUMENT & ROOT CONFIGURATION
+// ============================================================================
+
+/// Configuración del documento HTML
+/// Establece el comportamiento base del documento y mejoras de renderizado
+html {
+  // Normalización de line-height en todos los navegadores
+  line-height: 1.15;
+  
+  // Previene ajustes de font-size después de cambios de orientación en iOS
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  
+  // Establece el comportamiento de scroll suave
+  scroll-behavior: smooth;
+  
+  // Mejora la renderización de fuentes
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  // Establece el box-sizing por defecto
+  box-sizing: border-box;
+  
+  // Altura mínima para aplicaciones de pantalla completa
+  height: 100%;
+  
+  // Configuración para modo oscuro si está habilitado
+  @if $enable-dark-mode {
+    color-scheme: light dark;
+  }
+  
+  // Soporte para prefers-reduced-motion
+  @media (prefers-reduced-motion: reduce) {
+    scroll-behavior: auto;
+  }
+  
+  // Configuración de variables CSS personalizadas
+  --scroll-behavior: smooth;
+  --focus-ring-color: #{rgba($primary, 0.25)};
+  --focus-ring-width: #{$focus-ring-width};
+  --selection-bg: #{$primary};
+  --selection-color: #{$white};
+}
+
+/// Herencia del box-sizing para todos los elementos
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+  
+  // Reset de margin y padding para control total
+  margin: 0;
+  padding: 0;
+  
+  // Mejora la renderización en dispositivos móviles
+  -webkit-tap-highlight-color: transparent;
+}
+
+/// Configuración del body
+body {
+  // Reset básico
+  margin: 0;
+  padding: 0;
+  
+  // Tipografía base
+  font-family: $font-family-base;
+  font-size: $font-size-base;
+  font-weight: $font-weight-normal;
+  line-height: $line-height-base;
+  
+  // Colores base
+  color: $body-color;
+  background-color: $body-bg;
+  
+  // Configuración de renderizado de texto
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  // Altura mínima para aplicaciones
+  min-height: 100vh;
+  min-height: 100dvh; // Soporte para dynamic viewport height
+  
+  // Previene el scroll horizontal no deseado
+  overflow-x: hidden;
+  
+  // Soporte para scroll touch en iOS
+  -webkit-overflow-scrolling: touch;
+  
+  // Configuración de selección de texto
+  &::selection {
+    background-color: var(--selection-bg);
+    color: var(--selection-color);
+    text-shadow: none;
+  }
+  
+  &::-moz-selection {
+    background-color: var(--selection-bg);
+    color: var(--selection-color);
+    text-shadow: none;
+  }
+}
+
+// ============================================================================
+// 2. HTML5 SEMANTIC ELEMENTS NORMALIZATION
+// ============================================================================
+
+/// Elementos de bloque HTML5
+/// Asegura que los elementos HTML5 se muestren como bloque en navegadores antiguos
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+main,
+nav,
+section {
+  display: block;
+}
+
+/// Elementos inline HTML5
+/// Normaliza elementos que pueden no estar soportados
+summary {
+  display: list-item;
+  cursor: pointer;
+}
+
+/// Template element
+/// Oculta el elemento template que no debería mostrarse
+template {
+  display: none;
+}
+
+/// Hidden attribute
+/// Asegura que [hidden] funcione correctamente en IE 10-
+[hidden] {
+  display: none !important;
+}
+
+// ============================================================================
+// 3. TYPOGRAPHY RESET
+// ============================================================================
+
+/// Configuración de encabezados
+h1, h2, h3, h4, h5, h6 {
+  // Reset de estilos por defecto
+  margin: 0;
+  padding: 0;
+  
+  // Configuración tipográfica base
+  font-family: $headings-font-family or $font-family-base;
+  font-weight: $headings-font-weight;
+  line-height: $headings-line-height;
+  color: $headings-color;
+  
+  // Mejora la renderización
+  text-rendering: optimizeLegibility;
+  
+  // Previene el ajuste automático de tamaño en iOS
+  -webkit-text-size-adjust: 100%;
+  
+  // Configuración de word-break para textos largos
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/// Tamaños específicos de encabezados
+h1 { font-size: $h1-font-size; }
+h2 { font-size: $h2-font-size; }
+h3 { font-size: $h3-font-size; }
+h4 { font-size: $h4-font-size; }
+h5 { font-size: $h5-font-size; }
+h6 { font-size: $h6-font-size; }
+
+/// Párrafos
+p {
+  margin: 0 0 $paragraph-margin-bottom 0;
+  
+  // Configuración de texto
+  orphans: 3;
+  widows: 3;
+  
+  // Manejo de texto largo
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/// Texto pequeño
+small {
+  font-size: $small-font-size;
+  font-weight: $font-weight-normal;
+}
+
+/// Texto strong y bold
+strong,
+b {
+  font-weight: $font-weight-bold;
+}
+
+/// Texto emphasis e italic
+em,
+i {
+  font-style: italic;
+}
+
+/// Elementos de código
+code,
+kbd,
+pre,
+samp {
+  font-family: $font-family-monospace;
+  font-size: 1em;
+  background-color: $gray-100;
+  padding: 0.125rem 0.25rem;
+  border-radius: $border-radius-sm;
+}
+
+/// Bloques de código
+pre {
+  display: block;
+  margin: 0 0 1rem 0;
+  padding: 1rem;
+  background-color: $gray-100;
+  border: 1px solid $gray-200;
+  border-radius: $border-radius;
+  overflow-x: auto;
+  white-space: pre;
+  
+  code {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+  }
+}
+
+/// Citas
+blockquote {
+  margin: 0 0 1rem 0;
+  padding: 0.5rem 1rem;
+  border-left: 4px solid $primary;
+  background-color: rgba($primary, 0.05);
+  
+  p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/// Texto marcado
+mark {
+  background-color: $warning;
+  color: color-contrast($warning);
+  padding: 0.125rem 0.25rem;
+  border-radius: $border-radius-sm;
+}
+
+/// Texto tachado
+del,
+s {
+  text-decoration: line-through;
+}
+
+/// Texto insertado
+ins {
+  text-decoration: underline;
+  text-decoration-color: $success;
+}
+
+/// Subíndice y superíndice
+sub,
+sup {
+  position: relative;
+  font-size: 75%;
+  line-height: 0;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+// ============================================================================
+// 4. LINKS RESET
+// ============================================================================
+
+/// Enlaces
+a {
+  // Colores y decoración
+  color: $link-color;
+  text-decoration: $link-decoration;
+  
+  // Transición suave
+  transition: color $transition-duration-150 $transition-ease-in-out;
+  
+  // Remove el outline por defecto, será reemplazado por focus
+  outline: none;
+  
+  // Estados
+  &:hover {
+    color: $link-hover-color;
+    text-decoration: $link-hover-decoration;
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+    border-radius: $border-radius-sm;
+  }
+  
+  &:active {
+    color: darken($link-color, 15%);
+  }
+  
+  // Enlaces sin estilo
+  &:not([href]):not([class]) {
+    color: inherit;
+    text-decoration: none;
+    
+    &:hover {
+      color: inherit;
+      text-decoration: none;
+    }
+  }
+}
+
+/// Remove el outline por defecto en Webkit
+a:focus {
+  outline-offset: 2px;
+}
+
+// ============================================================================
+// 5. LISTS RESET
+// ============================================================================
+
+/// Listas ordenadas y no ordenadas
+ul,
+ol {
+  margin: 0 0 1rem 0;
+  padding-left: 2rem;
+  
+  ul,
+  ol {
+    margin-bottom: 0;
+  }
+}
+
+/// Lista sin estilo
+ul {
+  list-style-type: disc;
+  
+  ul {
+    list-style-type: circle;
+    
+    ul {
+      list-style-type: square;
+    }
+  }
+}
+
+/// Listas de definición
+dl {
+  margin: 0 0 1rem 0;
+}
+
+dt {
+  font-weight: $font-weight-bold;
+  margin-bottom: 0.25rem;
+}
+
+dd {
+  margin-left: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+/// Items de lista
+li {
+  margin-bottom: 0.25rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// ============================================================================
+// 6. MEDIA ELEMENTS RESET
+// ============================================================================
+
+/// Imágenes y elementos multimedia
+img,
+video,
+audio,
+canvas,
+svg {
+  // Hace que las imágenes sean responsivas por defecto
+  max-width: 100%;
+  height: auto;
+  
+  // Mejora la renderización de imágenes
+  -ms-interpolation-mode: bicubic;
+  
+  // Elimina el borde en imágenes dentro de enlaces en IE 10-
+  border: 0;
+  
+  // Alineación vertical
+  vertical-align: middle;
+}
+
+/// SVG específico
+svg {
+  // Permite que el SVG sea redimensionable
+  fill: currentColor;
+  
+  // Oculta el overflow en IE
+  overflow: hidden;
+  
+  // Mejora la renderización
+  shape-rendering: auto;
+}
+
+/// Figures
+figure {
+  margin: 0 0 1rem 0;
+  
+  img {
+    display: block;
+  }
+}
+
+figcaption {
+  font-size: $font-size-sm;
+  color: $text-muted;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+/// Picture element
+picture {
+  display: block;
+}
+
+/// Video y audio
+video,
+audio {
+  display: block;
+}
+
+// ============================================================================
+// 7. FORM ELEMENTS RESET
+// ============================================================================
+
+/// Reset general de formularios
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+legend {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: $font-weight-medium;
+  line-height: inherit;
+  color: inherit;
+  white-space: normal;
+  border: 0;
+}
+
+/// Labels
+label {
+  display: inline-block;
+  margin-bottom: $label-margin-bottom;
+  font-size: $label-font-size;
+  font-weight: $label-font-weight;
+  color: $label-color;
+  cursor: pointer;
+}
+
+/// Inputs, selects y textareas
+input,
+button,
+select,
+optgroup,
+textarea {
+  // Herencia de tipografía
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  
+  // Reset de margin
+  margin: 0;
+  
+  // Normalización de colores
+  color: inherit;
+  
+  // Remove el outline por defecto
+  outline: none;
+}
+
+/// Normalización específica para inputs
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="time"],
+input[type="week"],
+input[type="color"],
+select,
+textarea {
+  // Apariencia normalizada
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  
+  // Background y border reset
+  background-color: transparent;
+  border: 1px solid $input-border-color;
+  border-radius: $input-border-radius;
+  
+  // Padding y sizing
+  padding: $input-padding-y $input-padding-x;
+  width: 100%;
+  
+  // Transición
+  transition: border-color $transition-duration-150 $transition-ease-in-out,
+              box-shadow $transition-duration-150 $transition-ease-in-out;
+  
+  // Estados
+  &:focus {
+    border-color: $input-focus-border-color;
+    box-shadow: $input-focus-box-shadow;
+  }
+  
+  &:disabled,
+  &[readonly] {
+    background-color: $input-disabled-bg;
+    opacity: 1;
+    cursor: not-allowed;
+  }
+  
+  &::placeholder {
+    color: $input-placeholder-color;
+    opacity: 1;
+  }
+}
+
+/// Normalización de textareas
+textarea {
+  // Permite redimensionamiento solo vertical
+  resize: vertical;
+  
+  // Altura mínima
+  min-height: 100px;
+  
+  // Remove el scrollbar horizontal
+  overflow-x: hidden;
+}
+
+/// Select específico
+select {
+  // Cursor pointer
+  cursor: pointer;
+  
+  // Background arrow para selects
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+  
+  // Remove arrow en IE
+  &::-ms-expand {
+    display: none;
+  }
+  
+  // Multiple selects
+  &[multiple] {
+    background-image: none;
+    padding-right: $input-padding-x;
+  }
+}
+
+/// Buttons
+button,
+input[type="button"],
+input[type="reset"],
+input[type="submit"] {
+  // Cursor pointer
+  cursor: pointer;
+  
+  // Remove el border por defecto
+  border: 0;
+  
+  // Background transparente por defecto
+  background-color: transparent;
+  
+  // Remove la apariencia por defecto
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  
+  // Transición
+  transition: all $transition-duration-150 $transition-ease-in-out;
+  
+  // Estados
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+  }
+  
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+/// Checkboxes y radio buttons
+input[type="checkbox"],
+input[type="radio"] {
+  // Tamaño
+  width: 1rem;
+  height: 1rem;
+  
+  // Margin
+  margin-right: 0.5rem;
+  margin-top: 0.125rem;
+  
+  // Cursor
+  cursor: pointer;
+  
+  // Reset de apariencia
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  
+  // Estilos base
+  background-color: $white;
+  border: 1px solid $input-border-color;
+  flex-shrink: 0;
+  
+  // Estados
+  &:checked {
+    background-color: $primary;
+    border-color: $primary;
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 2px var(--focus-ring-color);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+/// Checkbox específico
+input[type="checkbox"] {
+  border-radius: $border-radius-sm;
+  
+  &:checked {
+    background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='m13.854 3.646-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708.708z'/%3e%3c/svg%3e");
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+}
+
+/// Radio button específico
+input[type="radio"] {
+  border-radius: 50%;
+  
+  &:checked {
+    background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='8' cy='8' r='3'/%3e%3c/svg%3e");
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+}
+
+/// File inputs
+input[type="file"] {
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  
+  &:focus {
+    outline: none;
+  }
+}
+
+/// Range inputs
+input[type="range"] {
+  width: 100%;
+  height: 1.5rem;
+  background: transparent;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  
+  // Webkit track
+  &::-webkit-slider-track {
+    width: 100%;
+    height: 4px;
+    background: $gray-300;
+    border-radius: 2px;
+  }
+  
+  // Webkit thumb
+  &::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: $primary;
+    cursor: pointer;
+    margin-top: -8px;
+  }
+  
+  // Firefox track
+  &::-moz-range-track {
+    width: 100%;
+    height: 4px;
+    background: $gray-300;
+    border-radius: 2px;
+    border: none;
+  }
+  
+  // Firefox thumb
+  &::-moz-range-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: $primary;
+    cursor: pointer;
+    border: none;
+  }
+}
+
+/// Progress elements
+progress {
+  vertical-align: baseline;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  
+  &::-webkit-progress-bar {
+    background-color: $gray-200;
+    border-radius: $border-radius;
+  }
+  
+  &::-webkit-progress-value {
+    background-color: $primary;
+    border-radius: $border-radius;
+  }
+  
+  &::-moz-progress-bar {
+    background-color: $primary;
+    border-radius: $border-radius;
+  }
+}
+
+// ============================================================================
+// 8. TABLE RESET
+// ============================================================================
+
+/// Tablas
+table {
+  // Collapse borders
+  border-collapse: collapse;
+  border-spacing: 0;
+  
+  // Ancho completo por defecto
+  width: 100%;
+  
+  // Mejora la renderización
+  table-layout: fixed;
+  
+  // Margin
+  margin-bottom: 1rem;
+}
+
+/// Celdas de tabla
+th,
+td {
+  // Padding base
+  padding: $table-cell-padding-y $table-cell-padding-x;
+  
+  // Alineación
+  text-align: left;
+  vertical-align: top;
+  
+  // Border
+  border-bottom: 1px solid $table-border-color;
+}
+
+/// Headers de tabla
+th {
+  font-weight: $font-weight-semibold;
+  background-color: $table-head-bg;
+  color: $table-head-color;
+}
+
+/// Caption de tabla
+caption {
+  padding-top: $table-cell-padding-y;
+  padding-bottom: $table-cell-padding-y;
+  color: $text-muted;
+  text-align: left;
+  caption-side: bottom;
+}
+
+// ============================================================================
+// 9. INTERACTIVE ELEMENTS
+// ============================================================================
+
+/// Details y summary
+details {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+summary {
+  display: list-item;
+  cursor: pointer;
+  outline: none;
+  
+  &:focus {
+    box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+  }
+}
+
+/// Dialog
+dialog {
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: fit-content;
+  height: fit-content;
+  margin: auto;
+  border: solid;
+  padding: 1em;
+  background: white;
+  color: black;
+  display: block;
+}
+
+dialog:not([open]) {
+  display: none;
+}
+
+// ============================================================================
+// 10. ACCESSIBILITY IMPROVEMENTS
+// ============================================================================
+
+/// Screen reader only content
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only-focusable {
+  &:active,
+  &:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+}
+
+/// Skip links
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: $primary;
+  color: $white;
+  padding: 8px;
+  text-decoration: none;
+  border-radius: $border-radius;
+  z-index: 100000;
+  
+  &:focus {
+    top: 6px;
+  }
+}
+
+/// Focus management
+[tabindex="-1"]:focus:not(:focus-visible) {
+  outline: 0 !important;
+}
+
+/// Improved focus for better accessibility
+:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+// ============================================================================
+// 11. PRINT STYLES
+// ============================================================================
+
+@if $enable-print-styles {
+  @media print {
+    // Configuración general de impresión
+    *,
+    *::before,
+    *::after {
+      text-shadow: none !important;
+      box-shadow: none !important;
+    }
+    
+    // Links
+    a:not(.btn) {
+      text-decoration: underline;
+    }
+    
+    a[href]:after {
+      content: " (" attr(href) ")";
+    }
+    
+    abbr[title]:after {
+      content: " (" attr(title) ")";
+    }
+    
+    // Don't show links that are fragment identifiers
+    a[href^="#"]:after,
+    a[href^="javascript:"]:after {
+      content: "";
+    }
+    
+    // Imágenes
+    img {
+      page-break-inside: avoid;
+    }
+    
+    // Encabezados y párrafos
+    h1,
+    h2,
+    h3,
+    p {
+      orphans: 3;
+      widows: 3;
+    }
+    
+    h1,
+    h2,
+    h3 {
+      page-break-after: avoid;
+    }
+    
+    // Elementos a ocultar en impresión
+    .d-print-none {
+      display: none !important;
+    }
+    
+    // Configuración del body para impresión
+    body {
+      min-width: $print-body-min-width !important;
+      background: white !important;
+      color: black !important;
+    }
+    
+    // Tablas
+    table {
+      border-collapse: collapse !important;
+    }
+    
+    th,
+    td {
+      border: 1px solid #ddd !important;
+    }
+  }
+}
+
+// ============================================================================
+// 12. REDUCED MOTION SUPPORT
+// ============================================================================
+
+/// Respeta las preferencias de movimiento reducido del usuario
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+// ============================================================================
+// 13. HIGH CONTRAST MODE SUPPORT
+// ============================================================================
+
+/// Soporte para modo de alto contraste
+@media (prefers-contrast: high) {
+  input,
+  button,
+  select,
+  textarea {
+    border: 2px solid ButtonText;
+  }
+  
+  button,
+  input[type="button"],
+  input[type="reset"],
+  input[type="submit"] {
+    border: 2px solid ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
+  }
+}
+
+// ============================================================================
+// 14. DARK MODE SUPPORT
+// ============================================================================
+
+@if $enable-dark-mode {
+  /// Soporte básico para modo oscuro
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+    }
+    
+    body {
+      background-color: $dark-theme-bg;
+      color: $dark-theme-color;
+    }
+    
+    input,
+    textarea,
+    select {
+      background-color: $dark-theme-surface;
+      border-color: $dark-theme-border;
+      color: $dark-theme-color;
+    }
+    
+    code,
+    pre {
+      background-color: $dark-theme-surface;
+      color: $dark-theme-color;
+    }
+  }
+}
+
+// ============================================================================
+// 15. MOBILE OPTIMIZATIONS
+// ============================================================================
+
+/// Optimizaciones específicas para móviles
+@media screen and (max-width: 768px) {
+  // Mejora la velocidad de scroll en iOS
+  body {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  // Previene el zoom en inputs en iOS
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  select,
+  textarea {
+    font-size: 16px; // Previene zoom en iOS Safari
+  }
+  
+  // Mejora la experiencia táctil
+  button,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    min-height: 44px; // Área táctil mínima recomendada
+    min-width: 44px;
+  }
+}
+
+// ============================================================================
+// 16. UTILITIES RESET
+// ============================================================================
+
+/// Utilidades básicas que resetean comportamientos
+.list-unstyled {
+  padding-left: 0;
+  list-style: none;
+}
+
+.img-responsive {
+  max-width: 100%;
+  height: auto;
+}
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.visually-hidden {
+  @extend .sr-only;
+}
+
+.visually-hidden-focusable {
+  @extend .sr-only-focusable;
+}
+
+// ============================================================================
+// 17. BROWSER-SPECIFIC FIXES
+// ============================================================================
+
+/// Fix para Safari iOS y el bug del 100vh
+@supports (-webkit-touch-callout: none) {
+  body {
+    min-height: -webkit-fill-available;
+  }
+}
+
+/// Fix para IE11 y flexbox
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+  img {
+    flex-shrink: 0;
+  }
+}
+
+/// Fix para Firefox y el scrollbar
+@-moz-document url-prefix() {
+  html {
+    scrollbar-width: thin;
+  }
+}
+
+/// Fix para Chrome y el autofill
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px $white inset !important;
+  -webkit-text-fill-color: $body-color !important;
+}
+
+@if $enable-dark-mode {
+  @media (prefers-color-scheme: dark) {
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 30px $dark-theme-surface inset !important;
+      -webkit-text-fill-color: $dark-theme-color !important;
+    }
+  }
+}
+
+// ============================================================================
+// FIN DEL ARCHIVO _RESET.SCSS
+// ============================================================================

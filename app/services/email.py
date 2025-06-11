@@ -2,7 +2,7 @@
 Email Service - Ecosistema de Emprendimiento
 Servicio completo de email con múltiples proveedores, plantillas y tracking
 
-Author: Senior Developer
+Author: jusga
 Version: 1.0.0
 """
 

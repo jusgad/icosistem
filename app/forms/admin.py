@@ -4,7 +4,7 @@ Admin Forms Module
 Formularios administrativos para el ecosistema de emprendimiento.
 Incluye gestión de usuarios, organizaciones, programas y configuraciones.
 
-Author: Senior Developer
+Author: jusga
 Date: 2025
 """
 

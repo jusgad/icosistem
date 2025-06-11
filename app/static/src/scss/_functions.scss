@@ -1,0 +1,970 @@
+// ============================================================================
+// _FUNCTIONS.SCSS - DASHBOARD PROJECT
+// Desarrollado por: Jusgad
+// Descripción: Biblioteca completa de funciones para dashboard administrativo
+// Versión: 2.0.0
+// ============================================================================
+
+// ============================================================================
+// 1. FUNCIONES DE UTILIDAD BÁSICA
+// ============================================================================
+
+/// Función para verificar si un valor existe en un mapa
+/// @param {Map} $map - El mapa a verificar
+/// @param {String} $key - La clave a buscar
+/// @return {Boolean} - True si existe, false si no
+/// @example scss - Usage
+///   $exists: map-has-deep-key($theme-colors, 'primary');
+@function map-has-deep-key($map, $key...) {
+  @each $k in $key {
+    @if not map-has-key($map, $k) {
+      @return false;
+    }
+    $map: map-get($map, $k);
+  }
+  @return true;
+}
+
+/// Función para obtener un valor anidado de un mapa
+/// @param {Map} $map - El mapa base
+/// @param {String} $keys - Las claves anidadas
+/// @return {*} - El valor encontrado o null
+/// @example scss - Usage
+///   $value: map-deep-get($theme-colors, 'primary', '500');
+@function map-deep-get($map, $keys...) {
+  @each $key in $keys {
+    $map: map-get($map, $key);
+  }
+  @return $map;
+}
+
+/// Función para verificar si una variable está definida
+/// @param {*} $value - El valor a verificar
+/// @return {Boolean} - True si está definido
+@function is-defined($value) {
+  @return $value != null and $value != '';
+}
+
+/// Función para verificar si un valor es un número
+/// @param {*} $value - El valor a verificar
+/// @return {Boolean} - True si es número
+@function is-number($value) {
+  @return type-of($value) == 'number';
+}
+
+/// Función para verificar si un valor es una cadena
+/// @param {*} $value - El valor a verificar
+/// @return {Boolean} - True si es string
+@function is-string($value) {
+  @return type-of($value) == 'string';
+}
+
+/// Función para verificar si un valor es un color
+/// @param {*} $value - El valor a verificar
+/// @return {Boolean} - True si es color
+@function is-color($value) {
+  @return type-of($value) == 'color';
+}
+
+/// Función para verificar si un valor es una lista
+/// @param {*} $value - El valor a verificar
+/// @return {Boolean} - True si es lista
+@function is-list($value) {
+  @return type-of($value) == 'list';
+}
+
+// ============================================================================
+// 2. FUNCIONES DE UNIDADES Y CONVERSIONES
+// ============================================================================
+
+/// Función para remover la unidad de un número
+/// @param {Number} $number - Número con unidad
+/// @return {Number} - Número sin unidad
+/// @example scss - Usage
+///   $unitless: strip-unit(16px); // Returns: 16
+@function strip-unit($number) {
+  @if type-of($number) == 'number' and not unitless($number) {
+    @return $number / ($number * 0 + 1);
+  }
+  @return $number;
+}
+
+/// Función para convertir px a rem
+/// @param {Number} $pixels - Valor en píxeles
+/// @param {Number} $base-font-size - Tamaño base de fuente (por defecto 16px)
+/// @return {Number} - Valor en rem
+/// @example scss - Usage
+///   $rem-value: px-to-rem(24px); // Returns: 1.5rem
+@function px-to-rem($pixels, $base-font-size: 16px) {
+  @if unitless($pixels) {
+    $pixels: $pixels * 1px;
+  }
+  @if unitless($base-font-size) {
+    $base-font-size: $base-font-size * 1px;
+  }
+  @return $pixels / $base-font-size * 1rem;
+}
+
+/// Función para convertir rem a px
+/// @param {Number} $rems - Valor en rem
+/// @param {Number} $base-font-size - Tamaño base de fuente
+/// @return {Number} - Valor en píxeles
+@function rem-to-px($rems, $base-font-size: 16px) {
+  @if unitless($rems) {
+    $rems: $rems * 1rem;
+  }
+  @if unitless($base-font-size) {
+    $base-font-size: $base-font-size * 1px;
+  }
+  @return strip-unit($rems) * $base-font-size;
+}
+
+/// Función para convertir px a em
+/// @param {Number} $pixels - Valor en píxeles
+/// @param {Number} $context - Contexto en píxeles
+/// @return {Number} - Valor en em
+@function px-to-em($pixels, $context: 16px) {
+  @if unitless($pixels) {
+    $pixels: $pixels * 1px;
+  }
+  @if unitless($context) {
+    $context: $context * 1px;
+  }
+  @return $pixels / $context * 1em;
+}
+
+/// Función para convertir valores a la unidad especificada
+/// @param {Number} $value - Valor a convertir
+/// @param {String} $unit - Unidad destino (px, rem, em, %)
+/// @param {Number} $context - Contexto base
+/// @return {Number} - Valor convertido
+@function to-unit($value, $unit: 'rem', $context: 16px) {
+  @if $unit == 'rem' {
+    @return px-to-rem($value, $context);
+  } @else if $unit == 'em' {
+    @return px-to-em($value, $context);
+  } @else if $unit == 'px' {
+    @return if(unitless($value), $value * 1px, $value);
+  } @else {
+    @return $value;
+  }
+}
+
+// ============================================================================
+// 3. FUNCIONES MATEMÁTICAS
+// ============================================================================
+
+/// Función de potencia (exponenciación)
+/// @param {Number} $base - Base
+/// @param {Number} $exponent - Exponente
+/// @return {Number} - Resultado de la potencia
+@function pow($base, $exponent) {
+  $result: 1;
+  @for $i from 1 through abs($exponent) {
+    $result: $result * $base;
+  }
+  @if $exponent < 0 {
+    $result: 1 / $result;
+  }
+  @return $result;
+}
+
+/// Función para calcular la raíz cuadrada
+/// @param {Number} $number - Número
+/// @return {Number} - Raíz cuadrada
+@function sqrt($number) {
+  $guess: $number;
+  $new-guess: $number / 2;
+  
+  @while abs($guess - $new-guess) > 0.01 {
+    $guess: $new-guess;
+    $new-guess: ($guess + $number / $guess) / 2;
+  }
+  
+  @return $new-guess;
+}
+
+/// Función para redondear a un número específico de decimales
+/// @param {Number} $number - Número a redondear
+/// @param {Number} $digits - Número de decimales
+/// @return {Number} - Número redondeado
+@function decimal-round($number, $digits: 2) {
+  $multiplier: pow(10, $digits);
+  @return round($number * $multiplier) / $multiplier;
+}
+
+/// Función para obtener el valor mínimo de una lista
+/// @param {List} $numbers - Lista de números
+/// @return {Number} - Valor mínimo
+@function list-min($numbers...) {
+  $min: nth($numbers, 1);
+  @each $number in $numbers {
+    @if $number < $min {
+      $min: $number;
+    }
+  }
+  @return $min;
+}
+
+/// Función para obtener el valor máximo de una lista
+/// @param {List} $numbers - Lista de números
+/// @return {Number} - Valor máximo
+@function list-max($numbers...) {
+  $max: nth($numbers, 1);
+  @each $number in $numbers {
+    @if $number > $max {
+      $max: $number;
+    }
+  }
+  @return $max;
+}
+
+/// Función para sumar todos los valores de una lista
+/// @param {List} $numbers - Lista de números
+/// @return {Number} - Suma total
+@function list-sum($numbers...) {
+  $sum: 0;
+  @each $number in $numbers {
+    $sum: $sum + $number;
+  }
+  @return $sum;
+}
+
+/// Función para calcular el promedio de una lista
+/// @param {List} $numbers - Lista de números
+/// @return {Number} - Promedio
+@function list-average($numbers...) {
+  @return list-sum($numbers...) / length($numbers);
+}
+
+/// Función para clamp (limitar un valor entre mín y máx)
+/// @param {Number} $value - Valor
+/// @param {Number} $min - Valor mínimo
+/// @param {Number} $max - Valor máximo
+/// @return {Number} - Valor limitado
+@function clamp($value, $min, $max) {
+  @return if($value < $min, $min, if($value > $max, $max, $value));
+}
+
+/// Función para interpolar entre dos valores
+/// @param {Number} $start - Valor inicial
+/// @param {Number} $end - Valor final
+/// @param {Number} $factor - Factor de interpolación (0-1)
+/// @return {Number} - Valor interpolado
+@function lerp($start, $end, $factor: 0.5) {
+  @return $start + ($end - $start) * $factor;
+}
+
+// ============================================================================
+// 4. FUNCIONES DE COLOR
+// ============================================================================
+
+/// Función para obtener el contraste entre dos colores
+/// @param {Color} $color1 - Primer color
+/// @param {Color} $color2 - Segundo color
+/// @return {Number} - Ratio de contraste
+@function contrast-ratio($color1, $color2) {
+  $luminance1: luminance($color1);
+  $luminance2: luminance($color2);
+  
+  @return if($luminance1 > $luminance2, 
+    ($luminance1 + 0.05) / ($luminance2 + 0.05),
+    ($luminance2 + 0.05) / ($luminance1 + 0.05)
+  );
+}
+
+/// Función para calcular la luminancia de un color
+/// @param {Color} $color - Color
+/// @return {Number} - Luminancia
+@function luminance($color) {
+  $red: red($color) / 255;
+  $green: green($color) / 255;
+  $blue: blue($color) / 255;
+  
+  $red: if($red <= 0.03928, $red / 12.92, pow(($red + 0.055) / 1.055, 2.4));
+  $green: if($green <= 0.03928, $green / 12.92, pow(($green + 0.055) / 1.055, 2.4));
+  $blue: if($blue <= 0.03928, $blue / 12.92, pow(($blue + 0.055) / 1.055, 2.4));
+  
+  @return 0.2126 * $red + 0.7152 * $green + 0.0722 * $blue;
+}
+
+/// Función para obtener un color de contraste accesible
+/// @param {Color} $background - Color de fondo
+/// @param {Color} $light - Color claro (por defecto blanco)
+/// @param {Color} $dark - Color oscuro (por defecto negro)
+/// @param {Number} $threshold - Umbral de contraste mínimo
+/// @return {Color} - Color con buen contraste
+@function color-contrast($background, $light: #fff, $dark: #000, $threshold: 4.5) {
+  $light-contrast: contrast-ratio($background, $light);
+  $dark-contrast: contrast-ratio($background, $dark);
+  
+  @if $light-contrast >= $threshold {
+    @return $light;
+  } @else if $dark-contrast >= $threshold {
+    @return $dark;
+  } @else {
+    @return if($light-contrast > $dark-contrast, $light, $dark);
+  }
+}
+
+/// Función para tint (aclarar) un color
+/// @param {Color} $color - Color base
+/// @param {Number} $percentage - Porcentaje de aclarado
+/// @return {Color} - Color aclarado
+@function tint($color, $percentage) {
+  @return mix(white, $color, $percentage);
+}
+
+/// Función para shade (oscurecer) un color
+/// @param {Color} $color - Color base
+/// @param {Number} $percentage - Porcentaje de oscurecido
+/// @return {Color} - Color oscurecido
+@function shade($color, $percentage) {
+  @return mix(black, $color, $percentage);
+}
+
+/// Función para tone (tonificar) un color
+/// @param {Color} $color - Color base
+/// @param {Number} $percentage - Porcentaje de tonificación
+/// @return {Color} - Color tonificado
+@function tone($color, $percentage) {
+  @return mix(gray, $color, $percentage);
+}
+
+/// Función para obtener un color desde un mapa de colores
+/// @param {String} $color-name - Nombre del color
+/// @param {String} $variant - Variante del color (100, 200, etc.)
+/// @param {Map} $color-map - Mapa de colores
+/// @return {Color} - Color solicitado
+@function get-color($color-name, $variant: null, $color-map: null) {
+  @if $color-map == null {
+    $color-map: $theme-colors;
+  }
+  
+  @if $variant == null {
+    @return map-get($color-map, $color-name);
+  } @else {
+    $color-variants: map-get($color-map, $color-name);
+    @if type-of($color-variants) == 'map' {
+      @return map-get($color-variants, $variant);
+    } @else {
+      @return $color-variants;
+    }
+  }
+}
+
+/// Función para generar una paleta de colores automáticamente
+/// @param {Color} $base-color - Color base
+/// @param {Number} $steps - Número de variantes
+/// @return {Map} - Mapa con la paleta generada
+@function generate-color-palette($base-color, $steps: 9) {
+  $palette: ();
+  $step-size: 100 / ($steps - 1);
+  
+  @for $i from 0 through ($steps - 1) {
+    $variant: 50 + ($i * $step-size);
+    $percentage: $i * (100 / ($steps - 1));
+    
+    @if $i < ($steps / 2) {
+      $color: tint($base-color, 100 - ($percentage * 2));
+    } @else {
+      $color: shade($base-color, ($percentage - 50) * 2);
+    }
+    
+    $palette: map-merge($palette, (#{round($variant)}: $color));
+  }
+  
+  @return $palette;
+}
+
+/// Función para convertir color a formato RGB CSS
+/// @param {Color} $color - Color
+/// @return {String} - String RGB
+@function to-rgb($color) {
+  @return "#{red($color)}, #{green($color)}, #{blue($color)}";
+}
+
+/// Función para convertir color a formato RGBA CSS
+/// @param {Color} $color - Color
+/// @param {Number} $alpha - Transparencia
+/// @return {String} - String RGBA
+@function to-rgba($color, $alpha: 1) {
+  @return "rgba(#{red($color)}, #{green($color)}, #{blue($color)}, #{$alpha})";
+}
+
+// ============================================================================
+// 5. FUNCIONES DE ESPACIADO
+// ============================================================================
+
+/// Función para obtener un valor de espaciado del mapa
+/// @param {String|Number} $key - Clave del espaciado
+/// @param {Map} $spacer-map - Mapa de espaciadores
+/// @return {Number} - Valor del espaciado
+@function spacing($key, $spacer-map: $spacers) {
+  @if map-has-key($spacer-map, $key) {
+    @return map-get($spacer-map, $key);
+  } @else if is-number($key) {
+    @return $key;
+  } @else {
+    @warn "Spacing key '#{$key}' not found in spacer map.";
+    @return 0;
+  }
+}
+
+/// Función para calcular espaciado fluido
+/// @param {Number} $min-space - Espaciado mínimo
+/// @param {Number} $max-space - Espaciado máximo
+/// @param {Number} $min-width - Ancho mínimo del viewport
+/// @param {Number} $max-width - Ancho máximo del viewport
+/// @return {String} - Valor clamp CSS
+@function fluid-spacing($min-space, $max-space, $min-width: 320px, $max-width: 1200px) {
+  $min-space-rem: px-to-rem($min-space);
+  $max-space-rem: px-to-rem($max-space);
+  $min-width-rem: px-to-rem($min-width);
+  $max-width-rem: px-to-rem($max-width);
+  
+  $slope: ($max-space-rem - $min-space-rem) / ($max-width-rem - $min-width-rem);
+  $intersection: $min-space-rem - $slope * $min-width-rem;
+  
+  @return clamp(#{$min-space-rem}, #{$intersection} + #{$slope * 100}vw, #{$max-space-rem});
+}
+
+/// Función para generar escalas de espaciado
+/// @param {Number} $base - Valor base
+/// @param {Number} $ratio - Ratio de escala
+/// @param {Number} $steps - Número de pasos
+/// @return {Map} - Mapa de espaciados escalados
+@function generate-spacing-scale($base: 1rem, $ratio: 1.5, $steps: 10) {
+  $scale: ();
+  
+  @for $i from 0 through $steps {
+    $value: $base * pow($ratio, $i - ($steps / 2));
+    $scale: map-merge($scale, (#{$i}: $value));
+  }
+  
+  @return $scale;
+}
+
+// ============================================================================
+// 6. FUNCIONES DE TIPOGRAFÍA
+// ============================================================================
+
+/// Función para calcular el tamaño de fuente fluido
+/// @param {Number} $min-size - Tamaño mínimo
+/// @param {Number} $max-size - Tamaño máximo
+/// @param {Number} $min-width - Ancho mínimo del viewport
+/// @param {Number} $max-width - Ancho máximo del viewport
+/// @return {String} - Valor clamp CSS
+@function fluid-font-size($min-size, $max-size, $min-width: 320px, $max-width: 1200px) {
+  $min-size-rem: px-to-rem($min-size);
+  $max-size-rem: px-to-rem($max-size);
+  $min-width-rem: px-to-rem($min-width);
+  $max-width-rem: px-to-rem($max-width);
+  
+  $slope: ($max-size-rem - $min-size-rem) / ($max-width-rem - $min-width-rem);
+  $intersection: $min-size-rem - $slope * $min-width-rem;
+  
+  @return clamp(#{$min-size-rem}, #{$intersection} + #{$slope * 100}vw, #{$max-size-rem});
+}
+
+/// Función para generar escala tipográfica
+/// @param {Number} $base-size - Tamaño base
+/// @param {Number} $ratio - Ratio de escala
+/// @param {Number} $steps - Número de pasos
+/// @return {Map} - Mapa de tamaños tipográficos
+@function generate-type-scale($base-size: 1rem, $ratio: 1.25, $steps: 6) {
+  $scale: ();
+  
+  @for $i from 1 through $steps {
+    $size: $base-size * pow($ratio, $i - 1);
+    $scale: map-merge($scale, (#{$i}: $size));
+  }
+  
+  @return $scale;
+}
+
+/// Función para calcular line-height óptimo
+/// @param {Number} $font-size - Tamaño de fuente
+/// @param {Number} $baseline - Grid base
+/// @return {Number} - Line-height calculado
+@function optimal-line-height($font-size, $baseline: 24px) {
+  $font-size-px: if(unit($font-size) == 'rem', rem-to-px($font-size), $font-size);
+  $lines: ceil($font-size-px / $baseline);
+  @return ($lines * $baseline) / $font-size-px;
+}
+
+// ============================================================================
+// 7. FUNCIONES DE RESPONSIVE DESIGN
+// ============================================================================
+
+/// Función para obtener un breakpoint
+/// @param {String} $name - Nombre del breakpoint
+/// @param {Map} $breakpoints - Mapa de breakpoints
+/// @return {Number} - Valor del breakpoint
+@function breakpoint($name, $breakpoints: $grid-breakpoints) {
+  @if map-has-key($breakpoints, $name) {
+    @return map-get($breakpoints, $name);
+  } @else {
+    @warn "Breakpoint '#{$name}' not found.";
+    @return 0;
+  }
+}
+
+/// Función para calcular breakpoint fluido
+/// @param {String} $min-bp - Breakpoint mínimo
+/// @param {String} $max-bp - Breakpoint máximo
+/// @param {Number} $min-value - Valor mínimo
+/// @param {Number} $max-value - Valor máximo
+/// @return {String} - Valor fluido CSS
+@function fluid-between-breakpoints($min-bp, $max-bp, $min-value, $max-value) {
+  $min-width: breakpoint($min-bp);
+  $max-width: breakpoint($max-bp);
+  
+  @return fluid-font-size($min-value, $max-value, $min-width, $max-width);
+}
+
+/// Función para verificar si un breakpoint es válido
+/// @param {String} $breakpoint - Nombre del breakpoint
+/// @return {Boolean} - True si es válido
+@function is-valid-breakpoint($breakpoint) {
+  @return map-has-key($grid-breakpoints, $breakpoint);
+}
+
+// ============================================================================
+// 8. FUNCIONES DE STRING
+// ============================================================================
+
+/// Función para reemplazar texto en un string
+/// @param {String} $string - String original
+/// @param {String} $search - Texto a buscar
+/// @param {String} $replace - Texto de reemplazo
+/// @return {String} - String modificado
+@function str-replace($string, $search, $replace: '') {
+  $index: str-index($string, $search);
+  
+  @if $index {
+    @return str-slice($string, 1, $index - 1) + $replace + str-replace(str-slice($string, $index + str-length($search)), $search, $replace);
+  }
+  
+  @return $string;
+}
+
+/// Función para convertir string a minúsculas
+/// @param {String} $string - String a convertir
+/// @return {String} - String en minúsculas
+@function to-lower-case($string) {
+  $lower-case: 'abcdefghijklmnopqrstuvwxyz';
+  $upper-case: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  $result: '';
+  
+  @for $i from 1 through str-length($string) {
+    $char: str-slice($string, $i, $i);
+    $index: str-index($upper-case, $char);
+    
+    @if $index {
+      $char: str-slice($lower-case, $index, $index);
+    }
+    
+    $result: $result + $char;
+  }
+  
+  @return $result;
+}
+
+/// Función para convertir string a mayúsculas
+/// @param {String} $string - String a convertir
+/// @return {String} - String en mayúsculas
+@function to-upper-case($string) {
+  $lower-case: 'abcdefghijklmnopqrstuvwxyz';
+  $upper-case: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  $result: '';
+  
+  @for $i from 1 through str-length($string) {
+    $char: str-slice($string, $i, $i);
+    $index: str-index($lower-case, $char);
+    
+    @if $index {
+      $char: str-slice($upper-case, $index, $index);
+    }
+    
+    $result: $result + $char;
+  }
+  
+  @return $result;
+}
+
+/// Función para capitalizar la primera letra
+/// @param {String} $string - String a capitalizar
+/// @return {String} - String capitalizado
+@function capitalize($string) {
+  @return to-upper-case(str-slice($string, 1, 1)) + str-slice($string, 2);
+}
+
+/// Función para verificar si un string contiene otro
+/// @param {String} $string - String a verificar
+/// @param {String} $search - Texto a buscar
+/// @return {Boolean} - True si contiene el texto
+@function str-contains($string, $search) {
+  @return str-index($string, $search) != null;
+}
+
+/// Función para generar un slug desde un string
+/// @param {String} $string - String a convertir
+/// @return {String} - Slug generado
+@function slugify($string) {
+  $string: to-lower-case($string);
+  $string: str-replace($string, ' ', '-');
+  $string: str-replace($string, '_', '-');
+  @return $string;
+}
+
+// ============================================================================
+// 9. FUNCIONES DE LISTAS
+// ============================================================================
+
+/// Función para verificar si una lista contiene un valor
+/// @param {List} $list - Lista a verificar
+/// @param {*} $value - Valor a buscar
+/// @return {Boolean} - True si contiene el valor
+@function list-contains($list, $value) {
+  @return index($list, $value) != null;
+}
+
+/// Función para remover un valor de una lista
+/// @param {List} $list - Lista original
+/// @param {*} $value - Valor a remover
+/// @return {List} - Lista sin el valor
+@function list-remove($list, $value) {
+  $new-list: ();
+  
+  @each $item in $list {
+    @if $item != $value {
+      $new-list: append($new-list, $item);
+    }
+  }
+  
+  @return $new-list;
+}
+
+/// Función para revertir una lista
+/// @param {List} $list - Lista a revertir
+/// @return {List} - Lista revertida
+@function list-reverse($list) {
+  $reversed: ();
+  
+  @for $i from length($list) through 1 {
+    $reversed: append($reversed, nth($list, $i));
+  }
+  
+  @return $reversed;
+}
+
+/// Función para obtener los primeros N elementos de una lista
+/// @param {List} $list - Lista original
+/// @param {Number} $count - Número de elementos
+/// @return {List} - Lista con los primeros elementos
+@function list-take($list, $count) {
+  $new-list: ();
+  
+  @for $i from 1 through min($count, length($list)) {
+    $new-list: append($new-list, nth($list, $i));
+  }
+  
+  @return $new-list;
+}
+
+/// Función para saltar los primeros N elementos de una lista
+/// @param {List} $list - Lista original
+/// @param {Number} $count - Número de elementos a saltar
+/// @return {List} - Lista sin los primeros elementos
+@function list-skip($list, $count) {
+  $new-list: ();
+  
+  @for $i from ($count + 1) through length($list) {
+    $new-list: append($new-list, nth($list, $i));
+  }
+  
+  @return $new-list;
+}
+
+// ============================================================================
+// 10. FUNCIONES DE VALIDACIÓN
+// ============================================================================
+
+/// Función para validar un color
+/// @param {*} $value - Valor a validar
+/// @param {Color} $fallback - Color de respaldo
+/// @return {Color} - Color válido
+@function validate-color($value, $fallback: #000) {
+  @if is-color($value) {
+    @return $value;
+  } @else {
+    @warn "Invalid color value: #{$value}. Using fallback: #{$fallback}";
+    @return $fallback;
+  }
+}
+
+/// Función para validar un número
+/// @param {*} $value - Valor a validar
+/// @param {Number} $fallback - Número de respaldo
+/// @return {Number} - Número válido
+@function validate-number($value, $fallback: 0) {
+  @if is-number($value) {
+    @return $value;
+  } @else {
+    @warn "Invalid number value: #{$value}. Using fallback: #{$fallback}";
+    @return $fallback;
+  }
+}
+
+/// Función para validar un string
+/// @param {*} $value - Valor a validar
+/// @param {String} $fallback - String de respaldo
+/// @return {String} - String válido
+@function validate-string($value, $fallback: '') {
+  @if is-string($value) {
+    @return $value;
+  } @else {
+    @warn "Invalid string value: #{$value}. Using fallback: #{$fallback}";
+    @return $fallback;
+  }
+}
+
+/// Función para validar que un número esté en un rango
+/// @param {Number} $value - Valor a validar
+/// @param {Number} $min - Valor mínimo
+/// @param {Number} $max - Valor máximo
+/// @param {Number} $fallback - Valor de respaldo
+/// @return {Number} - Número válido en el rango
+@function validate-range($value, $min, $max, $fallback: null) {
+  @if not is-number($value) {
+    @warn "Value must be a number: #{$value}";
+    @return if($fallback, $fallback, $min);
+  }
+  
+  @if $value < $min or $value > $max {
+    @warn "Value #{$value} is outside range #{$min} to #{$max}";
+    @return if($fallback, $fallback, clamp($value, $min, $max));
+  }
+  
+  @return $value;
+}
+
+// ============================================================================
+// 11. FUNCIONES DE CONFIGURACIÓN ESPECÍFICAS DEL DASHBOARD
+// ============================================================================
+
+/// Función para obtener configuraciones del tema
+/// @param {String} $property - Propiedad a obtener
+/// @param {*} $fallback - Valor de respaldo
+/// @return {*} - Valor de la configuración
+@function theme-config($property, $fallback: null) {
+  $config: (
+    'sidebar-width': $sidebar-width,
+    'sidebar-collapsed-width': $sidebar-width-collapsed,
+    'header-height': $header-height,
+    'border-radius': $border-radius,
+    'transition-duration': $transition-duration-300,
+    'primary-color': $primary,
+    'secondary-color': $secondary,
+    'success-color': $success,
+    'warning-color': $warning,
+    'danger-color': $danger,
+    'info-color': $info
+  );
+  
+  @if map-has-key($config, $property) {
+    @return map-get($config, $property);
+  } @else if $fallback {
+    @return $fallback;
+  } @else {
+    @warn "Theme configuration '#{$property}' not found.";
+    @return null;
+  }
+}
+
+/// Función para calcular espaciado del sidebar
+/// @param {String} $state - Estado del sidebar (expanded, collapsed)
+/// @return {Number} - Ancho calculado
+@function sidebar-width($state: 'expanded') {
+  @if $state == 'expanded' {
+    @return theme-config('sidebar-width');
+  } @else if $state == 'collapsed' {
+    @return theme-config('sidebar-collapsed-width');
+  } @else {
+    @warn "Invalid sidebar state: #{$state}";
+    @return theme-config('sidebar-width');
+  }
+}
+
+/// Función para calcular z-index basado en capas
+/// @param {String} $layer - Capa (dropdown, modal, tooltip, etc.)
+/// @return {Number} - Z-index calculado
+@function z-index($layer) {
+  $z-layers: (
+    'base': 1,
+    'dropdown': 1000,
+    'sticky': 1020,
+    'fixed': 1030,
+    'modal-backdrop': 1040,
+    'modal': 1050,
+    'popover': 1070,
+    'tooltip': 1080,
+    'notification': 1090
+  );
+  
+  @if map-has-key($z-layers, $layer) {
+    @return map-get($z-layers, $layer);
+  } @else {
+    @warn "Z-index layer '#{$layer}' not found.";
+    @return 1;
+  }
+}
+
+/// Función para generar shadow basado en elevación
+/// @param {Number} $elevation - Nivel de elevación (0-24)
+/// @return {String} - Box-shadow CSS
+@function elevation-shadow($elevation) {
+  $elevation: clamp($elevation, 0, 24);
+  
+  $shadow-key-umbra-opacity: 0.2;
+  $shadow-key-penumbra-opacity: 0.14;
+  $shadow-ambient-shadow-opacity: 0.12;
+  
+  $umbra-offset: ($elevation * 0.5) + 1;
+  $penumbra-offset: ($elevation * 1) + 1;
+  $ambient-offset: $elevation + 1;
+  
+  $umbra-blur: ($elevation * 1) + 1;
+  $penumbra-blur: ($elevation * 1.5) + 1;
+  $ambient-blur: ($elevation * 0.75) + 1;
+  
+  @return 
+    0 #{$umbra-offset}px #{$umbra-blur}px rgba(0, 0, 0, $shadow-key-umbra-opacity),
+    0 #{$penumbra-offset}px #{$penumbra-blur}px rgba(0, 0, 0, $shadow-key-penumbra-opacity),
+    0 #{$ambient-offset}px #{$ambient-blur}px rgba(0, 0, 0, $shadow-ambient-shadow-opacity);
+}
+
+// ============================================================================
+// 12. FUNCIONES DE UTILIDAD AVANZADAS
+// ============================================================================
+
+/// Función para generar un mapa de utilidades CSS
+/// @param {String} $property - Propiedad CSS
+/// @param {Map} $values - Mapa de valores
+/// @param {String} $prefix - Prefijo de clase
+/// @return {Map} - Mapa de utilidades generado
+@function generate-utility-map($property, $values, $prefix: '') {
+  $utilities: ();
+  
+  @each $key, $value in $values {
+    $class-name: if($prefix == '', $key, $prefix + '-' + $key);
+    $utilities: map-merge($utilities, (
+      $class-name: (
+        property: $property,
+        value: $value
+      )
+    ));
+  }
+  
+  @return $utilities;
+}
+
+/// Función para deep merge de mapas
+/// @param {Map} $parent-map - Mapa padre
+/// @param {Map} $child-map - Mapa hijo
+/// @return {Map} - Mapa combinado
+@function map-deep-merge($parent-map, $child-map) {
+  $result: $parent-map;
+  
+  @each $key, $value in $child-map {
+    @if type-of(map-get($result, $key)) == 'map' and type-of($value) == 'map' {
+      $result: map-merge($result, ($key: map-deep-merge(map-get($result, $key), $value)));
+    } @else {
+      $result: map-merge($result, ($key: $value));
+    }
+  }
+  
+  @return $result;
+}
+
+/// Función para escapar caracteres especiales en URLs
+/// @param {String} $string - String a escapar
+/// @return {String} - String escapado
+@function url-escape($string) {
+  $search: ('<', '>', '"', ' ', '#', '%');
+  $replace: ('%3C', '%3E', '%22', '%20', '%23', '%25');
+  $result: $string;
+  
+  @for $i from 1 through length($search) {
+    $result: str-replace($result, nth($search, $i), nth($replace, $i));
+  }
+  
+  @return $result;
+}
+
+/// Función para generar un hash simple de un string
+/// @param {String} $string - String a hashear
+/// @return {String} - Hash generado
+@function simple-hash($string) {
+  $hash: 0;
+  
+  @for $i from 1 through str-length($string) {
+    $char-code: str-index('abcdefghijklmnopqrstuvwxyz', str-slice($string, $i, $i));
+    @if $char-code {
+      $hash: ($hash * 31 + $char-code) % 1000000;
+    }
+  }
+  
+  @return to-string($hash);
+}
+
+// ============================================================================
+// 13. FUNCIONES DE PERFORMANCE Y OPTIMIZACIÓN
+// ============================================================================
+
+/// Función para cache de valores calculados
+/// @param {String} $key - Clave del cache
+/// @param {*} $value - Valor a cachear
+/// @return {*} - Valor cacheado
+$function-cache: () !global;
+
+@function cache-get($key) {
+  @return map-get($function-cache, $key);
+}
+
+@function cache-set($key, $value) {
+  $function-cache: map-merge($function-cache, ($key: $value)) !global;
+  @return $value;
+}
+
+@function cache-has($key) {
+  @return map-has-key($function-cache, $key);
+}
+
+/// Función memoizada para cálculos costosos
+/// @param {String} $function-name - Nombre de la función
+/// @param {List} $args - Argumentos de la función
+/// @return {*} - Resultado memoizado
+@function memoize($function-name, $args...) {
+  $cache-key: $function-name + '-' + inspect($args);
+  
+  @if cache-has($cache-key) {
+    @return cache-get($cache-key);
+  }
+  
+  // Aquí iría la lógica de la función específica
+  $result: null;
+  
+  @if $function-name == 'color-contrast' {
+    $result: color-contrast(nth($args, 1), nth($args, 2), nth($args, 3));
+  } @else if $function-name == 'fluid-font-size' {
+    $result: fluid-font-size(nth($args, 1), nth($args, 2), nth($args, 3), nth($args, 4));
+  }
+  
+  @return cache-set($cache-key, $result);
+}
+
+// ============================================================================
+// FIN DEL ARCHIVO _FUNCTIONS.SCSS
+// ============================================================================

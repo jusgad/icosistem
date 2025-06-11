@@ -2,7 +2,7 @@
 Notification Service - Ecosistema de Emprendimiento
 Servicio completo de notificaciones multi-canal con plantillas, colas y tracking
 
-Author: Senior Developer
+Author: jusga
 Version: 1.0.0
 """
 

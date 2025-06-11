@@ -4,7 +4,7 @@ Client/Stakeholder Forms Module
 Formularios específicos para clientes y stakeholders en el ecosistema.
 Incluye perfiles, evaluaciones, inversiones, partnerships y reportes.
 
-Author: Senior Developer
+Author: jusga
 Date: 2025
 """
 

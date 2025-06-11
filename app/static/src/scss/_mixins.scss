@@ -1,0 +1,1149 @@
+// ============================================================================
+// _MIXINS.SCSS - DASHBOARD PROJECT
+// Desarrollado por: jusgad
+// Descripción: Biblioteca completa de mixins para dashboard administrativo
+// Versión: 2.0.0
+// ============================================================================
+
+// ============================================================================
+// 1. RESPONSIVE DESIGN MIXINS
+// ============================================================================
+
+/// Responsive breakpoint mixin - Mobile First Approach
+/// @param {String} $breakpoint - Breakpoint name (xs, sm, md, lg, xl, xxl)
+/// @example scss - Usage
+///   .element {
+///     @include respond-to(md) {
+///       font-size: 1.2rem;
+///     }
+///   }
+@mixin respond-to($breakpoint) {
+  @if map-has-key($grid-breakpoints, $breakpoint) {
+    $breakpoint-value: map-get($grid-breakpoints, $breakpoint);
+    
+    @if $breakpoint-value == 0 {
+      @content;
+    } @else {
+      @media (min-width: $breakpoint-value) {
+        @content;
+      }
+    }
+  } @else {
+    @warn "Invalid breakpoint: #{$breakpoint}.";
+  }
+}
+
+/// Responsive breakpoint mixin - Desktop First Approach
+/// @param {String} $breakpoint - Breakpoint name
+@mixin respond-down($breakpoint) {
+  @if map-has-key($grid-breakpoints, $breakpoint) {
+    $breakpoint-value: map-get($grid-breakpoints, $breakpoint);
+    
+    @if $breakpoint-value > 0 {
+      @media (max-width: $breakpoint-value - 1px) {
+        @content;
+      }
+    }
+  } @else {
+    @warn "Invalid breakpoint: #{$breakpoint}.";
+  }
+}
+
+/// Between two breakpoints
+/// @param {String} $lower - Lower breakpoint
+/// @param {String} $upper - Upper breakpoint
+@mixin respond-between($lower, $upper) {
+  @if map-has-key($grid-breakpoints, $lower) and map-has-key($grid-breakpoints, $upper) {
+    $lower-value: map-get($grid-breakpoints, $lower);
+    $upper-value: map-get($grid-breakpoints, $upper);
+    
+    @media (min-width: $lower-value) and (max-width: $upper-value - 1px) {
+      @content;
+    }
+  } @else {
+    @warn "Invalid breakpoints: #{$lower}, #{$upper}.";
+  }
+}
+
+/// Custom media query mixin
+/// @param {String} $query - Custom media query
+@mixin media($query) {
+  @media #{$query} {
+    @content;
+  }
+}
+
+/// Retina/High DPI display mixin
+@mixin retina {
+  @media 
+    only screen and (-webkit-min-device-pixel-ratio: 2),
+    only screen and (min--moz-device-pixel-ratio: 2),
+    only screen and (-o-min-device-pixel-ratio: 2/1),
+    only screen and (min-device-pixel-ratio: 2),
+    only screen and (min-resolution: 192dpi),
+    only screen and (min-resolution: 2dppx) {
+    @content;
+  }
+}
+
+// ============================================================================
+// 2. FLEXBOX UTILITIES
+// ============================================================================
+
+/// Flexbox container with common properties
+/// @param {String} $direction - flex-direction (row, column, row-reverse, column-reverse)
+/// @param {String} $wrap - flex-wrap (nowrap, wrap, wrap-reverse)
+/// @param {String} $justify - justify-content
+/// @param {String} $align - align-items
+@mixin flex($direction: row, $wrap: nowrap, $justify: flex-start, $align: stretch) {
+  display: flex;
+  flex-direction: $direction;
+  flex-wrap: $wrap;
+  justify-content: $justify;
+  align-items: $align;
+}
+
+/// Flex center - both horizontal and vertical
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/// Flex space between with center alignment
+@mixin flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/// Flex space around with center alignment
+@mixin flex-around {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+/// Flex start alignment
+@mixin flex-start {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+/// Flex end alignment
+@mixin flex-end {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/// Flex column center
+@mixin flex-column-center {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/// Flex item properties
+/// @param {Number} $grow - flex-grow
+/// @param {Number} $shrink - flex-shrink
+/// @param {String} $basis - flex-basis
+@mixin flex-item($grow: 0, $shrink: 1, $basis: auto) {
+  flex: $grow $shrink $basis;
+}
+
+// ============================================================================
+// 3. GRID UTILITIES
+// ============================================================================
+
+/// CSS Grid container
+/// @param {String} $columns - grid-template-columns
+/// @param {String} $rows - grid-template-rows
+/// @param {String} $gap - grid-gap
+@mixin grid($columns: 1fr, $rows: auto, $gap: 1rem) {
+  display: grid;
+  grid-template-columns: $columns;
+  grid-template-rows: $rows;
+  gap: $gap;
+}
+
+/// Grid center items
+@mixin grid-center {
+  display: grid;
+  place-items: center;
+}
+
+/// Auto-fit grid columns
+/// @param {String} $min-width - Minimum column width
+/// @param {String} $gap - Grid gap
+@mixin grid-auto-fit($min-width: 250px, $gap: 1rem) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax($min-width, 1fr));
+  gap: $gap;
+}
+
+/// Auto-fill grid columns
+/// @param {String} $min-width - Minimum column width
+/// @param {String} $gap - Grid gap
+@mixin grid-auto-fill($min-width: 250px, $gap: 1rem) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax($min-width, 1fr));
+  gap: $gap;
+}
+
+/// Grid area placement
+/// @param {Number} $row-start - grid-row-start
+/// @param {Number} $col-start - grid-column-start
+/// @param {Number} $row-end - grid-row-end
+/// @param {Number} $col-end - grid-column-end
+@mixin grid-area($row-start, $col-start, $row-end: null, $col-end: null) {
+  grid-area: $row-start / $col-start / $row-end / $col-end;
+}
+
+// ============================================================================
+// 4. TYPOGRAPHY MIXINS
+// ============================================================================
+
+/// Typography scale mixin
+/// @param {String} $size - Font size key from $font-sizes map
+/// @param {String} $weight - Font weight
+/// @param {String} $line-height - Line height
+@mixin font-size($size, $weight: null, $line-height: null) {
+  @if map-has-key($spacers, $size) {
+    font-size: map-get($spacers, $size);
+  } @else {
+    font-size: $size;
+  }
+  
+  @if $weight {
+    font-weight: $weight;
+  }
+  
+  @if $line-height {
+    line-height: $line-height;
+  }
+}
+
+/// Heading mixin
+/// @param {Number} $level - Heading level (1-6)
+/// @param {String} $weight - Font weight
+/// @param {String} $line-height - Line height
+/// @param {String} $margin-bottom - Bottom margin
+@mixin heading($level: 1, $weight: $headings-font-weight, $line-height: $headings-line-height, $margin-bottom: $headings-margin-bottom) {
+  @if $level == 1 {
+    font-size: $h1-font-size;
+  } @else if $level == 2 {
+    font-size: $h2-font-size;
+  } @else if $level == 3 {
+    font-size: $h3-font-size;
+  } @else if $level == 4 {
+    font-size: $h4-font-size;
+  } @else if $level == 5 {
+    font-size: $h5-font-size;
+  } @else if $level == 6 {
+    font-size: $h6-font-size;
+  }
+  
+  font-weight: $weight;
+  line-height: $line-height;
+  margin-bottom: $margin-bottom;
+  color: $headings-color;
+}
+
+/// Text truncation (ellipsis)
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/// Multi-line text truncation
+/// @param {Number} $lines - Number of lines to show
+@mixin line-clamp($lines: 2) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/// Responsive font size
+/// @param {String} $min-size - Minimum font size
+/// @param {String} $max-size - Maximum font size
+/// @param {String} $min-vw - Minimum viewport width
+/// @param {String} $max-vw - Maximum viewport width
+@mixin fluid-font-size($min-size, $max-size, $min-vw: 320px, $max-vw: 1200px) {
+  font-size: $min-size;
+  
+  @media (min-width: $min-vw) {
+    font-size: calc(#{$min-size} + #{strip-unit($max-size - $min-size)} * ((100vw - #{$min-vw}) / #{strip-unit($max-vw - $min-vw)}));
+  }
+  
+  @media (min-width: $max-vw) {
+    font-size: $max-size;
+  }
+}
+
+/// Text selection styling
+/// @param {Color} $background - Selection background color
+/// @param {Color} $color - Selection text color
+@mixin selection($background: $primary, $color: $white) {
+  ::selection {
+    background: $background;
+    color: $color;
+  }
+  
+  ::-moz-selection {
+    background: $background;
+    color: $color;
+  }
+}
+
+// ============================================================================
+// 5. SPACING MIXINS
+// ============================================================================
+
+/// Margin utility mixin
+/// @param {String|List} $values - Margin values (top, right, bottom, left)
+@mixin margin($values) {
+  @if length($values) == 1 {
+    margin: map-get($spacers, $values) or $values;
+  } @else if length($values) == 2 {
+    $top: nth($values, 1);
+    $right: nth($values, 2);
+    margin: (map-get($spacers, $top) or $top) (map-get($spacers, $right) or $right);
+  } @else if length($values) == 4 {
+    $top: nth($values, 1);
+    $right: nth($values, 2);
+    $bottom: nth($values, 3);
+    $left: nth($values, 4);
+    margin: (map-get($spacers, $top) or $top) (map-get($spacers, $right) or $right) (map-get($spacers, $bottom) or $bottom) (map-get($spacers, $left) or $left);
+  }
+}
+
+/// Padding utility mixin
+/// @param {String|List} $values - Padding values
+@mixin padding($values) {
+  @if length($values) == 1 {
+    padding: map-get($spacers, $values) or $values;
+  } @else if length($values) == 2 {
+    $top: nth($values, 1);
+    $right: nth($values, 2);
+    padding: (map-get($spacers, $top) or $top) (map-get($spacers, $right) or $right);
+  } @else if length($values) == 4 {
+    $top: nth($values, 1);
+    $right: nth($values, 2);
+    $bottom: nth($values, 3);
+    $left: nth($values, 4);
+    padding: (map-get($spacers, $top) or $top) (map-get($spacers, $right) or $right) (map-get($spacers, $bottom) or $bottom) (map-get($spacers, $left) or $left);
+  }
+}
+
+/// Size utility (width and height)
+/// @param {String} $width - Width value
+/// @param {String} $height - Height value (defaults to width)
+@mixin size($width, $height: $width) {
+  width: $width;
+  height: $height;
+}
+
+/// Square size
+/// @param {String} $size - Size value
+@mixin square($size) {
+  @include size($size, $size);
+}
+
+/// Circle
+/// @param {String} $size - Circle diameter
+@mixin circle($size) {
+  @include square($size);
+  border-radius: 50%;
+}
+
+// ============================================================================
+// 6. VISUAL EFFECTS MIXINS
+// ============================================================================
+
+/// Box shadow mixin
+/// @param {String} $shadow - Shadow type (xs, sm, md, lg, xl, 2xl, inner, none)
+@mixin shadow($shadow: md) {
+  @if $shadow == xs {
+    box-shadow: $shadow-xs;
+  } @else if $shadow == sm {
+    box-shadow: $shadow-sm;
+  } @else if $shadow == md {
+    box-shadow: $shadow-md;
+  } @else if $shadow == lg {
+    box-shadow: $shadow-lg;
+  } @else if $shadow == xl {
+    box-shadow: $shadow-xl;
+  } @else if $shadow == 2xl {
+    box-shadow: $shadow-2xl;
+  } @else if $shadow == inner {
+    box-shadow: $shadow-inner;
+  } @else if $shadow == none {
+    box-shadow: none;
+  } @else {
+    box-shadow: $shadow;
+  }
+}
+
+/// Border radius mixin
+/// @param {String} $radius - Radius size (sm, md, lg, xl, 2xl, full)
+@mixin rounded($radius: md) {
+  @if $radius == sm {
+    border-radius: $border-radius-sm;
+  } @else if $radius == md {
+    border-radius: $border-radius;
+  } @else if $radius == lg {
+    border-radius: $border-radius-lg;
+  } @else if $radius == xl {
+    border-radius: $border-radius-xl;
+  } @else if $radius == 2xl {
+    border-radius: $border-radius-2xl;
+  } @else if $radius == full {
+    border-radius: $border-radius-pill;
+  } @else {
+    border-radius: $radius;
+  }
+}
+
+/// Border mixin
+/// @param {String} $width - Border width
+/// @param {String} $style - Border style
+/// @param {Color} $color - Border color
+@mixin border($width: 1px, $style: solid, $color: $border-color) {
+  border: $width $style $color;
+}
+
+/// Gradient background
+/// @param {Color} $start-color - Start color
+/// @param {Color} $end-color - End color
+/// @param {String} $direction - Gradient direction
+@mixin gradient($start-color, $end-color, $direction: to bottom) {
+  background: $start-color;
+  background: linear-gradient($direction, $start-color 0%, $end-color 100%);
+}
+
+/// Glass morphism effect
+/// @param {Color} $bg-color - Background color
+/// @param {Number} $opacity - Background opacity
+/// @param {String} $blur - Backdrop blur amount
+@mixin glass($bg-color: $white, $opacity: 0.1, $blur: 10px) {
+  background: rgba($bg-color, $opacity);
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+}
+
+/// Neumorphism effect
+/// @param {Color} $bg-color - Background color
+/// @param {String} $size - Shadow size
+@mixin neumorphism($bg-color: $gray-100, $size: 20px) {
+  background: $bg-color;
+  border-radius: $size;
+  box-shadow: 
+    #{$size} #{$size} #{$size * 2} lighten($bg-color, 10%),
+    #{-$size} #{-$size} #{$size * 2} darken($bg-color, 10%);
+}
+
+// ============================================================================
+// 7. ANIMATION MIXINS
+// ============================================================================
+
+/// Transition mixin
+/// @param {String} $property - CSS property to animate
+/// @param {String} $duration - Animation duration
+/// @param {String} $timing - Timing function
+/// @param {String} $delay - Animation delay
+@mixin transition($property: all, $duration: $transition-duration-300, $timing: $transition-ease-in-out, $delay: 0s) {
+  transition: $property $duration $timing $delay;
+}
+
+/// Multiple transitions
+/// @param {List} $transitions - List of transitions
+@mixin transitions($transitions...) {
+  transition: $transitions;
+}
+
+/// Transform mixin
+/// @param {String} $transforms - Transform functions
+@mixin transform($transforms) {
+  transform: $transforms;
+}
+
+/// Animation mixin
+/// @param {String} $name - Animation name
+/// @param {String} $duration - Animation duration
+/// @param {String} $timing - Timing function
+/// @param {String} $delay - Animation delay
+/// @param {String} $iteration - Iteration count
+/// @param {String} $direction - Animation direction
+/// @param {String} $fill-mode - Fill mode
+@mixin animation($name, $duration: 1s, $timing: ease, $delay: 0s, $iteration: 1, $direction: normal, $fill-mode: both) {
+  animation: $name $duration $timing $delay $iteration $direction $fill-mode;
+}
+
+/// Keyframe animation generator
+/// @param {String} $name - Animation name
+@mixin keyframes($name) {
+  @-webkit-keyframes #{$name} {
+    @content;
+  }
+  
+  @keyframes #{$name} {
+    @content;
+  }
+}
+
+/// Hover transform effect
+/// @param {String} $transform - Transform to apply on hover
+/// @param {String} $duration - Transition duration
+@mixin hover-transform($transform: translateY(-2px), $duration: $transition-duration-200) {
+  transition: transform $duration $transition-ease-out;
+  
+  &:hover {
+    transform: $transform;
+  }
+}
+
+/// Pulse animation
+/// @param {Color} $color - Pulse color
+/// @param {String} $duration - Animation duration
+@mixin pulse($color: $primary, $duration: 2s) {
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: inherit;
+    background: $color;
+    opacity: 0.7;
+    animation: pulse-animation $duration infinite;
+  }
+  
+  @include keyframes(pulse-animation) {
+    0% {
+      transform: scale(1);
+      opacity: 0.7;
+    }
+    70% {
+      transform: scale(1.05);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0;
+    }
+  }
+}
+
+// ============================================================================
+// 8. BUTTON MIXINS
+// ============================================================================
+
+/// Button base styles
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: $font-family-base;
+  font-weight: $btn-font-weight;
+  line-height: $btn-line-height;
+  color: $body-color;
+  text-align: center;
+  text-decoration: none;
+  white-space: $btn-white-space;
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+  background-color: transparent;
+  border: $btn-border-width solid transparent;
+  outline: none;
+  @include transition(all, $transition-duration-150, $transition-ease-in-out);
+  
+  &:hover {
+    text-decoration: none;
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: $btn-focus-box-shadow;
+  }
+  
+  &:disabled,
+  &.disabled {
+    opacity: $btn-disabled-opacity;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+/// Button size mixin
+/// @param {String} $padding-y - Vertical padding
+/// @param {String} $padding-x - Horizontal padding
+/// @param {String} $font-size - Font size
+/// @param {String} $border-radius - Border radius
+@mixin button-size($padding-y, $padding-x, $font-size, $border-radius) {
+  padding: $padding-y $padding-x;
+  font-size: $font-size;
+  border-radius: $border-radius;
+}
+
+/// Button variant mixin
+/// @param {Color} $background - Background color
+/// @param {Color} $border - Border color
+/// @param {Color} $color - Text color
+/// @param {Color} $hover-background - Hover background
+/// @param {Color} $hover-border - Hover border
+/// @param {Color} $hover-color - Hover text color
+/// @param {Color} $active-background - Active background
+/// @param {Color} $active-border - Active border
+/// @param {Color} $active-color - Active text color
+@mixin button-variant(
+  $background,
+  $border: $background,
+  $color: color-contrast($background),
+  $hover-background: darken($background, 7.5%),
+  $hover-border: darken($border, 10%),
+  $hover-color: $color,
+  $active-background: darken($background, 10%),
+  $active-border: darken($border, 12.5%),
+  $active-color: $color
+) {
+  color: $color;
+  background-color: $background;
+  border-color: $border;
+  
+  &:hover {
+    color: $hover-color;
+    background-color: $hover-background;
+    border-color: $hover-border;
+  }
+  
+  &:focus {
+    color: $hover-color;
+    background-color: $hover-background;
+    border-color: $hover-border;
+    box-shadow: 0 0 0 $btn-focus-width rgba($border, 0.5);
+  }
+  
+  &:active,
+  &.active {
+    color: $active-color;
+    background-color: $active-background;
+    border-color: $active-border;
+    
+    &:focus {
+      box-shadow: 0 0 0 $btn-focus-width rgba($border, 0.5);
+    }
+  }
+  
+  &:disabled,
+  &.disabled {
+    color: $color;
+    background-color: $background;
+    border-color: $border;
+  }
+}
+
+/// Button outline variant
+/// @param {Color} $color - Button color
+/// @param {Color} $color-hover - Hover text color
+/// @param {Color} $active-background - Active background
+/// @param {Color} $active-border - Active border
+@mixin button-outline-variant($color, $color-hover: $white, $active-background: $color, $active-border: $color) {
+  color: $color;
+  border-color: $color;
+  
+  &:hover {
+    color: $color-hover;
+    background-color: $active-background;
+    border-color: $active-border;
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 $btn-focus-width rgba($color, 0.5);
+  }
+  
+  &:active,
+  &.active {
+    color: $color-hover;
+    background-color: $active-background;
+    border-color: $active-border;
+    
+    &:focus {
+      box-shadow: 0 0 0 $btn-focus-width rgba($color, 0.5);
+    }
+  }
+  
+  &:disabled,
+  &.disabled {
+    color: $color;
+    background-color: transparent;
+  }
+}
+
+// ============================================================================
+// 9. FORM MIXINS
+// ============================================================================
+
+/// Form control base
+@mixin form-control-base {
+  display: block;
+  width: 100%;
+  padding: $input-padding-y $input-padding-x;
+  font-family: $input-font-family;
+  font-size: $input-font-size;
+  font-weight: $input-font-weight;
+  line-height: $input-line-height;
+  color: $input-color;
+  background-color: $input-bg;
+  background-image: none;
+  border: $input-border-width solid $input-border-color;
+  appearance: none;
+  border-radius: $input-border-radius;
+  @include transition(border-color, $transition-duration-150, $transition-ease-in-out);
+  @include transition(box-shadow, $transition-duration-150, $transition-ease-in-out);
+  
+  &::placeholder {
+    color: $input-placeholder-color;
+    opacity: 1;
+  }
+  
+  &:focus {
+    color: $input-focus-color;
+    background-color: $input-focus-bg;
+    border-color: $input-focus-border-color;
+    outline: 0;
+    box-shadow: $input-focus-box-shadow;
+  }
+  
+  &:disabled,
+  &[readonly] {
+    background-color: $input-disabled-bg;
+    opacity: 1;
+  }
+  
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+/// Form control size
+/// @param {String} $padding-y - Vertical padding
+/// @param {String} $padding-x - Horizontal padding
+/// @param {String} $font-size - Font size
+/// @param {String} $border-radius - Border radius
+@mixin form-control-size($padding-y, $padding-x, $font-size, $border-radius) {
+  padding: $padding-y $padding-x;
+  font-size: $font-size;
+  border-radius: $border-radius;
+}
+
+/// Form validation state
+/// @param {String} $state - Validation state (valid, invalid)
+/// @param {Color} $color - State color
+/// @param {String} $icon - State icon
+@mixin form-validation-state($state, $color, $icon) {
+  .#{$state}-feedback {
+    display: none;
+    width: 100%;
+    margin-top: $form-feedback-margin-top;
+    font-size: $form-feedback-font-size;
+    font-style: $form-feedback-font-style;
+    color: $color;
+  }
+  
+  .#{$state}-tooltip {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 5;
+    display: none;
+    max-width: 100%;
+    padding: $form-feedback-tooltip-padding-y $form-feedback-tooltip-padding-x;
+    margin-top: 0.1rem;
+    font-size: $form-feedback-tooltip-font-size;
+    line-height: $form-feedback-tooltip-line-height;
+    color: color-contrast($color);
+    background-color: rgba($color, $form-feedback-tooltip-opacity);
+    border-radius: $form-feedback-tooltip-border-radius;
+  }
+  
+  .form-control {
+    .was-validated &:#{$state},
+    &.is-#{$state} {
+      border-color: $color;
+      
+      &:focus {
+        border-color: $color;
+        box-shadow: 0 0 0 $input-focus-width rgba($color, 0.25);
+      }
+    }
+  }
+  
+  .was-validated .form-control:#{$state},
+  .form-control.is-#{$state} {
+    ~ .#{$state}-feedback,
+    ~ .#{$state}-tooltip {
+      display: block;
+    }
+  }
+}
+
+// ============================================================================
+// 10. LAYOUT HELPERS
+// ============================================================================
+
+/// Clearfix
+@mixin clearfix {
+  &::after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+}
+
+/// Visually hidden (screen reader only)
+@mixin visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/// Reset visually hidden
+@mixin visually-hidden-focusable {
+  &:not(:focus):not(:focus-within) {
+    @include visually-hidden;
+  }
+}
+
+/// Position absolute center
+@mixin absolute-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/// Position fixed center
+@mixin fixed-center {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/// Aspect ratio
+/// @param {Number} $width - Width ratio
+/// @param {Number} $height - Height ratio
+@mixin aspect-ratio($width, $height) {
+  position: relative;
+  
+  &::before {
+    content: "";
+    display: block;
+    padding-top: percentage($height / $width);
+  }
+  
+  > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+/// Cover background image
+@mixin cover-background {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/// Contain background image
+@mixin contain-background {
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+// ============================================================================
+// 11. SCROLLBAR CUSTOMIZATION
+// ============================================================================
+
+/// Custom scrollbar
+/// @param {String} $size - Scrollbar size
+/// @param {Color} $thumb-color - Thumb color
+/// @param {Color} $track-color - Track color
+/// @param {String} $border-radius - Border radius
+@mixin scrollbar($size: 8px, $thumb-color: $gray-400, $track-color: $gray-100, $border-radius: 4px) {
+  &::-webkit-scrollbar {
+    width: $size;
+    height: $size;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: $track-color;
+    border-radius: $border-radius;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: $thumb-color;
+    border-radius: $border-radius;
+    
+    &:hover {
+      background: darken($thumb-color, 10%);
+    }
+  }
+  
+  // Firefox
+  scrollbar-width: thin;
+  scrollbar-color: $thumb-color $track-color;
+}
+
+/// Hide scrollbar
+@mixin hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// ============================================================================
+// 12. ACCESSIBILITY MIXINS
+// ============================================================================
+
+/// Focus ring
+/// @param {Color} $color - Focus color
+/// @param {String} $width - Focus ring width
+/// @param {String} $offset - Focus ring offset
+@mixin focus-ring($color: $primary, $width: $focus-ring-width, $offset: 2px) {
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 $offset $white, 0 0 0 calc(#{$offset} + #{$width}) $color;
+  }
+}
+
+/// Skip link
+@mixin skip-link {
+  @include visually-hidden;
+  
+  &:focus {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: auto;
+    height: auto;
+    padding: $spacer;
+    margin: 0;
+    background: $primary;
+    color: $white;
+    text-decoration: none;
+    z-index: 99999;
+  }
+}
+
+/// High contrast mode support
+@mixin high-contrast {
+  @media (prefers-contrast: high) {
+    @content;
+  }
+}
+
+/// Reduced motion support
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+/// Dark mode support
+@mixin dark-mode {
+  @media (prefers-color-scheme: dark) {
+    @content;
+  }
+}
+
+// ============================================================================
+// 13. UTILITY MIXINS
+// ============================================================================
+
+/// Generate utility classes
+/// @param {String} $property - CSS property
+/// @param {Map} $values - Map of values
+/// @param {String} $class - Base class name
+@mixin generate-utility($property, $values, $class: $property) {
+  @each $key, $value in $values {
+    .#{$class}-#{$key} {
+      #{$property}: $value !important;
+    }
+  }
+}
+
+/// Reset list styles
+@mixin list-unstyled {
+  padding-left: 0;
+  list-style: none;
+}
+
+/// Reset button styles
+@mixin button-reset {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+  outline: none;
+}
+
+/// Reset input styles
+@mixin input-reset {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  outline: none;
+  appearance: none;
+}
+
+/// Reset link styles
+@mixin link-reset {
+  color: inherit;
+  text-decoration: none;
+  
+  &:hover,
+  &:focus {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+/// Word wrap
+@mixin word-wrap {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/// Prevent text selection
+@mixin no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+// ============================================================================
+// 14. PRINT MIXINS
+// ============================================================================
+
+/// Print styles
+@mixin print-styles {
+  @media print {
+    @content;
+  }
+}
+
+/// Hide from print
+@mixin print-hidden {
+  @include print-styles {
+    display: none !important;
+  }
+}
+
+/// Show only in print
+@mixin print-only {
+  display: none;
+  
+  @include print-styles {
+    display: block !important;
+  }
+}
+
+// ============================================================================
+// 15. PERFORMANCE MIXINS
+// ============================================================================
+
+/// Hardware acceleration
+@mixin hardware-acceleration {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/// Will change optimization
+/// @param {String} $properties - Properties that will change
+@mixin will-change($properties: auto) {
+  will-change: $properties;
+}
+
+/// GPU rendering
+@mixin gpu-render {
+  transform: translate3d(0, 0, 0);
+}
+
+// ============================================================================
+// 16. HELPER FUNCTIONS (used by mixins)
+// ============================================================================
+
+/// Strip unit from number
+/// @param {Number} $number - Number with unit
+/// @return {Number} - Unitless number
+@function strip-unit($number) {
+  @if type-of($number) == 'number' and not unitless($number) {
+    @return $number / ($number * 0 + 1);
+  }
+  
+  @return $number;
+}
+
+/// Color contrast function
+/// @param {Color} $background - Background color
+/// @param {Color} $color-contrast-dark - Dark contrast color
+/// @param {Color} $color-contrast-light - Light contrast color
+/// @param {Number} $min-contrast-ratio - Minimum contrast ratio
+/// @return {Color} - Contrasting color
+@function color-contrast($background, $color-contrast-dark: $dark, $color-contrast-light: $light, $min-contrast-ratio: 4.5) {
+  $foregrounds: $color-contrast-light, $color-contrast-dark, $white, $black;
+  $max-ratio: 0;
+  $max-ratio-color: null;
+  
+  @each $color in $foregrounds {
+    $contrast-ratio: contrast($background, $color);
+    @if $contrast-ratio > $min-contrast-ratio {
+      @return $color;
+    } @else if $contrast-ratio > $max-ratio {
+      $max-ratio: $contrast-ratio;
+      $max-ratio-color: $color;
+    }
+  }
+  
+  @warn "Found no color leading to #{$min-contrast-ratio}:1 contrast ratio against #{$background}...";
+  
+  @return $max-ratio-color;
+}
+
+// ============================================================================
+// FIN DEL ARCHIVO _MIXINS.SCSS
+// ============================================================================

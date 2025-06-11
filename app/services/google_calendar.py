@@ -2,7 +2,7 @@
 Google Calendar Service - Ecosistema de Emprendimiento
 Servicio completo de integración con Google Calendar API
 
-Author: Senior Developer
+Author: jusga
 Version: 1.0.0
 """
 

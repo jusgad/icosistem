@@ -1,0 +1,1358 @@
+// ============================================================================
+// _BUTTONS.SCSS - DASHBOARD PROJECT
+// Desarrollado por: jusgad
+// Descripción: Sistema completo de botones para dashboard administrativo
+// Versión: 2.0.0
+// ============================================================================
+
+// ============================================================================
+// 1. BASE BUTTON CONFIGURATION
+// ============================================================================
+
+/// Configuración base para todos los botones
+/// Establece las propiedades fundamentales que heredarán todas las variantes
+.btn {
+  // Configuración de display y layout
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  
+  // Tipografía
+  font-family: $font-family-base;
+  font-weight: $btn-font-weight;
+  line-height: $btn-line-height;
+  text-align: center;
+  text-decoration: none;
+  vertical-align: middle;
+  white-space: $btn-white-space;
+  
+  // Interacción y cursor
+  cursor: pointer;
+  user-select: none;
+  
+  // Bordes y background base
+  background-color: transparent;
+  border: $btn-border-width solid transparent;
+  
+  // Configuración de outline y focus
+  outline: none;
+  
+  // Transiciones suaves
+  transition: $btn-transition;
+  
+  // Configuración de gap para iconos
+  gap: 0.5rem;
+  
+  // Configuración de border-radius base
+  border-radius: $btn-border-radius;
+  
+  // Estados base
+  &:hover {
+    text-decoration: none;
+    transform: translateY(-1px);
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: $btn-focus-box-shadow;
+    z-index: 2;
+  }
+  
+  &:active {
+    transform: translateY(0);
+    box-shadow: $btn-active-box-shadow;
+  }
+  
+  // Estado disabled
+  &:disabled,
+  &.disabled {
+    opacity: $btn-disabled-opacity;
+    cursor: not-allowed;
+    pointer-events: none;
+    transform: none;
+    box-shadow: none;
+  }
+  
+  // Configuración para iconos dentro de botones
+  .icon,
+  svg {
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+    
+    &:only-child {
+      margin: 0;
+    }
+  }
+  
+  // Loading state
+  &.loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 1em;
+      height: 1em;
+      margin: -0.5em 0 0 -0.5em;
+      border: 2px solid currentColor;
+      border-radius: 50%;
+      border-right-color: transparent;
+      animation: btn-loading-spin 0.75s linear infinite;
+    }
+  }
+}
+
+/// Animación para estado loading
+@keyframes btn-loading-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+// ============================================================================
+// 2. BUTTON SIZES
+// ============================================================================
+
+/// Tamaño extra pequeño
+.btn-xs {
+  @include button-size(
+    $btn-padding-y * 0.375,
+    $btn-padding-x * 0.5,
+    $btn-font-size * 0.75,
+    $btn-border-radius-sm
+  );
+  gap: 0.25rem;
+}
+
+/// Tamaño pequeño
+.btn-sm {
+  @include button-size(
+    $btn-padding-y-sm,
+    $btn-padding-x-sm,
+    $btn-font-size-sm,
+    $btn-border-radius-sm
+  );
+  gap: 0.375rem;
+}
+
+/// Tamaño mediano (default)
+.btn-md {
+  @include button-size(
+    $btn-padding-y,
+    $btn-padding-x,
+    $btn-font-size,
+    $btn-border-radius
+  );
+  gap: 0.5rem;
+}
+
+/// Tamaño grande
+.btn-lg {
+  @include button-size(
+    $btn-padding-y-lg,
+    $btn-padding-x-lg,
+    $btn-font-size-lg,
+    $btn-border-radius-lg
+  );
+  gap: 0.625rem;
+}
+
+/// Tamaño extra grande
+.btn-xl {
+  @include button-size(
+    $btn-padding-y-lg * 1.25,
+    $btn-padding-x-lg * 1.5,
+    $btn-font-size-lg * 1.125,
+    $btn-border-radius-lg
+  );
+  gap: 0.75rem;
+}
+
+// ============================================================================
+// 3. BUTTON VARIANTS - SOLID BUTTONS
+// ============================================================================
+
+/// Botón primario
+.btn-primary {
+  @include button-variant(
+    $primary,
+    $primary,
+    color-contrast($primary),
+    darken($primary, 7.5%),
+    darken($primary, 10%),
+    color-contrast(darken($primary, 7.5%)),
+    darken($primary, 10%),
+    darken($primary, 12.5%),
+    color-contrast(darken($primary, 10%))
+  );
+  box-shadow: 0 2px 4px rgba($primary, 0.2);
+  
+  &:hover {
+    box-shadow: 0 4px 8px rgba($primary, 0.3);
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($primary, 0.25);
+  }
+}
+
+/// Botón secundario
+.btn-secondary {
+  @include button-variant(
+    $secondary,
+    $secondary,
+    color-contrast($secondary),
+    darken($secondary, 7.5%),
+    darken($secondary, 10%),
+    color-contrast(darken($secondary, 7.5%)),
+    darken($secondary, 10%),
+    darken($secondary, 12.5%),
+    color-contrast(darken($secondary, 10%))
+  );
+  box-shadow: 0 2px 4px rgba($secondary, 0.2);
+  
+  &:hover {
+    box-shadow: 0 4px 8px rgba($secondary, 0.3);
+  }
+}
+
+/// Botón de éxito
+.btn-success {
+  @include button-variant(
+    $success,
+    $success,
+    color-contrast($success),
+    darken($success, 7.5%),
+    darken($success, 10%),
+    color-contrast(darken($success, 7.5%)),
+    darken($success, 10%),
+    darken($success, 12.5%),
+    color-contrast(darken($success, 10%))
+  );
+  box-shadow: 0 2px 4px rgba($success, 0.2);
+  
+  &:hover {
+    box-shadow: 0 4px 8px rgba($success, 0.3);
+  }
+}
+
+/// Botón de información
+.btn-info {
+  @include button-variant(
+    $info,
+    $info,
+    color-contrast($info),
+    darken($info, 7.5%),
+    darken($info, 10%),
+    color-contrast(darken($info, 7.5%)),
+    darken($info, 10%),
+    darken($info, 12.5%),
+    color-contrast(darken($info, 10%))
+  );
+  box-shadow: 0 2px 4px rgba($info, 0.2);
+  
+  &:hover {
+    box-shadow: 0 4px 8px rgba($info, 0.3);
+  }
+}
+
+/// Botón de advertencia
+.btn-warning {
+  @include button-variant(
+    $warning,
+    $warning,
+    color-contrast($warning),
+    darken($warning, 7.5%),
+    darken($warning, 10%),
+    color-contrast(darken($warning, 7.5%)),
+    darken($warning, 10%),
+    darken($warning, 12.5%),
+    color-contrast(darken($warning, 10%))
+  );
+  box-shadow: 0 2px 4px rgba($warning, 0.2);
+  
+  &:hover {
+    box-shadow: 0 4px 8px rgba($warning, 0.3);
+  }
+}
+
+/// Botón de peligro
+.btn-danger {
+  @include button-variant(
+    $danger,
+    $danger,
+    color-contrast($danger),
+    darken($danger, 7.5%),
+    darken($danger, 10%),
+    color-contrast(darken($danger, 7.5%)),
+    darken($danger, 10%),
+    darken($danger, 12.5%),
+    color-contrast(darken($danger, 10%))
+  );
+  box-shadow: 0 2px 4px rgba($danger, 0.2);
+  
+  &:hover {
+    box-shadow: 0 4px 8px rgba($danger, 0.3);
+  }
+}
+
+/// Botón claro
+.btn-light {
+  @include button-variant(
+    $light,
+    $light,
+    $dark,
+    darken($light, 7.5%),
+    darken($light, 10%),
+    $dark,
+    darken($light, 10%),
+    darken($light, 12.5%),
+    $dark
+  );
+  box-shadow: 0 2px 4px rgba($black, 0.1);
+}
+
+/// Botón oscuro
+.btn-dark {
+  @include button-variant(
+    $dark,
+    $dark,
+    $white,
+    lighten($dark, 7.5%),
+    lighten($dark, 10%),
+    $white,
+    lighten($dark, 10%),
+    lighten($dark, 12.5%),
+    $white
+  );
+  box-shadow: 0 2px 4px rgba($dark, 0.3);
+  
+  &:hover {
+    box-shadow: 0 4px 8px rgba($dark, 0.4);
+  }
+}
+
+// ============================================================================
+// 4. BUTTON VARIANTS - OUTLINE BUTTONS
+// ============================================================================
+
+/// Botón outline primario
+.btn-outline-primary {
+  @include button-outline-variant($primary, $white, $primary, $primary);
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($primary, 0.25);
+  }
+}
+
+/// Botón outline secundario
+.btn-outline-secondary {
+  @include button-outline-variant($secondary, $white, $secondary, $secondary);
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($secondary, 0.25);
+  }
+}
+
+/// Botón outline de éxito
+.btn-outline-success {
+  @include button-outline-variant($success, $white, $success, $success);
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($success, 0.25);
+  }
+}
+
+/// Botón outline de información
+.btn-outline-info {
+  @include button-outline-variant($info, $white, $info, $info);
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($info, 0.25);
+  }
+}
+
+/// Botón outline de advertencia
+.btn-outline-warning {
+  @include button-outline-variant($warning, $white, $warning, $warning);
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($warning, 0.25);
+  }
+}
+
+/// Botón outline de peligro
+.btn-outline-danger {
+  @include button-outline-variant($danger, $white, $danger, $danger);
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($danger, 0.25);
+  }
+}
+
+/// Botón outline claro
+.btn-outline-light {
+  @include button-outline-variant($light, $dark, $light, $light);
+}
+
+/// Botón outline oscuro
+.btn-outline-dark {
+  @include button-outline-variant($dark, $white, $dark, $dark);
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($dark, 0.25);
+  }
+}
+
+// ============================================================================
+// 5. BUTTON VARIANTS - GHOST BUTTONS
+// ============================================================================
+
+/// Botones ghost (sin fondo, solo hover)
+.btn-ghost-primary {
+  color: $primary;
+  background-color: transparent;
+  border-color: transparent;
+  
+  &:hover {
+    color: $white;
+    background-color: $primary;
+    border-color: $primary;
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($primary, 0.25);
+  }
+}
+
+.btn-ghost-secondary {
+  color: $secondary;
+  background-color: transparent;
+  border-color: transparent;
+  
+  &:hover {
+    color: $white;
+    background-color: $secondary;
+    border-color: $secondary;
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($secondary, 0.25);
+  }
+}
+
+.btn-ghost-success {
+  color: $success;
+  background-color: transparent;
+  border-color: transparent;
+  
+  &:hover {
+    color: $white;
+    background-color: $success;
+    border-color: $success;
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($success, 0.25);
+  }
+}
+
+.btn-ghost-danger {
+  color: $danger;
+  background-color: transparent;
+  border-color: transparent;
+  
+  &:hover {
+    color: $white;
+    background-color: $danger;
+    border-color: $danger;
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($danger, 0.25);
+  }
+}
+
+// ============================================================================
+// 6. BUTTON VARIANTS - SOFT BUTTONS
+// ============================================================================
+
+/// Botones soft (fondo suave del color)
+.btn-soft-primary {
+  color: $primary;
+  background-color: rgba($primary, 0.1);
+  border-color: rgba($primary, 0.1);
+  
+  &:hover {
+    color: $primary;
+    background-color: rgba($primary, 0.2);
+    border-color: rgba($primary, 0.2);
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($primary, 0.25);
+  }
+  
+  &:active {
+    color: $white;
+    background-color: $primary;
+    border-color: $primary;
+  }
+}
+
+.btn-soft-secondary {
+  color: $secondary;
+  background-color: rgba($secondary, 0.1);
+  border-color: rgba($secondary, 0.1);
+  
+  &:hover {
+    color: $secondary;
+    background-color: rgba($secondary, 0.2);
+    border-color: rgba($secondary, 0.2);
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($secondary, 0.25);
+  }
+  
+  &:active {
+    color: $white;
+    background-color: $secondary;
+    border-color: $secondary;
+  }
+}
+
+.btn-soft-success {
+  color: $success;
+  background-color: rgba($success, 0.1);
+  border-color: rgba($success, 0.1);
+  
+  &:hover {
+    color: $success;
+    background-color: rgba($success, 0.2);
+    border-color: rgba($success, 0.2);
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($success, 0.25);
+  }
+  
+  &:active {
+    color: $white;
+    background-color: $success;
+    border-color: $success;
+  }
+}
+
+.btn-soft-info {
+  color: $info;
+  background-color: rgba($info, 0.1);
+  border-color: rgba($info, 0.1);
+  
+  &:hover {
+    color: $info;
+    background-color: rgba($info, 0.2);
+    border-color: rgba($info, 0.2);
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($info, 0.25);
+  }
+  
+  &:active {
+    color: $white;
+    background-color: $info;
+    border-color: $info;
+  }
+}
+
+.btn-soft-warning {
+  color: $warning;
+  background-color: rgba($warning, 0.1);
+  border-color: rgba($warning, 0.1);
+  
+  &:hover {
+    color: $warning;
+    background-color: rgba($warning, 0.2);
+    border-color: rgba($warning, 0.2);
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($warning, 0.25);
+  }
+  
+  &:active {
+    color: $white;
+    background-color: $warning;
+    border-color: $warning;
+  }
+}
+
+.btn-soft-danger {
+  color: $danger;
+  background-color: rgba($danger, 0.1);
+  border-color: rgba($danger, 0.1);
+  
+  &:hover {
+    color: $danger;
+    background-color: rgba($danger, 0.2);
+    border-color: rgba($danger, 0.2);
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($danger, 0.25);
+  }
+  
+  &:active {
+    color: $white;
+    background-color: $danger;
+    border-color: $danger;
+  }
+}
+
+// ============================================================================
+// 7. BUTTON VARIANTS - GRADIENT BUTTONS
+// ============================================================================
+
+/// Botones con gradientes
+.btn-gradient-primary {
+  background: linear-gradient(135deg, $primary 0%, lighten($primary, 10%) 100%);
+  border: none;
+  color: $white;
+  box-shadow: 0 4px 15px rgba($primary, 0.3);
+  
+  &:hover {
+    background: linear-gradient(135deg, darken($primary, 5%) 0%, $primary 100%);
+    box-shadow: 0 6px 20px rgba($primary, 0.4);
+    color: $white;
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($primary, 0.25);
+  }
+}
+
+.btn-gradient-success {
+  background: linear-gradient(135deg, $success 0%, lighten($success, 10%) 100%);
+  border: none;
+  color: $white;
+  box-shadow: 0 4px 15px rgba($success, 0.3);
+  
+  &:hover {
+    background: linear-gradient(135deg, darken($success, 5%) 0%, $success 100%);
+    box-shadow: 0 6px 20px rgba($success, 0.4);
+    color: $white;
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($success, 0.25);
+  }
+}
+
+.btn-gradient-danger {
+  background: linear-gradient(135deg, $danger 0%, lighten($danger, 10%) 100%);
+  border: none;
+  color: $white;
+  box-shadow: 0 4px 15px rgba($danger, 0.3);
+  
+  &:hover {
+    background: linear-gradient(135deg, darken($danger, 5%) 0%, $danger 100%);
+    box-shadow: 0 6px 20px rgba($danger, 0.4);
+    color: $white;
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($danger, 0.25);
+  }
+}
+
+// ============================================================================
+// 8. SPECIAL BUTTON STYLES
+// ============================================================================
+
+/// Botón de enlace
+.btn-link {
+  color: $primary;
+  background-color: transparent;
+  border-color: transparent;
+  text-decoration: none;
+  box-shadow: none;
+  
+  &:hover {
+    color: darken($primary, 15%);
+    text-decoration: underline;
+    background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    transform: none;
+  }
+  
+  &:focus {
+    color: darken($primary, 15%);
+    text-decoration: underline;
+    box-shadow: 0 0 0 3px rgba($primary, 0.25);
+  }
+  
+  &:disabled,
+  &.disabled {
+    color: $text-muted;
+    text-decoration: none;
+  }
+}
+
+/// Botón de cierre
+.btn-close {
+  box-sizing: content-box;
+  width: 1em;
+  height: 1em;
+  padding: 0.25em;
+  color: $black;
+  background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='m.293.293.707.707L8 8l7-7 .707.707L9.414 8.707 16 15.414l-.707.707L8 9.414l-7 7-.707-.707L7.293 8.293 1 2l.293-.293z'/%3e%3c/svg%3e") center/1em auto no-repeat;
+  border: 0;
+  border-radius: $border-radius-sm;
+  opacity: 0.5;
+  
+  &:hover {
+    color: $black;
+    text-decoration: none;
+    opacity: 0.75;
+    transform: none;
+  }
+  
+  &:focus {
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba($primary, 0.25);
+    opacity: 1;
+  }
+  
+  &:disabled,
+  &.disabled {
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.25;
+  }
+}
+
+/// Botón circular
+.btn-circle {
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  border-radius: 50%;
+  
+  &.btn-sm {
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  &.btn-lg {
+    width: 4rem;
+    height: 4rem;
+  }
+  
+  &.btn-xl {
+    width: 5rem;
+    height: 5rem;
+  }
+}
+
+/// Botón cuadrado
+.btn-square {
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  
+  &.btn-sm {
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  &.btn-lg {
+    width: 4rem;
+    height: 4rem;
+  }
+  
+  &.btn-xl {
+    width: 5rem;
+    height: 5rem;
+  }
+}
+
+// ============================================================================
+// 9. BUTTON BLOCKS
+// ============================================================================
+
+/// Botón de bloque (ancho completo)
+.btn-block {
+  width: 100%;
+}
+
+/// Responsive block buttons
+@each $breakpoint in map-keys($grid-breakpoints) {
+  @include respond-to($breakpoint) {
+    $infix: if($breakpoint == xs, '', '-#{$breakpoint}');
+    
+    .btn-block#{$infix} {
+      width: 100%;
+    }
+  }
+}
+
+// ============================================================================
+// 10. BUTTON GROUPS
+// ============================================================================
+
+/// Grupo de botones
+.btn-group {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  
+  > .btn {
+    position: relative;
+    flex: 1 1 auto;
+    border-radius: 0;
+    
+    &:first-child {
+      border-top-left-radius: $btn-border-radius;
+      border-bottom-left-radius: $btn-border-radius;
+    }
+    
+    &:last-child {
+      border-top-right-radius: $btn-border-radius;
+      border-bottom-right-radius: $btn-border-radius;
+    }
+    
+    &:not(:first-child) {
+      margin-left: -$btn-border-width;
+    }
+    
+    &:hover,
+    &:focus,
+    &:active,
+    &.active {
+      z-index: 1;
+    }
+  }
+  
+  // Grupo vertical
+  &.btn-group-vertical {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    
+    > .btn {
+      width: 100%;
+      border-radius: 0;
+      
+      &:first-child {
+        border-top-left-radius: $btn-border-radius;
+        border-top-right-radius: $btn-border-radius;
+        border-bottom-left-radius: 0;
+      }
+      
+      &:last-child {
+        border-bottom-left-radius: $btn-border-radius;
+        border-bottom-right-radius: $btn-border-radius;
+        border-top-right-radius: 0;
+      }
+      
+      &:not(:first-child) {
+        margin-left: 0;
+        margin-top: -$btn-border-width;
+      }
+    }
+  }
+  
+  // Tamaños de grupos
+  &.btn-group-sm > .btn {
+    @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $btn-font-size-sm, $btn-border-radius-sm);
+  }
+  
+  &.btn-group-lg > .btn {
+    @include button-size($btn-padding-y-lg, $btn-padding-x-lg, $btn-font-size-lg, $btn-border-radius-lg);
+  }
+}
+
+// ============================================================================
+// 11. FLOATING ACTION BUTTONS (FAB)
+// ============================================================================
+
+/// Botón flotante
+.btn-fab {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  box-shadow: 0 6px 20px rgba($black, 0.15);
+  z-index: 1000;
+  
+  &:hover {
+    box-shadow: 0 8px 25px rgba($black, 0.2);
+    transform: translateY(-2px);
+  }
+  
+  &.btn-fab-extended {
+    width: auto;
+    height: 3rem;
+    padding: 0 1.5rem;
+    border-radius: 1.5rem;
+    
+    .icon {
+      margin-right: 0.5rem;
+    }
+  }
+  
+  // Posiciones alternativas
+  &.btn-fab-top-right {
+    top: 2rem;
+    bottom: auto;
+  }
+  
+  &.btn-fab-top-left {
+    top: 2rem;
+    left: 2rem;
+    right: auto;
+    bottom: auto;
+  }
+  
+  &.btn-fab-bottom-left {
+    left: 2rem;
+    right: auto;
+  }
+}
+
+// ============================================================================
+// 12. BUTTON WITH ICONS
+// ============================================================================
+
+/// Configuración para botones con iconos
+.btn {
+  // Solo icono
+  &.btn-icon-only {
+    .icon,
+    svg {
+      margin: 0;
+    }
+  }
+  
+  // Icono a la izquierda
+  &.btn-icon-left {
+    .icon,
+    svg {
+      order: -1;
+    }
+  }
+  
+  // Icono a la derecha
+  &.btn-icon-right {
+    .icon,
+    svg {
+      order: 1;
+    }
+  }
+  
+  // Icono arriba (vertical)
+  &.btn-icon-top {
+    flex-direction: column;
+    
+    .icon,
+    svg {
+      order: -1;
+      margin-bottom: 0.25rem;
+    }
+  }
+  
+  // Icono abajo (vertical)
+  &.btn-icon-bottom {
+    flex-direction: column;
+    
+    .icon,
+    svg {
+      order: 1;
+      margin-top: 0.25rem;
+    }
+  }
+}
+
+// ============================================================================
+// 13. DASHBOARD SPECIFIC BUTTONS
+// ============================================================================
+
+/// Botón de acción de tabla
+.btn-table-action {
+  @include button-size(0.25rem, 0.5rem, $font-size-sm, $border-radius-sm);
+  color: $text-muted;
+  border: none;
+  background: transparent;
+  
+  &:hover {
+    color: $primary;
+    background: rgba($primary, 0.1);
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 2px rgba($primary, 0.25);
+  }
+}
+
+/// Botón de filtro
+.btn-filter {
+  position: relative;
+  
+  &.active {
+    &::after {
+      content: '';
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 8px;
+      height: 8px;
+      background: $primary;
+      border-radius: 50%;
+      border: 2px solid $white;
+    }
+  }
+}
+
+/// Botón de notificación
+.btn-notification {
+  position: relative;
+  
+  .notification-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    background: $danger;
+    color: $white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 18px;
+    text-align: center;
+    border-radius: 9px;
+    border: 2px solid $white;
+  }
+}
+
+/// Botones de sidebar
+.btn-sidebar-toggle {
+  display: none;
+  
+  @include respond-down(lg) {
+    display: inline-flex;
+  }
+}
+
+/// Botón de exportar
+.btn-export {
+  .icon {
+    animation: btn-export-bounce 2s ease-in-out infinite;
+  }
+  
+  &:hover .icon {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes btn-export-bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-3px);
+  }
+  60% {
+    transform: translateY(-1px);
+  }
+}
+
+// ============================================================================
+// 14. BUTTON STATES AND ANIMATIONS
+// ============================================================================
+
+/// Estados de éxito temporal
+.btn-success-temp {
+  transition: all 0.3s ease;
+  
+  &.success-state {
+    background-color: $success !important;
+    border-color: $success !important;
+    color: $white !important;
+    
+    &::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.2em;
+    }
+    
+    .btn-text {
+      opacity: 0;
+    }
+  }
+}
+
+/// Efectos de ripple
+.btn-ripple {
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba($white, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+  
+  &:active::before {
+    width: 300px;
+    height: 300px;
+  }
+}
+
+/// Pulso infinito
+.btn-pulse {
+  animation: btn-pulse 2s ease-in-out infinite;
+}
+
+@keyframes btn-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba($primary, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba($primary, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba($primary, 0);
+  }
+}
+
+// ============================================================================
+// 15. RESPONSIVE BUTTONS
+// ============================================================================
+
+/// Botones responsive
+@include respond-down(sm) {
+  .btn-responsive {
+    padding: $btn-padding-y-sm $btn-padding-x-sm;
+    font-size: $btn-font-size-sm;
+    
+    .btn-text-long {
+      display: none;
+    }
+    
+    .btn-text-short {
+      display: inline;
+    }
+  }
+}
+
+@include respond-to(sm) {
+  .btn-responsive {
+    .btn-text-long {
+      display: inline;
+    }
+    
+    .btn-text-short {
+      display: none;
+    }
+  }
+}
+
+// ============================================================================
+// 16. DARK MODE SUPPORT
+// ============================================================================
+
+@if $enable-dark-mode {
+  @include dark-mode {
+    .btn-light {
+      background-color: $gray-700;
+      border-color: $gray-700;
+      color: $white;
+      
+      &:hover {
+        background-color: $gray-600;
+        border-color: $gray-600;
+        color: $white;
+      }
+    }
+    
+    .btn-outline-light {
+      color: $gray-300;
+      border-color: $gray-300;
+      
+      &:hover {
+        background-color: $gray-300;
+        color: $dark;
+      }
+    }
+    
+    .btn-close {
+      filter: invert(1) grayscale(100%) brightness(200%);
+    }
+    
+    .btn-table-action {
+      color: $gray-400;
+      
+      &:hover {
+        color: $primary;
+        background: rgba($primary, 0.2);
+      }
+    }
+  }
+}
+
+// ============================================================================
+// 17. ACCESSIBILITY ENHANCEMENTS
+// ============================================================================
+
+/// Mejoras de accesibilidad
+.btn {
+  // Mejora el contraste en modo alto contraste
+  @media (prefers-contrast: high) {
+    border-width: 2px;
+  }
+  
+  // Respeta las preferencias de movimiento reducido
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    
+    &:hover {
+      transform: none;
+    }
+    
+    &.loading::after {
+      animation: none;
+    }
+  }
+  
+  // Soporte para navegación por teclado
+  &:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+}
+
+// Focus trap para botones modales
+.btn-modal-focus {
+  &:focus {
+    z-index: 1051; // Encima de modales
+  }
+}
+
+// ============================================================================
+// 18. PRINT STYLES
+// ============================================================================
+
+@if $enable-print-styles {
+  @media print {
+    .btn {
+      border: 1px solid $black;
+      background: $white !important;
+      color: $black !important;
+      box-shadow: none !important;
+      
+      &::after {
+        content: " [" attr(aria-label) "]";
+      }
+    }
+    
+    .btn-fab,
+    .btn-close {
+      display: none;
+    }
+  }
+}
+
+// ============================================================================
+// 19. UTILITY CLASSES FOR BUTTONS
+// ============================================================================
+
+/// Espaciado entre botones
+.btn + .btn {
+  margin-left: 0.5rem;
+}
+
+.btn-group .btn + .btn {
+  margin-left: 0;
+}
+
+/// Botones centrados
+.btn-center {
+  margin: 0 auto;
+  display: block;
+}
+
+/// Botones alineados a la derecha
+.btn-right {
+  margin-left: auto;
+  display: block;
+}
+
+/// Stack de botones verticales
+.btn-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  
+  .btn {
+    width: 100%;
+  }
+}
+
+/// Toolbar de botones
+.btn-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  
+  .btn-group {
+    margin-right: 0;
+  }
+}
+
+// ============================================================================
+// 20. PERFORMANCE OPTIMIZATIONS
+// ============================================================================
+
+/// Optimización para muchos botones
+.btn-grid {
+  .btn {
+    will-change: transform;
+    transform: translateZ(0); // Force hardware acceleration
+  }
+}
+
+/// Reduce paint en hover para listas largas
+.btn-list {
+  .btn {
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+}
+
+// ============================================================================
+// FIN DEL ARCHIVO _BUTTONS.SCSS
+// ============================================================================

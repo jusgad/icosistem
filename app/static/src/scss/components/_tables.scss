@@ -1,0 +1,632 @@
+// ============================================================================
+// TABLES COMPONENT
+// ============================================================================
+// Archivo: app/static/src/scss/components/_tables.scss
+// Descripción: Estilos completos para tablas del dashboard
+// Desarrollado por: Senior Developer
+// ============================================================================
+
+// Variables SCSS para tablas
+// ============================================================================
+$table-cell-padding: 0.75rem !default;
+$table-cell-padding-sm: 0.5rem !default;
+$table-cell-padding-lg: 1rem !default;
+
+// Colores
+$table-bg: transparent !default;
+$table-accent-bg: rgba(0, 0, 0, 0.05) !default;
+$table-hover-bg: rgba(0, 0, 0, 0.075) !default;
+$table-active-bg: $table-hover-bg !default;
+
+$table-border-width: 1px !default;
+$table-border-color: #dee2e6 !default;
+$table-border-radius: 0.375rem !default;
+
+$table-striped-order: odd !default;
+$table-striped-bg: rgba(0, 0, 0, 0.025) !default;
+
+$table-group-separator-color: currentColor !default;
+
+$table-caption-color: #6c757d !default;
+
+// Variables para temas
+$table-dark-bg: #212529 !default;
+$table-dark-accent-bg: rgba(255, 255, 255, 0.05) !default;
+$table-dark-hover-bg: rgba(255, 255, 255, 0.075) !default;
+$table-dark-border-color: #454d55 !default;
+$table-dark-color: #fff !default;
+
+// Variables para estados
+$table-success-bg: #d1e7dd !default;
+$table-info-bg: #d1ecf1 !default;
+$table-warning-bg: #fff3cd !default;
+$table-danger-bg: #f8d7da !default;
+$table-light-bg: #f8f9fa !default;
+$table-primary-bg: #cce5ff !default;
+
+// Mixins
+// ============================================================================
+@mixin table-row-variant($state, $background, $border: null) {
+  .table-#{$state} {
+    $color: color-contrast($background);
+    $hover-bg: mix($color, $background, percentage(0.5));
+    $striped-bg: mix($color, $background, percentage(0.05));
+    $active-bg: mix($color, $background, percentage(0.1));
+
+    --bs-table-bg: #{$background};
+    --bs-table-striped-bg: #{$striped-bg};
+    --bs-table-striped-color: #{color-contrast($striped-bg)};
+    --bs-table-active-bg: #{$active-bg};
+    --bs-table-active-color: #{color-contrast($active-bg)};
+    --bs-table-hover-bg: #{$hover-bg};
+    --bs-table-hover-color: #{color-contrast($hover-bg)};
+
+    @if $border != null {
+      --bs-table-border-color: #{$border};
+    }
+  }
+}
+
+// Base Table Styles
+// ============================================================================
+.table {
+  --bs-table-bg: #{$table-bg};
+  --bs-table-accent-bg: #{$table-accent-bg};
+  --bs-table-striped-color: #{$body-color};
+  --bs-table-striped-bg: #{$table-striped-bg};
+  --bs-table-active-color: #{$body-color};
+  --bs-table-active-bg: #{$table-active-bg};
+  --bs-table-hover-color: #{$body-color};
+  --bs-table-hover-bg: #{$table-hover-bg};
+
+  width: 100%;
+  margin-bottom: 1rem;
+  color: var(--bs-body-color);
+  vertical-align: top;
+  border-color: var(--bs-table-border-color, #{$table-border-color});
+  background-color: var(--bs-table-bg);
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+
+  // Cabeceras
+  > :not(caption) > * > * {
+    padding: $table-cell-padding $table-cell-padding;
+    background-color: var(--bs-table-bg);
+    border-bottom-width: $table-border-width;
+    box-shadow: inset 0 0 0 9999px var(--bs-table-accent-bg);
+  }
+
+  > tbody {
+    vertical-align: inherit;
+  }
+
+  > thead {
+    vertical-align: bottom;
+    
+    th {
+      font-weight: 600;
+      color: #374151;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      background-color: #f9fafb;
+      border-bottom: 2px solid $table-border-color;
+      
+      &.sortable {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        transition: all 0.2s ease;
+        
+        &:hover {
+          background-color: #f3f4f6;
+          color: #1f2937;
+        }
+        
+        &::after {
+          content: '\2195';
+          position: absolute;
+          right: 0.5rem;
+          top: 50%;
+          transform: translateY(-50%);
+          opacity: 0.5;
+          font-size: 0.75rem;
+        }
+        
+        &.sort-asc::after {
+          content: '\2191';
+          opacity: 1;
+        }
+        
+        &.sort-desc::after {
+          content: '\2193';
+          opacity: 1;
+        }
+      }
+    }
+  }
+
+  // Celdas
+  td, th {
+    border-bottom: $table-border-width solid $table-border-color;
+    transition: all 0.15s ease-in-out;
+    
+    &.text-center {
+      text-align: center;
+    }
+    
+    &.text-right {
+      text-align: right;
+    }
+    
+    &.text-left {
+      text-align: left;
+    }
+    
+    &.no-wrap {
+      white-space: nowrap;
+    }
+    
+    &.break-word {
+      word-break: break-word;
+    }
+  }
+
+  // Filas
+  tbody tr {
+    transition: all 0.15s ease-in-out;
+    
+    &:hover {
+      background-color: var(--bs-table-hover-bg);
+      color: var(--bs-table-hover-color);
+    }
+    
+    &.selected {
+      background-color: rgba(59, 130, 246, 0.1);
+      border-left: 3px solid #3b82f6;
+    }
+    
+    &.active {
+      background-color: var(--bs-table-active-bg);
+      color: var(--bs-table-active-color);
+    }
+  }
+
+  // Caption
+  > caption {
+    padding-top: $table-cell-padding;
+    padding-bottom: $table-cell-padding;
+    color: $table-caption-color;
+    text-align: left;
+    caption-side: bottom;
+  }
+
+  // Label dentro de celdas
+  > :not(caption) > * > * {
+    .badge {
+      font-size: 0.75rem;
+    }
+    
+    .btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+  }
+}
+
+// Table Variants
+// ============================================================================
+
+// Striped tables
+.table-striped {
+  > tbody > tr:nth-of-type(#{$table-striped-order}) > td {
+    --bs-table-accent-bg: var(--bs-table-striped-bg);
+    color: var(--bs-table-striped-color);
+  }
+}
+
+// Hoverable tables
+.table-hover {
+  > tbody > tr:hover > td {
+    --bs-table-accent-bg: var(--bs-table-hover-bg);
+    color: var(--bs-table-hover-color);
+  }
+}
+
+// Bordered tables
+.table-bordered {
+  border: $table-border-width solid $table-border-color;
+  
+  > :not(caption) > * {
+    border-width: $table-border-width 0;
+    
+    > * {
+      border-width: 0 $table-border-width;
+    }
+  }
+}
+
+// Borderless tables
+.table-borderless {
+  > :not(caption) > * > * {
+    border-bottom-width: 0;
+  }
+  
+  > :not(:first-child) {
+    border-top-width: 0;
+  }
+}
+
+// Small table
+.table-sm {
+  > :not(caption) > * > * {
+    padding: $table-cell-padding-sm;
+  }
+  
+  font-size: 0.8125rem;
+}
+
+// Large table
+.table-lg {
+  > :not(caption) > * > * {
+    padding: $table-cell-padding-lg;
+  }
+  
+  font-size: 0.9375rem;
+}
+
+// Table with rounded corners
+.table-rounded {
+  border-radius: $table-border-radius;
+  overflow: hidden;
+  
+  thead th {
+    &:first-child {
+      border-top-left-radius: $table-border-radius;
+    }
+    
+    &:last-child {
+      border-top-right-radius: $table-border-radius;
+    }
+  }
+}
+
+// Responsive Tables
+// ============================================================================
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: $table-border-radius;
+  
+  > .table {
+    margin-bottom: 0;
+    min-width: 600px;
+    
+    > thead > tr > th,
+    > tbody > tr > th,
+    > tbody > tr > td {
+      white-space: nowrap;
+    }
+  }
+  
+  // Responsive breakpoints
+  @media (max-width: 575.98px) {
+    font-size: 0.8125rem;
+    
+    .table {
+      > :not(caption) > * > * {
+        padding: $table-cell-padding-sm;
+      }
+    }
+  }
+}
+
+// Responsive variants
+@each $breakpoint in map-keys($grid-breakpoints) {
+  $infix: breakpoint-infix($breakpoint, $grid-breakpoints);
+
+  .table-responsive#{$infix} {
+    @include media-breakpoint-down($breakpoint) {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+}
+
+// Dark theme
+// ============================================================================
+.table-dark {
+  --bs-table-bg: #{$table-dark-bg};
+  --bs-table-striped-bg: #{$table-dark-accent-bg};
+  --bs-table-striped-color: #{$table-dark-color};
+  --bs-table-active-bg: #{$table-dark-hover-bg};
+  --bs-table-active-color: #{$table-dark-color};
+  --bs-table-hover-bg: #{$table-dark-hover-bg};
+  --bs-table-hover-color: #{$table-dark-color};
+  --bs-table-border-color: #{$table-dark-border-color};
+
+  color: $table-dark-color;
+  border-color: $table-dark-border-color;
+  
+  thead th {
+    background-color: darken($table-dark-bg, 5%);
+    color: $table-dark-color;
+    border-bottom-color: $table-dark-border-color;
+  }
+}
+
+// Table Row Variants
+// ============================================================================
+@include table-row-variant(primary, $table-primary-bg);
+@include table-row-variant(secondary, $secondary);
+@include table-row-variant(success, $table-success-bg);
+@include table-row-variant(info, $table-info-bg);
+@include table-row-variant(warning, $table-warning-bg);
+@include table-row-variant(danger, $table-danger-bg);
+@include table-row-variant(light, $table-light-bg);
+@include table-row-variant(dark, $table-dark-bg);
+
+// Loading state
+// ============================================================================
+.table-loading {
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #3498db;
+    border-radius: 50%;
+    animation: table-spin 2s linear infinite;
+    z-index: 11;
+  }
+}
+
+@keyframes table-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Empty state
+// ============================================================================
+.table-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6b7280;
+  
+  .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+  
+  .empty-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  
+  .empty-description {
+    font-size: 0.875rem;
+    color: #9ca3af;
+  }
+}
+
+// Table actions
+// ============================================================================
+.table-actions {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: flex-end;
+  
+  .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    line-height: 1.25;
+    
+    &.btn-icon {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}
+
+// Table filters
+// ============================================================================
+.table-filters {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: $table-border-radius $table-border-radius 0 0;
+  border: 1px solid $table-border-color;
+  border-bottom: none;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin: 0;
+      white-space: nowrap;
+    }
+    
+    .form-control,
+    .form-select {
+      font-size: 0.875rem;
+      min-width: 120px;
+    }
+  }
+  
+  .filter-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+// Table pagination
+// ============================================================================
+.table-pagination {
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  padding: 1rem 0;
+  border-top: 1px solid $table-border-color;
+  
+  .pagination-info {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+  
+  .pagination-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+}
+
+// Utilities específicas para tablas
+// ============================================================================
+.table-wrapper {
+  background: white;
+  border-radius: $table-border-radius;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  
+  .table {
+    margin-bottom: 0;
+    
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+.table-fixed {
+  table-layout: fixed;
+  
+  th, td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.table-nowrap {
+  th, td {
+    white-space: nowrap;
+  }
+}
+
+.table-compact {
+  > :not(caption) > * > * {
+    padding: 0.375rem 0.5rem;
+  }
+  
+  font-size: 0.8125rem;
+}
+
+// Checkbox column
+// ============================================================================
+.table-checkbox {
+  width: 40px;
+  text-align: center;
+  
+  .form-check {
+    margin: 0;
+    
+    .form-check-input {
+      margin: 0;
+    }
+  }
+}
+
+// Número de fila
+// ============================================================================
+.table-row-number {
+  width: 50px;
+  text-align: center;
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 0.8125rem;
+}
+
+// Estados de la fila
+// ============================================================================
+.table tbody tr {
+  &.row-new {
+    background-color: rgba(34, 197, 94, 0.1);
+    border-left: 3px solid #22c55e;
+  }
+  
+  &.row-updated {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-left: 3px solid #3b82f6;
+  }
+  
+  &.row-deleted {
+    background-color: rgba(239, 68, 68, 0.1);
+    border-left: 3px solid #ef4444;
+    opacity: 0.6;
+    text-decoration: line-through;
+  }
+  
+  &.row-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+// Print styles
+// ============================================================================
+@media print {
+  .table {
+    border-collapse: collapse !important;
+    
+    td, th {
+      background-color: #fff !important;
+    }
+  }
+  
+  .table-dark {
+    td, th {
+      border-color: #dee2e6 !important;
+    }
+  }
+  
+  .table-actions,
+  .table-filters,
+  .table-pagination {
+    display: none !important;
+  }
+}

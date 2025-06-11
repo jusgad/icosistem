@@ -4,7 +4,7 @@ Integration Hub Service
 Hub centralizado para gestionar todas las integraciones externas del ecosistema.
 Incluye OAuth, webhooks, rate limiting, circuit breakers y analytics.
 
-Author: Senior Developer  
+Author: jusga  
 Date: 2025
 """
 

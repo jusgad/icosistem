@@ -1,0 +1,886 @@
+// ============================================================================
+// _VARIABLES.SCSS - DASHBOARD PROJECT
+// Desarrollado por: jusga
+// Descripción: Sistema completo de variables para dashboard administrativo
+// Versión: 2.0.0
+// ============================================================================
+
+// ============================================================================
+// 1. CONFIGURACIÓN GLOBAL
+// ============================================================================
+
+// Prefijo para variables CSS customizadas
+$prefix: 'dash' !default;
+
+// Habilitar/deshabilitar funciones
+$enable-rounded: true !default;
+$enable-shadows: true !default;
+$enable-gradients: false !default;
+$enable-transitions: true !default;
+$enable-hover-media-query: false !default;
+$enable-grid-classes: true !default;
+$enable-print-styles: true !default;
+$enable-responsive-font-sizes: true !default;
+
+// ============================================================================
+// 2. COLORES PRINCIPALES
+// ============================================================================
+
+// Colores de marca
+$brand-primary: #2563eb !default;      // Azul principal
+$brand-secondary: #64748b !default;    // Gris azulado
+$brand-accent: #f59e0b !default;       // Ámbar/Dorado
+$brand-dark: #0f172a !default;         // Azul muy oscuro
+$brand-light: #f8fafc !default;        // Gris muy claro
+
+// Paleta de colores primarios extendida
+$blue-50: #eff6ff !default;
+$blue-100: #dbeafe !default;
+$blue-200: #bfdbfe !default;
+$blue-300: #93c5fd !default;
+$blue-400: #60a5fa !default;
+$blue-500: #3b82f6 !default;  // Base
+$blue-600: #2563eb !default;  // Primary
+$blue-700: #1d4ed8 !default;
+$blue-800: #1e40af !default;
+$blue-900: #1e3a8a !default;
+$blue-950: #172554 !default;
+
+// Paleta de grises completa
+$gray-50: #f8fafc !default;
+$gray-100: #f1f5f9 !default;
+$gray-200: #e2e8f0 !default;
+$gray-300: #cbd5e1 !default;
+$gray-400: #94a3b8 !default;
+$gray-500: #64748b !default;  // Base
+$gray-600: #475569 !default;
+$gray-700: #334155 !default;
+$gray-800: #1e293b !default;
+$gray-900: #0f172a !default;
+$gray-950: #020617 !default;
+
+// Colores neutros básicos
+$white: #ffffff !default;
+$black: #000000 !default;
+$transparent: transparent !default;
+
+// ============================================================================
+// 3. COLORES SEMÁNTICOS Y DE ESTADO
+// ============================================================================
+
+// Colores de éxito (Verde)
+$success-50: #f0fdf4 !default;
+$success-100: #dcfce7 !default;
+$success-200: #bbf7d0 !default;
+$success-300: #86efac !default;
+$success-400: #4ade80 !default;
+$success-500: #22c55e !default;
+$success-600: #16a34a !default;  // Base
+$success-700: #15803d !default;
+$success-800: #166534 !default;
+$success-900: #14532d !default;
+
+// Colores de advertencia (Ámbar)
+$warning-50: #fffbeb !default;
+$warning-100: #fef3c7 !default;
+$warning-200: #fde68a !default;
+$warning-300: #fcd34d !default;
+$warning-400: #fbbf24 !default;
+$warning-500: #f59e0b !default;  // Base
+$warning-600: #d97706 !default;
+$warning-700: #b45309 !default;
+$warning-800: #92400e !default;
+$warning-900: #78350f !default;
+
+// Colores de error/peligro (Rojo)
+$danger-50: #fef2f2 !default;
+$danger-100: #fee2e2 !default;
+$danger-200: #fecaca !default;
+$danger-300: #fca5a5 !default;
+$danger-400: #f87171 !default;
+$danger-500: #ef4444 !default;  // Base
+$danger-600: #dc2626 !default;
+$danger-700: #b91c1c !default;
+$danger-800: #991b1b !default;
+$danger-900: #7f1d1d !default;
+
+// Colores de información (Cian)
+$info-50: #ecfeff !default;
+$info-100: #cffafe !default;
+$info-200: #a5f3fc !default;
+$info-300: #67e8f9 !default;
+$info-400: #22d3ee !default;
+$info-500: #06b6d4 !default;  // Base
+$info-600: #0891b2 !default;
+$info-700: #0e7490 !default;
+$info-800: #155e75 !default;
+$info-900: #164e63 !default;
+
+// Colores principales del sistema
+$primary: $blue-600 !default;
+$primary-rgb: 37, 99, 235 !default;
+$secondary: $gray-500 !default;
+$secondary-rgb: 100, 116, 139 !default;
+$success: $success-600 !default;
+$success-rgb: 22, 163, 74 !default;
+$info: $info-500 !default;
+$info-rgb: 6, 182, 212 !default;
+$warning: $warning-500 !default;
+$warning-rgb: 245, 158, 11 !default;
+$danger: $danger-500 !default;
+$danger-rgb: 239, 68, 68 !default;
+$light: $gray-100 !default;
+$light-rgb: 241, 245, 249 !default;
+$dark: $gray-800 !default;
+$dark-rgb: 30, 41, 59 !default;
+
+// ============================================================================
+// 4. COLORES ADICIONALES PARA DASHBOARD
+// ============================================================================
+
+// Colores para gráficos y visualizaciones
+$chart-colors: (
+  1: #3b82f6,  // Azul
+  2: #10b981,  // Verde
+  3: #f59e0b,  // Ámbar
+  4: #ef4444,  // Rojo
+  5: #8b5cf6,  // Violeta
+  6: #06b6d4,  // Cian
+  7: #f97316,  // Naranja
+  8: #84cc16,  // Lima
+  9: #ec4899,  // Rosa
+  10: #6b7280, // Gris
+  11: #14b8a6, // Teal
+  12: #a855f7  // Púrpura
+) !default;
+
+// Colores de fondo para diferentes contextos
+$body-bg: $gray-50 !default;
+$body-color: $gray-700 !default;
+$content-bg: $white !default;
+$sidebar-bg: $white !default;
+$header-bg: $white !default;
+$card-bg: $white !default;
+$modal-bg: $white !default;
+
+// Colores de borde
+$border-color: $gray-200 !default;
+$border-color-light: $gray-100 !default;
+$border-color-dark: $gray-300 !default;
+
+// Colores de texto
+$text-primary: $gray-900 !default;
+$text-secondary: $gray-600 !default;
+$text-muted: $gray-500 !default;
+$text-light: $gray-400 !default;
+$text-white: $white !default;
+
+// Colores de enlaces
+$link-color: $primary !default;
+$link-decoration: none !default;
+$link-hover-color: darken($link-color, 10%) !default;
+$link-hover-decoration: none !default;
+
+// ============================================================================
+// 5. TIPOGRAFÍA
+// ============================================================================
+
+// Familias de fuentes
+$font-family-sans-serif: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol' !default;
+$font-family-serif: 'Charter', 'Bitstream Charter', 'Sitka Text', Cambria, serif !default;
+$font-family-monospace: 'JetBrains Mono', 'Fira Code', 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace !default;
+$font-family-base: $font-family-sans-serif !default;
+
+// Tamaños de fuente (escala modular 1.250 - Perfect Fourth)
+$font-size-base: 1rem !default;        // 16px
+$font-size-xs: 0.75rem !default;       // 12px
+$font-size-sm: 0.875rem !default;      // 14px
+$font-size-lg: 1.125rem !default;      // 18px
+$font-size-xl: 1.25rem !default;       // 20px
+$font-size-2xl: 1.5rem !default;       // 24px
+$font-size-3xl: 1.875rem !default;     // 30px
+$font-size-4xl: 2.25rem !default;      // 36px
+$font-size-5xl: 3rem !default;         // 48px
+$font-size-6xl: 3.75rem !default;      // 60px
+$font-size-7xl: 4.5rem !default;       // 72px
+$font-size-8xl: 6rem !default;         // 96px
+$font-size-9xl: 8rem !default;         // 128px
+
+// Pesos de fuente
+$font-weight-lighter: lighter !default;
+$font-weight-light: 300 !default;
+$font-weight-normal: 400 !default;
+$font-weight-medium: 500 !default;
+$font-weight-semibold: 600 !default;
+$font-weight-bold: 700 !default;
+$font-weight-bolder: bolder !default;
+$font-weight-black: 900 !default;
+
+// Altura de línea
+$line-height-none: 1 !default;
+$line-height-tight: 1.25 !default;
+$line-height-snug: 1.375 !default;
+$line-height-normal: 1.5 !default;
+$line-height-relaxed: 1.625 !default;
+$line-height-loose: 2 !default;
+$line-height-base: $line-height-normal !default;
+
+// Configuración de encabezados
+$h1-font-size: $font-size-4xl !default;
+$h2-font-size: $font-size-3xl !default;
+$h3-font-size: $font-size-2xl !default;
+$h4-font-size: $font-size-xl !default;
+$h5-font-size: $font-size-lg !default;
+$h6-font-size: $font-size-base !default;
+
+$headings-margin-bottom: 0.5rem !default;
+$headings-font-family: null !default;
+$headings-font-weight: $font-weight-semibold !default;
+$headings-line-height: $line-height-tight !default;
+$headings-color: $text-primary !default;
+
+// Configuración de párrafos
+$paragraph-margin-bottom: 1rem !default;
+
+// Configuración de texto pequeño
+$small-font-size: 0.875em !default;
+
+// ============================================================================
+// 6. ESPACIADO Y DIMENSIONES
+// ============================================================================
+
+// Sistema de espaciado (escala de 4px)
+$spacer: 1rem !default; // 16px base
+
+$spacers: (
+  0: 0,
+  px: 1px,
+  0.5: $spacer * 0.125,    // 2px
+  1: $spacer * 0.25,       // 4px
+  1.5: $spacer * 0.375,    // 6px
+  2: $spacer * 0.5,        // 8px
+  2.5: $spacer * 0.625,    // 10px
+  3: $spacer * 0.75,       // 12px
+  3.5: $spacer * 0.875,    // 14px
+  4: $spacer,              // 16px
+  5: $spacer * 1.25,       // 20px
+  6: $spacer * 1.5,        // 24px
+  7: $spacer * 1.75,       // 28px
+  8: $spacer * 2,          // 32px
+  9: $spacer * 2.25,       // 36px
+  10: $spacer * 2.5,       // 40px
+  11: $spacer * 2.75,      // 44px
+  12: $spacer * 3,         // 48px
+  14: $spacer * 3.5,       // 56px
+  16: $spacer * 4,         // 64px
+  20: $spacer * 5,         // 80px
+  24: $spacer * 6,         // 96px
+  28: $spacer * 7,         // 112px
+  32: $spacer * 8,         // 128px
+  36: $spacer * 9,         // 144px
+  40: $spacer * 10,        // 160px
+  44: $spacer * 11,        // 176px
+  48: $spacer * 12,        // 192px
+  52: $spacer * 13,        // 208px
+  56: $spacer * 14,        // 224px
+  60: $spacer * 15,        // 240px
+  64: $spacer * 16,        // 256px
+  72: $spacer * 18,        // 288px
+  80: $spacer * 20,        // 320px
+  96: $spacer * 24         // 384px
+) !default;
+
+// Espaciado específico para componentes
+$component-padding-y: 0.5rem !default;
+$component-padding-x: 0.75rem !default;
+
+// ============================================================================
+// 7. GRID SYSTEM Y BREAKPOINTS
+// ============================================================================
+
+// Breakpoints para responsive design
+$grid-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px
+) !default;
+
+// Contenedores máximos
+$container-max-widths: (
+  sm: 540px,
+  md: 720px,
+  lg: 960px,
+  xl: 1140px,
+  xxl: 1320px
+) !default;
+
+// Grid system
+$grid-columns: 12 !default;
+$grid-gutter-width: 1.5rem !default;
+$grid-row-columns: 6 !default;
+
+// Breakpoints específicos del dashboard
+$breakpoint-mobile: 480px !default;
+$breakpoint-tablet: 768px !default;
+$breakpoint-desktop: 1024px !default;
+$breakpoint-wide: 1280px !default;
+$breakpoint-ultra: 1536px !default;
+
+// ============================================================================
+// 8. COMPONENTES ESPECÍFICOS DEL DASHBOARD
+// ============================================================================
+
+// Sidebar
+$sidebar-width: 280px !default;
+$sidebar-width-sm: 240px !default;
+$sidebar-width-collapsed: 80px !default;
+$sidebar-bg: $white !default;
+$sidebar-border-color: $border-color !default;
+$sidebar-padding: 1.5rem !default;
+$sidebar-z-index: 1000 !default;
+
+// Navigation
+$nav-link-padding-y: 0.75rem !default;
+$nav-link-padding-x: 1rem !default;
+$nav-link-font-size: $font-size-sm !default;
+$nav-link-font-weight: $font-weight-medium !default;
+$nav-link-color: $text-secondary !default;
+$nav-link-hover-color: $text-primary !default;
+$nav-link-active-color: $white !default;
+$nav-link-active-bg: $primary !default;
+$nav-link-border-radius: 0.5rem !default;
+
+// Header
+$header-height: 4rem !default;
+$header-bg: $white !default;
+$header-border-color: $border-color !default;
+$header-padding-y: 0 !default;
+$header-padding-x: 2rem !default;
+$header-z-index: 999 !default;
+
+// Content area
+$content-padding: 2rem !default;
+$content-padding-sm: 1rem !default;
+$content-bg: $gray-50 !default;
+
+// Cards
+$card-bg: $white !default;
+$card-border-width: 1px !default;
+$card-border-color: $border-color !default;
+$card-border-radius: 0.75rem !default;
+$card-padding: 1.5rem !default;
+$card-padding-sm: 1rem !default;
+$card-margin-bottom: 1.5rem !default;
+$card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !default;
+$card-shadow-hover: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !default;
+
+// Tablas
+$table-cell-padding-y: 0.75rem !default;
+$table-cell-padding-x: 1rem !default;
+$table-cell-padding-y-sm: 0.5rem !default;
+$table-cell-padding-x-sm: 0.75rem !default;
+$table-bg: $white !default;
+$table-striped-bg: $gray-50 !default;
+$table-hover-bg: $gray-50 !default;
+$table-border-color: $border-color !default;
+$table-head-bg: $gray-50 !default;
+$table-head-color: $text-primary !default;
+
+// ============================================================================
+// 9. BOTONES
+// ============================================================================
+
+// Tamaños de botones
+$btn-padding-y: 0.5rem !default;
+$btn-padding-x: 1rem !default;
+$btn-font-size: $font-size-sm !default;
+$btn-line-height: $line-height-normal !default;
+$btn-white-space: nowrap !default;
+
+$btn-padding-y-sm: 0.375rem !default;
+$btn-padding-x-sm: 0.75rem !default;
+$btn-font-size-sm: $font-size-xs !default;
+
+$btn-padding-y-lg: 0.75rem !default;
+$btn-padding-x-lg: 1.5rem !default;
+$btn-font-size-lg: $font-size-lg !default;
+
+// Configuración general de botones
+$btn-border-width: 1px !default;
+$btn-font-weight: $font-weight-medium !default;
+$btn-box-shadow: inset 0 1px 0 rgba($white, 0.15), 0 1px 1px rgba($black, 0.075) !default;
+$btn-focus-width: 0.2rem !default;
+$btn-focus-box-shadow: 0 0 0 $btn-focus-width rgba($primary, 0.25) !default;
+$btn-disabled-opacity: 0.65 !default;
+$btn-active-box-shadow: inset 0 3px 5px rgba($black, 0.125) !default;
+
+// Border radius para botones
+$btn-border-radius: 0.5rem !default;
+$btn-border-radius-sm: 0.375rem !default;
+$btn-border-radius-lg: 0.625rem !default;
+
+// Transiciones
+$btn-transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !default;
+
+// ============================================================================
+// 10. FORMULARIOS
+// ============================================================================
+
+// Inputs
+$input-padding-y: 0.75rem !default;
+$input-padding-x: 1rem !default;
+$input-font-size: $font-size-base !default;
+$input-font-weight: $font-weight-normal !default;
+$input-line-height: $line-height-normal !default;
+
+$input-padding-y-sm: 0.5rem !default;
+$input-padding-x-sm: 0.75rem !default;
+$input-font-size-sm: $font-size-sm !default;
+
+$input-padding-y-lg: 1rem !default;
+$input-padding-x-lg: 1.25rem !default;
+$input-font-size-lg: $font-size-lg !default;
+
+// Colores y bordes de inputs
+$input-bg: $white !default;
+$input-disabled-bg: $gray-100 !default;
+$input-color: $text-primary !default;
+$input-border-color: $gray-300 !default;
+$input-border-width: 1px !default;
+$input-box-shadow: inset 0 1px 2px rgba($black, 0.075) !default;
+
+$input-border-radius: 0.5rem !default;
+$input-border-radius-sm: 0.375rem !default;
+$input-border-radius-lg: 0.625rem !default;
+
+// Estados de inputs
+$input-focus-bg: $input-bg !default;
+$input-focus-border-color: $primary !default;
+$input-focus-color: $input-color !default;
+$input-focus-width: 0.2rem !default;
+$input-focus-box-shadow: 0 0 0 $input-focus-width rgba($primary, 0.25) !default;
+
+// Placeholder
+$input-placeholder-color: $gray-400 !default;
+$input-plaintext-color: $text-primary !default;
+
+// Heights
+$input-height-border: $input-border-width * 2 !default;
+$input-height-inner: calc(#{$input-line-height * 1em} + #{$input-padding-y * 2}) !default;
+$input-height: calc(#{$input-height-inner} + #{$input-height-border}) !default;
+
+$input-height-inner-sm: calc(#{$input-line-height * 1em} + #{$input-padding-y-sm * 2}) !default;
+$input-height-sm: calc(#{$input-height-inner-sm} + #{$input-height-border}) !default;
+
+$input-height-inner-lg: calc(#{$input-line-height * 1em} + #{$input-padding-y-lg * 2}) !default;
+$input-height-lg: calc(#{$input-height-inner-lg} + #{$input-height-border}) !default;
+
+// Labels
+$label-margin-bottom: 0.5rem !default;
+$label-font-size: $font-size-sm !default;
+$label-font-weight: $font-weight-medium !default;
+$label-color: $text-primary !default;
+
+// ============================================================================
+// 11. MODALES
+// ============================================================================
+
+$modal-inner-padding: 1.5rem !default;
+$modal-footer-margin-between: 0.5rem !default;
+$modal-dialog-margin: 0.5rem !default;
+$modal-dialog-margin-y-sm-up: 1.75rem !default;
+$modal-title-line-height: $line-height-normal !default;
+$modal-content-color: null !default;
+$modal-content-bg: $white !default;
+$modal-content-border-color: rgba($black, 0.2) !default;
+$modal-content-border-width: 1px !default;
+$modal-content-border-radius: 0.75rem !default;
+$modal-content-inner-border-radius: calc(#{$modal-content-border-radius} - #{$modal-content-border-width}) !default;
+$modal-content-box-shadow-xs: 0 0.25rem 0.5rem rgba($black, 0.5) !default;
+$modal-content-box-shadow-sm-up: 0 0.5rem 1rem rgba($black, 0.5) !default;
+$modal-backdrop-bg: $black !default;
+$modal-backdrop-opacity: 0.5 !default;
+$modal-header-border-color: $border-color !default;
+$modal-footer-border-color: $modal-header-border-color !default;
+$modal-header-border-width: $modal-content-border-width !default;
+$modal-footer-border-width: $modal-header-border-width !default;
+$modal-header-padding-y: $modal-inner-padding !default;
+$modal-header-padding-x: $modal-inner-padding !default;
+$modal-header-padding: $modal-header-padding-y $modal-header-padding-x !default;
+
+// Modal sizes
+$modal-sm: 300px !default;
+$modal-md: 500px !default;
+$modal-lg: 800px !default;
+$modal-xl: 1140px !default;
+
+// ============================================================================
+// 12. DROPDOWNS
+// ============================================================================
+
+$dropdown-min-width: 10rem !default;
+$dropdown-padding-x: 0 !default;
+$dropdown-padding-y: 0.5rem !default;
+$dropdown-spacer: 0.125rem !default;
+$dropdown-font-size: $font-size-base !default;
+$dropdown-color: $text-primary !default;
+$dropdown-bg: $white !default;
+$dropdown-border-color: rgba($black, 0.15) !default;
+$dropdown-border-radius: $border-radius !default;
+$dropdown-border-width: 1px !default;
+$dropdown-inner-border-radius: calc(#{$dropdown-border-radius} - #{$dropdown-border-width}) !default;
+$dropdown-divider-bg: $gray-200 !default;
+$dropdown-divider-margin-y: $spacer * 0.5 !default;
+$dropdown-box-shadow: 0 0.5rem 1rem rgba($black, 0.175) !default;
+
+$dropdown-link-color: $gray-700 !default;
+$dropdown-link-hover-color: darken($gray-700, 5%) !default;
+$dropdown-link-hover-bg: $gray-100 !default;
+
+$dropdown-link-active-color: $component-active-color !default;
+$dropdown-link-active-bg: $component-active-bg !default;
+
+$dropdown-link-disabled-color: $gray-500 !default;
+
+$dropdown-item-padding-y: 0.5rem !default;
+$dropdown-item-padding-x: 1rem !default;
+
+$dropdown-header-color: $gray-500 !default;
+$dropdown-header-padding: $dropdown-padding-y $dropdown-item-padding-x !default;
+
+// ============================================================================
+// 13. ALERTAS Y NOTIFICACIONES
+// ============================================================================
+
+$alert-padding-y: 1rem !default;
+$alert-padding-x: 1rem !default;
+$alert-margin-bottom: 1rem !default;
+$alert-border-radius: 0.5rem !default;
+$alert-link-font-weight: $font-weight-bold !default;
+$alert-border-width: 1px !default;
+$alert-bg-scale: -80% !default;
+$alert-border-scale: -70% !default;
+$alert-color-scale: 40% !default;
+$alert-dismissible-padding-r: $alert-padding-x * 3 !default;
+
+// ============================================================================
+// 14. BADGES
+// ============================================================================
+
+$badge-font-size: 0.75em !default;
+$badge-font-weight: $font-weight-bold !default;
+$badge-color: $white !default;
+$badge-padding-y: 0.35em !default;
+$badge-padding-x: 0.65em !default;
+$badge-border-radius: 0.375rem !default;
+
+// ============================================================================
+// 15. BORDES Y BORDER RADIUS
+// ============================================================================
+
+$border-width: 1px !default;
+$border-widths: (
+  0: 0,
+  1: 1px,
+  2: 2px,
+  3: 3px,
+  4: 4px,
+  5: 5px
+) !default;
+
+$border-color: $gray-200 !default;
+$border-style: solid !default;
+
+// Border radius
+$border-radius: 0.5rem !default;
+$border-radius-sm: 0.375rem !default;
+$border-radius-lg: 0.75rem !default;
+$border-radius-xl: 1rem !default;
+$border-radius-2xl: 1.5rem !default;
+$border-radius-pill: 50rem !default;
+
+// Component border radius
+$component-border-radius: $border-radius !default;
+
+// ============================================================================
+// 16. SOMBRAS (BOX SHADOWS)
+// ============================================================================
+
+$box-shadow: 0 0.5rem 1rem rgba($black, 0.15) !default;
+$box-shadow-sm: 0 0.125rem 0.25rem rgba($black, 0.075) !default;
+$box-shadow-lg: 0 1rem 3rem rgba($black, 0.175) !default;
+$box-shadow-inset: inset 0 1px 2px rgba($black, 0.075) !default;
+
+// Sombras específicas para dashboard
+$shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !default;
+$shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !default;
+$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !default;
+$shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !default;
+$shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !default;
+$shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !default;
+$shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06) !default;
+
+// ============================================================================
+// 17. TRANSICIONES Y ANIMACIONES
+// ============================================================================
+
+// Duraciones
+$transition-duration-75: 75ms !default;
+$transition-duration-100: 100ms !default;
+$transition-duration-150: 150ms !default;
+$transition-duration-200: 200ms !default;
+$transition-duration-300: 300ms !default;
+$transition-duration-500: 500ms !default;
+$transition-duration-700: 700ms !default;
+$transition-duration-1000: 1000ms !default;
+
+// Curvas de animación
+$transition-ease-linear: linear !default;
+$transition-ease-in: cubic-bezier(0.4, 0, 1, 1) !default;
+$transition-ease-out: cubic-bezier(0, 0, 0.2, 1) !default;
+$transition-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1) !default;
+
+// Transiciones comunes
+$transition-base: all $transition-duration-150 $transition-ease-in-out !default;
+$transition-fade: opacity $transition-duration-150 $transition-ease-linear !default;
+$transition-collapse: height $transition-duration-300 $transition-ease-in-out !default;
+
+// Transiciones específicas
+$transition-fast: all 0.15s ease-in-out !default;
+$transition-normal: all 0.3s ease-in-out !default;
+$transition-slow: all 0.5s ease-in-out !default;
+
+// ============================================================================
+// 18. Z-INDEX
+// ============================================================================
+
+$zindex-dropdown: 1000 !default;
+$zindex-sticky: 1020 !default;
+$zindex-fixed: 1030 !default;
+$zindex-modal-backdrop: 1040 !default;
+$zindex-offcanvas-backdrop: 1045 !default;
+$zindex-modal: 1050 !default;
+$zindex-offcanvas: 1055 !default;
+$zindex-popover: 1070 !default;
+$zindex-tooltip: 1080 !default;
+$zindex-toast: 1090 !default;
+
+// Z-index específicos del dashboard
+$z-sidebar: 1000 !default;
+$z-header: 999 !default;
+$z-dropdown: 1010 !default;
+$z-modal: 1050 !default;
+$z-tooltip: 1070 !default;
+$z-notification: 1080 !default;
+
+// ============================================================================
+// 19. UTILIDADES ADICIONALES
+// ============================================================================
+
+// Opacidades
+$opacities: (
+  0: 0,
+  5: 0.05,
+  10: 0.1,
+  20: 0.2,
+  25: 0.25,
+  30: 0.3,
+  40: 0.4,
+  50: 0.5,
+  60: 0.6,
+  70: 0.7,
+  75: 0.75,
+  80: 0.8,
+  90: 0.9,
+  95: 0.95,
+  100: 1
+) !default;
+
+// Escalas
+$scales: (
+  0: 0,
+  50: 0.5,
+  75: 0.75,
+  90: 0.9,
+  95: 0.95,
+  100: 1,
+  105: 1.05,
+  110: 1.1,
+  125: 1.25,
+  150: 1.5
+) !default;
+
+// Rotaciones
+$rotations: (
+  0: 0deg,
+  1: 1deg,
+  2: 2deg,
+  3: 3deg,
+  6: 6deg,
+  12: 12deg,
+  45: 45deg,
+  90: 90deg,
+  180: 180deg
+) !default;
+
+// ============================================================================
+// 20. CONFIGURACIONES ESPECÍFICAS DEL TEMA
+// ============================================================================
+
+// Variables del tema claro/oscuro
+$enable-dark-mode: true !default;
+
+// Tema oscuro
+$dark-theme-bg: $gray-900 !default;
+$dark-theme-color: $gray-100 !default;
+$dark-theme-border: $gray-700 !default;
+$dark-theme-surface: $gray-800 !default;
+
+// Estados activos
+$component-active-color: $white !default;
+$component-active-bg: $primary !default;
+
+// Configuración de foco
+$focus-ring-width: 0.25rem !default;
+$focus-ring-opacity: 0.25 !default;
+$focus-ring-color: rgba($primary, $focus-ring-opacity) !default;
+$focus-ring-blur: 0 !default;
+$focus-ring-box-shadow: 0 0 $focus-ring-blur $focus-ring-width $focus-ring-color !default;
+
+// ============================================================================
+// 21. CONFIGURACIONES DE PRINT
+// ============================================================================
+
+$print-page-size: a3 !default;
+$print-body-min-width: map-get($grid-breakpoints, "lg") !default;
+
+// ============================================================================
+// 22. COMPONENTES ESPECIALES DEL DASHBOARD
+// ============================================================================
+
+// Breadcrumbs
+$breadcrumb-font-size: $font-size-sm !default;
+$breadcrumb-padding-y: 0.75rem !default;
+$breadcrumb-padding-x: 0 !default;
+$breadcrumb-item-padding-x: 0.5rem !default;
+$breadcrumb-margin-bottom: 1rem !default;
+$breadcrumb-bg: null !default;
+$breadcrumb-divider-color: $gray-500 !default;
+$breadcrumb-active-color: $gray-500 !default;
+$breadcrumb-divider: quote("/") !default;
+$breadcrumb-divider-flipped: $breadcrumb-divider !default;
+$breadcrumb-border-radius: null !default;
+
+// Progress bars
+$progress-height: 1rem !default;
+$progress-font-size: $font-size-base * 0.75 !default;
+$progress-bg: $gray-200 !default;
+$progress-border-radius: $border-radius !default;
+$progress-box-shadow: inset 0 0.1rem 0.1rem rgba($black, 0.1) !default;
+$progress-bar-color: $white !default;
+$progress-bar-bg: $primary !default;
+$progress-bar-animation-timing: 1s linear infinite !default;
+$progress-bar-transition: width 0.6s ease !default;
+
+// Loading spinners
+$spinner-width: 2rem !default;
+$spinner-height: $spinner-width !default;
+$spinner-vertical-align: -0.125em !default;
+$spinner-border-width: 0.25em !default;
+$spinner-animation-speed: 0.75s !default;
+
+$spinner-width-sm: 1rem !default;
+$spinner-height-sm: $spinner-width-sm !default;
+$spinner-border-width-sm: 0.125em !default;
+
+// Tooltips
+$tooltip-font-size: $font-size-sm !default;
+$tooltip-max-width: 200px !default;
+$tooltip-color: $white !default;
+$tooltip-bg: $black !default;
+$tooltip-border-radius: $border-radius !default;
+$tooltip-opacity: 0.9 !default;
+$tooltip-padding-y: $spacer * 0.25 !default;
+$tooltip-padding-x: $spacer * 0.5 !default;
+$tooltip-margin: 0 !default;
+
+$tooltip-arrow-width: 0.8rem !default;
+$tooltip-arrow-height: 0.4rem !default;
+$tooltip-arrow-color: null !default;
+
+// Popovers
+$popover-font-size: $font-size-sm !default;
+$popover-bg: $white !default;
+$popover-max-width: 276px !default;
+$popover-border-width: 1px !default;
+$popover-border-color: rgba($black, 0.2) !default;
+$popover-border-radius: $border-radius-lg !default;
+$popover-inner-border-radius: calc(#{$popover-border-radius} - #{$popover-border-width}) !default;
+$popover-box-shadow: $box-shadow-lg !default;
+
+// ============================================================================
+// 23. VARIABLES DE LAYOUT AVANZADAS
+// ============================================================================
+
+// Contenedor principal
+$container-padding-x: $spacer !default;
+
+// Layout del dashboard
+$dashboard-min-height: 100vh !default;
+$dashboard-transition: all 0.3s ease-in-out !default;
+
+// Sticky elements
+$sticky-top: 0 !default;
+
+// Offcanvas
+$offcanvas-padding-y: $modal-inner-padding !default;
+$offcanvas-padding-x: $modal-inner-padding !default;
+$offcanvas-horizontal-width: 400px !default;
+$offcanvas-vertical-height: 30vh !default;
+$offcanvas-transition-duration: 0.3s !default;
+$offcanvas-border-color: $modal-content-border-color !default;
+$offcanvas-border-width: $modal-content-border-width !default;
+$offcanvas-title-line-height: $modal-title-line-height !default;
+$offcanvas-bg-color: $modal-content-bg !default;
+$offcanvas-color: $modal-content-color !default;
+$offcanvas-box-shadow: $modal-content-box-shadow-xs !default;
+$offcanvas-backdrop-bg: $modal-backdrop-bg !default;
+$offcanvas-backdrop-opacity: $modal-backdrop-opacity !default;
+
+// ============================================================================
+// 24. CONFIGURACIONES FINALES
+// ============================================================================
+
+// Configuración de CSS custom properties
+$variable-prefix: bs- !default; // Bootstrap compatibility
+$enable-css-custom-properties: true !default;
+
+// Configuración de validación
+$enable-validation-icons: true !default;
+$form-feedback-margin-top: $form-text-margin-top !default;
+$form-feedback-font-size: $form-text-font-size !default;
+$form-feedback-font-style: $form-text-font-style !default;
+$form-feedback-valid-color: $success !default;
+$form-feedback-invalid-color: $danger !default;
+
+$form-feedback-icon-valid-color: $form-feedback-valid-color !default;
+$form-feedback-icon-valid: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'><path fill='#{$form-feedback-icon-valid-color}' d='m2.3 6.73.02-.02 1.24-1.46L6.1 2.48a.42.42 0 0 1 .64.06l.08.1a.42.42 0 0 1-.06.64L3.44 7.14a.42.42 0 0 1-.64-.06l-.02-.02L.9 4.54a.42.42 0 0 1 .06-.64l.1-.08a.42.42 0 0 1 .64.06z'/></svg>") !default;
+
+$form-feedback-icon-invalid-color: $form-feedback-invalid-color !default;
+$form-feedback-icon-invalid: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='#{$form-feedback-icon-invalid-color}'><circle cx='6' cy='6' r='4.5'/><path d='m5.8 4.6 2.4 2.8m0-2.8L5.8 7.4'/></svg>") !default;
+
+// Text and background utilities
+$utilities-text: true !default;
+$utilities-text-colors: map-loop($theme-colors, rgba-css-var, "$key", "text") !default;
+$utilities-bg: true !default;
+$utilities-bg-colors: map-loop($theme-colors, rgba-css-var, "$key", "bg") !default;
+
+// Negative margins
+$enable-negative-margins: true !default;
+
+// ============================================================================
+// FIN DEL ARCHIVO _VARIABLES.SCSS
+// ============================================================================

@@ -4,7 +4,7 @@ Forms Base Module
 Clases base y mixins reutilizables para todos los formularios del ecosistema.
 Incluye funcionalidades avanzadas, validaciones y utilidades comunes.
 
-Author: Senior Developer
+Author: jusga
 Date: 2025
 """
 

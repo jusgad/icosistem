@@ -1,0 +1,1074 @@
+// ============================================================================
+// _TYPOGRAPHY.SCSS - DASHBOARD PROJECT
+// Desarrollado por: jusga
+// Descripción: Sistema tipográfico completo para dashboard administrativo
+// Versión: 2.0.0
+// ============================================================================
+
+// ============================================================================
+// 1. FONT LOADING & OPTIMIZATION
+// ============================================================================
+
+/// Optimización de carga de fuentes
+/// Utiliza font-display: swap para mejorar la performance
+@if $enable-responsive-font-sizes {
+  // Inter font family (variable font)
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+  
+  // JetBrains Mono para código
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+}
+
+/// Font face local fallbacks para mejor performance
+@font-face {
+  font-family: 'Inter Fallback';
+  src: local('Arial'), local('Helvetica'), local('sans-serif');
+  font-display: swap;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
+// ============================================================================
+// 2. BASE TYPOGRAPHY CONFIGURATION
+// ============================================================================
+
+/// Configuración base del documento
+html {
+  // Configuración de font-size base responsive
+  font-size: clamp(14px, 2.5vw, 16px);
+  
+  // Mejoras de renderizado
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  // Configuración de hyphenation
+  hyphens: auto;
+  hyphenate-limit-chars: 6 3 3;
+  hyphenate-limit-lines: 2;
+  hyphenate-limit-last: always;
+  hyphenate-limit-zone: 8%;
+  
+  // Soporte para diferentes escrituras
+  text-orientation: mixed;
+  writing-mode: horizontal-tb;
+}
+
+/// Configuración del body
+body {
+  // Stack de fuentes optimizado
+  font-family: $font-family-base, 'Inter Fallback', system-ui, -apple-system, sans-serif;
+  font-size: $font-size-base;
+  font-weight: $font-weight-normal;
+  line-height: $line-height-base;
+  color: $body-color;
+  
+  // Configuración de texto
+  text-align: left;
+  text-decoration-skip-ink: auto;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  
+  // Optimizaciones de performance
+  font-kerning: auto;
+  font-variant-ligatures: common-ligatures;
+  font-variant-numeric: oldstyle-nums proportional-nums;
+  font-feature-settings: 
+    "kern" 1,
+    "liga" 1,
+    "clig" 1,
+    "calt" 1,
+    "onum" 1,
+    "pnum" 1;
+}
+
+// ============================================================================
+// 3. TYPOGRAPHY SCALE SYSTEM
+// ============================================================================
+
+/// Escala tipográfica modular (Perfect Fourth - 1.333)
+/// Genera un sistema coherente y matemáticamente perfecto
+$type-scale-ratio: 1.333 !default;
+$type-scale-base: $font-size-base !default;
+
+/// Función para generar escala tipográfica
+@function type-scale($level: 0) {
+  @return $type-scale-base * pow($type-scale-ratio, $level);
+}
+
+/// Mapa de escala tipográfica
+$type-scale: (
+  -3: type-scale(-3), // 0.563rem - micro text
+  -2: type-scale(-2), // 0.750rem - small text
+  -1: type-scale(-1), // 1.000rem - body text
+   0: type-scale(0),  // 1.333rem - lead text
+   1: type-scale(1),  // 1.777rem - h4
+   2: type-scale(2),  // 2.369rem - h3
+   3: type-scale(3),  // 3.157rem - h2
+   4: type-scale(4),  // 4.209rem - h1
+   5: type-scale(5),  // 5.610rem - display
+   6: type-scale(6)   // 7.478rem - hero
+) !default;
+
+/// Utilidad para acceder a la escala
+@function font-scale($level) {
+  @return map-get($type-scale, $level);
+}
+
+// ============================================================================
+// 4. HEADING STYLES SYSTEM
+// ============================================================================
+
+/// Configuración base para todos los encabezados
+%heading-base {
+  font-family: $headings-font-family or inherit;
+  font-weight: $headings-font-weight;
+  line-height: $headings-line-height;
+  color: $headings-color;
+  margin: 0 0 $headings-margin-bottom 0;
+  
+  // Optimizaciones tipográficas
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 
+    "kern" 1,
+    "liga" 1,
+    "calt" 1,
+    "lnum" 1,
+    "tnum" 0;
+  
+  // Mejoras de legibilidad
+  text-wrap: balance;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  
+  // Configuración de selección
+  &::selection {
+    background-color: rgba($primary, 0.2);
+    color: inherit;
+  }
+}
+
+/// Estilos específicos de encabezados
+h1, .h1 {
+  @extend %heading-base;
+  font-size: $h1-font-size;
+  font-weight: $font-weight-bold;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  
+  // Responsive scaling
+  @include respond-to(sm) {
+    font-size: calc(#{$h1-font-size} * 1.1);
+  }
+  
+  @include respond-to(lg) {
+    font-size: calc(#{$h1-font-size} * 1.2);
+  }
+}
+
+h2, .h2 {
+  @extend %heading-base;
+  font-size: $h2-font-size;
+  font-weight: $font-weight-semibold;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  
+  @include respond-to(sm) {
+    font-size: calc(#{$h2-font-size} * 1.05);
+  }
+  
+  @include respond-to(lg) {
+    font-size: calc(#{$h2-font-size} * 1.1);
+  }
+}
+
+h3, .h3 {
+  @extend %heading-base;
+  font-size: $h3-font-size;
+  font-weight: $font-weight-semibold;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  
+  @include respond-to(lg) {
+    font-size: calc(#{$h3-font-size} * 1.05);
+  }
+}
+
+h4, .h4 {
+  @extend %heading-base;
+  font-size: $h4-font-size;
+  font-weight: $font-weight-medium;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+h5, .h5 {
+  @extend %heading-base;
+  font-size: $h5-font-size;
+  font-weight: $font-weight-medium;
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+
+h6, .h6 {
+  @extend %heading-base;
+  font-size: $h6-font-size;
+  font-weight: $font-weight-medium;
+  line-height: 1.35;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  color: $text-muted;
+}
+
+// ============================================================================
+// 5. DISPLAY HEADINGS
+// ============================================================================
+
+/// Encabezados de display para hero sections
+.display-1 {
+  @extend %heading-base;
+  font-size: font-scale(6);
+  font-weight: $font-weight-light;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  
+  @include respond-to(sm) {
+    font-size: calc(#{font-scale(6)} * 0.8);
+  }
+  
+  @include respond-to(md) {
+    font-size: font-scale(6);
+  }
+}
+
+.display-2 {
+  @extend %heading-base;
+  font-size: font-scale(5);
+  font-weight: $font-weight-light;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.display-3 {
+  @extend %heading-base;
+  font-size: font-scale(4);
+  font-weight: $font-weight-normal;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.display-4 {
+  @extend %heading-base;
+  font-size: font-scale(3);
+  font-weight: $font-weight-normal;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+// ============================================================================
+// 6. PARAGRAPH AND TEXT STYLES
+// ============================================================================
+
+/// Párrafos
+p {
+  margin: 0 0 $paragraph-margin-bottom 0;
+  font-size: $font-size-base;
+  line-height: $line-height-base;
+  color: $body-color;
+  
+  // Optimizaciones tipográficas
+  text-rendering: optimizeLegibility;
+  font-kerning: auto;
+  
+  // Mejoras de legibilidad
+  text-align: left;
+  word-spacing: 0.1em;
+  hanging-punctuation: first last;
+  
+  // Configuración de hyphenation
+  hyphens: auto;
+  hyphenate-limit-chars: 6 3 3;
+  
+  // Órfanos y viudas
+  orphans: 3;
+  widows: 3;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+  
+  // Párrafos de introducción
+  &.lead {
+    font-size: font-scale(0);
+    font-weight: $font-weight-normal;
+    line-height: 1.6;
+    color: $text-secondary;
+    margin-bottom: 1.5rem;
+    
+    @include respond-to(md) {
+      font-size: calc(#{font-scale(0)} * 1.1);
+    }
+  }
+  
+  // Párrafos pequeños
+  &.small {
+    font-size: $font-size-sm;
+    line-height: 1.5;
+    color: $text-muted;
+  }
+}
+
+/// Texto enfatizado
+strong, b {
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+}
+
+em, i {
+  font-style: italic;
+  font-synthesis: none; // Previene síntesis artificial
+}
+
+/// Texto marcado
+mark {
+  background-color: rgba($warning, 0.2);
+  color: darken($warning, 30%);
+  padding: 0.125em 0.25em;
+  border-radius: $border-radius-sm;
+  font-weight: $font-weight-medium;
+  
+  // Modo oscuro
+  @include dark-mode {
+    background-color: rgba($warning, 0.3);
+    color: lighten($warning, 20%);
+  }
+}
+
+/// Texto pequeño
+small, .small {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-normal;
+  line-height: 1.4;
+  color: $text-muted;
+}
+
+/// Texto muy pequeño
+.text-xs {
+  font-size: $font-size-xs;
+  line-height: 1.3;
+  color: $text-light;
+}
+
+// ============================================================================
+// 7. SPECIALIZED TEXT ELEMENTS
+// ============================================================================
+
+/// Citas en bloque
+blockquote {
+  margin: 0 0 1.5rem 0;
+  padding: 1.5rem 2rem;
+  border-left: 4px solid $primary;
+  background-color: rgba($primary, 0.05);
+  position: relative;
+  
+  // Comillas decorativas
+  &::before {
+    content: '"';
+    font-size: 4rem;
+    color: rgba($primary, 0.3);
+    position: absolute;
+    top: 0.5rem;
+    left: 1rem;
+    font-family: Georgia, serif;
+    line-height: 1;
+  }
+  
+  p {
+    font-size: $font-size-lg;
+    line-height: 1.6;
+    color: $text-secondary;
+    margin-bottom: 1rem;
+    font-style: italic;
+    position: relative;
+    z-index: 1;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  footer, cite {
+    display: block;
+    font-size: $font-size-sm;
+    color: $text-muted;
+    margin-top: 1rem;
+    font-style: normal;
+    
+    &::before {
+      content: '— ';
+    }
+  }
+  
+  // Variantes de citas
+  &.quote-large {
+    padding: 2rem 3rem;
+    
+    p {
+      font-size: $font-size-xl;
+    }
+    
+    &::before {
+      font-size: 6rem;
+      top: 0;
+    }
+  }
+  
+  &.quote-minimal {
+    border-left: none;
+    background: none;
+    padding: 1rem 0;
+    
+    &::before {
+      display: none;
+    }
+    
+    p {
+      font-style: normal;
+    }
+  }
+}
+
+/// Elementos de código
+code {
+  font-family: $font-family-monospace;
+  font-size: 0.875em;
+  background-color: rgba($gray-500, 0.1);
+  color: $danger;
+  padding: 0.125rem 0.375rem;
+  border-radius: $border-radius-sm;
+  font-weight: $font-weight-medium;
+  
+  // Configuración específica para monospace
+  font-feature-settings: 
+    "kern" 0,
+    "liga" 0,
+    "calt" 0,
+    "lnum" 1,
+    "tnum" 1;
+  
+  @include dark-mode {
+    background-color: rgba($gray-300, 0.2);
+    color: lighten($danger, 20%);
+  }
+}
+
+kbd {
+  font-family: $font-family-monospace;
+  font-size: 0.75em;
+  background-color: $gray-800;
+  color: $white;
+  padding: 0.25rem 0.5rem;
+  border-radius: $border-radius-sm;
+  border: 1px solid $gray-600;
+  box-shadow: 0 1px 0 rgba($black, 0.2), inset 0 0 0 2px $white;
+  font-weight: $font-weight-medium;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+pre {
+  font-family: $font-family-monospace;
+  font-size: $font-size-sm;
+  background-color: $gray-100;
+  color: $text-primary;
+  padding: 1.5rem;
+  border-radius: $border-radius;
+  border: 1px solid $gray-200;
+  overflow-x: auto;
+  line-height: 1.5;
+  
+  // Configuración específica para monospace
+  font-feature-settings: 
+    "kern" 0,
+    "liga" 0,
+    "calt" 0,
+    "lnum" 1,
+    "tnum" 1;
+  
+  // Scrollbar personalizado
+  @include scrollbar(6px, $gray-400, $gray-200);
+  
+  code {
+    background: none;
+    color: inherit;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+  }
+  
+  @include dark-mode {
+    background-color: $gray-800;
+    border-color: $gray-700;
+    color: $gray-100;
+  }
+}
+
+/// Abreviaciones
+abbr[title] {
+  text-decoration: underline dotted;
+  cursor: help;
+  border-bottom: none;
+  text-decoration-color: $text-muted;
+}
+
+/// Texto subrayado
+u {
+  text-decoration: underline;
+  text-decoration-color: $primary;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.1em;
+}
+
+/// Texto tachado
+s, del {
+  text-decoration: line-through;
+  text-decoration-color: $danger;
+  text-decoration-thickness: 2px;
+  opacity: 0.7;
+}
+
+/// Texto insertado
+ins {
+  text-decoration: underline;
+  text-decoration-color: $success;
+  text-decoration-thickness: 2px;
+  background-color: rgba($success, 0.1);
+  padding: 0.125em 0.25em;
+  border-radius: $border-radius-sm;
+}
+
+// ============================================================================
+// 8. TEXT UTILITIES
+// ============================================================================
+
+/// Utilidades de alineación
+.text-left { text-align: left !important; }
+.text-right { text-align: right !important; }
+.text-center { text-align: center !important; }
+.text-justify { text-align: justify !important; }
+
+/// Utilidades de transformación
+.text-lowercase { text-transform: lowercase !important; }
+.text-uppercase { text-transform: uppercase !important; }
+.text-capitalize { text-transform: capitalize !important; }
+
+/// Utilidades de decoración
+.text-decoration-none { text-decoration: none !important; }
+.text-decoration-underline { text-decoration: underline !important; }
+.text-decoration-line-through { text-decoration: line-through !important; }
+
+/// Utilidades de peso de fuente
+.fw-light { font-weight: $font-weight-light !important; }
+.fw-lighter { font-weight: $font-weight-lighter !important; }
+.fw-normal { font-weight: $font-weight-normal !important; }
+.fw-medium { font-weight: $font-weight-medium !important; }
+.fw-semibold { font-weight: $font-weight-semibold !important; }
+.fw-bold { font-weight: $font-weight-bold !important; }
+.fw-bolder { font-weight: $font-weight-bolder !important; }
+
+/// Utilidades de estilo de fuente
+.fst-italic { font-style: italic !important; }
+.fst-normal { font-style: normal !important; }
+
+/// Utilidades de altura de línea
+.lh-1 { line-height: 1 !important; }
+.lh-sm { line-height: $line-height-sm !important; }
+.lh-base { line-height: $line-height-base !important; }
+.lh-lg { line-height: $line-height-lg !important; }
+
+/// Utilidades de espaciado de letras
+.ls-tight { letter-spacing: -0.05em !important; }
+.ls-normal { letter-spacing: 0 !important; }
+.ls-wide { letter-spacing: 0.05em !important; }
+.ls-wider { letter-spacing: 0.1em !important; }
+
+/// Utilidades de familia de fuentes
+.font-sans-serif { font-family: $font-family-sans-serif !important; }
+.font-serif { font-family: $font-family-serif !important; }
+.font-monospace { font-family: $font-family-monospace !important; }
+
+// ============================================================================
+// 9. TEXT COLOR UTILITIES
+// ============================================================================
+
+/// Utilidades de color de texto
+.text-primary { color: $primary !important; }
+.text-secondary { color: $secondary !important; }
+.text-success { color: $success !important; }
+.text-info { color: $info !important; }
+.text-warning { color: $warning !important; }
+.text-danger { color: $danger !important; }
+.text-light { color: $light !important; }
+.text-dark { color: $dark !important; }
+
+/// Utilidades de color de texto extendidas
+.text-muted { color: $text-muted !important; }
+.text-body { color: $body-color !important; }
+.text-black-50 { color: rgba($black, 0.5) !important; }
+.text-white-50 { color: rgba($white, 0.5) !important; }
+
+/// Utilidades de color de grises
+.text-gray-100 { color: $gray-100 !important; }
+.text-gray-200 { color: $gray-200 !important; }
+.text-gray-300 { color: $gray-300 !important; }
+.text-gray-400 { color: $gray-400 !important; }
+.text-gray-500 { color: $gray-500 !important; }
+.text-gray-600 { color: $gray-600 !important; }
+.text-gray-700 { color: $gray-700 !important; }
+.text-gray-800 { color: $gray-800 !important; }
+.text-gray-900 { color: $gray-900 !important; }
+
+// ============================================================================
+// 10. TYPOGRAPHY SIZE UTILITIES
+// ============================================================================
+
+/// Utilidades de tamaño de fuente
+.fs-1 { font-size: $h1-font-size !important; }
+.fs-2 { font-size: $h2-font-size !important; }
+.fs-3 { font-size: $h3-font-size !important; }
+.fs-4 { font-size: $h4-font-size !important; }
+.fs-5 { font-size: $h5-font-size !important; }
+.fs-6 { font-size: $h6-font-size !important; }
+
+/// Utilidades adicionales de tamaño
+.fs-xs { font-size: $font-size-xs !important; }
+.fs-sm { font-size: $font-size-sm !important; }
+.fs-base { font-size: $font-size-base !important; }
+.fs-lg { font-size: $font-size-lg !important; }
+.fs-xl { font-size: $font-size-xl !important; }
+.fs-2xl { font-size: $font-size-2xl !important; }
+.fs-3xl { font-size: $font-size-3xl !important; }
+
+// ============================================================================
+// 11. TRUNCATION UTILITIES
+// ============================================================================
+
+/// Truncado simple
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/// Truncado multi-línea
+.text-truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.text-truncate-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.text-truncate-4 {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/// Word break utilities
+.text-break {
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+.text-nowrap { white-space: nowrap !important; }
+.text-wrap { white-space: normal !important; }
+.text-pre { white-space: pre !important; }
+.text-pre-line { white-space: pre-line !important; }
+.text-pre-wrap { white-space: pre-wrap !important; }
+
+// ============================================================================
+// 12. LISTS TYPOGRAPHY
+// ============================================================================
+
+/// Listas sin estilo
+.list-unstyled {
+  padding-left: 0;
+  list-style: none;
+}
+
+/// Listas inline
+.list-inline {
+  padding-left: 0;
+  list-style: none;
+  
+  .list-inline-item {
+    display: inline-block;
+    
+    &:not(:last-child) {
+      margin-right: 0.5rem;
+    }
+  }
+}
+
+/// Listas estilizadas
+.list-styled {
+  li {
+    position: relative;
+    padding-left: 1.5rem;
+    margin-bottom: 0.5rem;
+    
+    &::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: $primary;
+      font-weight: $font-weight-bold;
+    }
+  }
+}
+
+/// Lista de definiciones horizontal
+.dl-horizontal {
+  @include respond-to(sm) {
+    dt {
+      float: left;
+      width: 160px;
+      clear: left;
+      text-align: right;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    dd {
+      margin-left: 180px;
+    }
+  }
+}
+
+// ============================================================================
+// 13. DASHBOARD-SPECIFIC TYPOGRAPHY
+// ============================================================================
+
+/// Tipografía específica para métricas y estadísticas
+.metric-value {
+  font-family: $font-family-monospace;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  line-height: 1;
+  color: $text-primary;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  
+  &.metric-large {
+    font-size: $font-size-4xl;
+    
+    @include respond-to(md) {
+      font-size: $font-size-5xl;
+    }
+  }
+  
+  &.metric-small {
+    font-size: $font-size-xl;
+  }
+}
+
+.metric-label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+/// Tipografía para breadcrumbs
+.breadcrumb {
+  font-size: $font-size-sm;
+  color: $text-muted;
+  
+  a {
+    color: $text-secondary;
+    text-decoration: none;
+    
+    &:hover {
+      color: $primary;
+      text-decoration: underline;
+    }
+  }
+  
+  .breadcrumb-item {
+    &::before {
+      content: '/';
+      margin: 0 0.5rem;
+      color: $text-light;
+    }
+    
+    &:first-child::before {
+      display: none;
+    }
+    
+    &.active {
+      color: $text-primary;
+      font-weight: $font-weight-medium;
+    }
+  }
+}
+
+/// Tipografía para badges y etiquetas
+.badge-text {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+/// Tipografía para tablas
+.table-text {
+  font-size: $font-size-sm;
+  line-height: 1.4;
+  
+  th {
+    font-weight: $font-weight-semibold;
+    color: $text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    font-size: $font-size-xs;
+  }
+  
+  .table-number {
+    font-family: $font-family-monospace;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    text-align: right;
+  }
+}
+
+// ============================================================================
+// 14. RESPONSIVE TYPOGRAPHY
+// ============================================================================
+
+/// Clases responsive para tamaños de fuente
+@each $breakpoint in map-keys($grid-breakpoints) {
+  @include respond-to($breakpoint) {
+    $infix: if($breakpoint == xs, '', '-#{$breakpoint}');
+    
+    .fs#{$infix}-1 { font-size: $h1-font-size !important; }
+    .fs#{$infix}-2 { font-size: $h2-font-size !important; }
+    .fs#{$infix}-3 { font-size: $h3-font-size !important; }
+    .fs#{$infix}-4 { font-size: $h4-font-size !important; }
+    .fs#{$infix}-5 { font-size: $h5-font-size !important; }
+    .fs#{$infix}-6 { font-size: $h6-font-size !important; }
+    
+    .text#{$infix}-left { text-align: left !important; }
+    .text#{$infix}-right { text-align: right !important; }
+    .text#{$infix}-center { text-align: center !important; }
+  }
+}
+
+// ============================================================================
+// 15. FLUID TYPOGRAPHY
+// ============================================================================
+
+/// Tipografía fluida para encabezados principales
+@if $enable-responsive-font-sizes {
+  .fluid-text {
+    font-size: clamp(1rem, 4vw, 1.5rem);
+  }
+  
+  .fluid-heading {
+    font-size: clamp(1.5rem, 6vw, 3rem);
+    line-height: 1.2;
+  }
+  
+  .fluid-display {
+    font-size: clamp(2rem, 8vw, 5rem);
+    line-height: 1.1;
+  }
+  
+  .fluid-hero {
+    font-size: clamp(3rem, 12vw, 8rem);
+    line-height: 1;
+  }
+}
+
+// ============================================================================
+// 16. DARK MODE TYPOGRAPHY
+// ============================================================================
+
+@if $enable-dark-mode {
+  @include dark-mode {
+    body {
+      color: $dark-theme-color;
+    }
+    
+    h1, h2, h3, h4, h5, h6,
+    .h1, .h2, .h3, .h4, .h5, .h6 {
+      color: $dark-theme-color;
+    }
+    
+    .text-muted {
+      color: rgba($dark-theme-color, 0.6) !important;
+    }
+    
+    .text-secondary {
+      color: rgba($dark-theme-color, 0.8) !important;
+    }
+    
+    blockquote {
+      background-color: rgba($primary, 0.1);
+      border-left-color: $primary;
+      
+      &::before {
+        color: rgba($primary, 0.4);
+      }
+    }
+  }
+}
+
+// ============================================================================
+// 17. ACCESSIBILITY ENHANCEMENTS
+// ============================================================================
+
+/// Mejoras de accesibilidad
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-contrast: high) {
+  body {
+    font-weight: $font-weight-medium;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: $font-weight-bold;
+  }
+  
+  .text-muted {
+    color: $text-secondary !important;
+  }
+}
+
+/// Soporte para dislexia
+.dyslexia-friendly {
+  font-family: 'Comic Sans MS', 'OpenDyslexic', sans-serif;
+  font-size: 1.1em;
+  line-height: 1.6;
+  letter-spacing: 0.05em;
+  word-spacing: 0.15em;
+}
+
+// ============================================================================
+// 18. PRINT TYPOGRAPHY
+// ============================================================================
+
+@if $enable-print-styles {
+  @media print {
+    body {
+      font-size: 12pt;
+      line-height: 1.4;
+      color: black;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+      color: black;
+      page-break-after: avoid;
+    }
+    
+    p {
+      orphans: 3;
+      widows: 3;
+    }
+    
+    blockquote {
+      border: 1px solid black;
+      page-break-inside: avoid;
+    }
+    
+    pre, code {
+      background: white;
+      border: 1px solid black;
+    }
+    
+    .text-truncate,
+    .text-truncate-2,
+    .text-truncate-3,
+    .text-truncate-4 {
+      overflow: visible;
+      text-overflow: clip;
+      white-space: normal;
+      -webkit-line-clamp: none;
+    }
+  }
+}
+
+// ============================================================================
+// 19. PERFORMANCE OPTIMIZATIONS
+// ============================================================================
+
+/// Font loading optimization
+.font-loading {
+  font-display: swap;
+}
+
+/// Font subset loading
+@supports (font-display: optional) {
+  @font-face {
+    font-family: 'Inter Subset';
+    src: url('fonts/inter-subset.woff2') format('woff2');
+    font-display: optional;
+    unicode-range: U+0020-007F; // Basic Latin
+  }
+}
+
+/// Critical text rendering
+.critical-text {
+  font-display: block;
+  text-rendering: optimizeSpeed;
+}
+
+// ============================================================================
+// 20. INTERNATIONALIZATION SUPPORT
+// ============================================================================
+
+/// Soporte para diferentes idiomas
+[lang="ar"],
+[lang="he"] {
+  direction: rtl;
+  text-align: right;
+}
+
+[lang="ja"],
+[lang="ko"],
+[lang="zh"] {
+  line-height: 1.7;
+  word-break: break-all;
+}
+
+[lang="th"] {
+  line-height: 1.8;
+  word-break: break-all;
+}
+
+// Configuración específica para idiomas con caracteres complejos
+.text-complex-script {
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  font-kerning: auto;
+  font-variant-ligatures: common-ligatures contextual;
+}
+
+// ============================================================================
+// FIN DEL ARCHIVO _TYPOGRAPHY.SCSS
+// ============================================================================

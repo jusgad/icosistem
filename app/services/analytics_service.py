@@ -2,7 +2,7 @@
 Analytics Service - Ecosistema de Emprendimiento
 Servicio completo de analytics, métricas y business intelligence
 
-Author: Senior Developer
+Author: jusga
 Version: 1.0.0
 """
 

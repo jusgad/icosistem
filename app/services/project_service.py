@@ -2,7 +2,7 @@
 Project Service - Ecosistema de Emprendimiento
 Servicio para gestión completa de proyectos de emprendedores
 
-Author: Senior Developer
+Author: jusga
 Version: 1.0.0
 """
 

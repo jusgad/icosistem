@@ -1,0 +1,1936 @@
+// ============================================================================
+// _MODALS.SCSS - DASHBOARD PROJECT
+// Desarrollado por: jusga
+// Descripción: Sistema completo de modales para dashboard administrativo
+// Versión: 2.0.0
+// ============================================================================
+
+// ============================================================================
+// 1. BASE MODAL CONFIGURATION
+// ============================================================================
+
+/// Configuración base del overlay de modal
+/// El backdrop que cubre toda la pantalla
+.modal {
+  // Posicionamiento fijo para cubrir toda la pantalla
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: $modal-zindex;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  
+  // Configuración inicial (oculto)
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  
+  // Mejoras de performance
+  will-change: opacity, visibility;
+  backface-visibility: hidden;
+  
+  // Transición suave
+  transition: 
+    opacity $modal-transition-duration $modal-transition-timing,
+    visibility $modal-transition-duration $modal-transition-timing;
+  
+  // Estado activo
+  &.show {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  
+  // Prevenir scroll del body cuando modal está abierto
+  &.show ~ body,
+  &.show ~ .modal-open {
+    overflow: hidden;
+  }
+  
+  // Configuración de scrolling
+  -webkit-overflow-scrolling: touch;
+  
+  // Focus trap
+  &:focus {
+    outline: none;
+  }
+}
+
+/// Backdrop del modal
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: $modal-backdrop-zindex;
+  width: 100vw;
+  height: 100vh;
+  background-color: $modal-backdrop-bg;
+  opacity: 0;
+  
+  // Transición del backdrop
+  transition: opacity $modal-transition-duration $modal-transition-timing;
+  
+  // Estado activo
+  &.show {
+    opacity: $modal-backdrop-opacity;
+  }
+  
+  // Cursor pointer para cerrar al hacer click
+  cursor: pointer;
+}
+
+/// Contenedor del diálogo modal
+.modal-dialog {
+  position: relative;
+  width: auto;
+  margin: $modal-dialog-margin;
+  min-height: calc(100% - #{$modal-dialog-margin * 2});
+  
+  // Configuración de display
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  
+  // Pointer events para contenido
+  pointer-events: none;
+  
+  // Responsive margins
+  @include respond-to(sm) {
+    max-width: $modal-md;
+    margin: $modal-dialog-margin-y-sm-up auto;
+    min-height: calc(100% - #{$modal-dialog-margin-y-sm-up * 2});
+  }
+  
+  // Centrado vertical
+  &.modal-dialog-centered {
+    min-height: calc(100% - #{$modal-dialog-margin * 2});
+    align-items: center;
+    
+    @include respond-to(sm) {
+      min-height: calc(100% - #{$modal-dialog-margin-y-sm-up * 2});
+    }
+  }
+  
+  // Modal scrollable
+  &.modal-dialog-scrollable {
+    height: calc(100% - #{$modal-dialog-margin * 2});
+    
+    @include respond-to(sm) {
+      height: calc(100% - #{$modal-dialog-margin-y-sm-up * 2});
+    }
+    
+    .modal-content {
+      max-height: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .modal-body {
+      overflow-y: auto;
+      
+      // Scrollbar personalizado
+      @include scrollbar(6px, $gray-400, $gray-200);
+    }
+  }
+}
+
+/// Contenido del modal
+.modal-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  
+  // Habilitar pointer events
+  pointer-events: auto;
+  
+  // Apariencia
+  background-color: $modal-content-bg;
+  background-clip: padding-box;
+  border: $modal-content-border-width solid $modal-content-border-color;
+  border-radius: $modal-content-border-radius;
+  box-shadow: $modal-content-box-shadow-xs;
+  
+  // Outline para accesibilidad
+  outline: 0;
+  
+  // Sombra mejorada en pantallas grandes
+  @include respond-to(sm) {
+    box-shadow: $modal-content-box-shadow-sm-up;
+  }
+  
+  // Animación de entrada
+  transform: scale(0.9) translateY(-50px);
+  transition: 
+    transform $modal-transition-duration $modal-transition-timing,
+    opacity $modal-transition-duration $modal-transition-timing;
+  
+  .modal.show & {
+    transform: scale(1) translateY(0);
+  }
+}
+
+// ============================================================================
+// 2. MODAL STRUCTURE COMPONENTS
+// ============================================================================
+
+/// Header del modal
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $modal-header-padding;
+  border-bottom: $modal-header-border-width solid $modal-header-border-color;
+  border-top-left-radius: $modal-content-inner-border-radius;
+  border-top-right-radius: $modal-content-inner-border-radius;
+  
+  // Configuración de flex
+  flex-shrink: 0;
+  
+  // Espaciado interno
+  gap: 1rem;
+  
+  // Título del modal
+  .modal-title {
+    margin: 0;
+    line-height: $modal-title-line-height;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $headings-color;
+  }
+  
+  // Subtítulo del modal
+  .modal-subtitle {
+    margin: 0;
+    font-size: $font-size-sm;
+    color: $text-muted;
+    font-weight: $font-weight-normal;
+  }
+  
+  // Grupo de título y subtítulo
+  .modal-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+    flex: 1;
+  }
+  
+  // Iconos en header
+  .modal-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+    color: $primary;
+  }
+  
+  // Acciones del header
+  .modal-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+}
+
+/// Botón de cerrar
+.modal-close {
+  // Reset de botón
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  
+  // Posicionamiento
+  margin: -0.25rem -0.25rem -0.25rem auto;
+  
+  // Cursor
+  cursor: pointer;
+  
+  // Tamaño
+  width: 2rem;
+  height: 2rem;
+  
+  // Flexbox
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  // Color y opacity
+  color: $text-muted;
+  opacity: 0.7;
+  
+  // Border radius
+  border-radius: $border-radius-sm;
+  
+  // Transición
+  transition: all $transition-duration-150 $transition-ease-in-out;
+  
+  // Estados
+  &:hover {
+    color: $text-primary;
+    opacity: 1;
+    background-color: rgba($gray-500, 0.1);
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba($primary, 0.25);
+    opacity: 1;
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  // Icono X
+  &::before {
+    content: '×';
+    font-size: 1.5rem;
+    line-height: 1;
+    font-weight: 300;
+  }
+  
+  // Variante con icono SVG
+  &.modal-close-icon {
+    &::before {
+      display: none;
+    }
+    
+    svg {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+}
+
+/// Body del modal
+.modal-body {
+  position: relative;
+  flex: 1 1 auto;
+  padding: $modal-inner-padding;
+  
+  // Color del texto
+  color: $modal-content-color;
+  
+  // Espaciado de elementos internos
+  > *:last-child {
+    margin-bottom: 0;
+  }
+  
+  // Configuración de texto
+  line-height: 1.6;
+  
+  // Cuando no hay footer
+  &:last-child {
+    border-bottom-left-radius: $modal-content-inner-border-radius;
+    border-bottom-right-radius: $modal-content-inner-border-radius;
+  }
+}
+
+/// Footer del modal
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: $modal-inner-padding;
+  border-top: $modal-footer-border-width solid $modal-footer-border-color;
+  border-bottom-left-radius: $modal-content-inner-border-radius;
+  border-bottom-right-radius: $modal-content-inner-border-radius;
+  
+  // Flex shrink
+  flex-shrink: 0;
+  
+  // Gap entre botones
+  gap: $modal-footer-margin-between;
+  
+  // Responsive stacking
+  @include respond-down(sm) {
+    flex-direction: column-reverse;
+    
+    .btn {
+      width: 100%;
+    }
+  }
+  
+  // Alineación alternativa
+  &.modal-footer-start {
+    justify-content: flex-start;
+  }
+  
+  &.modal-footer-center {
+    justify-content: center;
+  }
+  
+  &.modal-footer-between {
+    justify-content: space-between;
+  }
+  
+  // Footer sin borde
+  &.modal-footer-borderless {
+    border-top: none;
+    padding-top: 0;
+  }
+}
+
+// ============================================================================
+// 3. MODAL SIZES
+// ============================================================================
+
+/// Modal pequeño
+.modal-sm {
+  max-width: $modal-sm;
+}
+
+/// Modal mediano (default)
+.modal-md {
+  max-width: $modal-md;
+}
+
+/// Modal grande
+.modal-lg {
+  max-width: $modal-lg;
+}
+
+/// Modal extra grande
+.modal-xl {
+  max-width: $modal-xl;
+}
+
+/// Modal fullscreen
+.modal-fullscreen {
+  width: 100vw;
+  max-width: none;
+  height: 100%;
+  margin: 0;
+  
+  .modal-content {
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+  }
+  
+  .modal-header {
+    border-radius: 0;
+  }
+  
+  .modal-footer {
+    border-radius: 0;
+  }
+}
+
+/// Modal fullscreen responsivo
+@each $breakpoint in map-keys($grid-breakpoints) {
+  $infix: if($breakpoint == xs, '', '-#{$breakpoint}');
+  
+  @include respond-down($breakpoint) {
+    .modal-fullscreen#{$infix}-down {
+      width: 100vw;
+      max-width: none;
+      height: 100%;
+      margin: 0;
+      
+      .modal-content {
+        height: 100%;
+        border: 0;
+        border-radius: 0;
+      }
+      
+      .modal-header {
+        border-radius: 0;
+      }
+      
+      .modal-footer {
+        border-radius: 0;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// 4. MODAL VARIANTS
+// ============================================================================
+
+/// Modal con animación de fade
+.modal-fade {
+  .modal-content {
+    transform: scale(0.9) translateY(-50px);
+    opacity: 0;
+    transition: 
+      transform $modal-transition-duration $modal-transition-timing,
+      opacity $modal-transition-duration $modal-transition-timing;
+  }
+  
+  &.show .modal-content {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+/// Modal con animación de slide down
+.modal-slide-down {
+  .modal-content {
+    transform: translateY(-100%);
+    transition: transform $modal-transition-duration $modal-transition-timing;
+  }
+  
+  &.show .modal-content {
+    transform: translateY(0);
+  }
+}
+
+/// Modal con animación de slide up
+.modal-slide-up {
+  .modal-content {
+    transform: translateY(100%);
+    transition: transform $modal-transition-duration $modal-transition-timing;
+  }
+  
+  &.show .modal-content {
+    transform: translateY(0);
+  }
+}
+
+/// Modal con animación de zoom
+.modal-zoom {
+  .modal-content {
+    transform: scale(0.1);
+    transition: transform $modal-transition-duration cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  &.show .modal-content {
+    transform: scale(1);
+  }
+}
+
+/// Modal con animación de flip
+.modal-flip {
+  perspective: 1000px;
+  
+  .modal-content {
+    transform: rotateY(-90deg);
+    transition: transform $modal-transition-duration * 1.5 $modal-transition-timing;
+  }
+  
+  &.show .modal-content {
+    transform: rotateY(0);
+  }
+}
+
+/// Modal con backdrop blur
+.modal-blur {
+  .modal-backdrop {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+}
+
+/// Modal sin backdrop
+.modal-no-backdrop {
+  .modal-backdrop {
+    display: none;
+  }
+}
+
+/// Modal estático (no se cierra al hacer click fuera)
+.modal-static {
+  .modal-backdrop {
+    pointer-events: none;
+  }
+  
+  &.show .modal-dialog {
+    animation: modalShake 0.3s ease-in-out;
+  }
+}
+
+@keyframes modalShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+// ============================================================================
+// 5. DASHBOARD SPECIFIC MODALS
+// ============================================================================
+
+/// Modal de confirmación
+.modal-confirm {
+  .modal-dialog {
+    max-width: 400px;
+  }
+  
+  .modal-body {
+    text-align: center;
+    padding: 2rem;
+    
+    .confirm-icon {
+      width: 4rem;
+      height: 4rem;
+      margin: 0 auto 1.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      svg {
+        width: 2rem;
+        height: 2rem;
+      }
+      
+      &.confirm-danger {
+        background: rgba($danger, 0.1);
+        color: $danger;
+      }
+      
+      &.confirm-warning {
+        background: rgba($warning, 0.1);
+        color: $warning;
+      }
+      
+      &.confirm-success {
+        background: rgba($success, 0.1);
+        color: $success;
+      }
+      
+      &.confirm-info {
+        background: rgba($info, 0.1);
+        color: $info;
+      }
+    }
+    
+    .confirm-title {
+      font-size: $font-size-xl;
+      font-weight: $font-weight-semibold;
+      color: $headings-color;
+      margin-bottom: 0.75rem;
+    }
+    
+    .confirm-message {
+      color: $text-secondary;
+      margin-bottom: 0;
+    }
+  }
+  
+  .modal-footer {
+    justify-content: center;
+    gap: 1rem;
+    
+    .btn {
+      min-width: 100px;
+    }
+  }
+}
+
+/// Modal de formulario
+.modal-form {
+  .modal-body {
+    padding: 1.5rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1.5rem;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  .form-row {
+    display: flex;
+    gap: 1rem;
+    
+    .form-group {
+      flex: 1;
+      margin-bottom: 1.5rem;
+    }
+    
+    @include respond-down(sm) {
+      flex-direction: column;
+      gap: 0;
+    }
+  }
+  
+  .form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid $border-color;
+    
+    &:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    
+    .section-title {
+      font-size: $font-size-lg;
+      font-weight: $font-weight-semibold;
+      color: $headings-color;
+      margin-bottom: 1rem;
+    }
+  }
+}
+
+/// Modal de imagen/galería
+.modal-image {
+  .modal-dialog {
+    max-width: 90vw;
+    max-height: 90vh;
+  }
+  
+  .modal-content {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+  
+  .modal-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    background: linear-gradient(180deg, rgba($black, 0.7) 0%, transparent 100%);
+    border: none;
+    border-radius: 0;
+    color: $white;
+    
+    .modal-title {
+      color: $white;
+    }
+    
+    .modal-close {
+      color: $white;
+      
+      &:hover {
+        background: rgba($white, 0.2);
+      }
+    }
+  }
+  
+  .modal-body {
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    
+    img {
+      max-width: 100%;
+      max-height: 80vh;
+      object-fit: contain;
+      border-radius: $border-radius;
+    }
+  }
+  
+  .modal-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(0deg, rgba($black, 0.7) 0%, transparent 100%);
+    border: none;
+    border-radius: 0;
+    
+    .image-info {
+      color: $white;
+      font-size: $font-size-sm;
+    }
+    
+    .image-actions {
+      display: flex;
+      gap: 0.5rem;
+      
+      .btn {
+        background: rgba($white, 0.2);
+        border: 1px solid rgba($white, 0.3);
+        color: $white;
+        
+        &:hover {
+          background: rgba($white, 0.3);
+        }
+      }
+    }
+  }
+  
+  // Navegación de galería
+  .modal-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+    
+    .nav-btn {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      background: rgba($black, 0.7);
+      border: none;
+      color: $white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all $transition-duration-200;
+      
+      &:hover {
+        background: rgba($black, 0.9);
+        transform: scale(1.1);
+      }
+      
+      svg {
+        width: 1.25rem;
+        height: 1.25rem;
+      }
+    }
+    
+    &.modal-nav-prev {
+      left: 1rem;
+    }
+    
+    &.modal-nav-next {
+      right: 1rem;
+    }
+  }
+}
+
+/// Modal de video
+.modal-video {
+  .modal-dialog {
+    max-width: 90vw;
+  }
+  
+  .modal-content {
+    background: $black;
+    border: none;
+  }
+  
+  .modal-header {
+    background: rgba($black, 0.9);
+    border: none;
+    color: $white;
+    
+    .modal-title {
+      color: $white;
+    }
+    
+    .modal-close {
+      color: $white;
+      
+      &:hover {
+        background: rgba($white, 0.2);
+      }
+    }
+  }
+  
+  .modal-body {
+    padding: 0;
+    
+    video,
+    iframe {
+      width: 100%;
+      height: auto;
+      min-height: 300px;
+      
+      @include respond-to(md) {
+        min-height: 400px;
+      }
+      
+      @include respond-to(lg) {
+        min-height: 500px;
+      }
+    }
+  }
+  
+  .video-controls {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba($black, 0.7);
+    padding: 0.75rem 1rem;
+    border-radius: $border-radius;
+    
+    .control-btn {
+      background: none;
+      border: none;
+      color: $white;
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: $border-radius-sm;
+      
+      &:hover {
+        background: rgba($white, 0.2);
+      }
+      
+      svg {
+        width: 1rem;
+        height: 1rem;
+      }
+    }
+    
+    .progress-bar {
+      flex: 1;
+      height: 4px;
+      background: rgba($white, 0.3);
+      border-radius: 2px;
+      overflow: hidden;
+      
+      .progress {
+        height: 100%;
+        background: $primary;
+        width: 0%;
+        transition: width 0.1s ease;
+      }
+    }
+    
+    .time-display {
+      color: $white;
+      font-size: $font-size-sm;
+      font-family: $font-family-monospace;
+    }
+  }
+}
+
+/// Modal de loading
+.modal-loading {
+  .modal-dialog {
+    max-width: 300px;
+  }
+  
+  .modal-content {
+    border: none;
+    box-shadow: $shadow-lg;
+  }
+  
+  .modal-body {
+    text-align: center;
+    padding: 2rem;
+    
+    .loading-spinner {
+      width: 3rem;
+      height: 3rem;
+      margin: 0 auto 1.5rem;
+      border: 3px solid $gray-200;
+      border-top-color: $primary;
+      border-radius: 50%;
+      animation: modalLoadingSpin 1s linear infinite;
+    }
+    
+    .loading-text {
+      color: $text-secondary;
+      margin-bottom: 0;
+    }
+    
+    .loading-progress {
+      margin-top: 1rem;
+      
+      .progress {
+        height: 4px;
+        background: $gray-200;
+        border-radius: 2px;
+        overflow: hidden;
+        
+        .progress-bar {
+          height: 100%;
+          background: $primary;
+          transition: width 0.3s ease;
+        }
+      }
+      
+      .progress-text {
+        margin-top: 0.5rem;
+        font-size: $font-size-sm;
+        color: $text-muted;
+      }
+    }
+  }
+  
+  // Sin botón de cerrar durante carga
+  .modal-close {
+    display: none;
+  }
+}
+
+@keyframes modalLoadingSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/// Modal de notificación/alert
+.modal-alert {
+  .modal-dialog {
+    max-width: 400px;
+  }
+  
+  .modal-content {
+    border: none;
+    box-shadow: $shadow-xl;
+  }
+  
+  .modal-body {
+    padding: 1.5rem;
+    text-align: center;
+    
+    .alert-icon {
+      width: 3rem;
+      height: 3rem;
+      margin: 0 auto 1rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      svg {
+        width: 1.5rem;
+        height: 1.5rem;
+      }
+    }
+    
+    .alert-title {
+      font-size: $font-size-lg;
+      font-weight: $font-weight-semibold;
+      margin-bottom: 0.75rem;
+    }
+    
+    .alert-message {
+      color: $text-secondary;
+      margin-bottom: 1.5rem;
+    }
+    
+    .alert-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+  }
+  
+  // Variantes de alerta
+  &.modal-alert-success {
+    .alert-icon {
+      background: rgba($success, 0.1);
+      color: $success;
+    }
+    
+    .alert-title {
+      color: $success;
+    }
+  }
+  
+  &.modal-alert-warning {
+    .alert-icon {
+      background: rgba($warning, 0.1);
+      color: $warning;
+    }
+    
+    .alert-title {
+      color: $warning;
+    }
+  }
+  
+  &.modal-alert-danger {
+    .alert-icon {
+      background: rgba($danger, 0.1);
+      color: $danger;
+    }
+    
+    .alert-title {
+      color: $danger;
+    }
+  }
+  
+  &.modal-alert-info {
+    .alert-icon {
+      background: rgba($info, 0.1);
+      color: $info;
+    }
+    
+    .alert-title {
+      color: $info;
+    }
+  }
+}
+
+// ============================================================================
+// 6. MODAL STATES
+// ============================================================================
+
+/// Modal con estado de éxito
+.modal-success {
+  .modal-content {
+    border-top: 4px solid $success;
+  }
+  
+  .modal-header {
+    background: rgba($success, 0.05);
+    
+    .modal-icon {
+      color: $success;
+    }
+  }
+}
+
+/// Modal con estado de error
+.modal-error {
+  .modal-content {
+    border-top: 4px solid $danger;
+  }
+  
+  .modal-header {
+    background: rgba($danger, 0.05);
+    
+    .modal-icon {
+      color: $danger;
+    }
+  }
+}
+
+/// Modal con estado de advertencia
+.modal-warning {
+  .modal-content {
+    border-top: 4px solid $warning;
+  }
+  
+  .modal-header {
+    background: rgba($warning, 0.05);
+    
+    .modal-icon {
+      color: $warning;
+    }
+  }
+}
+
+/// Modal con estado de información
+.modal-info {
+  .modal-content {
+    border-top: 4px solid $info;
+  }
+  
+  .modal-header {
+    background: rgba($info, 0.05);
+    
+    .modal-icon {
+      color: $info;
+    }
+  }
+}
+
+// ============================================================================
+// 7. MODAL LAYOUTS AND COMBINATIONS
+// ============================================================================
+
+/// Modal de dos columnas
+.modal-two-column {
+  .modal-dialog {
+    max-width: 800px;
+  }
+  
+  .modal-body {
+    display: flex;
+    gap: 2rem;
+    
+    .modal-column {
+      flex: 1;
+      
+      &.modal-column-primary {
+        flex: 2;
+      }
+      
+      &.modal-column-secondary {
+        flex: 1;
+        border-left: 1px solid $border-color;
+        padding-left: 2rem;
+      }
+    }
+    
+    @include respond-down(md) {
+      flex-direction: column;
+      gap: 1.5rem;
+      
+      .modal-column-secondary {
+        border-left: none;
+        border-top: 1px solid $border-color;
+        padding-left: 0;
+        padding-top: 1.5rem;
+      }
+    }
+  }
+}
+
+/// Modal con sidebar
+.modal-sidebar {
+  .modal-dialog {
+    max-width: 900px;
+  }
+  
+  .modal-content {
+    display: flex;
+    flex-direction: row;
+    height: 80vh;
+    
+    @include respond-down(md) {
+      flex-direction: column;
+      height: auto;
+    }
+  }
+  
+  .modal-sidebar-nav {
+    width: 200px;
+    background: $gray-50;
+    border-right: 1px solid $border-color;
+    flex-shrink: 0;
+    
+    @include respond-down(md) {
+      width: 100%;
+      border-right: none;
+      border-bottom: 1px solid $border-color;
+    }
+    
+    .nav-list {
+      list-style: none;
+      padding: 1rem 0;
+      margin: 0;
+      
+      .nav-item {
+        .nav-link {
+          display: block;
+          padding: 0.75rem 1.5rem;
+          color: $text-secondary;
+          text-decoration: none;
+          border-left: 3px solid transparent;
+          transition: all $transition-duration-150;
+          
+          &:hover {
+            background: rgba($primary, 0.05);
+            color: $primary;
+          }
+          
+          &.active {
+            background: rgba($primary, 0.1);
+            color: $primary;
+            border-left-color: $primary;
+          }
+        }
+      }
+    }
+  }
+  
+  .modal-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    
+    .modal-main-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid $border-color;
+      
+      h3 {
+        margin: 0;
+        font-size: $font-size-xl;
+        font-weight: $font-weight-semibold;
+      }
+    }
+    
+    .modal-main-body {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      
+      @include scrollbar(6px, $gray-400, $gray-200);
+    }
+  }
+}
+
+/// Modal con tabs
+.modal-tabs {
+  .modal-header {
+    padding-bottom: 0;
+    border-bottom: none;
+    
+    .modal-title-group {
+      margin-bottom: 1rem;
+    }
+    
+    .nav-tabs {
+      border-bottom: 1px solid $border-color;
+      margin: 0 (-$modal-inner-padding) 0;
+      
+      .nav-link {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-bottom: 2px solid transparent;
+        background: none;
+        color: $text-muted;
+        
+        &:hover {
+          color: $primary;
+          background: rgba($primary, 0.05);
+        }
+        
+        &.active {
+          color: $primary;
+          border-bottom-color: $primary;
+          background: none;
+        }
+      }
+    }
+  }
+  
+  .modal-body {
+    .tab-content {
+      .tab-pane {
+        display: none;
+        
+        &.active {
+          display: block;
+        }
+      }
+    }
+  }
+}
+
+/// Modal wizard/stepper
+.modal-wizard {
+  .modal-header {
+    .wizard-steps {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+      
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: $text-muted;
+        font-size: $font-size-sm;
+        
+        .step-number {
+          width: 1.5rem;
+          height: 1.5rem;
+          border-radius: 50%;
+          background: $gray-300;
+          color: $white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: $font-size-xs;
+          font-weight: $font-weight-semibold;
+        }
+        
+        &.completed {
+          color: $success;
+          
+          .step-number {
+            background: $success;
+          }
+        }
+        
+        &.active {
+          color: $primary;
+          
+          .step-number {
+            background: $primary;
+          }
+        }
+        
+        &:not(:last-child)::after {
+          content: '';
+          width: 2rem;
+          height: 1px;
+          background: $border-color;
+          margin-left: 1rem;
+        }
+      }
+    }
+  }
+  
+  .modal-footer {
+    .wizard-navigation {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      
+      .nav-left {
+        display: flex;
+        gap: 0.5rem;
+      }
+      
+      .nav-right {
+        display: flex;
+        gap: 0.5rem;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// 8. RESPONSIVE MODALS
+// ============================================================================
+
+/// Adaptaciones responsive
+@include respond-down(sm) {
+  .modal {
+    padding: 0.5rem;
+  }
+  
+  .modal-dialog {
+    margin: 0.5rem;
+    min-height: calc(100% - 1rem);
+    
+    &.modal-dialog-centered {
+      min-height: calc(100% - 1rem);
+    }
+  }
+  
+  .modal-content {
+    border-radius: $border-radius;
+  }
+  
+  .modal-header {
+    padding: 1rem;
+    flex-wrap: wrap;
+    
+    .modal-title {
+      font-size: $font-size-base;
+    }
+    
+    .modal-actions {
+      width: 100%;
+      justify-content: flex-start;
+      margin-top: 0.75rem;
+    }
+  }
+  
+  .modal-body {
+    padding: 1rem;
+  }
+  
+  .modal-footer {
+    padding: 1rem;
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+    
+    .btn {
+      width: 100%;
+    }
+  }
+  
+  // Modales específicos en mobile
+  .modal-form {
+    .form-row {
+      flex-direction: column;
+      gap: 0;
+    }
+  }
+  
+  .modal-two-column .modal-body {
+    flex-direction: column;
+    gap: 1rem;
+    
+    .modal-column-secondary {
+      border-left: none;
+      border-top: 1px solid $border-color;
+      padding-left: 0;
+      padding-top: 1rem;
+    }
+  }
+}
+
+@include respond-down(xs) {
+  .modal-dialog {
+    margin: 0.25rem;
+    min-height: calc(100% - 0.5rem);
+  }
+  
+  .modal-fullscreen-xs-down {
+    width: 100vw;
+    max-width: none;
+    height: 100%;
+    margin: 0;
+    
+    .modal-content {
+      height: 100%;
+      border: 0;
+      border-radius: 0;
+    }
+  }
+}
+
+// ============================================================================
+// 9. DARK MODE SUPPORT
+// ============================================================================
+
+@if $enable-dark-mode {
+  @include dark-mode {
+    .modal-content {
+      background-color: $dark-theme-surface;
+      border-color: $dark-theme-border;
+      color: $dark-theme-color;
+    }
+    
+    .modal-header {
+      border-bottom-color: $dark-theme-border;
+      
+      .modal-title,
+      .modal-subtitle {
+        color: $dark-theme-color;
+      }
+    }
+    
+    .modal-footer {
+      border-top-color: $dark-theme-border;
+    }
+    
+    .modal-close {
+      color: rgba($dark-theme-color, 0.7);
+      
+      &:hover {
+        color: $dark-theme-color;
+        background-color: rgba($dark-theme-color, 0.1);
+      }
+    }
+    
+    .modal-backdrop {
+      background-color: rgba($black, 0.8);
+    }
+    
+    // Estados en dark mode
+    .modal-success .modal-header {
+      background: rgba($success, 0.1);
+    }
+    
+    .modal-error .modal-header {
+      background: rgba($danger, 0.1);
+    }
+    
+    .modal-warning .modal-header {
+      background: rgba($warning, 0.1);
+    }
+    
+    .modal-info .modal-header {
+      background: rgba($info, 0.1);
+    }
+    
+    // Modales específicos
+    .modal-sidebar .modal-sidebar-nav {
+      background: rgba($dark-theme-color, 0.05);
+      border-right-color: $dark-theme-border;
+    }
+    
+    .modal-tabs .nav-tabs {
+      border-bottom-color: $dark-theme-border;
+      
+      .nav-link {
+        color: rgba($dark-theme-color, 0.7);
+        
+        &:hover {
+          background: rgba($primary, 0.1);
+        }
+      }
+    }
+  }
+}
+
+// ============================================================================
+// 10. ACCESSIBILITY ENHANCEMENTS
+// ============================================================================
+
+/// Mejoras de accesibilidad
+.modal {
+  // Respeta las preferencias de movimiento reducido
+  @media (prefers-reduced-motion: reduce) {
+    .modal-content {
+      transition: none;
+      transform: none !important;
+    }
+    
+    &.modal-fade .modal-content,
+    &.modal-slide-down .modal-content,
+    &.modal-slide-up .modal-content,
+    &.modal-zoom .modal-content,
+    &.modal-flip .modal-content {
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+  
+  // Mejora el contraste en modo alto contraste
+  @media (prefers-contrast: high) {
+    .modal-content {
+      border-width: 2px;
+    }
+    
+    .modal-header,
+    .modal-footer {
+      border-width: 2px;
+    }
+  }
+  
+  // Focus management
+  &[aria-hidden="false"] {
+    .modal-content {
+      &:focus {
+        outline: none;
+      }
+    }
+  }
+  
+  // Screen reader improvements
+  &[aria-modal="true"] {
+    .modal-header {
+      .modal-title {
+        // Será anunciado como el título del diálogo
+        id: modal-title;
+      }
+    }
+    
+    .modal-body {
+      // Descripción del modal
+      id: modal-description;
+    }
+  }
+}
+
+/// Focus trap para modales
+.modal-focus-trap {
+  // El primer elemento focuseable
+  .modal-focus-first {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  // El último elemento focuseable
+  .modal-focus-last {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+/// Anuncios para screen readers
+.modal-sr-status {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+// ============================================================================
+// 11. PRINT STYLES
+// ============================================================================
+
+@if $enable-print-styles {
+  @media print {
+    .modal {
+      position: static;
+      z-index: auto;
+      display: block !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      
+      .modal-backdrop {
+        display: none;
+      }
+      
+      .modal-dialog {
+        position: static;
+        width: auto;
+        height: auto;
+        margin: 0;
+        display: block;
+      }
+      
+      .modal-content {
+        position: static;
+        display: block;
+        border: 1px solid $black;
+        box-shadow: none;
+        transform: none !important;
+        page-break-inside: avoid;
+      }
+      
+      .modal-header {
+        border-bottom: 1px solid $black;
+        background: $white !important;
+        
+        .modal-close,
+        .modal-actions {
+          display: none;
+        }
+      }
+      
+      .modal-footer {
+        border-top: 1px solid $black;
+        background: $white !important;
+        
+        .btn {
+          display: none;
+        }
+      }
+      
+      .modal-body {
+        background: $white !important;
+        color: $black !important;
+      }
+    }
+    
+    // Ocultar modales específicos en impresión
+    .modal-image,
+    .modal-video,
+    .modal-loading {
+      display: none !important;
+    }
+  }
+}
+
+// ============================================================================
+// 12. PERFORMANCE OPTIMIZATIONS
+// ============================================================================
+
+/// Optimizaciones de performance
+.modal-performance {
+  // Contenedor para muchos modales
+  contain: layout style paint;
+  
+  .modal-content {
+    // Force hardware acceleration
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    
+    // Reduce repaint durante animaciones
+    &.animating {
+      will-change: transform, opacity;
+    }
+    
+    &:not(.animating) {
+      will-change: auto;
+    }
+  }
+  
+  .modal-backdrop {
+    will-change: opacity;
+    
+    &.show {
+      will-change: auto;
+    }
+  }
+}
+
+/// Lazy loading para contenido de modales
+.modal-lazy {
+  .modal-body {
+    min-height: 200px;
+    
+    .lazy-content {
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      
+      &.loaded {
+        opacity: 1;
+      }
+    }
+    
+    .lazy-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+      color: $text-muted;
+      
+      .spinner {
+        width: 2rem;
+        height: 2rem;
+        border: 2px solid $gray-200;
+        border-top-color: $primary;
+        border-radius: 50%;
+        animation: modalLoadingSpin 1s linear infinite;
+        margin-right: 1rem;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// 13. UTILITY CLASSES
+// ============================================================================
+
+/// Utilidades específicas para modales
+.modal-auto-height {
+  .modal-dialog {
+    height: auto;
+  }
+  
+  .modal-content {
+    height: auto;
+  }
+}
+
+.modal-full-height {
+  .modal-dialog {
+    height: 100%;
+    margin: 0;
+  }
+  
+  .modal-content {
+    height: 100%;
+    border-radius: 0;
+  }
+}
+
+.modal-no-padding {
+  .modal-body {
+    padding: 0;
+  }
+}
+
+.modal-extra-padding {
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: $modal-inner-padding * 1.5;
+  }
+}
+
+.modal-borderless {
+  .modal-content {
+    border: none;
+  }
+  
+  .modal-header,
+  .modal-footer {
+    border: none;
+  }
+}
+
+.modal-rounded {
+  .modal-content {
+    border-radius: $border-radius-xl;
+  }
+}
+
+.modal-no-close {
+  .modal-close {
+    display: none;
+  }
+}
+
+.modal-persistent {
+  .modal-backdrop {
+    pointer-events: none;
+  }
+}
+
+// ============================================================================
+// 14. MODAL MANAGER UTILITIES
+// ============================================================================
+
+/// Utilidades para el manejo de múltiples modales
+.modal-stack {
+  // Cada modal sucesivo tiene mayor z-index
+  &.modal-level-1 {
+    z-index: $modal-zindex + 10;
+    
+    .modal-backdrop {
+      z-index: $modal-backdrop-zindex + 10;
+    }
+  }
+  
+  &.modal-level-2 {
+    z-index: $modal-zindex + 20;
+    
+    .modal-backdrop {
+      z-index: $modal-backdrop-zindex + 20;
+      opacity: $modal-backdrop-opacity * 0.8;
+    }
+  }
+  
+  &.modal-level-3 {
+    z-index: $modal-zindex + 30;
+    
+    .modal-backdrop {
+      z-index: $modal-backdrop-zindex + 30;
+      opacity: $modal-backdrop-opacity * 0.6;
+    }
+  }
+}
+
+/// Body lock cuando modal está abierto
+.modal-open {
+  overflow: hidden;
+  padding-right: var(--scrollbar-width, 0);
+}
+
+/// Offset para evitar el salto del scrollbar
+.modal-scrollbar-measure {
+  position: absolute;
+  top: -9999px;
+  width: 50px;
+  height: 50px;
+  overflow: scroll;
+}
+
+// ============================================================================
+// 15. INTEGRATION WITH DASHBOARD COMPONENTS
+// ============================================================================
+
+/// Integración con otros componentes del dashboard
+.modal-dashboard {
+  // Modales dentro de tarjetas
+  .card & {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    border-radius: inherit;
+    
+    .modal-backdrop {
+      border-radius: inherit;
+    }
+  }
+  
+  // Modales en sidebar
+  .sidebar & {
+    .modal-dialog {
+      max-width: 90%;
+    }
+  }
+  
+  // Modales en header
+  .header & {
+    top: $header-height;
+    height: calc(100vh - #{$header-height});
+  }
+}
+
+/// Tooltips en modales
+.modal .tooltip {
+  z-index: $modal-zindex + 100;
+}
+
+/// Dropdowns en modales
+.modal .dropdown-menu {
+  z-index: $modal-zindex + 50;
+}
+
+// ============================================================================
+// FIN DEL ARCHIVO _MODALS.SCSS
+// ============================================================================

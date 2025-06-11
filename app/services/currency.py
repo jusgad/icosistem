@@ -4,7 +4,7 @@ Currency Service
 Servicio para manejo de conversión de monedas, tasas de cambio y formateo.
 Incluye cache, múltiples proveedores de APIs y manejo robusto de errores.
 
-Author: Senior Developer
+Author: jusga
 Date: 2025
 """
 

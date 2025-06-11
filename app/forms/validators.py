@@ -4,7 +4,7 @@ Forms Validators Module
 Validadores personalizados para el ecosistema de emprendimiento.
 Incluye validaciones específicas del dominio, seguridad y compliance.
 
-Author: Senior Developer
+Author: jusga
 Date: 2025
 """
 

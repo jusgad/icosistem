@@ -2,7 +2,7 @@
 File Storage Service - Ecosistema de Emprendimiento
 Servicio completo de almacenamiento con múltiples proveedores y funcionalidades empresariales
 
-Author: Senior Developer
+Author: jusga
 Version: 1.0.0
 """
 

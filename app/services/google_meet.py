@@ -2,7 +2,7 @@
 Google Meet Service - Ecosistema de Emprendimiento
 Servicio completo de integración con Google Meet API
 
-Author: Senior Developer
+Author: jusga
 Version: 1.0.0
 """
 

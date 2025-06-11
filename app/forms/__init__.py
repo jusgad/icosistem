@@ -4,7 +4,7 @@ Forms Module Initialization
 Módulo central para todos los formularios del ecosistema de emprendimiento.
 Incluye importaciones, utilidades, validadores globales y configuración.
 
-Author: Senior Developer
+Author: jusga
 Date: 2025
 """
 

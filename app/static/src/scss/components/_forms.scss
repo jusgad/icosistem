@@ -1,0 +1,2001 @@
+// ============================================================================
+// _FORMS.SCSS - DASHBOARD PROJECT
+// Desarrollado por: jusga
+// Descripción: Sistema completo de formularios para dashboard administrativo
+// Versión: 2.0.0
+// ============================================================================
+
+// ============================================================================
+// 1. BASE FORM CONFIGURATION
+// ============================================================================
+
+/// Configuración base para todos los elementos de formulario
+/// Reset y normalización cross-browser
+input,
+button,
+select,
+optgroup,
+textarea {
+  // Herencia de tipografía
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  
+  // Reset de margin
+  margin: 0;
+  
+  // Normalización de colores
+  color: inherit;
+}
+
+/// Configuración específica para inputs
+input {
+  // Overflow visible en Edge
+  overflow: visible;
+}
+
+/// Configuración específica para select
+select {
+  // Remove el outline de Edge
+  &::-ms-expand {
+    background-color: transparent;
+    border: 0;
+  }
+}
+
+/// Configuración específica para textarea
+textarea {
+  // Permitir redimensionamiento solo vertical
+  resize: vertical;
+  
+  // Remove scrollbar en IE
+  overflow: auto;
+}
+
+/// Configuración específica para fieldset
+fieldset {
+  // Reset básico
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+/// Configuración específica para legend
+legend {
+  // Display block
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+  line-height: inherit;
+  color: inherit;
+  white-space: normal;
+}
+
+// ============================================================================
+// 2. FORM GROUPS AND LAYOUT
+// ============================================================================
+
+/// Grupo de formulario base
+.form-group {
+  margin-bottom: $spacer;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/// Label de formulario
+.form-label {
+  display: inline-block;
+  margin-bottom: $label-margin-bottom;
+  font-size: $label-font-size;
+  font-weight: $label-font-weight;
+  color: $label-color;
+  cursor: pointer;
+  
+  // Configuración para labels requeridos
+  &.required {
+    &::after {
+      content: ' *';
+      color: $danger;
+    }
+  }
+  
+  // Labels flotantes
+  &.form-label-floating {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    transform-origin: left top;
+    transition: all $transition-duration-200 $transition-ease-out;
+    color: $text-muted;
+    z-index: 2;
+  }
+  
+  // Labels inline
+  &.form-label-inline {
+    margin-bottom: 0;
+    margin-right: 0.75rem;
+    align-self: center;
+  }
+}
+
+/// Texto de ayuda
+.form-text {
+  margin-top: 0.25rem;
+  font-size: $font-size-sm;
+  color: $text-muted;
+  line-height: 1.4;
+  
+  // Con icono
+  &.form-text-icon {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    
+    .icon {
+      margin-top: 0.125rem;
+      flex-shrink: 0;
+      width: 1rem;
+      height: 1rem;
+      color: $text-light;
+    }
+  }
+}
+
+/// Grupo de formulario horizontal
+.form-group-horizontal {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  
+  .form-label {
+    flex-shrink: 0;
+    width: 150px;
+    margin-bottom: 0;
+    padding-top: calc(#{$input-padding-y} + #{$input-border-width});
+    text-align: right;
+    
+    @include respond-down(md) {
+      width: 120px;
+      text-align: left;
+    }
+    
+    @include respond-down(sm) {
+      width: 100%;
+      text-align: left;
+      padding-top: 0;
+      margin-bottom: $label-margin-bottom;
+    }
+  }
+  
+  .form-control-wrapper {
+    flex: 1;
+  }
+  
+  @include respond-down(sm) {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+/// Fila de formulario (múltiples campos)
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: $spacer;
+  
+  .form-group {
+    flex: 1;
+    margin-bottom: 0;
+    min-width: 0;
+  }
+  
+  // Columnas específicas
+  .col-2 { flex: 0 0 calc(16.666667% - 0.75rem); }
+  .col-3 { flex: 0 0 calc(25% - 0.75rem); }
+  .col-4 { flex: 0 0 calc(33.333333% - 0.75rem); }
+  .col-6 { flex: 0 0 calc(50% - 0.5rem); }
+  .col-8 { flex: 0 0 calc(66.666667% - 0.33rem); }
+  .col-9 { flex: 0 0 calc(75% - 0.25rem); }
+  .col-12 { flex: 0 0 100%; }
+  
+  @include respond-down(md) {
+    .col-2,
+    .col-3,
+    .col-4 {
+      flex: 0 0 calc(50% - 0.5rem);
+    }
+  }
+  
+  @include respond-down(sm) {
+    flex-direction: column;
+    gap: 0;
+    
+    .form-group {
+      margin-bottom: $spacer;
+    }
+    
+    .col-2,
+    .col-3,
+    .col-4,
+    .col-6,
+    .col-8,
+    .col-9,
+    .col-12 {
+      flex: none;
+    }
+  }
+}
+
+/// Sección de formulario
+.form-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid $border-color;
+  
+  &:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  
+  .section-title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $headings-color;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    
+    .section-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+      color: $primary;
+    }
+  }
+  
+  .section-description {
+    color: $text-muted;
+    font-size: $font-size-sm;
+    margin-bottom: 1.5rem;
+  }
+}
+
+// ============================================================================
+// 3. FORM CONTROLS BASE
+// ============================================================================
+
+/// Configuración base para controles de formulario
+.form-control {
+  display: block;
+  width: 100%;
+  padding: $input-padding-y $input-padding-x;
+  font-family: $input-font-family;
+  font-size: $input-font-size;
+  font-weight: $input-font-weight;
+  line-height: $input-line-height;
+  color: $input-color;
+  background-color: $input-bg;
+  background-image: none;
+  border: $input-border-width solid $input-border-color;
+  appearance: none;
+  border-radius: $input-border-radius;
+  
+  // Transiciones
+  transition: 
+    border-color $transition-duration-150 $transition-ease-in-out,
+    box-shadow $transition-duration-150 $transition-ease-in-out,
+    background-color $transition-duration-150 $transition-ease-in-out;
+  
+  // Placeholder
+  &::placeholder {
+    color: $input-placeholder-color;
+    opacity: 1;
+  }
+  
+  // Estados
+  &:focus {
+    color: $input-focus-color;
+    background-color: $input-focus-bg;
+    border-color: $input-focus-border-color;
+    outline: 0;
+    box-shadow: $input-focus-box-shadow;
+  }
+  
+  &:disabled,
+  &[readonly] {
+    background-color: $input-disabled-bg;
+    opacity: 1;
+  }
+  
+  &:disabled {
+    cursor: not-allowed;
+  }
+  
+  &[readonly] {
+    cursor: default;
+  }
+  
+  // Estados de validación
+  &.is-valid {
+    border-color: $success;
+    padding-right: calc(1.5em + 0.75rem);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='m2.3 6.73.02-.02 1.24-1.46L6.1 2.48a.42.42 0 0 1 .64.06l.08.1a.42.42 0 0 1-.06.64L3.44 7.14a.42.42 0 0 1-.64-.06l-.02-.02L.9 4.54a.42.42 0 0 1 .06-.64l.1-.08a.42.42 0 0 1 .64.06z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    
+    &:focus {
+      border-color: $success;
+      box-shadow: 0 0 0 0.2rem rgba($success, 0.25);
+    }
+  }
+  
+  &.is-invalid {
+    border-color: $danger;
+    padding-right: calc(1.5em + 0.75rem);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 4.6 2.4 2.8m0-2.8L5.8 7.4'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    
+    &:focus {
+      border-color: $danger;
+      box-shadow: 0 0 0 0.2rem rgba($danger, 0.25);
+    }
+  }
+}
+
+/// Textarea específico
+textarea.form-control {
+  min-height: 100px;
+  
+  // Auto-resize
+  &.form-control-auto-resize {
+    resize: none;
+    overflow: hidden;
+  }
+}
+
+/// Select específico
+select.form-control {
+  cursor: pointer;
+  
+  // Arrow personalizado
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1rem;
+  padding-right: 2.5rem;
+  
+  // Remove arrow en IE
+  &::-ms-expand {
+    display: none;
+  }
+  
+  // Multiple select
+  &[multiple] {
+    background-image: none;
+    padding-right: $input-padding-x;
+    height: auto;
+    
+    option {
+      padding: 0.25rem 0.5rem;
+    }
+  }
+  
+  // Select con tamaño específico
+  &[size]:not([size="1"]) {
+    background-image: none;
+    padding-right: $input-padding-x;
+  }
+}
+
+// ============================================================================
+// 4. FORM CONTROL SIZES
+// ============================================================================
+
+/// Form control pequeño
+.form-control-sm {
+  @include form-control-size(
+    $input-padding-y-sm,
+    $input-padding-x-sm,
+    $input-font-size-sm,
+    $input-border-radius-sm
+  );
+}
+
+/// Form control grande
+.form-control-lg {
+  @include form-control-size(
+    $input-padding-y-lg,
+    $input-padding-x-lg,
+    $input-font-size-lg,
+    $input-border-radius-lg
+  );
+}
+
+/// Form control plaintext
+.form-control-plaintext {
+  display: block;
+  width: 100%;
+  padding: $input-padding-y 0;
+  margin-bottom: 0;
+  font-size: $input-font-size;
+  line-height: $input-line-height;
+  color: $input-plaintext-color;
+  background-color: transparent;
+  border: solid transparent;
+  border-width: $input-border-width 0;
+  
+  &.form-control-sm,
+  &.form-control-lg {
+    padding-right: 0;
+    padding-left: 0;
+  }
+}
+
+// ============================================================================
+// 5. INPUT GROUPS
+// ============================================================================
+
+/// Grupo de input
+.input-group {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  width: 100%;
+  
+  > .form-control,
+  > .form-select {
+    position: relative;
+    flex: 1 1 auto;
+    width: 1%;
+    min-width: 0;
+  }
+  
+  > .form-control:focus,
+  > .form-select:focus {
+    z-index: 5;
+  }
+  
+  // Prepend
+  .input-group-prepend {
+    display: flex;
+    
+    .input-group-text {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+  }
+  
+  // Append
+  .input-group-append {
+    display: flex;
+    
+    .input-group-text {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+  }
+  
+  // Cuando hay prepend
+  > .input-group-prepend + .form-control,
+  > .input-group-prepend + .form-select {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+  
+  // Cuando hay append
+  > .form-control + .input-group-append,
+  > .form-select + .input-group-append {
+    .input-group-text {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+  }
+  
+  > .form-control:not(:last-child),
+  > .form-select:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+}
+
+/// Texto del grupo de input
+.input-group-text {
+  display: flex;
+  align-items: center;
+  padding: $input-padding-y $input-padding-x;
+  font-size: $input-font-size;
+  font-weight: $font-weight-normal;
+  line-height: $input-line-height;
+  color: $text-muted;
+  text-align: center;
+  white-space: nowrap;
+  background-color: $gray-100;
+  border: $input-border-width solid $input-border-color;
+  border-radius: $input-border-radius;
+  
+  // Iconos
+  .icon,
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+  
+  // Tamaños
+  .input-group-sm & {
+    padding: $input-padding-y-sm $input-padding-x-sm;
+    font-size: $input-font-size-sm;
+    border-radius: $input-border-radius-sm;
+  }
+  
+  .input-group-lg & {
+    padding: $input-padding-y-lg $input-padding-x-lg;
+    font-size: $input-font-size-lg;
+    border-radius: $input-border-radius-lg;
+  }
+}
+
+// ============================================================================
+// 6. CHECKBOXES AND RADIOS
+// ============================================================================
+
+/// Contenedor base para checks y radios
+.form-check {
+  position: relative;
+  display: block;
+  padding-left: 1.75rem;
+  margin-bottom: 0.5rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/// Input de check/radio
+.form-check-input {
+  position: absolute;
+  left: 0;
+  z-index: 1;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.125rem;
+  vertical-align: top;
+  background-color: $white;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  border: $input-border-width solid $input-border-color;
+  appearance: none;
+  color-adjust: exact;
+  cursor: pointer;
+  
+  // Transición
+  transition: 
+    background-color $transition-duration-150 $transition-ease-in-out,
+    background-position $transition-duration-150 $transition-ease-in-out,
+    border-color $transition-duration-150 $transition-ease-in-out,
+    box-shadow $transition-duration-150 $transition-ease-in-out;
+  
+  // Estados
+  &:focus {
+    border-color: $input-focus-border-color;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba($primary, 0.25);
+  }
+  
+  &:checked {
+    background-color: $primary;
+    border-color: $primary;
+  }
+  
+  &:disabled {
+    pointer-events: none;
+    filter: none;
+    opacity: 0.5;
+  }
+  
+  &[disabled] ~ .form-check-label,
+  &:disabled ~ .form-check-label {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  // Checkbox específico
+  &[type="checkbox"] {
+    border-radius: $border-radius-sm;
+    
+    &:checked {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='white'%3e%3cpath fill-rule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clip-rule='evenodd'/%3e%3c/svg%3e");
+    }
+    
+    &:indeterminate {
+      background-color: $primary;
+      border-color: $primary;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='white'%3e%3cpath fill-rule='evenodd' d='M4 10a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1z' clip-rule='evenodd'/%3e%3c/svg%3e");
+    }
+  }
+  
+  // Radio específico
+  &[type="radio"] {
+    border-radius: 50%;
+    
+    &:checked {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8' fill='white'%3e%3ccircle r='2'/%3e%3c/svg%3e");
+    }
+  }
+}
+
+/// Label de check/radio
+.form-check-label {
+  color: $text-primary;
+  cursor: pointer;
+  font-size: $font-size-base;
+  line-height: 1.5;
+}
+
+/// Checks inline
+.form-check-inline {
+  display: inline-block;
+  margin-right: 1rem;
+  margin-bottom: 0;
+}
+
+/// Custom switch
+.form-switch {
+  padding-left: 2.5rem;
+  
+  .form-check-input {
+    width: 2rem;
+    height: 1.25rem;
+    margin-left: -2.5rem;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%280,0,0,.25%29'/%3e%3c/svg%3e");
+    background-position: left center;
+    border-radius: 2rem;
+    transition: background-position $transition-duration-150 $transition-ease-in-out;
+    
+    &:focus {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%280,0,0,.25%29'/%3e%3c/svg%3e");
+    }
+    
+    &:checked {
+      background-position: right center;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='white'/%3e%3c/svg%3e");
+    }
+  }
+}
+
+// ============================================================================
+// 7. RANGE INPUTS
+// ============================================================================
+
+/// Range input
+.form-range {
+  width: 100%;
+  height: 1.5rem;
+  padding: 0;
+  background-color: transparent;
+  appearance: none;
+  
+  &:focus {
+    outline: 0;
+    
+    &::-webkit-slider-thumb {
+      box-shadow: 0 0 0 1px $body-bg, 0 0 0 0.2rem rgba($primary, 0.25);
+    }
+    
+    &::-moz-range-thumb {
+      box-shadow: 0 0 0 1px $body-bg, 0 0 0 0.2rem rgba($primary, 0.25);
+    }
+  }
+  
+  &::-moz-focus-outer {
+    border: 0;
+  }
+  
+  &::-webkit-slider-track {
+    width: 100%;
+    height: 0.5rem;
+    color: transparent;
+    cursor: pointer;
+    background-color: $gray-300;
+    border-color: transparent;
+    border-radius: 1rem;
+  }
+  
+  &::-webkit-slider-thumb {
+    width: 1rem;
+    height: 1rem;
+    margin-top: -0.25rem;
+    background-color: $primary;
+    border: 0;
+    border-radius: 1rem;
+    transition: background-color $transition-duration-150 $transition-ease-in-out, border-color $transition-duration-150 $transition-ease-in-out, box-shadow $transition-duration-150 $transition-ease-in-out;
+    appearance: none;
+    cursor: pointer;
+    
+    &:active {
+      background-color: lighten($primary, 35%);
+    }
+  }
+  
+  &::-moz-range-track {
+    width: 100%;
+    height: 0.5rem;
+    color: transparent;
+    cursor: pointer;
+    background-color: $gray-300;
+    border-color: transparent;
+    border-radius: 1rem;
+  }
+  
+  &::-moz-range-thumb {
+    width: 1rem;
+    height: 1rem;
+    background-color: $primary;
+    border: 0;
+    border-radius: 1rem;
+    transition: background-color $transition-duration-150 $transition-ease-in-out, border-color $transition-duration-150 $transition-ease-in-out, box-shadow $transition-duration-150 $transition-ease-in-out;
+    appearance: none;
+    cursor: pointer;
+    
+    &:active {
+      background-color: lighten($primary, 35%);
+    }
+  }
+  
+  &:disabled {
+    pointer-events: none;
+    
+    &::-webkit-slider-thumb {
+      background-color: $gray-500;
+    }
+    
+    &::-moz-range-thumb {
+      background-color: $gray-500;
+    }
+  }
+}
+
+// ============================================================================
+// 8. FILE INPUTS
+// ============================================================================
+
+/// File input
+.form-file {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  height: $input-height;
+  margin-bottom: 0;
+}
+
+.form-file-input {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: $input-height;
+  margin: 0;
+  overflow: hidden;
+  opacity: 0;
+  cursor: pointer;
+  
+  &:focus ~ .form-file-label {
+    border-color: $input-focus-border-color;
+    box-shadow: $input-focus-box-shadow;
+  }
+  
+  &:disabled ~ .form-file-label,
+  &[disabled] ~ .form-file-label {
+    background-color: $input-disabled-bg;
+    border-color: $input-border-color;
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.form-file-label {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  height: $input-height;
+  border-color: $input-border-color;
+  border-radius: $input-border-radius;
+  background-color: $input-bg;
+  border: $input-border-width solid $input-border-color;
+  transition: border-color $transition-duration-150 $transition-ease-in-out, box-shadow $transition-duration-150 $transition-ease-in-out;
+}
+
+.form-file-text {
+  display: block;
+  flex-grow: 1;
+  padding: $input-padding-y $input-padding-x;
+  overflow: hidden;
+  font-family: $input-font-family;
+  font-weight: $input-font-weight;
+  line-height: $input-line-height;
+  color: $input-placeholder-color;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background-color: transparent;
+  border-color: inherit;
+  border-style: inherit;
+  border-width: 0;
+  border-radius: 0;
+  
+  &[data-browse] {
+    &::after {
+      content: attr(data-browse);
+    }
+  }
+}
+
+.form-file-button {
+  display: block;
+  flex-shrink: 0;
+  padding: $input-padding-y $input-padding-x;
+  margin-left: -$input-border-width;
+  line-height: $input-line-height;
+  color: $text-muted;
+  background-color: $gray-100;
+  border-left: inherit;
+  border-radius: 0 $input-border-radius $input-border-radius 0;
+  cursor: pointer;
+}
+
+/// Dropzone para archivos
+.form-file-dropzone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 2rem;
+  border: 2px dashed $border-color;
+  border-radius: $border-radius-lg;
+  background-color: $gray-50;
+  color: $text-muted;
+  text-align: center;
+  cursor: pointer;
+  transition: all $transition-duration-200 $transition-ease-in-out;
+  
+  &:hover {
+    border-color: $primary;
+    background-color: rgba($primary, 0.05);
+    color: $primary;
+  }
+  
+  &.dragover {
+    border-color: $primary;
+    background-color: rgba($primary, 0.1);
+    color: $primary;
+    transform: scale(1.02);
+  }
+  
+  .dropzone-icon {
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+  
+  .dropzone-title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-medium;
+    margin-bottom: 0.5rem;
+  }
+  
+  .dropzone-subtitle {
+    font-size: $font-size-sm;
+    margin-bottom: 1rem;
+  }
+  
+  .dropzone-button {
+    margin-top: 1rem;
+  }
+  
+  input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+  
+  // Estado con archivos seleccionados
+  &.has-files {
+    border-color: $success;
+    background-color: rgba($success, 0.05);
+    color: $success;
+    
+    .dropzone-icon {
+      color: $success;
+      opacity: 0.8;
+    }
+  }
+}
+
+/// Lista de archivos seleccionados
+.file-list {
+  margin-top: 1rem;
+  
+  .file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    border: 1px solid $border-color;
+    border-radius: $border-radius;
+    background-color: $white;
+    margin-bottom: 0.5rem;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1;
+      min-width: 0;
+      
+      .file-icon {
+        width: 2rem;
+        height: 2rem;
+        background: $gray-100;
+        border-radius: $border-radius-sm;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: $text-muted;
+        flex-shrink: 0;
+      }
+      
+      .file-details {
+        min-width: 0;
+        flex: 1;
+        
+        .file-name {
+          font-weight: $font-weight-medium;
+          color: $text-primary;
+          @include truncate;
+        }
+        
+        .file-size {
+          font-size: $font-size-sm;
+          color: $text-muted;
+        }
+      }
+    }
+    
+    .file-progress {
+      width: 100px;
+      height: 4px;
+      background: $gray-200;
+      border-radius: 2px;
+      overflow: hidden;
+      margin: 0 1rem;
+      
+      .progress-bar {
+        height: 100%;
+        background: $primary;
+        transition: width 0.3s ease;
+      }
+    }
+    
+    .file-actions {
+      display: flex;
+      gap: 0.5rem;
+      
+      .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: $font-size-sm;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// 9. VALIDATION FEEDBACK
+// ============================================================================
+
+/// Feedback de validación
+.valid-feedback {
+  display: none;
+  width: 100%;
+  margin-top: 0.25rem;
+  font-size: $font-size-sm;
+  color: $success;
+  
+  .was-validated .form-control:valid ~ &,
+  .form-control.is-valid ~ & {
+    display: block;
+  }
+}
+
+.invalid-feedback {
+  display: none;
+  width: 100%;
+  margin-top: 0.25rem;
+  font-size: $font-size-sm;
+  color: $danger;
+  
+  .was-validated .form-control:invalid ~ &,
+  .form-control.is-invalid ~ & {
+    display: block;
+  }
+}
+
+/// Tooltip de validación
+.valid-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 5;
+  display: none;
+  max-width: 100%;
+  padding: 0.25rem 0.5rem;
+  margin-top: 0.1rem;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+  color: $white;
+  background-color: rgba($success, 0.9);
+  border-radius: $border-radius-sm;
+  
+  .was-validated .form-control:valid ~ &,
+  .form-control.is-valid ~ & {
+    display: block;
+  }
+}
+
+.invalid-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 5;
+  display: none;
+  max-width: 100%;
+  padding: 0.25rem 0.5rem;
+  margin-top: 0.1rem;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+  color: $white;
+  background-color: rgba($danger, 0.9);
+  border-radius: $border-radius-sm;
+  
+  .was-validated .form-control:invalid ~ &,
+  .form-control.is-invalid ~ & {
+    display: block;
+  }
+}
+
+// ============================================================================
+// 10. FLOATING LABELS
+// ============================================================================
+
+/// Grupo de label flotante
+.form-floating {
+  position: relative;
+  
+  > .form-control,
+  > .form-select {
+    height: calc(3.5rem + 2px);
+    line-height: 1.25;
+    
+    &::placeholder {
+      color: transparent;
+    }
+    
+    &:focus,
+    &:not(:placeholder-shown) {
+      padding-top: 1.625rem;
+      padding-bottom: 0.625rem;
+    }
+    
+    &:-webkit-autofill {
+      padding-top: 1.625rem;
+      padding-bottom: 0.625rem;
+    }
+  }
+  
+  > label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    padding: 1rem 0.75rem;
+    pointer-events: none;
+    border: 1px solid transparent;
+    transform-origin: 0 0;
+    transition: opacity 0.1s ease-in-out, transform 0.1s ease-in-out;
+    color: rgba($text-muted, 0.65);
+  }
+  
+  > .form-control:focus ~ label,
+  > .form-control:not(:placeholder-shown) ~ label,
+  > .form-select ~ label {
+    opacity: 0.65;
+    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+  }
+  
+  > .form-control:-webkit-autofill ~ label {
+    opacity: 0.65;
+    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+  }
+}
+
+// ============================================================================
+// 11. CUSTOM FORM CONTROLS
+// ============================================================================
+
+/// Select personalizado
+.form-select-custom {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  
+  .select-trigger {
+    @extend .form-control;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    
+    .select-value {
+      flex: 1;
+      text-align: left;
+      @include truncate;
+    }
+    
+    .select-arrow {
+      width: 1rem;
+      height: 1rem;
+      transition: transform $transition-duration-150;
+      color: $text-muted;
+    }
+    
+    &.open .select-arrow {
+      transform: rotate(180deg);
+    }
+  }
+  
+  .select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    background: $white;
+    border: 1px solid $border-color;
+    border-radius: $border-radius;
+    box-shadow: $shadow-lg;
+    margin-top: 2px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all $transition-duration-150;
+    
+    @include scrollbar(4px, $gray-400, $gray-200);
+    
+    &.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    
+    .select-option {
+      padding: 0.75rem;
+      cursor: pointer;
+      transition: background-color $transition-duration-150;
+      border-bottom: 1px solid $gray-100;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      &:hover {
+        background-color: $gray-50;
+      }
+      
+      &.selected {
+        background-color: rgba($primary, 0.1);
+        color: $primary;
+        font-weight: $font-weight-medium;
+      }
+      
+      &.disabled {
+        color: $text-muted;
+        cursor: not-allowed;
+        background-color: transparent;
+      }
+    }
+    
+    .select-search {
+      padding: 0.5rem;
+      border-bottom: 1px solid $border-color;
+      position: sticky;
+      top: 0;
+      background: $white;
+      
+      input {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-sm;
+        font-size: $font-size-sm;
+        
+        &:focus {
+          outline: none;
+          border-color: $primary;
+        }
+      }
+    }
+    
+    .select-empty {
+      padding: 1rem;
+      text-align: center;
+      color: $text-muted;
+      font-size: $font-size-sm;
+    }
+  }
+}
+
+/// Input con iconos
+.form-control-icon {
+  position: relative;
+  
+  .form-control {
+    padding-left: 2.5rem;
+  }
+  
+  .form-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    height: 1rem;
+    color: $text-muted;
+    pointer-events: none;
+  }
+  
+  &.icon-right {
+    .form-control {
+      padding-left: $input-padding-x;
+      padding-right: 2.5rem;
+    }
+    
+    .form-icon {
+      left: auto;
+      right: 0.75rem;
+    }
+  }
+  
+  &.icon-both {
+    .form-control {
+      padding-left: 2.5rem;
+      padding-right: 2.5rem;
+    }
+    
+    .form-icon-left {
+      left: 0.75rem;
+    }
+    
+    .form-icon-right {
+      right: 0.75rem;
+    }
+  }
+}
+
+/// Búsqueda con sugerencias
+.form-search-suggestions {
+  position: relative;
+  
+  .search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+    background: $white;
+    border: 1px solid $border-color;
+    border-top: none;
+    border-radius: 0 0 $border-radius $border-radius;
+    box-shadow: $shadow-lg;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all $transition-duration-150;
+    
+    &.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    
+    .suggestion-item {
+      padding: 0.75rem;
+      cursor: pointer;
+      border-bottom: 1px solid $gray-100;
+      transition: background-color $transition-duration-150;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      &:hover,
+      &.highlighted {
+        background-color: $gray-50;
+      }
+      
+      .suggestion-title {
+        font-weight: $font-weight-medium;
+        color: $text-primary;
+      }
+      
+      .suggestion-description {
+        font-size: $font-size-sm;
+        color: $text-muted;
+        margin-top: 0.25rem;
+      }
+      
+      .suggestion-match {
+        background-color: rgba($primary, 0.2);
+        color: $primary;
+        padding: 0 0.25rem;
+        border-radius: $border-radius-sm;
+      }
+    }
+    
+    .suggestion-empty {
+      padding: 1rem;
+      text-align: center;
+      color: $text-muted;
+      font-size: $font-size-sm;
+    }
+  }
+}
+
+// ============================================================================
+// 12. DASHBOARD SPECIFIC FORMS
+// ============================================================================
+
+/// Formulario de filtros
+.form-filters {
+  background: $white;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  
+  .filters-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    
+    .filters-title {
+      font-size: $font-size-lg;
+      font-weight: $font-weight-semibold;
+      color: $headings-color;
+      margin: 0;
+    }
+    
+    .filters-toggle {
+      color: $primary;
+      text-decoration: none;
+      font-size: $font-size-sm;
+      
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+  
+  .filters-content {
+    .form-row {
+      margin-bottom: 1rem;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+  
+  .filters-actions {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid $border-color;
+    display: flex;
+    gap: 0.75rem;
+    
+    @include respond-down(sm) {
+      flex-direction: column;
+    }
+  }
+  
+  // Filtros colapsables
+  &.filters-collapsed {
+    .filters-content {
+      display: none;
+    }
+    
+    .filters-actions {
+      display: none;
+    }
+  }
+}
+
+/// Formulario inline
+.form-inline {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  gap: 0.75rem;
+  
+  .form-group {
+    display: flex;
+    flex: 0 0 auto;
+    flex-flow: row wrap;
+    align-items: center;
+    margin-bottom: 0;
+    gap: 0.5rem;
+  }
+  
+  .form-control {
+    display: inline-block;
+    width: auto;
+    vertical-align: middle;
+  }
+  
+  .form-select {
+    width: auto;
+  }
+  
+  @include respond-down(sm) {
+    flex-direction: column;
+    align-items: stretch;
+    
+    .form-group {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .form-control,
+    .form-select {
+      width: 100%;
+    }
+  }
+}
+
+/// Formulario de búsqueda rápida
+.form-quick-search {
+  position: relative;
+  max-width: 400px;
+  
+  .search-input {
+    @extend .form-control;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+    
+    &:focus {
+      box-shadow: 0 0 0 3px rgba($primary, 0.1);
+    }
+  }
+  
+  .search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    height: 1rem;
+    color: $text-muted;
+  }
+  
+  .search-clear {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: $text-muted;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: $border-radius-sm;
+    opacity: 0;
+    transition: opacity $transition-duration-150;
+    
+    &:hover {
+      color: $text-primary;
+      background: rgba($gray-500, 0.1);
+    }
+    
+    &.show {
+      opacity: 1;
+    }
+  }
+}
+
+/// Campos de configuración
+.form-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
+  margin-bottom: 1rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+  
+  .setting-info {
+    flex: 1;
+    margin-right: 1rem;
+    
+    .setting-title {
+      font-weight: $font-weight-medium;
+      color: $text-primary;
+      margin-bottom: 0.25rem;
+    }
+    
+    .setting-description {
+      font-size: $font-size-sm;
+      color: $text-muted;
+      margin: 0;
+    }
+  }
+  
+  .setting-control {
+    flex-shrink: 0;
+  }
+  
+  // Variantes
+  &.setting-highlighted {
+    background: rgba($primary, 0.05);
+    border-color: rgba($primary, 0.2);
+  }
+  
+  &.setting-warning {
+    background: rgba($warning, 0.05);
+    border-color: rgba($warning, 0.2);
+  }
+  
+  &.setting-danger {
+    background: rgba($danger, 0.05);
+    border-color: rgba($danger, 0.2);
+  }
+}
+
+// ============================================================================
+// 13. RESPONSIVE FORMS
+// ============================================================================
+
+/// Adaptaciones responsive
+@include respond-down(md) {
+  .form-group-horizontal {
+    .form-label {
+      width: 120px;
+    }
+  }
+  
+  .form-row {
+    .col-2,
+    .col-3,
+    .col-4 {
+      flex: 0 0 calc(50% - 0.5rem);
+    }
+  }
+}
+
+@include respond-down(sm) {
+  .form-group-horizontal {
+    flex-direction: column;
+    
+    .form-label {
+      width: 100%;
+      text-align: left;
+      padding-top: 0;
+      margin-bottom: $label-margin-bottom;
+    }
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+    
+    .form-group {
+      margin-bottom: $spacer;
+    }
+    
+    .col-2,
+    .col-3,
+    .col-4,
+    .col-6,
+    .col-8,
+    .col-9,
+    .col-12 {
+      flex: none;
+    }
+  }
+  
+  .form-inline {
+    flex-direction: column;
+    align-items: stretch;
+    
+    .form-group {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .form-control,
+    .form-select {
+      width: 100%;
+    }
+  }
+  
+  .input-group {
+    flex-wrap: nowrap;
+  }
+  
+  .form-file-dropzone {
+    min-height: 150px;
+    padding: 1.5rem;
+  }
+}
+
+// ============================================================================
+// 14. DARK MODE SUPPORT
+// ============================================================================
+
+@if $enable-dark-mode {
+  @include dark-mode {
+    .form-control,
+    .form-select {
+      background-color: $dark-theme-surface;
+      border-color: $dark-theme-border;
+      color: $dark-theme-color;
+      
+      &:focus {
+        background-color: $dark-theme-surface;
+        border-color: $primary;
+        color: $dark-theme-color;
+      }
+      
+      &::placeholder {
+        color: rgba($dark-theme-color, 0.5);
+      }
+      
+      &:disabled {
+        background-color: rgba($dark-theme-color, 0.05);
+        color: rgba($dark-theme-color, 0.5);
+      }
+    }
+    
+    .form-check-input {
+      background-color: $dark-theme-surface;
+      border-color: $dark-theme-border;
+      
+      &:checked {
+        background-color: $primary;
+        border-color: $primary;
+      }
+    }
+    
+    .input-group-text {
+      background-color: rgba($dark-theme-color, 0.05);
+      border-color: $dark-theme-border;
+      color: rgba($dark-theme-color, 0.7);
+    }
+    
+    .form-file-dropzone {
+      background-color: rgba($dark-theme-color, 0.02);
+      border-color: $dark-theme-border;
+      color: rgba($dark-theme-color, 0.7);
+      
+      &:hover {
+        background-color: rgba($primary, 0.1);
+        border-color: $primary;
+        color: $primary;
+      }
+    }
+    
+    .file-item {
+      background-color: $dark-theme-surface;
+      border-color: $dark-theme-border;
+      
+      .file-icon {
+        background-color: rgba($dark-theme-color, 0.05);
+        color: rgba($dark-theme-color, 0.7);
+      }
+    }
+    
+    .form-select-custom {
+      .select-dropdown {
+        background-color: $dark-theme-surface;
+        border-color: $dark-theme-border;
+        
+        .select-option {
+          border-bottom-color: $dark-theme-border;
+          
+          &:hover {
+            background-color: rgba($dark-theme-color, 0.05);
+          }
+          
+          &.selected {
+            background-color: rgba($primary, 0.2);
+          }
+        }
+        
+        .select-search {
+          background-color: $dark-theme-surface;
+          border-bottom-color: $dark-theme-border;
+          
+          input {
+            background-color: $dark-theme-surface;
+            border-color: $dark-theme-border;
+            color: $dark-theme-color;
+          }
+        }
+      }
+    }
+    
+    .form-filters {
+      background-color: $dark-theme-surface;
+      border-color: $dark-theme-border;
+      
+      .filters-actions {
+        border-top-color: $dark-theme-border;
+      }
+    }
+    
+    .form-setting {
+      border-color: $dark-theme-border;
+      
+      &.setting-highlighted {
+        background-color: rgba($primary, 0.1);
+        border-color: rgba($primary, 0.3);
+      }
+    }
+  }
+}
+
+// ============================================================================
+// 15. ACCESSIBILITY ENHANCEMENTS
+// ============================================================================
+
+/// Mejoras de accesibilidad
+.form-control,
+.form-select,
+.form-check-input,
+.form-range {
+  // Respeta las preferencias de movimiento reducido
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+  
+  // Mejora el contraste en modo alto contraste
+  @media (prefers-contrast: high) {
+    border-width: 2px;
+  }
+  
+  // Soporte para navegación por teclado
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 2px;
+  }
+}
+
+/// Screen reader improvements
+.sr-only-label {
+  @extend .sr-only;
+}
+
+/// Form con anuncios ARIA
+.form-live-region {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/// Skip links para formularios largos
+.form-skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: $primary;
+  color: $white;
+  padding: 8px;
+  text-decoration: none;
+  border-radius: $border-radius;
+  z-index: 100000;
+  
+  &:focus {
+    top: 6px;
+  }
+}
+
+// ============================================================================
+// 16. PRINT STYLES
+// ============================================================================
+
+@if $enable-print-styles {
+  @media print {
+    .form-control,
+    .form-select,
+    textarea {
+      background: $white !important;
+      border: 1px solid $black !important;
+      color: $black !important;
+    }
+    
+    .form-check-input {
+      -webkit-appearance: checkbox;
+      -moz-appearance: checkbox;
+      appearance: checkbox;
+    }
+    
+    .form-check-input[type="radio"] {
+      -webkit-appearance: radio;
+      -moz-appearance: radio;
+      appearance: radio;
+    }
+    
+    .input-group-text {
+      background: $white !important;
+      border: 1px solid $black !important;
+    }
+    
+    .btn {
+      border: 1px solid $black !important;
+      background: $white !important;
+      color: $black !important;
+    }
+    
+    // Ocultar elementos interactivos en impresión
+    .form-file-dropzone,
+    .search-dropdown,
+    .select-dropdown,
+    .form-quick-search .search-clear {
+      display: none;
+    }
+  }
+}
+
+// ============================================================================
+// 17. UTILITY CLASSES
+// ============================================================================
+
+/// Utilidades específicas para formularios
+.form-control-flush {
+  border-left: 0;
+  border-right: 0;
+  border-radius: 0;
+}
+
+.form-control-borderless {
+  border: none;
+  box-shadow: none;
+  
+  &:focus {
+    box-shadow: none;
+  }
+}
+
+.form-control-underline {
+  border: none;
+  border-bottom: 2px solid $border-color;
+  border-radius: 0;
+  background: transparent;
+  
+  &:focus {
+    border-bottom-color: $primary;
+    box-shadow: none;
+  }
+}
+
+.form-readonly {
+  .form-control,
+  .form-select {
+    background-color: $gray-100;
+    cursor: not-allowed;
+  }
+}
+
+.form-compact {
+  .form-group {
+    margin-bottom: 0.75rem;
+  }
+  
+  .form-control,
+  .form-select {
+    padding: 0.375rem 0.75rem;
+    font-size: $font-size-sm;
+  }
+  
+  .form-label {
+    margin-bottom: 0.25rem;
+    font-size: $font-size-sm;
+  }
+}
+
+.form-spacious {
+  .form-group {
+    margin-bottom: 2rem;
+  }
+  
+  .form-control,
+  .form-select {
+    padding: 1rem 1.25rem;
+    font-size: $font-size-lg;
+  }
+  
+  .form-label {
+    margin-bottom: 0.75rem;
+    font-size: $font-size-base;
+  }
+}
+
+.form-grid {
+  display: grid;
+  gap: 1rem;
+  
+  &.form-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  &.form-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  &.form-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  @include respond-down(md) {
+    &.form-grid-3,
+    &.form-grid-4 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @include respond-down(sm) {
+    &.form-grid-2,
+    &.form-grid-3,
+    &.form-grid-4 {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+// ============================================================================
+// FIN DEL ARCHIVO _FORMS.SCSS
+// ============================================================================

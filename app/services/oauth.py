@@ -2,7 +2,7 @@
 OAuth Service - Ecosistema de Emprendimiento
 Servicio completo de OAuth con múltiples proveedores y funcionalidades empresariales
 
-Author: Senior Developer
+Author: jusga
 Version: 1.0.0
 """
 

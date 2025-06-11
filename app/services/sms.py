@@ -4,7 +4,7 @@ SMS Service
 Servicio completo para envío de SMS con múltiples proveedores, templates,
 rate limiting, analytics y soporte internacional.
 
-Author: Senior Developer
+Author: jusga
 Date: 2025
 """
 

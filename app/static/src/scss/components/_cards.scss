@@ -1,0 +1,1412 @@
+// ============================================================================
+// _CARDS.SCSS - DASHBOARD PROJECT
+// Desarrollado por: Jusgad
+// Descripción: Sistema completo de cards para dashboard administrativo
+// Versión: 2.0.0
+// ============================================================================
+
+// ============================================================================
+// 1. BASE CARD CONFIGURATION
+// ============================================================================
+
+/// Configuración base para todas las cards
+/// Establece las propiedades fundamentales que heredarán todas las variantes
+.card {
+  // Layout básico
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  
+  // Espaciado
+  min-width: 0;
+  word-wrap: break-word;
+  
+  // Apariencia
+  background-color: $card-bg;
+  background-clip: border-box;
+  border: $card-border-width solid $card-border-color;
+  border-radius: $card-border-radius;
+  
+  // Sombra
+  box-shadow: $card-shadow;
+  
+  // Transición para efectos
+  transition: all $transition-normal;
+  
+  // Mejora la renderización
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  
+  // Configuración de overflow
+  overflow: hidden;
+  
+  // Reset para elementos internos
+  > hr {
+    margin-right: 0;
+    margin-left: 0;
+  }
+  
+  // Cards anidadas
+  > .list-group {
+    border-top: inherit;
+    border-bottom: inherit;
+    
+    &:first-child {
+      border-top-width: 0;
+      border-top-left-radius: $card-inner-border-radius;
+      border-top-right-radius: $card-inner-border-radius;
+    }
+    
+    &:last-child {
+      border-bottom-width: 0;
+      border-bottom-left-radius: $card-inner-border-radius;
+      border-bottom-right-radius: $card-inner-border-radius;
+    }
+  }
+  
+  // Cards con accordion
+  > .card-header + .list-group,
+  > .list-group + .card-footer {
+    border-top: 0;
+  }
+}
+
+// ============================================================================
+// 2. CARD BODY
+// ============================================================================
+
+/// Cuerpo principal de la card
+.card-body {
+  // Flexibilidad para ocupar espacio disponible
+  flex: 1 1 auto;
+  
+  // Padding
+  padding: $card-padding;
+  
+  // Configuración de texto
+  color: $body-color;
+  
+  // Último elemento sin margin bottom
+  > *:last-child {
+    margin-bottom: 0;
+  }
+  
+  // Títulos dentro del body
+  .card-title {
+    margin-top: 0;
+    margin-bottom: $card-title-spacer-y;
+    font-size: $card-title-font-size;
+    font-weight: $card-title-font-weight;
+    line-height: $card-title-line-height;
+    color: $card-title-color;
+  }
+  
+  .card-subtitle {
+    margin-top: -$card-title-spacer-y * 0.5;
+    margin-bottom: 0;
+    font-size: $card-subtitle-font-size;
+    color: $card-subtitle-color;
+    font-weight: $card-subtitle-font-weight;
+  }
+  
+  .card-text {
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  // Links dentro de cards
+  .card-link {
+    color: $card-link-color;
+    text-decoration: $card-link-decoration;
+    
+    &:hover {
+      color: $card-link-hover-color;
+      text-decoration: $card-link-hover-decoration;
+    }
+    
+    + .card-link {
+      margin-left: $card-link-spacer-x;
+    }
+  }
+}
+
+// ============================================================================
+// 3. CARD HEADER
+// ============================================================================
+
+/// Header de la card
+.card-header {
+  padding: $card-header-padding-y $card-header-padding-x;
+  margin-bottom: 0;
+  color: $card-header-color;
+  background-color: $card-header-bg;
+  border-bottom: $card-border-width solid $card-border-color;
+  border-top-left-radius: $card-inner-border-radius;
+  border-top-right-radius: $card-inner-border-radius;
+  
+  // Configuración flexbox para headers con acciones
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  
+  // Primer elemento
+  &:first-child {
+    border-radius: $card-border-radius $card-border-radius 0 0;
+  }
+  
+  // Títulos en header
+  .card-title {
+    margin: 0;
+    font-size: $card-header-title-font-size;
+    font-weight: $card-header-title-font-weight;
+    line-height: $card-header-title-line-height;
+    color: $card-header-title-color;
+  }
+  
+  .card-subtitle {
+    margin: 0;
+    font-size: $card-header-subtitle-font-size;
+    color: $card-header-subtitle-color;
+    font-weight: $card-header-subtitle-font-weight;
+  }
+  
+  // Acciones en header
+  .card-actions {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    
+    .btn {
+      padding: $spacing-xs $spacing-sm;
+      font-size: $font-size-sm;
+    }
+  }
+  
+  // Dropdown en header
+  .dropdown-toggle {
+    &::after {
+      margin-left: auto;
+    }
+  }
+}
+
+// ============================================================================
+// 4. CARD FOOTER
+// ============================================================================
+
+/// Footer de la card
+.card-footer {
+  padding: $card-footer-padding-y $card-footer-padding-x;
+  color: $card-footer-color;
+  background-color: $card-footer-bg;
+  border-top: $card-border-width solid $card-border-color;
+  border-bottom-left-radius: $card-inner-border-radius;
+  border-bottom-right-radius: $card-inner-border-radius;
+  
+  // Configuración flexbox
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  
+  // Último elemento
+  &:last-child {
+    border-radius: 0 0 $card-border-radius $card-border-radius;
+  }
+  
+  // Contenido del footer
+  .card-footer-actions {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+  
+  .card-footer-text {
+    color: $text-muted;
+    font-size: $font-size-sm;
+    margin: 0;
+  }
+}
+
+// ============================================================================
+// 5. CARD IMAGES
+// ============================================================================
+
+/// Imágenes en cards
+.card-img {
+  width: 100%;
+  border-radius: $card-border-radius;
+}
+
+.card-img-top {
+  width: 100%;
+  border-top-left-radius: $card-inner-border-radius;
+  border-top-right-radius: $card-inner-border-radius;
+}
+
+.card-img-bottom {
+  width: 100%;
+  border-bottom-left-radius: $card-inner-border-radius;
+  border-bottom-right-radius: $card-inner-border-radius;
+}
+
+// Card con imagen de fondo
+.card-img-overlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: $card-img-overlay-padding;
+  border-radius: $card-inner-border-radius;
+  background: rgba($black, 0.5);
+  color: $white;
+  
+  // Gradiente para mejor legibilidad
+  &.card-img-overlay-gradient {
+    background: linear-gradient(
+      135deg,
+      rgba($black, 0.7) 0%,
+      rgba($black, 0.3) 50%,
+      rgba($black, 0.7) 100%
+    );
+  }
+  
+  // Overlay solo en la parte inferior
+  &.card-img-overlay-bottom {
+    top: auto;
+    height: 40%;
+    background: linear-gradient(
+      to top,
+      rgba($black, 0.8) 0%,
+      rgba($black, 0.4) 70%,
+      transparent 100%
+    );
+  }
+}
+
+// ============================================================================
+// 6. CARD SIZES
+// ============================================================================
+
+/// Card pequeña
+.card-sm {
+  .card-body {
+    padding: $card-padding-sm;
+  }
+  
+  .card-header {
+    padding: $card-header-padding-y * 0.75 $card-header-padding-x * 0.75;
+    
+    .card-title {
+      font-size: $font-size-base;
+    }
+  }
+  
+  .card-footer {
+    padding: $card-footer-padding-y * 0.75 $card-footer-padding-x * 0.75;
+  }
+}
+
+/// Card large
+.card-lg {
+  .card-body {
+    padding: $card-padding * 1.5;
+  }
+  
+  .card-header {
+    padding: $card-header-padding-y * 1.25 $card-header-padding-x * 1.25;
+    
+    .card-title {
+      font-size: $font-size-lg;
+    }
+  }
+  
+  .card-footer {
+    padding: $card-footer-padding-y * 1.25 $card-footer-padding-x * 1.25;
+  }
+}
+
+/// Card extra large
+.card-xl {
+  .card-body {
+    padding: $card-padding * 2;
+  }
+  
+  .card-header {
+    padding: $card-header-padding-y * 1.5 $card-header-padding-x * 1.5;
+    
+    .card-title {
+      font-size: $font-size-xl;
+    }
+  }
+  
+  .card-footer {
+    padding: $card-footer-padding-y * 1.5 $card-footer-padding-x * 1.5;
+  }
+}
+
+// ============================================================================
+// 7. CARD VARIANTS
+// ============================================================================
+
+/// Card con borde coloreado
+.card-bordered {
+  border-width: 2px;
+  
+  &.card-bordered-primary {
+    border-color: $primary;
+    
+    .card-header {
+      background-color: rgba($primary, 0.1);
+      border-bottom-color: $primary;
+    }
+  }
+  
+  &.card-bordered-secondary {
+    border-color: $secondary;
+    
+    .card-header {
+      background-color: rgba($secondary, 0.1);
+      border-bottom-color: $secondary;
+    }
+  }
+  
+  &.card-bordered-success {
+    border-color: $success;
+    
+    .card-header {
+      background-color: rgba($success, 0.1);
+      border-bottom-color: $success;
+    }
+  }
+  
+  &.card-bordered-info {
+    border-color: $info;
+    
+    .card-header {
+      background-color: rgba($info, 0.1);
+      border-bottom-color: $info;
+    }
+  }
+  
+  &.card-bordered-warning {
+    border-color: $warning;
+    
+    .card-header {
+      background-color: rgba($warning, 0.1);
+      border-bottom-color: $warning;
+    }
+  }
+  
+  &.card-bordered-danger {
+    border-color: $danger;
+    
+    .card-header {
+      background-color: rgba($danger, 0.1);
+      border-bottom-color: $danger;
+    }
+  }
+}
+
+/// Card con borde superior
+.card-border-top {
+  border-top: 4px solid $gray-300;
+  
+  &.card-border-top-primary { border-top-color: $primary; }
+  &.card-border-top-secondary { border-top-color: $secondary; }
+  &.card-border-top-success { border-top-color: $success; }
+  &.card-border-top-info { border-top-color: $info; }
+  &.card-border-top-warning { border-top-color: $warning; }
+  &.card-border-top-danger { border-top-color: $danger; }
+}
+
+/// Card con borde izquierdo
+.card-border-left {
+  border-left: 4px solid $gray-300;
+  
+  &.card-border-left-primary { border-left-color: $primary; }
+  &.card-border-left-secondary { border-left-color: $secondary; }
+  &.card-border-left-success { border-left-color: $success; }
+  &.card-border-left-info { border-left-color: $info; }
+  &.card-border-left-warning { border-left-color: $warning; }
+  &.card-border-left-danger { border-left-color: $danger; }
+}
+
+/// Card sin borde
+.card-borderless {
+  border: none;
+  box-shadow: none;
+}
+
+/// Card con sombra elevada
+.card-elevated {
+  box-shadow: $shadow-lg;
+  
+  &:hover {
+    box-shadow: $shadow-xl;
+  }
+}
+
+/// Card plana
+.card-flat {
+  box-shadow: none;
+  border: 1px solid $gray-200;
+}
+
+// ============================================================================
+// 8. INTERACTIVE CARDS
+// ============================================================================
+
+/// Card con hover effect
+.card-hover {
+  cursor: pointer;
+  transition: all $transition-normal;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $card-shadow-hover;
+    border-color: darken($card-border-color, 10%);
+  }
+  
+  &:active {
+    transform: translateY(-2px);
+  }
+}
+
+/// Card clickeable
+.card-clickable {
+  cursor: pointer;
+  transition: all $transition-fast;
+  
+  &:hover {
+    box-shadow: $shadow-md;
+    transform: translateY(-1px);
+  }
+  
+  &:active {
+    transform: translateY(0);
+    box-shadow: $shadow-sm;
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba($primary, 0.25);
+  }
+}
+
+/// Card seleccionable
+.card-selectable {
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all $transition-fast;
+  
+  &:hover {
+    border-color: rgba($primary, 0.3);
+  }
+  
+  &.selected {
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba($primary, 0.1);
+    
+    .card-header {
+      background-color: rgba($primary, 0.1);
+    }
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: $primary;
+  }
+}
+
+/// Card con estado activo
+.card-active {
+  border-color: $primary;
+  box-shadow: 0 0 0 2px rgba($primary, 0.25);
+  
+  .card-header {
+    background-color: rgba($primary, 0.1);
+    color: $primary;
+  }
+}
+
+// ============================================================================
+// 9. DASHBOARD SPECIFIC CARDS
+// ============================================================================
+
+/// Card de métrica/estadística
+.card-metric {
+  text-align: center;
+  
+  .card-body {
+    padding: $spacing-xl;
+  }
+  
+  .metric-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto $spacing-md;
+    border-radius: $border-radius-lg;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: $font-size-xl;
+    
+    &.metric-icon-primary {
+      background-color: rgba($primary, 0.1);
+      color: $primary;
+    }
+    
+    &.metric-icon-success {
+      background-color: rgba($success, 0.1);
+      color: $success;
+    }
+    
+    &.metric-icon-warning {
+      background-color: rgba($warning, 0.1);
+      color: $warning;
+    }
+    
+    &.metric-icon-danger {
+      background-color: rgba($danger, 0.1);
+      color: $danger;
+    }
+    
+    &.metric-icon-info {
+      background-color: rgba($info, 0.1);
+      color: $info;
+    }
+  }
+  
+  .metric-value {
+    font-size: $font-size-4xl;
+    font-weight: $font-weight-bold;
+    line-height: 1;
+    margin-bottom: $spacing-sm;
+    color: $text-primary;
+    font-family: $font-family-monospace;
+    
+    // Animación de conteo
+    &.counting {
+      animation: metric-pulse 0.5s ease-out;
+    }
+  }
+  
+  .metric-label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $text-muted;
+    margin-bottom: $spacing-md;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .metric-trend {
+    display: inline-flex;
+    align-items: center;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    
+    .trend-icon {
+      margin-right: $spacing-xs;
+    }
+    
+    &.trend-up {
+      color: $success;
+    }
+    
+    &.trend-down {
+      color: $danger;
+    }
+    
+    &.trend-stable {
+      color: $text-muted;
+    }
+  }
+  
+  // Variante horizontal
+  &.card-metric-horizontal {
+    text-align: left;
+    
+    .card-body {
+      display: flex;
+      align-items: center;
+      padding: $spacing-lg;
+    }
+    
+    .metric-icon {
+      margin: 0 $spacing-lg 0 0;
+      flex-shrink: 0;
+    }
+    
+    .metric-content {
+      flex: 1;
+    }
+    
+    .metric-value {
+      font-size: $font-size-2xl;
+      margin-bottom: $spacing-xs;
+    }
+  }
+}
+
+@keyframes metric-pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/// Card de perfil/usuario
+.card-profile {
+  .card-body {
+    text-align: center;
+    padding: $spacing-xl;
+  }
+  
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin: 0 auto $spacing-lg;
+    position: relative;
+    overflow: hidden;
+    
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .status-indicator {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 3px solid $white;
+      
+      &.status-online { background-color: $success; }
+      &.status-away { background-color: $warning; }
+      &.status-busy { background-color: $danger; }
+      &.status-offline { background-color: $gray-400; }
+    }
+  }
+  
+  .profile-name {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    margin-bottom: $spacing-xs;
+    color: $text-primary;
+  }
+  
+  .profile-role {
+    font-size: $font-size-sm;
+    color: $text-muted;
+    margin-bottom: $spacing-lg;
+  }
+  
+  .profile-stats {
+    display: flex;
+    justify-content: space-around;
+    padding-top: $spacing-lg;
+    border-top: 1px solid $gray-200;
+    
+    .stat-item {
+      text-align: center;
+      
+      .stat-value {
+        font-size: $font-size-lg;
+        font-weight: $font-weight-bold;
+        color: $text-primary;
+        display: block;
+      }
+      
+      .stat-label {
+        font-size: $font-size-xs;
+        color: $text-muted;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+    }
+  }
+}
+
+/// Card de notificación
+.card-notification {
+  border-left: 4px solid $primary;
+  background-color: rgba($primary, 0.05);
+  
+  .card-body {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacing-md;
+  }
+  
+  .notification-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: $primary;
+    color: $white;
+  }
+  
+  .notification-content {
+    flex: 1;
+    
+    .notification-title {
+      font-weight: $font-weight-semibold;
+      margin-bottom: $spacing-xs;
+      color: $text-primary;
+    }
+    
+    .notification-message {
+      color: $text-secondary;
+      margin-bottom: $spacing-sm;
+    }
+    
+    .notification-time {
+      font-size: $font-size-xs;
+      color: $text-muted;
+    }
+  }
+  
+  .notification-actions {
+    display: flex;
+    gap: $spacing-sm;
+    margin-top: $spacing-sm;
+  }
+  
+  // Variantes por tipo
+  &.card-notification-success {
+    border-left-color: $success;
+    background-color: rgba($success, 0.05);
+    
+    .notification-icon {
+      background-color: $success;
+    }
+  }
+  
+  &.card-notification-warning {
+    border-left-color: $warning;
+    background-color: rgba($warning, 0.05);
+    
+    .notification-icon {
+      background-color: $warning;
+    }
+  }
+  
+  &.card-notification-danger {
+    border-left-color: $danger;
+    background-color: rgba($danger, 0.05);
+    
+    .notification-icon {
+      background-color: $danger;
+    }
+  }
+  
+  &.card-notification-info {
+    border-left-color: $info;
+    background-color: rgba($info, 0.05);
+    
+    .notification-icon {
+      background-color: $info;
+    }
+  }
+}
+
+/// Card de tabla compacta
+.card-table {
+  .card-body {
+    padding: 0;
+  }
+  
+  .table {
+    margin-bottom: 0;
+    
+    thead th {
+      border-top: none;
+      background-color: $gray-50;
+      font-weight: $font-weight-semibold;
+      color: $text-secondary;
+      text-transform: uppercase;
+      font-size: $font-size-xs;
+      letter-spacing: 0.05em;
+      padding: $spacing-md $spacing-lg;
+    }
+    
+    tbody td {
+      padding: $spacing-md $spacing-lg;
+      border-top: 1px solid $gray-200;
+    }
+    
+    tr:last-child td {
+      border-bottom: none;
+    }
+  }
+}
+
+/// Card de progreso
+.card-progress {
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $spacing-md;
+    
+    .progress-title {
+      font-weight: $font-weight-medium;
+      color: $text-primary;
+    }
+    
+    .progress-value {
+      font-weight: $font-weight-semibold;
+      color: $text-primary;
+    }
+  }
+  
+  .progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: $gray-200;
+    overflow: hidden;
+    
+    .progress-bar {
+      background-color: $primary;
+      border-radius: 4px;
+      transition: width 0.6s ease;
+      
+      &.progress-bar-success { background-color: $success; }
+      &.progress-bar-warning { background-color: $warning; }
+      &.progress-bar-danger { background-color: $danger; }
+      &.progress-bar-info { background-color: $info; }
+    }
+  }
+}
+
+// ============================================================================
+// 10. CARD GROUPS AND LAYOUTS
+// ============================================================================
+
+/// Grupo de cards
+.card-group {
+  display: flex;
+  flex-direction: column;
+  
+  .card {
+    margin-bottom: $card-margin-bottom;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  @include respond-to(sm) {
+    flex-direction: row;
+    
+    .card {
+      flex: 1 0 0%;
+      margin-bottom: 0;
+      
+      + .card {
+        margin-left: 0;
+        border-left: 0;
+      }
+      
+      &:not(:last-child) {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+      
+      &:not(:first-child) {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+    }
+  }
+}
+
+/// Deck de cards
+.card-deck {
+  .card {
+    margin-bottom: $card-margin-bottom;
+  }
+  
+  @include respond-to(sm) {
+    display: flex;
+    flex-flow: row wrap;
+    margin-right: -$card-deck-margin;
+    margin-left: -$card-deck-margin;
+    
+    .card {
+      flex: 1 0 0%;
+      margin-right: $card-deck-margin;
+      margin-bottom: 0;
+      margin-left: $card-deck-margin;
+    }
+  }
+}
+
+/// Columnas de cards
+.card-columns {
+  @include respond-to(sm) {
+    column-count: $card-columns-count;
+    column-gap: $card-columns-gap;
+    orphans: 1;
+    widows: 1;
+    
+    .card {
+      display: inline-block;
+      width: 100%;
+    }
+  }
+}
+
+/// Grid de cards responsive
+.card-grid {
+  display: grid;
+  gap: $spacing-lg;
+  grid-template-columns: 1fr;
+  
+  @include respond-to(sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @include respond-to(md) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  @include respond-to(lg) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  // Variantes de grid
+  &.card-grid-2 {
+    @include respond-to(sm) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  &.card-grid-3 {
+    @include respond-to(md) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  &.card-grid-4 {
+    @include respond-to(lg) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  
+  &.card-grid-auto {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
+// ============================================================================
+// 11. LOADING AND SKELETON CARDS
+// ============================================================================
+
+/// Card con estado de carga
+.card-loading {
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba($white, 0.8);
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 32px;
+    height: 32px;
+    margin: -16px 0 0 -16px;
+    border: 3px solid $gray-300;
+    border-top: 3px solid $primary;
+    border-radius: 50%;
+    animation: card-loading-spin 1s linear infinite;
+    z-index: 2;
+  }
+}
+
+@keyframes card-loading-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/// Card skeleton
+.card-skeleton {
+  .skeleton-header {
+    height: 20px;
+    background: linear-gradient(90deg, $gray-200 25%, $gray-100 50%, $gray-200 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: $border-radius-sm;
+    margin-bottom: $spacing-md;
+    
+    &.skeleton-header-sm {
+      height: 16px;
+      width: 60%;
+    }
+    
+    &.skeleton-header-lg {
+      height: 24px;
+      width: 80%;
+    }
+  }
+  
+  .skeleton-text {
+    height: 14px;
+    background: linear-gradient(90deg, $gray-200 25%, $gray-100 50%, $gray-200 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: $border-radius-sm;
+    margin-bottom: $spacing-sm;
+    
+    &:nth-child(1) { width: 100%; }
+    &:nth-child(2) { width: 90%; }
+    &:nth-child(3) { width: 75%; }
+    &:last-child { margin-bottom: 0; }
+  }
+  
+  .skeleton-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, $gray-200 25%, $gray-100 50%, $gray-200 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    margin-bottom: $spacing-md;
+  }
+  
+  .skeleton-button {
+    height: 36px;
+    width: 100px;
+    background: linear-gradient(90deg, $gray-200 25%, $gray-100 50%, $gray-200 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: $border-radius;
+  }
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+// ============================================================================
+// 12. CARD ANIMATIONS
+// ============================================================================
+
+/// Animaciones de entrada
+.card-fade-in {
+  animation: card-fade-in 0.5s ease-out;
+}
+
+@keyframes card-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-slide-in-left {
+  animation: card-slide-in-left 0.5s ease-out;
+}
+
+@keyframes card-slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.card-scale-in {
+  animation: card-scale-in 0.3s ease-out;
+}
+
+@keyframes card-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/// Flip card
+.card-flip {
+  perspective: 1000px;
+  
+  .card-flip-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+  }
+  
+  &:hover .card-flip-inner {
+    transform: rotateY(180deg);
+  }
+  
+  .card-flip-front,
+  .card-flip-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: $card-border-radius;
+  }
+  
+  .card-flip-back {
+    transform: rotateY(180deg);
+  }
+}
+
+// ============================================================================
+// 13. RESPONSIVE CARDS
+// ============================================================================
+
+/// Cards responsive
+@include respond-down(sm) {
+  .card {
+    // En móviles, cards ocupan todo el ancho
+    margin-left: -$spacing-md;
+    margin-right: -$spacing-md;
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+    
+    &:first-child {
+      border-top-left-radius: $card-border-radius;
+      border-top-right-radius: $card-border-radius;
+      border-left: $card-border-width solid $card-border-color;
+      border-right: $card-border-width solid $card-border-color;
+      margin-left: 0;
+      margin-right: 0;
+    }
+    
+    &:last-child {
+      border-bottom-left-radius: $card-border-radius;
+      border-bottom-right-radius: $card-border-radius;
+      border-left: $card-border-width solid $card-border-color;
+      border-right: $card-border-width solid $card-border-color;
+      margin-left: 0;
+      margin-right: 0;
+    }
+  }
+  
+  // Card horizontal se vuelve vertical
+  .card-metric.card-metric-horizontal {
+    .card-body {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .metric-icon {
+      margin: 0 auto $spacing-md;
+    }
+  }
+  
+  // Profile stats se apilan
+  .card-profile .profile-stats {
+    flex-direction: column;
+    gap: $spacing-md;
+  }
+}
+
+// ============================================================================
+// 14. DARK MODE SUPPORT
+// ============================================================================
+
+@if $enable-dark-mode {
+  @include dark-mode {
+    .card {
+      background-color: $dark-theme-surface;
+      border-color: $dark-theme-border;
+      color: $dark-theme-color;
+    }
+    
+    .card-header {
+      background-color: rgba($dark-theme-border, 0.5);
+      color: $dark-theme-color;
+      border-bottom-color: $dark-theme-border;
+    }
+    
+    .card-footer {
+      background-color: rgba($dark-theme-border, 0.5);
+      color: $dark-theme-color;
+      border-top-color: $dark-theme-border;
+    }
+    
+    .card-notification {
+      background-color: rgba($primary, 0.1);
+    }
+    
+    .skeleton-header,
+    .skeleton-text,
+    .skeleton-avatar,
+    .skeleton-button {
+      background: linear-gradient(90deg, $gray-700 25%, $gray-600 50%, $gray-700 75%);
+      background-size: 200% 100%;
+    }
+    
+    .card-table .table thead th {
+      background-color: $gray-800;
+      color: $dark-theme-color;
+    }
+  }
+}
+
+// ============================================================================
+// 15. PRINT STYLES
+// ============================================================================
+
+@if $enable-print-styles {
+  @media print {
+    .card {
+      border: 1px solid $black !important;
+      box-shadow: none !important;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    
+    .card-header {
+      background: $white !important;
+      color: $black !important;
+    }
+    
+    .card-footer {
+      background: $white !important;
+      color: $black !important;
+    }
+    
+    // Ocultar elementos interactivos
+    .card-hover,
+    .card-clickable,
+    .card-actions,
+    .notification-actions {
+      display: none !important;
+    }
+    
+    // Simplificar cards de métrica
+    .card-metric .metric-icon {
+      background: $white !important;
+      color: $black !important;
+      border: 1px solid $black !important;
+    }
+  }
+}
+
+// ============================================================================
+// 16. ACCESSIBILITY ENHANCEMENTS
+// ============================================================================
+
+/// Mejoras de accesibilidad
+.card {
+  // Soporte para motion reducido
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    
+    &:hover {
+      transform: none;
+    }
+  }
+  
+  // Alto contraste
+  @media (prefers-contrast: high) {
+    border-width: 2px;
+    border-color: $black;
+    
+    .card-header {
+      border-bottom-width: 2px;
+    }
+    
+    .card-footer {
+      border-top-width: 2px;
+    }
+  }
+  
+  // Navegación por teclado
+  &[tabindex] {
+    &:focus {
+      outline: 2px solid $primary;
+      outline-offset: 2px;
+    }
+  }
+}
+
+// Cards clickeables necesitan role button
+.card-clickable {
+  &:focus-visible {
+    outline: 2px solid $primary;
+    outline-offset: 2px;
+  }
+}
+
+// ============================================================================
+// 17. PERFORMANCE OPTIMIZATIONS
+// ============================================================================
+
+/// Optimizaciones de rendimiento
+.card-grid {
+  // Usar contain para mejor performance en grids grandes
+  contain: layout style;
+}
+
+.card-hover {
+  // Acelerar animaciones con GPU
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.card-loading {
+  // Optimizar animación de loading
+  &::after {
+    will-change: transform;
+  }
+}
+
+// ============================================================================
+// FIN DEL ARCHIVO _CARDS.SCSS
+// ============================================================================

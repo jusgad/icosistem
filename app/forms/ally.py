@@ -4,7 +4,7 @@ Ally/Mentor Forms Module
 Formularios específicos para mentores y aliados en el ecosistema.
 Incluye perfil, disponibilidad, sesiones, evaluaciones y reportes.
 
-Author: Senior Developer
+Author: jusga
 Date: 2025
 """
 
