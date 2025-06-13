@@ -1,0 +1,1064 @@
+/**
+ * Font Awesome Custom Styles for Ecosistema Emprendimiento
+ * ========================================================
+ * 
+ * Personalización completa de Font Awesome para el ecosistema de emprendimiento
+ * Incluye iconos contextuales, animaciones, estados y componentes reutilizables
+ * 
+ * @author: Ecosistema Emprendimiento Team
+ * @version: 1.0.0
+ * @updated: 2025
+ * @requires: Font Awesome 6.x
+ */
+
+// ============================================================================
+// IMPORTS FONT AWESOME
+// ============================================================================
+
+// Importar Font Awesome desde CDN o local
+// @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+
+// ============================================================================
+// VARIABLES FONT AWESOME
+// ============================================================================
+
+// Configuración de fuentes
+$fa-font-display: auto !default;
+$fa-font-path: '../fonts' !default;
+$fa-font-size-base: 1rem !default;
+$fa-line-height-base: 1 !default;
+$fa-css-prefix: fa !default;
+$fa-version: '6.4.0' !default;
+
+// Tamaños de iconos para el ecosistema
+$fa-sizes: (
+  xs: 0.75rem,    // 12px - Para badges y elementos pequeños
+  sm: 0.875rem,   // 14px - Para botones pequeños
+  base: 1rem,     // 16px - Tamaño base
+  lg: 1.125rem,   // 18px - Para títulos de sección
+  xl: 1.25rem,    // 20px - Para headers
+  2x: 1.5rem,     // 24px - Para iconos destacados
+  3x: 2rem,       // 32px - Para cards y métricas
+  4x: 2.5rem,     // 40px - Para elementos principales
+  5x: 3rem,       // 48px - Para hero sections
+  6x: 4rem,       // 64px - Para ilustraciones
+  7x: 5rem,       // 80px - Para páginas de error
+  8x: 6rem        // 96px - Para elementos decorativos
+) !default;
+
+// Colores del ecosistema emprendimiento
+$fa-colors: (
+  // Colores principales
+  primary: #2563eb,
+  secondary: #10b981,
+  success: #059669,
+  warning: #f59e0b,
+  danger: #dc2626,
+  info: #0ea5e9,
+  
+  // Colores específicos del ecosistema
+  entrepreneur: #8b5cf6,    // Púrpura para emprendedores
+  mentor: #0d9488,          // Verde azulado para mentores
+  admin: #1f2937,           // Gris oscuro para admin
+  client: #ec4899,          // Rosa para clientes
+  project: #ea580c,         // Naranja para proyectos
+  meeting: #3b82f6,         // Azul para reuniones
+  document: #6366f1,        // Índigo para documentos
+  task: #84cc16,            // Lima para tareas
+  notification: #f59e0b,    // Amarillo para notificaciones
+  analytics: #06b6d4,       // Cian para analytics
+  
+  // Estados
+  active: #10b981,
+  inactive: #6b7280,
+  pending: #f59e0b,
+  completed: #059669,
+  cancelled: #dc2626,
+  
+  // Grises
+  muted: #6b7280,
+  light: #9ca3af,
+  dark: #374151,
+  
+  // Social
+  linkedin: #0077b5,
+  twitter: #1da1f2,
+  facebook: #4267b2,
+  instagram: #e4405f,
+  youtube: #ff0000,
+  whatsapp: #25d366,
+  telegram: #0088cc
+) !default;
+
+// Configuración de modo oscuro
+$fa-dark-colors: (
+  primary: #60a5fa,
+  secondary: #34d399,
+  text: #f9fafb,
+  muted: #9ca3af,
+  background: #1f2937,
+  border: #374151
+) !default;
+
+// Configuración de animaciones
+$fa-animation-duration: 0.3s !default;
+$fa-animation-timing: ease-in-out !default;
+$fa-spin-duration: 2s !default;
+$fa-pulse-duration: 1s !default;
+
+// Configuración de espaciado
+$fa-spacing: (
+  0: 0,
+  1: 0.25rem,   // 4px
+  2: 0.5rem,    // 8px
+  3: 0.75rem,   // 12px
+  4: 1rem,      // 16px
+  5: 1.25rem,   // 20px
+  6: 1.5rem,    // 24px
+  8: 2rem,      // 32px
+  10: 2.5rem,   // 40px
+  12: 3rem      // 48px
+) !default;
+
+// Breakpoints responsivos
+$fa-breakpoints: (
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px
+) !default;
+
+// ============================================================================
+// MIXINS FONT AWESOME
+// ============================================================================
+
+// Mixin base para iconos
+@mixin fa-icon($size: base, $color: inherit) {
+  font-family: 'Font Awesome 6 Free', 'Font Awesome 6 Brands';
+  font-weight: 900;
+  font-style: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  @if map-has-key($fa-sizes, $size) {
+    font-size: map-get($fa-sizes, $size);
+  } @else {
+    font-size: $size;
+  }
+  
+  @if map-has-key($fa-colors, $color) {
+    color: map-get($fa-colors, $color);
+  } @else if $color != inherit {
+    color: $color;
+  }
+}
+
+// Mixin para animaciones
+@mixin fa-animation($type: spin, $duration: $fa-animation-duration, $timing: $fa-animation-timing) {
+  animation: fa-#{$type} $duration $timing infinite;
+}
+
+// Mixin para estados hover
+@mixin fa-hover($color: primary, $transform: scale(1.1)) {
+  transition: all $fa-animation-duration $fa-animation-timing;
+  
+  &:hover {
+    @if map-has-key($fa-colors, $color) {
+      color: map-get($fa-colors, $color);
+    } @else {
+      color: $color;
+    }
+    
+    @if $transform {
+      transform: $transform;
+    }
+  }
+}
+
+// Mixin para responsividad
+@mixin fa-responsive($breakpoint) {
+  @media (max-width: map-get($fa-breakpoints, $breakpoint)) {
+    @content;
+  }
+}
+
+// Mixin para modo oscuro
+@mixin fa-dark-mode {
+  @media (prefers-color-scheme: dark) {
+    @content;
+  }
+  
+  [data-theme="dark"] & {
+    @content;
+  }
+}
+
+// Mixin para crear variantes de color
+@mixin fa-color-variant($color-name, $color-value) {
+  .fa-#{$color-name} {
+    color: $color-value;
+  }
+  
+  .fa-#{$color-name}-hover {
+    @include fa-hover($color-value);
+  }
+  
+  .btn-#{$color-name} .fa,
+  .btn-#{$color-name} [class*="fa-"] {
+    color: white;
+  }
+}
+
+// Mixin para iconos con fondo
+@mixin fa-background($size: 2rem, $bg-color: primary, $text-color: white, $border-radius: 50%) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: $size;
+  height: $size;
+  border-radius: $border-radius;
+  
+  @if map-has-key($fa-colors, $bg-color) {
+    background-color: map-get($fa-colors, $bg-color);
+  } @else {
+    background-color: $bg-color;
+  }
+  
+  @if map-has-key($fa-colors, $text-color) {
+    color: map-get($fa-colors, $text-color);
+  } @else {
+    color: $text-color;
+  }
+}
+
+// ============================================================================
+// CLASES BASE FONT AWESOME
+// ============================================================================
+
+// Configuración base
+.fa,
+[class^="fa-"],
+[class*=" fa-"] {
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  font-style: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  display: inline-block;
+}
+
+// Iconos de marca (brands)
+.fab {
+  font-family: 'Font Awesome 6 Brands';
+  font-weight: 400;
+}
+
+// Iconos regulares
+.far {
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 400;
+}
+
+// Iconos light (pro)
+.fal {
+  font-family: 'Font Awesome 6 Pro';
+  font-weight: 300;
+}
+
+// Iconos thin (pro)
+.fat {
+  font-family: 'Font Awesome 6 Pro';
+  font-weight: 100;
+}
+
+// ============================================================================
+// TAMAÑOS DE ICONOS
+// ============================================================================
+
+@each $size-name, $size-value in $fa-sizes {
+  .fa-#{$size-name} {
+    font-size: $size-value !important;
+  }
+}
+
+// Tamaños responsivos
+@each $breakpoint-name, $breakpoint-value in $fa-breakpoints {
+  @include fa-responsive($breakpoint-name) {
+    @each $size-name, $size-value in $fa-sizes {
+      .fa-#{$size-name}-#{$breakpoint-name} {
+        font-size: $size-value !important;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// COLORES DE ICONOS
+// ============================================================================
+
+// Generar clases de color
+@each $color-name, $color-value in $fa-colors {
+  @include fa-color-variant($color-name, $color-value);
+}
+
+// Colores específicos del modo oscuro
+@include fa-dark-mode {
+  @each $color-name, $color-value in $fa-dark-colors {
+    .fa-#{$color-name} {
+      color: $color-value;
+    }
+  }
+}
+
+// ============================================================================
+// ICONOS CON FONDO
+// ============================================================================
+
+// Iconos circulares con fondo
+.fa-circle {
+  @include fa-background();
+}
+
+.fa-circle-sm {
+  @include fa-background(1.5rem);
+}
+
+.fa-circle-lg {
+  @include fa-background(3rem);
+}
+
+.fa-circle-xl {
+  @include fa-background(4rem);
+}
+
+// Iconos cuadrados con fondo
+.fa-square {
+  @include fa-background(2rem, primary, white, 0.25rem);
+}
+
+.fa-square-sm {
+  @include fa-background(1.5rem, primary, white, 0.25rem);
+}
+
+.fa-square-lg {
+  @include fa-background(3rem, primary, white, 0.25rem);
+}
+
+// Variantes de color para fondos
+@each $color-name, $color-value in $fa-colors {
+  .fa-circle-#{$color-name} {
+    @include fa-background(2rem, $color-value, white);
+  }
+  
+  .fa-square-#{$color-name} {
+    @include fa-background(2rem, $color-value, white, 0.25rem);
+  }
+}
+
+// ============================================================================
+// ANIMACIONES
+// ============================================================================
+
+// Animación de rotación
+@keyframes fa-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(359deg); }
+}
+
+.fa-spin {
+  animation: fa-spin $fa-spin-duration linear infinite;
+}
+
+.fa-spin-reverse {
+  animation: fa-spin $fa-spin-duration linear infinite reverse;
+}
+
+// Animación de pulso
+@keyframes fa-pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.25; }
+  100% { opacity: 1; }
+}
+
+.fa-pulse {
+  animation: fa-pulse $fa-pulse-duration ease-in-out infinite;
+}
+
+// Animación de rebote
+@keyframes fa-bounce {
+  0%, 10%, 25%, 40%, 50% { transform: translateY(0); }
+  20% { transform: translateY(-6px); }
+  30% { transform: translateY(-4px); }
+}
+
+.fa-bounce {
+  animation: fa-bounce 1s ease-in-out infinite;
+}
+
+// Animación de sacudida
+@keyframes fa-shake {
+  0% { transform: translate(1px, 1px) rotate(0deg); }
+  10% { transform: translate(-1px, -2px) rotate(-1deg); }
+  20% { transform: translate(-3px, 0px) rotate(1deg); }
+  30% { transform: translate(3px, 2px) rotate(0deg); }
+  40% { transform: translate(1px, -1px) rotate(1deg); }
+  50% { transform: translate(-1px, 2px) rotate(-1deg); }
+  60% { transform: translate(-3px, 1px) rotate(0deg); }
+  70% { transform: translate(3px, 1px) rotate(-1deg); }
+  80% { transform: translate(-1px, -1px) rotate(1deg); }
+  90% { transform: translate(1px, 2px) rotate(0deg); }
+  100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+
+.fa-shake {
+  animation: fa-shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite;
+}
+
+// Animación de latido
+@keyframes fa-beat {
+  0%, 90% { transform: scale(1); }
+  45% { transform: scale(1.25); }
+}
+
+.fa-beat {
+  animation: fa-beat 1s ease-in-out infinite;
+}
+
+// Animación de parpadeo
+@keyframes fa-fade {
+  50% { opacity: 0.4; }
+}
+
+.fa-fade {
+  animation: fa-fade 2s ease-in-out infinite;
+}
+
+// Animación suave para hover
+.fa-hover {
+  @include fa-hover();
+}
+
+// ============================================================================
+// COMPONENTES ESPECÍFICOS DEL ECOSISTEMA
+// ============================================================================
+
+// Iconos de estado de usuario
+.user-status {
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 2px solid white;
+  }
+  
+  &.status-online::after {
+    background-color: map-get($fa-colors, success);
+  }
+  
+  &.status-away::after {
+    background-color: map-get($fa-colors, warning);
+  }
+  
+  &.status-busy::after {
+    background-color: map-get($fa-colors, danger);
+  }
+  
+  &.status-offline::after {
+    background-color: map-get($fa-colors, muted);
+  }
+}
+
+// Iconos de tipo de usuario con color específico
+.entrepreneur-icon {
+  @include fa-icon(base, entrepreneur);
+}
+
+.mentor-icon {
+  @include fa-icon(base, mentor);
+}
+
+.admin-icon {
+  @include fa-icon(base, admin);
+}
+
+.client-icon {
+  @include fa-icon(base, client);
+}
+
+// Iconos de métricas
+.metric-icon {
+  @include fa-background(3rem, info, white);
+  margin-bottom: 1rem;
+  
+  &.metric-growth {
+    @include fa-background(3rem, success, white);
+  }
+  
+  &.metric-warning {
+    @include fa-background(3rem, warning, white);
+  }
+  
+  &.metric-danger {
+    @include fa-background(3rem, danger, white);
+  }
+}
+
+// Iconos de navegación
+.nav-icon {
+  margin-right: 0.5rem;
+  width: 1.25rem;
+  text-align: center;
+  
+  @include fa-responsive(md) {
+    margin-right: 0;
+  }
+}
+
+// Iconos de botón
+.btn-icon {
+  margin-right: 0.5rem;
+  
+  &.btn-icon-only {
+    margin-right: 0;
+  }
+  
+  &.btn-icon-right {
+    margin-right: 0;
+    margin-left: 0.5rem;
+  }
+}
+
+// Iconos de card
+.card-icon {
+  @include fa-background(2.5rem, primary, white);
+  margin-bottom: 1rem;
+  
+  .card-primary & {
+    @include fa-background(2.5rem, primary, white);
+  }
+  
+  .card-success & {
+    @include fa-background(2.5rem, success, white);
+  }
+  
+  .card-warning & {
+    @include fa-background(2.5rem, warning, white);
+  }
+  
+  .card-danger & {
+    @include fa-background(2.5rem, danger, white);
+  }
+}
+
+// ============================================================================
+// LISTAS CON ICONOS
+// ============================================================================
+
+.fa-ul {
+  margin-left: 2.14285714em;
+  padding-left: 0;
+  list-style-type: none;
+  
+  > li {
+    position: relative;
+  }
+}
+
+.fa-li {
+  position: absolute;
+  left: -2.14285714em;
+  width: 2.14285714em;
+  top: 0.14285714em;
+  text-align: center;
+  
+  &.fa-li-small {
+    left: -1.57142857em;
+    width: 1.57142857em;
+  }
+}
+
+// Lista de características con iconos
+.feature-list {
+  .fa-li {
+    color: map-get($fa-colors, success);
+  }
+}
+
+// Lista de beneficios
+.benefit-list {
+  .fa-li {
+    color: map-get($fa-colors, primary);
+  }
+}
+
+// Lista de requisitos
+.requirement-list {
+  .fa-li {
+    color: map-get($fa-colors, warning);
+  }
+}
+
+// ============================================================================
+// ICONOS DECORATIVOS
+// ============================================================================
+
+// Separadores con iconos
+.separator-icon {
+  text-align: center;
+  margin: 2rem 0;
+  
+  &::before,
+  &::after {
+    content: '';
+    display: inline-block;
+    width: 50px;
+    height: 1px;
+    background-color: map-get($fa-colors, muted);
+    vertical-align: middle;
+  }
+  
+  .fa {
+    margin: 0 1rem;
+    color: map-get($fa-colors, primary);
+  }
+}
+
+// Iconos de fondo decorativos
+.bg-icon {
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 8rem;
+    color: rgba(map-get($fa-colors, primary), 0.05);
+    z-index: -1;
+    pointer-events: none;
+  }
+  
+  &.bg-icon-lightbulb::before {
+    content: '\f0eb';
+  }
+  
+  &.bg-icon-rocket::before {
+    content: '\f135';
+  }
+  
+  &.bg-icon-chart::before {
+    content: '\f201';
+  }
+  
+  &.bg-icon-handshake::before {
+    content: '\f2b5';
+  }
+}
+
+// ============================================================================
+// NOTIFICACIONES CON ICONOS
+// ============================================================================
+
+.notification {
+  position: relative;
+  
+  .fa-bell {
+    &.has-notifications::after {
+      content: '';
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 8px;
+      height: 8px;
+      background-color: map-get($fa-colors, danger);
+      border-radius: 50%;
+      border: 2px solid white;
+    }
+  }
+}
+
+// Badge con contador
+.fa-badge {
+  position: relative;
+  
+  &::after {
+    content: attr(data-count);
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: map-get($fa-colors, danger);
+    color: white;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    min-width: 18px;
+    text-align: center;
+  }
+  
+  &[data-count="0"]::after {
+    display: none;
+  }
+}
+
+// ============================================================================
+// ESTADOS INTERACTIVOS
+// ============================================================================
+
+// Estados de carga
+.fa-loading {
+  @include fa-animation(spin);
+  color: map-get($fa-colors, muted);
+}
+
+// Estados de éxito
+.fa-success {
+  color: map-get($fa-colors, success);
+  @include fa-animation(beat, 1s);
+}
+
+// Estados de error
+.fa-error {
+  color: map-get($fa-colors, danger);
+  @include fa-animation(shake, 0.5s);
+}
+
+// Estados deshabilitados
+.fa-disabled {
+  color: map-get($fa-colors, muted);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+// Estados activos
+.fa-active {
+  color: map-get($fa-colors, primary);
+}
+
+// ============================================================================
+// UTILIDADES DE ESPACIADO
+// ============================================================================
+
+// Márgenes para iconos
+@each $space-name, $space-value in $fa-spacing {
+  .fa-mr-#{$space-name} { margin-right: $space-value; }
+  .fa-ml-#{$space-name} { margin-left: $space-value; }
+  .fa-mt-#{$space-name} { margin-top: $space-value; }
+  .fa-mb-#{$space-name} { margin-bottom: $space-value; }
+  .fa-mx-#{$space-name} { 
+    margin-left: $space-value; 
+    margin-right: $space-value; 
+  }
+  .fa-my-#{$space-name} { 
+    margin-top: $space-value; 
+    margin-bottom: $space-value; 
+  }
+}
+
+// Padding para iconos con fondo
+@each $space-name, $space-value in $fa-spacing {
+  .fa-p-#{$space-name} { padding: $space-value; }
+  .fa-px-#{$space-name} { 
+    padding-left: $space-value; 
+    padding-right: $space-value; 
+  }
+  .fa-py-#{$space-name} { 
+    padding-top: $space-value; 
+    padding-bottom: $space-value; 
+  }
+}
+
+// ============================================================================
+// TRANSFORMACIONES
+// ============================================================================
+
+.fa-rotate-90 { transform: rotate(90deg); }
+.fa-rotate-180 { transform: rotate(180deg); }
+.fa-rotate-270 { transform: rotate(270deg); }
+.fa-flip-horizontal { transform: scaleX(-1); }
+.fa-flip-vertical { transform: scaleY(-1); }
+.fa-flip-both { transform: scale(-1); }
+
+// ============================================================================
+// COMPONENTES ESPECÍFICOS
+// ============================================================================
+
+// Iconos de redes sociales con colores específicos
+.social-icons {
+  display: flex;
+  gap: 1rem;
+  
+  .fa-linkedin { 
+    color: map-get($fa-colors, linkedin);
+    @include fa-hover(linkedin, scale(1.2));
+  }
+  
+  .fa-twitter { 
+    color: map-get($fa-colors, twitter);
+    @include fa-hover(twitter, scale(1.2));
+  }
+  
+  .fa-facebook { 
+    color: map-get($fa-colors, facebook);
+    @include fa-hover(facebook, scale(1.2));
+  }
+  
+  .fa-instagram { 
+    color: map-get($fa-colors, instagram);
+    @include fa-hover(instagram, scale(1.2));
+  }
+  
+  .fa-youtube { 
+    color: map-get($fa-colors, youtube);
+    @include fa-hover(youtube, scale(1.2));
+  }
+  
+  .fa-whatsapp { 
+    color: map-get($fa-colors, whatsapp);
+    @include fa-hover(whatsapp, scale(1.2));
+  }
+}
+
+// Timeline con iconos
+.timeline {
+  .timeline-item {
+    position: relative;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      left: 1rem;
+      top: 2.5rem;
+      bottom: -1rem;
+      width: 2px;
+      background-color: map-get($fa-colors, muted);
+    }
+    
+    .timeline-icon {
+      @include fa-background(2rem, primary, white);
+      position: relative;
+      z-index: 1;
+    }
+    
+    &.completed .timeline-icon {
+      @include fa-background(2rem, success, white);
+    }
+    
+    &.pending .timeline-icon {
+      @include fa-background(2rem, warning, white);
+    }
+    
+    &.cancelled .timeline-icon {
+      @include fa-background(2rem, danger, white);
+    }
+  }
+}
+
+// Progress con iconos
+.progress-steps {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 2rem 0;
+  
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    flex: 1;
+    
+    &:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 1rem;
+      left: 60%;
+      right: -40%;
+      height: 2px;
+      background-color: map-get($fa-colors, muted);
+      z-index: -1;
+    }
+    
+    .step-icon {
+      @include fa-background(2rem, muted, white);
+      margin-bottom: 0.5rem;
+    }
+    
+    .step-label {
+      font-size: 0.875rem;
+      color: map-get($fa-colors, muted);
+      text-align: center;
+    }
+    
+    &.active {
+      .step-icon {
+        @include fa-background(2rem, primary, white);
+        @include fa-animation(pulse, 2s);
+      }
+      
+      .step-label {
+        color: map-get($fa-colors, primary);
+        font-weight: 600;
+      }
+    }
+    
+    &.completed {
+      .step-icon {
+        @include fa-background(2rem, success, white);
+      }
+      
+      .step-label {
+        color: map-get($fa-colors, success);
+      }
+      
+      &::after {
+        background-color: map-get($fa-colors, success);
+      }
+    }
+  }
+}
+
+// ============================================================================
+// RESPONSIVIDAD
+// ============================================================================
+
+// Ocultar iconos en móvil
+.fa-hide-mobile {
+  @include fa-responsive(md) {
+    display: none;
+  }
+}
+
+// Mostrar solo en móvil
+.fa-mobile-only {
+  display: none;
+  
+  @include fa-responsive(md) {
+    display: inline-block;
+  }
+}
+
+// Tamaños adaptativos
+@include fa-responsive(lg) {
+  .fa-adaptive-lg { font-size: map-get($fa-sizes, lg) !important; }
+}
+
+@include fa-responsive(md) {
+  .fa-adaptive-md { font-size: map-get($fa-sizes, base) !important; }
+}
+
+@include fa-responsive(sm) {
+  .fa-adaptive-sm { font-size: map-get($fa-sizes, sm) !important; }
+}
+
+// ============================================================================
+// ACCESIBILIDAD
+// ============================================================================
+
+// Mejoras de accesibilidad
+.fa,
+[class^="fa-"],
+[class*=" fa-"] {
+  // Focus visible para navegación por teclado
+  &:focus-visible {
+    outline: 2px solid map-get($fa-colors, primary);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  
+  // Alto contraste
+  @media (prefers-contrast: high) {
+    font-weight: 900 !important;
+  }
+  
+  // Reducir movimiento para usuarios sensibles
+  @media (prefers-reduced-motion: reduce) {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+// Iconos decorativos ocultos para lectores de pantalla
+.fa-decorative {
+  aria-hidden: true;
+}
+
+// ============================================================================
+// PRINT STYLES
+// ============================================================================
+
+@media print {
+  .fa,
+  [class^="fa-"],
+  [class*=" fa-"] {
+    // Asegurar que los iconos sean visibles en impresión
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+    
+    // Remover animaciones en impresión
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  // Ocultar iconos interactivos en impresión
+  .fa-hover,
+  .fa-spin,
+  .fa-pulse,
+  .fa-bounce,
+  .fa-shake,
+  .fa-beat,
+  .fa-fade {
+    animation: none !important;
+  }
+  
+  // Simplificar colores para impresión
+  .fa-circle,
+  .fa-square,
+  [class*="fa-circle-"],
+  [class*="fa-square-"] {
+    background-color: #000 !important;
+    color: #fff !important;
+  }
+}
+
+// ============================================================================
+// UTILIDADES ESPECÍFICAS DEL ECOSISTEMA
+// ============================================================================
+
+// Mapeo de iconos por contexto del ecosistema
+.context-entrepreneur .fa { color: map-get($fa-colors, entrepreneur); }
+.context-mentor .fa { color: map-get($fa-colors, mentor); }
+.context-admin .fa { color: map-get($fa-colors, admin); }
+.context-client .fa { color: map-get($fa-colors, client); }
+.context-project .fa { color: map-get($fa-colors, project); }
+.context-meeting .fa { color: map-get($fa-colors, meeting); }
+.context-document .fa { color: map-get($fa-colors, document); }
+.context-task .fa { color: map-get($fa-colors, task); }
+
+// Iconos de prioridad
+.priority-high .fa { color: map-get($fa-colors, danger); }
+.priority-medium .fa { color: map-get($fa-colors, warning); }
+.priority-low .fa { color: map-get($fa-colors, info); }
+
+// Iconos de urgencia
+.urgent .fa { 
+  color: map-get($fa-colors, danger);
+  @include fa-animation(pulse);
+}

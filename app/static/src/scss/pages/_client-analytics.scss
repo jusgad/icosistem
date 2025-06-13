@@ -1,0 +1,1665 @@
+// =============================================================================
+// CLIENT ANALYTICS PAGE STYLES
+// =============================================================================
+// Estilos específicos para la página de analytics avanzados de clientes/stakeholders
+// Incluye dashboards interactivos, KPIs, gráficos, métricas y visualizaciones de datos
+
+// Variables específicas para analytics
+// =============================================================================
+$analytics-primary: #3b82f6;
+$analytics-secondary: #1e40af;
+$analytics-accent: #06b6d4;
+$analytics-success: #10b981;
+$analytics-warning: #f59e0b;
+$analytics-danger: #ef4444;
+$analytics-info: #6366f1;
+$analytics-dark: #1f2937;
+
+// Colores para diferentes métricas y KPIs
+$kpi-revenue: #059669;
+$kpi-growth: #3b82f6;
+$kpi-engagement: #8b5cf6;
+$kpi-retention: #06b6d4;
+$kpi-conversion: #f59e0b;
+$kpi-satisfaction: #10b981;
+
+// Colores para gráficos y visualizaciones
+$chart-blue: #3b82f6;
+$chart-green: #10b981;
+$chart-yellow: #f59e0b;
+$chart-red: #ef4444;
+$chart-purple: #8b5cf6;
+$chart-cyan: #06b6d4;
+$chart-pink: #ec4899;
+$chart-indigo: #6366f1;
+
+// Gradientes para widgets y cards
+$gradient-revenue: linear-gradient(135deg, #059669, #047857);
+$gradient-growth: linear-gradient(135deg, #3b82f6, #1e40af);
+$gradient-engagement: linear-gradient(135deg, #8b5cf6, #7c3aed);
+$gradient-retention: linear-gradient(135deg, #06b6d4, #0891b2);
+$gradient-analytics: linear-gradient(135deg, #6366f1, #4f46e5);
+
+// Sombras específicas para analytics
+$analytics-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+$analytics-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+$analytics-shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.15);
+$analytics-shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.1);
+$analytics-shadow-glow: 0 0 20px rgba(59, 130, 246, 0.3);
+
+// Mixins específicos para analytics
+// =============================================================================
+
+// Mixin para KPI cards
+@mixin kpi-card($gradient: $gradient-analytics, $glow-color: $analytics-primary) {
+  background: $gradient;
+  border-radius: 16px;
+  padding: 2rem;
+  color: white;
+  box-shadow: $analytics-shadow-lg;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  &:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: $analytics-shadow-xl, 0 0 30px rgba($glow-color, 0.4);
+    
+    &::before {
+      opacity: 1;
+    }
+  }
+}
+
+// Mixin para widgets de gráficos
+@mixin chart-widget {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: $analytics-shadow-sm;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+  position: relative;
+  
+  &:hover {
+    box-shadow: $analytics-shadow-md;
+    transform: translateY(-2px);
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: $gradient-analytics;
+    border-radius: 16px 16px 0 0;
+  }
+}
+
+// Mixin para barras de progreso animadas
+@mixin animated-progress($color: $analytics-primary) {
+  position: relative;
+  background: rgba($color, 0.1);
+  border-radius: 50px;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, $color, lighten($color, 15%));
+    border-radius: inherit;
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    animation: shimmer 2s infinite;
+  }
+}
+
+// Mixin para indicadores de tendencia
+@mixin trend-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  
+  &--up {
+    background: rgba($kpi-growth, 0.1);
+    color: $kpi-growth;
+    
+    &::before {
+      content: '↗';
+      font-size: 0.875rem;
+    }
+  }
+  
+  &--down {
+    background: rgba($analytics-danger, 0.1);
+    color: $analytics-danger;
+    
+    &::before {
+      content: '↘';
+      font-size: 0.875rem;
+    }
+  }
+  
+  &--neutral {
+    background: rgba(#6b7280, 0.1);
+    color: #6b7280;
+    
+    &::before {
+      content: '→';
+      font-size: 0.875rem;
+    }
+  }
+}
+
+// Layout principal de analytics
+// =============================================================================
+.client-analytics {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  
+  &__container {
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem;
+    
+    @media (min-width: 768px) {
+      padding: 2rem 1.5rem;
+    }
+    
+    @media (min-width: 1024px) {
+      padding: 2.5rem 2rem;
+    }
+  }
+  
+  &__header {
+    margin-bottom: 2.5rem;
+    
+    &-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    &-title {
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+      
+      @media (min-width: 768px) {
+        font-size: 2.75rem;
+      }
+    }
+    
+    &-subtitle {
+      font-size: 1.125rem;
+      color: #6b7280;
+      margin-bottom: 1.5rem;
+    }
+    
+    &-controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+      
+      @media (max-width: 767px) {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+}
+
+// Controles de filtros y tiempo
+// =============================================================================
+.analytics-controls {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: $analytics-shadow-sm;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 2rem;
+  
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    align-items: end;
+    
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+  }
+  
+  &__group {
+    display: flex;
+    flex-direction: column;
+    
+    label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      
+      i {
+        color: $analytics-primary;
+      }
+    }
+    
+    select,
+    input {
+      padding: 0.75rem 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      background: white;
+      transition: all 0.2s ease;
+      
+      &:focus {
+        outline: none;
+        border-color: $analytics-primary;
+        box-shadow: 0 0 0 3px rgba($analytics-primary, 0.1);
+      }
+    }
+    
+    .date-range-picker {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0.5rem;
+      align-items: center;
+      
+      span {
+        text-align: center;
+        color: #6b7280;
+        font-size: 0.8125rem;
+      }
+    }
+  }
+  
+  &__quick-filters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+    
+    .quick-filter {
+      padding: 0.5rem 1rem;
+      border: 1px solid #d1d5db;
+      background: white;
+      border-radius: 20px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+      }
+      
+      &--active {
+        background: $analytics-primary;
+        border-color: $analytics-primary;
+        color: white;
+      }
+    }
+  }
+  
+  &__actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    justify-content: flex-end;
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      
+      &--primary {
+        background: $analytics-primary;
+        color: white;
+        border: 1px solid $analytics-primary;
+        
+        &:hover {
+          background: darken($analytics-primary, 5%);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba($analytics-primary, 0.4);
+        }
+      }
+      
+      &--secondary {
+        background: white;
+        color: #374151;
+        border: 1px solid #d1d5db;
+        
+        &:hover {
+          background: #f9fafb;
+          border-color: #9ca3af;
+        }
+      }
+    }
+  }
+}
+
+// Grid de KPIs principales
+// =============================================================================
+.analytics-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+  
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  @media (min-width: 1440px) {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  
+  &__card {
+    position: relative;
+    transition: all 0.4s ease;
+    
+    &--revenue {
+      @include kpi-card($gradient-revenue, $kpi-revenue);
+    }
+    
+    &--growth {
+      @include kpi-card($gradient-growth, $kpi-growth);
+    }
+    
+    &--engagement {
+      @include kpi-card($gradient-engagement, $kpi-engagement);
+    }
+    
+    &--retention {
+      @include kpi-card($gradient-retention, $kpi-retention);
+    }
+    
+    &--conversion {
+      @include kpi-card(linear-gradient(135deg, $kpi-conversion, darken($kpi-conversion, 10%)), $kpi-conversion);
+    }
+    
+    &--satisfaction {
+      @include kpi-card(linear-gradient(135deg, $kpi-satisfaction, darken($kpi-satisfaction, 10%)), $kpi-satisfaction);
+    }
+  }
+  
+  &__icon {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    width: 3rem;
+    height: 3rem;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    backdrop-filter: blur(10px);
+  }
+  
+  &__header {
+    margin-bottom: 1rem;
+    
+    h4 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      opacity: 0.9;
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .kpi-value {
+      font-size: 2.25rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+      
+      @media (min-width: 1024px) {
+        font-size: 2.5rem;
+      }
+    }
+  }
+  
+  &__trend {
+    @include trend-indicator();
+    margin-bottom: 1rem;
+  }
+  
+  &__progress {
+    @include animated-progress(rgba(255, 255, 255, 0.8));
+    height: 4px;
+    margin-bottom: 0.75rem;
+    
+    &[data-progress="0"]::before { width: 0%; }
+    &[data-progress="25"]::before { width: 25%; }
+    &[data-progress="50"]::before { width: 50%; }
+    &[data-progress="75"]::before { width: 75%; }
+    &[data-progress="100"]::before { width: 100%; }
+  }
+  
+  &__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8125rem;
+    opacity: 0.9;
+    
+    .target {
+      font-weight: 500;
+    }
+    
+    .period {
+      font-weight: 400;
+    }
+  }
+}
+
+// Sección de gráficos principales
+// =============================================================================
+.analytics-charts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+  
+  @media (min-width: 1024px) {
+    grid-template-columns: 2fr 1fr;
+  }
+  
+  &__main {
+    @include chart-widget();
+    
+    &-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+      
+      h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        
+        i {
+          color: $analytics-primary;
+        }
+      }
+      
+      .chart-controls {
+        display: flex;
+        gap: 0.5rem;
+        
+        button {
+          padding: 0.375rem 0.875rem;
+          border: 1px solid #d1d5db;
+          background: white;
+          border-radius: 6px;
+          font-size: 0.8125rem;
+          font-weight: 500;
+          color: #6b7280;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          
+          &:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+          }
+          
+          &.active {
+            background: $analytics-primary;
+            border-color: $analytics-primary;
+            color: white;
+          }
+        }
+      }
+    }
+    
+    &-content {
+      height: 400px;
+      position: relative;
+      
+      @media (min-width: 1024px) {
+        height: 450px;
+      }
+      
+      .chart-container {
+        width: 100%;
+        height: 100%;
+        border-radius: 8px;
+        background: #f8fafc;
+        border: 2px dashed #d1d5db;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        
+        &:hover {
+          background: #f1f5f9;
+          border-color: #9ca3af;
+        }
+        
+        &--loaded {
+          background: transparent;
+          border: none;
+        }
+      }
+    }
+    
+    &-legend {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+      
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8125rem;
+        color: #6b7280;
+        
+        .legend-color {
+          width: 12px;
+          height: 12px;
+          border-radius: 2px;
+          
+          &--blue { background: $chart-blue; }
+          &--green { background: $chart-green; }
+          &--yellow { background: $chart-yellow; }
+          &--red { background: $chart-red; }
+          &--purple { background: $chart-purple; }
+          &--cyan { background: $chart-cyan; }
+        }
+      }
+    }
+  }
+  
+  &__sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  &__mini {
+    @include chart-widget();
+    padding: 1.25rem;
+    
+    &-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      
+      h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1f2937;
+      }
+      
+      .mini-trend {
+        @include trend-indicator();
+      }
+    }
+    
+    &-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+    
+    &-chart {
+      height: 80px;
+      background: #f8fafc;
+      border-radius: 6px;
+      border: 1px dashed #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9ca3af;
+      font-size: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    &-footer {
+      font-size: 0.8125rem;
+      color: #6b7280;
+      text-align: center;
+    }
+  }
+}
+
+// Widgets de insights y métricas secundarias
+// =============================================================================
+.analytics-insights {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+  
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (min-width: 1200px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  &__widget {
+    @include chart-widget();
+    
+    &-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      
+      .widget-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.125rem;
+        
+        &--primary {
+          background: rgba($analytics-primary, 0.1);
+          color: $analytics-primary;
+        }
+        
+        &--success {
+          background: rgba($analytics-success, 0.1);
+          color: $analytics-success;
+        }
+        
+        &--warning {
+          background: rgba($analytics-warning, 0.1);
+          color: $analytics-warning;
+        }
+        
+        &--info {
+          background: rgba($analytics-info, 0.1);
+          color: $analytics-info;
+        }
+      }
+      
+      h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1f2937;
+      }
+    }
+    
+    &-content {
+      .insight-metric {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.875rem 0;
+        border-bottom: 1px solid #f3f4f6;
+        
+        &:last-child {
+          border-bottom: none;
+        }
+        
+        .label {
+          font-size: 0.875rem;
+          color: #6b7280;
+          display: flex;
+          align-items: center;
+          gap: 0.375rem;
+          
+          .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            
+            &--active { background: $analytics-success; }
+            &--warning { background: $analytics-warning; }
+            &--inactive { background: #d1d5db; }
+          }
+        }
+        
+        .value {
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: #1f2937;
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+          
+          .trend-mini {
+            font-size: 0.75rem;
+            
+            &--up { color: $analytics-success; }
+            &--down { color: $analytics-danger; }
+            &--neutral { color: #6b7280; }
+          }
+        }
+      }
+      
+      .progress-section {
+        margin-top: 1rem;
+        
+        .progress-item {
+          margin-bottom: 1rem;
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+          
+          .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            
+            .progress-label {
+              font-size: 0.8125rem;
+              color: #6b7280;
+            }
+            
+            .progress-value {
+              font-size: 0.8125rem;
+              font-weight: 600;
+              color: #1f2937;
+            }
+          }
+          
+          .progress-bar {
+            @include animated-progress($analytics-primary);
+            height: 6px;
+            
+            &--success::before { background: linear-gradient(90deg, $analytics-success, lighten($analytics-success, 15%)); }
+            &--warning::before { background: linear-gradient(90deg, $analytics-warning, lighten($analytics-warning, 15%)); }
+            &--danger::before { background: linear-gradient(90deg, $analytics-danger, lighten($analytics-danger, 15%)); }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Tabla de datos detallados
+// =============================================================================
+.analytics-data-table {
+  @include chart-widget();
+  margin-bottom: 2.5rem;
+  
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+    
+    h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      
+      i {
+        color: $analytics-primary;
+      }
+    }
+    
+    .table-actions {
+      display: flex;
+      gap: 0.75rem;
+      
+      .search-box {
+        position: relative;
+        
+        input {
+          padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          font-size: 0.8125rem;
+          width: 200px;
+          
+          &:focus {
+            outline: none;
+            border-color: $analytics-primary;
+            box-shadow: 0 0 0 3px rgba($analytics-primary, 0.1);
+          }
+        }
+        
+        i {
+          position: absolute;
+          left: 0.75rem;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #9ca3af;
+          font-size: 0.875rem;
+        }
+      }
+      
+      .export-btn {
+        padding: 0.5rem 1rem;
+        background: $analytics-primary;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        &:hover {
+          background: darken($analytics-primary, 5%);
+        }
+      }
+    }
+  }
+  
+  &__content {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      
+      thead {
+        background: #f8fafc;
+        
+        th {
+          padding: 1rem 1.25rem;
+          text-align: left;
+          font-size: 0.8125rem;
+          font-weight: 600;
+          color: #374151;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          border-bottom: 1px solid #e5e7eb;
+          white-space: nowrap;
+          position: relative;
+          
+          &.sortable {
+            cursor: pointer;
+            
+            &:hover {
+              background: #e5e7eb;
+            }
+            
+            &::after {
+              content: '\f0dc';
+              font-family: 'Font Awesome 5 Free';
+              font-weight: 900;
+              position: absolute;
+              right: 0.75rem;
+              opacity: 0.3;
+              transition: opacity 0.2s ease;
+            }
+            
+            &.sorted::after {
+              opacity: 1;
+              color: $analytics-primary;
+            }
+          }
+        }
+      }
+      
+      tbody {
+        tr {
+          transition: background-color 0.2s ease;
+          
+          &:hover {
+            background: #f8fafc;
+          }
+          
+          &:not(:last-child) {
+            border-bottom: 1px solid #f3f4f6;
+          }
+        }
+        
+        td {
+          padding: 1rem 1.25rem;
+          color: #374151;
+          vertical-align: middle;
+          
+          &.number {
+            font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
+            font-weight: 500;
+            text-align: right;
+          }
+          
+          &.status {
+            .status-badge {
+              display: inline-flex;
+              align-items: center;
+              gap: 0.25rem;
+              padding: 0.25rem 0.75rem;
+              border-radius: 12px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              
+              &::before {
+                content: '';
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+              }
+              
+              &--active {
+                background: rgba($analytics-success, 0.1);
+                color: $analytics-success;
+                
+                &::before { background: $analytics-success; }
+              }
+              
+              &--inactive {
+                background: rgba(#6b7280, 0.1);
+                color: #6b7280;
+                
+                &::before { background: #6b7280; }
+              }
+              
+              &--warning {
+                background: rgba($analytics-warning, 0.1);
+                color: $analytics-warning;
+                
+                &::before { background: $analytics-warning; }
+              }
+            }
+          }
+          
+          &.trend {
+            .trend-cell {
+              @include trend-indicator();
+            }
+          }
+          
+          &.progress {
+            .progress-cell {
+              @include animated-progress($analytics-primary);
+              height: 6px;
+              width: 80px;
+              
+              &[data-progress="low"]::before { width: 25%; background: $analytics-danger; }
+              &[data-progress="medium"]::before { width: 60%; background: $analytics-warning; }
+              &[data-progress="high"]::before { width: 90%; background: $analytics-success; }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  &__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+    flex-wrap: wrap;
+    gap: 1rem;
+    
+    .pagination {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      
+      button {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        background: white;
+        border-radius: 4px;
+        font-size: 0.8125rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        &:hover:not(:disabled) {
+          background: #f9fafb;
+          border-color: #9ca3af;
+        }
+        
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        
+        &.active {
+          background: $analytics-primary;
+          border-color: $analytics-primary;
+          color: white;
+        }
+      }
+    }
+    
+    .table-info {
+      font-size: 0.8125rem;
+      color: #6b7280;
+    }
+  }
+}
+
+// Panel de comparativas y benchmarks
+// =============================================================================
+.analytics-comparison {
+  @include chart-widget();
+  margin-bottom: 2.5rem;
+  
+  &__header {
+    text-align: center;
+    margin-bottom: 2rem;
+    
+    h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+    
+    p {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+  }
+  
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    @media (min-width: 1200px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  &__item {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+    text-align: center;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      background: white;
+      box-shadow: $analytics-shadow-sm;
+      transform: translateY(-2px);
+    }
+    
+    &-icon {
+      width: 3rem;
+      height: 3rem;
+      background: rgba($analytics-primary, 0.1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      font-size: 1.25rem;
+      color: $analytics-primary;
+    }
+    
+    &-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 0.75rem;
+    }
+    
+    &-comparison {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      
+      .value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+      }
+      
+      .vs {
+        font-size: 0.8125rem;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      
+      .benchmark {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #6b7280;
+      }
+    }
+    
+    &-trend {
+      @include trend-indicator();
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+    
+    &-progress {
+      @include animated-progress($analytics-primary);
+      height: 8px;
+      margin-bottom: 0.75rem;
+    }
+    
+    &-label {
+      font-size: 0.8125rem;
+      color: #6b7280;
+    }
+  }
+}
+
+// Sección de exportación y acciones
+// =============================================================================
+.analytics-export {
+  @include chart-widget();
+  
+  &__header {
+    text-align: center;
+    margin-bottom: 2rem;
+    
+    h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+    
+    p {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+  }
+  
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+  }
+  
+  &__option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    
+    &:hover {
+      background: white;
+      border-color: $analytics-primary;
+      box-shadow: $analytics-shadow-sm;
+      transform: translateY(-2px);
+    }
+    
+    &-icon {
+      width: 3rem;
+      height: 3rem;
+      background: rgba($analytics-primary, 0.1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      color: $analytics-primary;
+    }
+    
+    &-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #1f2937;
+      text-align: center;
+    }
+    
+    &-description {
+      font-size: 0.75rem;
+      color: #6b7280;
+      text-align: center;
+      line-height: 1.4;
+    }
+  }
+}
+
+// Estados de carga
+// =============================================================================
+.analytics-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  
+  &__spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 4px solid #e5e7eb;
+    border-top: 4px solid $analytics-primary;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+  
+  &__text {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+  }
+  
+  &__subtext {
+    font-size: 0.75rem;
+    color: #9ca3af;
+  }
+}
+
+// Skeleton loaders para contenido
+.analytics-skeleton {
+  &__kpi {
+    background: #f3f4f6;
+    border-radius: 16px;
+    padding: 2rem;
+    
+    &-header {
+      width: 60%;
+      height: 1rem;
+      background: #e5e7eb;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+    }
+    
+    &-value {
+      width: 80%;
+      height: 2rem;
+      background: #e5e7eb;
+      border-radius: 4px;
+      margin-bottom: 0.75rem;
+    }
+    
+    &-trend {
+      width: 40%;
+      height: 0.75rem;
+      background: #e5e7eb;
+      border-radius: 4px;
+    }
+  }
+  
+  &__chart {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+    
+    &-header {
+      width: 50%;
+      height: 1.25rem;
+      background: #e5e7eb;
+      border-radius: 4px;
+      margin-bottom: 1.5rem;
+    }
+    
+    &-content {
+      width: 100%;
+      height: 300px;
+      background: #f3f4f6;
+      border-radius: 8px;
+    }
+  }
+}
+
+// Animaciones
+// =============================================================================
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Clases de animación
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.5s ease-out;
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+.stagger-animation > * {
+  animation: fadeInUp 0.8s ease-out;
+  
+  @for $i from 1 through 12 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.1}s;
+    }
+  }
+}
+
+// Responsive design
+// =============================================================================
+@media (max-width: 768px) {
+  .client-analytics {
+    &__header {
+      &-title {
+        font-size: 2rem;
+      }
+      
+      &-controls {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+  
+  .analytics-controls {
+    &__grid {
+      grid-template-columns: 1fr;
+    }
+    
+    &__quick-filters {
+      justify-content: center;
+    }
+    
+    &__actions {
+      flex-direction: column;
+    }
+  }
+  
+  .analytics-kpis {
+    grid-template-columns: 1fr;
+    
+    @media (min-width: 640px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  .analytics-charts {
+    grid-template-columns: 1fr;
+    
+    &__main-header {
+      flex-direction: column;
+      align-items: stretch;
+      
+      .chart-controls {
+        justify-content: center;
+      }
+    }
+  }
+  
+  .analytics-insights {
+    grid-template-columns: 1fr;
+  }
+  
+  .analytics-data-table {
+    &__header {
+      flex-direction: column;
+      
+      .table-actions {
+        width: 100%;
+        justify-content: center;
+        
+        .search-box input {
+          width: 100%;
+        }
+      }
+    }
+    
+    &__content table {
+      min-width: 600px;
+    }
+    
+    &__footer {
+      flex-direction: column;
+    }
+  }
+  
+  .analytics-comparison__grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .analytics-export__grid {
+    grid-template-columns: repeat(2, 1fr);
+    
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+// Print styles
+// =============================================================================
+@media print {
+  .client-analytics {
+    background: white !important;
+    
+    &__header-controls,
+    .analytics-controls,
+    .analytics-export {
+      display: none !important;
+    }
+  }
+  
+  .analytics-kpis__card,
+  .analytics-charts__main,
+  .analytics-insights__widget,
+  .analytics-data-table {
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+  }
+  
+  .analytics-kpis__card {
+    background: white !important;
+    color: #1f2937 !important;
+  }
+}
+
+// Accesibilidad
+// =============================================================================
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// Focus indicators
+.btn:focus,
+.analytics-controls input:focus,
+.analytics-controls select:focus,
+.analytics-data-table button:focus {
+  outline: 2px solid $analytics-primary;
+  outline-offset: 2px;
+}
+
+// Modo oscuro
+// =============================================================================
+@media (prefers-color-scheme: dark) {
+  .client-analytics {
+    background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+    
+    &__header-title {
+      color: white;
+    }
+    
+    &__header-subtitle {
+      color: #d1d5db;
+    }
+  }
+  
+  .analytics-controls,
+  .analytics-charts__main,
+  .analytics-insights__widget,
+  .analytics-data-table,
+  .analytics-comparison,
+  .analytics-export {
+    background: #374151;
+    border-color: #4b5563;
+    
+    h3, h4 {
+      color: white;
+    }
+    
+    p {
+      color: #d1d5db;
+    }
+  }
+  
+  .analytics-controls input,
+  .analytics-controls select {
+    background: #4b5563;
+    border-color: #6b7280;
+    color: white;
+    
+    &::placeholder {
+      color: #9ca3af;
+    }
+  }
+  
+  .analytics-data-table__content table {
+    thead {
+      background: #4b5563;
+      
+      th {
+        color: #f3f4f6;
+        border-color: #6b7280;
+      }
+    }
+    
+    tbody {
+      tr:hover {
+        background: #4b5563;
+      }
+      
+      td {
+        color: #e5e7eb;
+        border-color: #4b5563;
+      }
+    }
+  }
+}

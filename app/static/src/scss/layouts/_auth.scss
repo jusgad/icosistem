@@ -1,0 +1,1641 @@
+/**
+ * ===================================================================
+ * AUTH LAYOUT SYSTEM - SISTEMA COMPLETO DE AUTENTICACIÓN
+ * ===================================================================
+ * Desarrollado por: jusga
+ * Versión: 10.0.0
+ * Compatibilidad: IE11+, Chrome, Firefox, Safari, Edge
+ * Características: Login, Register, Reset, 2FA, SSO, Multi-step
+ * ===================================================================
+ */
+
+// ===================================================================
+// VARIABLES SCSS PARA AUTH SYSTEM
+// ===================================================================
+
+// Breakpoints para auth responsive
+$auth-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px
+) !default;
+
+// Colores del tema de autenticación
+$auth-primary: #3b82f6 !default;
+$auth-primary-hover: #2563eb !default;
+$auth-primary-light: #dbeafe !default;
+$auth-secondary: #6b7280 !default;
+$auth-success: #10b981 !default;
+$auth-warning: #f59e0b !default;
+$auth-error: #ef4444 !default;
+$auth-info: #06b6d4 !default;
+
+// Colores de fondo y superficie
+$auth-bg: #f8fafc !default;
+$auth-card-bg: #ffffff !default;
+$auth-overlay-bg: rgba(0, 0, 0, 0.5) !default;
+$auth-gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !default;
+$auth-gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !default;
+$auth-gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !default;
+
+// Colores de texto
+$auth-text-primary: #1f2937 !default;
+$auth-text-secondary: #6b7280 !default;
+$auth-text-muted: #9ca3af !default;
+$auth-text-white: #ffffff !default;
+$auth-text-error: #dc2626 !default;
+$auth-text-success: #059669 !default;
+
+// Colores tema oscuro
+$auth-dark-bg: #0f172a !default;
+$auth-dark-card-bg: #1e293b !default;
+$auth-dark-text-primary: #f8fafc !default;
+$auth-dark-text-secondary: #cbd5e1 !default;
+$auth-dark-text-muted: #64748b !default;
+$auth-dark-border: #334155 !default;
+
+// Dimensiones y espaciado
+$auth-card-width: 400px !default;
+$auth-card-width-sm: 320px !default;
+$auth-card-width-lg: 480px !default;
+$auth-card-width-xl: 600px !default;
+
+$auth-card-padding: 2rem !default;
+$auth-card-padding-sm: 1.5rem !default;
+$auth-card-padding-lg: 3rem !default;
+
+$auth-form-spacing: 1.5rem !default;
+$auth-form-spacing-sm: 1rem !default;
+$auth-form-spacing-lg: 2rem !default;
+
+// Bordes y esquinas
+$auth-border-radius: 0.75rem !default;
+$auth-border-radius-sm: 0.5rem !default;
+$auth-border-radius-lg: 1rem !default;
+$auth-border-width: 1px !default;
+$auth-border-color: #e5e7eb !default;
+
+// Sombras
+$auth-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !default;
+$auth-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !default;
+$auth-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !default;
+$auth-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !default;
+$auth-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !default;
+$auth-shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !default;
+
+// Animaciones y transiciones
+$auth-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1) !default;
+$auth-transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1) !default;
+$auth-transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1) !default;
+
+// Tipografía
+$auth-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !default;
+$auth-font-size-xs: 0.75rem !default;
+$auth-font-size-sm: 0.875rem !default;
+$auth-font-size-base: 1rem !default;
+$auth-font-size-lg: 1.125rem !default;
+$auth-font-size-xl: 1.25rem !default;
+$auth-font-size-2xl: 1.5rem !default;
+$auth-font-size-3xl: 1.875rem !default;
+
+// Z-index layers
+$auth-z-overlay: 1000 !default;
+$auth-z-modal: 1010 !default;
+$auth-z-dropdown: 1020 !default;
+$auth-z-tooltip: 1030 !default;
+
+// Features flags
+$auth-enable-animations: true !default;
+$auth-enable-dark-mode: true !default;
+$auth-enable-responsive: true !default;
+$auth-enable-social-auth: true !default;
+$auth-enable-2fa: true !default;
+
+// ===================================================================
+// FUNCIONES Y MIXINS
+// ===================================================================
+
+// Breakpoint mixins para auth
+@mixin auth-breakpoint-up($name, $breakpoints: $auth-breakpoints) {
+  $min: map-get($breakpoints, $name);
+  @if $min != 0 {
+    @media (min-width: $min) {
+      @content;
+    }
+  } @else {
+    @content;
+  }
+}
+
+@mixin auth-breakpoint-down($name, $breakpoints: $auth-breakpoints) {
+  $max: map-get($breakpoints, $name);
+  @if $max and $max > 0 {
+    @media (max-width: $max - 0.02) {
+      @content;
+    }
+  }
+}
+
+// Mixin para card base de auth
+@mixin auth-card-base(
+  $width: $auth-card-width,
+  $padding: $auth-card-padding,
+  $bg: $auth-card-bg,
+  $shadow: $auth-shadow-lg
+) {
+  width: 100%;
+  max-width: $width;
+  padding: $padding;
+  background-color: $bg;
+  border-radius: $auth-border-radius;
+  box-shadow: $shadow;
+  border: $auth-border-width solid $auth-border-color;
+  transition: all $auth-transition;
+}
+
+// Mixin para overlay de fondo
+@mixin auth-overlay($bg: $auth-overlay-bg) {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: $bg;
+  z-index: $auth-z-overlay;
+}
+
+// Mixin para centrado perfecto
+@mixin auth-center-flex() {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+// Mixin para formularios de auth
+@mixin auth-form-base() {
+  .auth-form {
+    &__group {
+      margin-bottom: $auth-form-spacing;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+    
+    &__label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: $auth-text-primary;
+      font-size: $auth-font-size-sm;
+    }
+    
+    &__input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: $auth-border-width solid $auth-border-color;
+      border-radius: $auth-border-radius-sm;
+      font-size: $auth-font-size-base;
+      transition: all $auth-transition-fast;
+      background-color: $auth-card-bg;
+      color: $auth-text-primary;
+      
+      &:focus {
+        outline: none;
+        border-color: $auth-primary;
+        box-shadow: 0 0 0 3px rgba($auth-primary, 0.1);
+      }
+      
+      &.is-invalid {
+        border-color: $auth-error;
+        box-shadow: 0 0 0 3px rgba($auth-error, 0.1);
+      }
+      
+      &.is-valid {
+        border-color: $auth-success;
+        box-shadow: 0 0 0 3px rgba($auth-success, 0.1);
+      }
+      
+      &::placeholder {
+        color: $auth-text-muted;
+      }
+    }
+    
+    &__help {
+      margin-top: 0.25rem;
+      font-size: $auth-font-size-xs;
+      color: $auth-text-secondary;
+    }
+    
+    &__error {
+      margin-top: 0.25rem;
+      font-size: $auth-font-size-xs;
+      color: $auth-text-error;
+      display: flex;
+      align-items: center;
+      
+      &-icon {
+        width: 14px;
+        height: 14px;
+        margin-right: 0.25rem;
+        flex-shrink: 0;
+      }
+    }
+    
+    &__success {
+      margin-top: 0.25rem;
+      font-size: $auth-font-size-xs;
+      color: $auth-text-success;
+      display: flex;
+      align-items: center;
+      
+      &-icon {
+        width: 14px;
+        height: 14px;
+        margin-right: 0.25rem;
+        flex-shrink: 0;
+      }
+    }
+  }
+}
+
+// Mixin para botones de auth
+@mixin auth-button($bg: $auth-primary, $text: $auth-text-white, $hover: $auth-primary-hover) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: $auth-border-radius-sm;
+  font-size: $auth-font-size-base;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all $auth-transition-fast;
+  background-color: $bg;
+  color: $text;
+  
+  &:hover {
+    background-color: $hover;
+    transform: translateY(-1px);
+    box-shadow: $auth-shadow-md;
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba($bg, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    
+    &:hover {
+      background-color: $bg;
+      transform: none;
+      box-shadow: none;
+    }
+  }
+}
+
+// Mixin para loading state
+@mixin auth-loading-state() {
+  position: relative;
+  pointer-events: none;
+  
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: auth-spin 1s linear infinite;
+  }
+  
+  .auth-button__text {
+    opacity: 0;
+  }
+}
+
+// ===================================================================
+// LAYOUT BASE DE AUTENTICACIÓN
+// ===================================================================
+
+.auth-layout {
+  font-family: $auth-font-family;
+  color: $auth-text-primary;
+  background-color: $auth-bg;
+  min-height: 100vh;
+  
+  // Contenedor principal
+  &__container {
+    @include auth-center-flex();
+  }
+  
+  // Card principal
+  &__card {
+    @include auth-card-base();
+  }
+  
+  // Estados del layout
+  &--loading {
+    .auth-layout__card {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+  }
+  
+  // Variantes de tamaño
+  &--sm .auth-layout__card {
+    @include auth-card-base($auth-card-width-sm, $auth-card-padding-sm);
+  }
+  
+  &--lg .auth-layout__card {
+    @include auth-card-base($auth-card-width-lg, $auth-card-padding-lg);
+  }
+  
+  &--xl .auth-layout__card {
+    @include auth-card-base($auth-card-width-xl, $auth-card-padding-lg);
+  }
+}
+
+// ===================================================================
+// LAYOUT CENTRADO (CLASSIC)
+// ===================================================================
+
+.auth-layout--centered {
+  background: $auth-gradient-primary;
+  
+  .auth-layout__container {
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="%23ffffff" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="%23ffffff" opacity="0.1"/><circle cx="50" cy="10" r="1" fill="%23ffffff" opacity="0.05"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+  }
+  
+  .auth-layout__card {
+    backdrop-filter: blur(10px);
+    background-color: rgba($auth-card-bg, 0.95);
+    border: $auth-border-width solid rgba(255, 255, 255, 0.2);
+  }
+}
+
+// ===================================================================
+// LAYOUT SPLIT SCREEN
+// ===================================================================
+
+.auth-layout--split {
+  display: flex;
+  min-height: 100vh;
+  
+  &__side {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    
+    // Lado izquierdo (contenido)
+    &--content {
+      background: $auth-gradient-secondary;
+      color: $auth-text-white;
+      position: relative;
+      overflow: hidden;
+      
+      &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M20,20 Q50,5 80,20 Q95,50 80,80 Q50,95 20,80 Q5,50 20,20" fill="none" stroke="%23ffffff" stroke-width="0.5" opacity="0.1"/></svg>');
+        animation: auth-float 6s ease-in-out infinite;
+      }
+    }
+    
+    // Lado derecho (formulario)
+    &--form {
+      background-color: $auth-card-bg;
+    }
+  }
+  
+  &__content {
+    position: relative;
+    z-index: 2;
+    max-width: 400px;
+    text-align: center;
+    
+    &-logo {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 2rem auto;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      svg {
+        width: 40px;
+        height: 40px;
+        fill: currentColor;
+      }
+    }
+    
+    &-title {
+      font-size: $auth-font-size-3xl;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+    
+    &-subtitle {
+      font-size: $auth-font-size-lg;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+  }
+  
+  &__form {
+    width: 100%;
+    max-width: 400px;
+    
+    .auth-layout__card {
+      box-shadow: none;
+      border: none;
+      background: transparent;
+    }
+  }
+  
+  // Responsive behavior
+  @include auth-breakpoint-down(md) {
+    flex-direction: column;
+    
+    .auth-layout--split__side--content {
+      min-height: 40vh;
+    }
+    
+    .auth-layout--split__side--form {
+      min-height: 60vh;
+    }
+  }
+}
+
+// ===================================================================
+// LAYOUT CON IMAGEN DE FONDO
+// ===================================================================
+
+.auth-layout--background {
+  background: url('/images/auth-bg.jpg') center/cover no-repeat;
+  position: relative;
+  
+  &::before {
+    content: "";
+    @include auth-overlay();
+    background: $auth-overlay-bg;
+  }
+  
+  .auth-layout__container {
+    position: relative;
+    z-index: 2;
+  }
+  
+  .auth-layout__card {
+    backdrop-filter: blur(15px);
+    background-color: rgba($auth-card-bg, 0.9);
+    border: $auth-border-width solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+// ===================================================================
+// LAYOUT MINIMAL (LIMPIO)
+// ===================================================================
+
+.auth-layout--minimal {
+  background-color: $auth-card-bg;
+  
+  .auth-layout__card {
+    box-shadow: none;
+    border: none;
+    background: transparent;
+    padding: $auth-card-padding-lg;
+  }
+}
+
+// ===================================================================
+// COMPONENTES DE FORMULARIO
+// ===================================================================
+
+@include auth-form-base();
+
+// Input con icono
+.auth-input-group {
+  position: relative;
+  
+  &__icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: $auth-text-muted;
+    pointer-events: none;
+    z-index: 2;
+  }
+  
+  .auth-form__input {
+    padding-left: 3rem;
+  }
+  
+  // Icono a la derecha (para toggle password)
+  &--icon-right {
+    .auth-input-group__icon {
+      left: auto;
+      right: 1rem;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: color $auth-transition-fast;
+      
+      &:hover {
+        color: $auth-text-primary;
+      }
+    }
+    
+    .auth-form__input {
+      padding-left: 1rem;
+      padding-right: 3rem;
+    }
+  }
+  
+  // Ambos iconos
+  &--icon-both {
+    .auth-form__input {
+      padding-left: 3rem;
+      padding-right: 3rem;
+    }
+  }
+}
+
+// Checkbox y radio personalizados
+.auth-checkbox,
+.auth-radio {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  
+  &__input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    
+    &:checked + .auth-checkbox__checkmark {
+      background-color: $auth-primary;
+      border-color: $auth-primary;
+      
+      &::after {
+        opacity: 1;
+        transform: rotate(45deg) scale(1);
+      }
+    }
+    
+    &:checked + .auth-radio__checkmark {
+      border-color: $auth-primary;
+      
+      &::after {
+        background-color: $auth-primary;
+        transform: scale(1);
+      }
+    }
+    
+    &:focus + .auth-checkbox__checkmark,
+    &:focus + .auth-radio__checkmark {
+      box-shadow: 0 0 0 3px rgba($auth-primary, 0.1);
+    }
+  }
+  
+  &__checkmark {
+    position: relative;
+    width: 18px;
+    height: 18px;
+    border: 2px solid $auth-border-color;
+    border-radius: $auth-border-radius-sm;
+    background-color: $auth-card-bg;
+    margin-right: 0.75rem;
+    transition: all $auth-transition-fast;
+    flex-shrink: 0;
+    
+    &::after {
+      content: "";
+      position: absolute;
+      left: 4px;
+      top: 1px;
+      width: 5px;
+      height: 9px;
+      border: solid $auth-text-white;
+      border-width: 0 2px 2px 0;
+      opacity: 0;
+      transform: rotate(45deg) scale(0.5);
+      transition: all $auth-transition-fast;
+    }
+  }
+  
+  &__text {
+    font-size: $auth-font-size-sm;
+    color: $auth-text-primary;
+    line-height: 1.4;
+  }
+}
+
+.auth-radio__checkmark {
+  border-radius: 50%;
+  
+  &::after {
+    left: 3px;
+    top: 3px;
+    width: 8px;
+    height: 8px;
+    border: none;
+    border-radius: 50%;
+    background-color: transparent;
+    transform: scale(0);
+    transition: all $auth-transition-fast;
+  }
+}
+
+// ===================================================================
+// BOTONES DE AUTENTICACIÓN
+// ===================================================================
+
+.auth-button {
+  @include auth-button();
+  position: relative;
+  
+  &__icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+  }
+  
+  &__text {
+    transition: opacity $auth-transition-fast;
+  }
+  
+  // Estados del botón
+  &--loading {
+    @include auth-loading-state();
+  }
+  
+  // Variantes de color
+  &--secondary {
+    @include auth-button($auth-secondary, $auth-text-white, darken($auth-secondary, 10%));
+  }
+  
+  &--success {
+    @include auth-button($auth-success, $auth-text-white, darken($auth-success, 10%));
+  }
+  
+  &--warning {
+    @include auth-button($auth-warning, $auth-text-white, darken($auth-warning, 10%));
+  }
+  
+  &--error {
+    @include auth-button($auth-error, $auth-text-white, darken($auth-error, 10%));
+  }
+  
+  // Botón outline
+  &--outline {
+    background-color: transparent;
+    color: $auth-primary;
+    border: 2px solid $auth-primary;
+    
+    &:hover {
+      background-color: $auth-primary;
+      color: $auth-text-white;
+    }
+  }
+  
+  // Botón ghost
+  &--ghost {
+    background-color: transparent;
+    color: $auth-primary;
+    border: none;
+    
+    &:hover {
+      background-color: rgba($auth-primary, 0.1);
+    }
+  }
+  
+  // Tamaños
+  &--sm {
+    padding: 0.5rem 1rem;
+    font-size: $auth-font-size-sm;
+  }
+  
+  &--lg {
+    padding: 1rem 2rem;
+    font-size: $auth-font-size-lg;
+  }
+}
+
+// ===================================================================
+// SOCIAL AUTH BUTTONS
+// ===================================================================
+
+@if $auth-enable-social-auth {
+  .auth-social {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: $auth-form-spacing;
+    
+    &__button {
+      @include auth-button(#ffffff, $auth-text-primary, #f9fafb);
+      border: $auth-border-width solid $auth-border-color;
+      position: relative;
+      
+      &--google {
+        &:hover {
+          border-color: #4285f4;
+          box-shadow: 0 0 0 1px rgba(66, 133, 244, 0.3);
+        }
+      }
+      
+      &--facebook {
+        @include auth-button(#1877f2, $auth-text-white, #166fe5);
+      }
+      
+      &--github {
+        @include auth-button(#333333, $auth-text-white, #24292e);
+      }
+      
+      &--twitter {
+        @include auth-button(#1da1f2, $auth-text-white, #1a91da);
+      }
+      
+      &--linkedin {
+        @include auth-button(#0077b5, $auth-text-white, #005885);
+      }
+      
+      &--microsoft {
+        @include auth-button(#00a1f1, $auth-text-white, #0078d4);
+      }
+    }
+    
+    &__icon {
+      width: 20px;
+      height: 20px;
+      margin-right: 0.75rem;
+    }
+    
+    &__divider {
+      position: relative;
+      text-align: center;
+      margin: $auth-form-spacing 0;
+      
+      &::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background-color: $auth-border-color;
+      }
+      
+      &-text {
+        background-color: $auth-card-bg;
+        color: $auth-text-muted;
+        padding: 0 1rem;
+        font-size: $auth-font-size-sm;
+        position: relative;
+        z-index: 1;
+      }
+    }
+  }
+}
+
+// ===================================================================
+// TWO-FACTOR AUTHENTICATION
+// ===================================================================
+
+@if $auth-enable-2fa {
+  .auth-2fa {
+    &__code-input {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      margin: $auth-form-spacing 0;
+    }
+    
+    &__digit {
+      width: 3rem;
+      height: 3rem;
+      text-align: center;
+      font-size: $auth-font-size-xl;
+      font-weight: 600;
+      border: 2px solid $auth-border-color;
+      border-radius: $auth-border-radius-sm;
+      background-color: $auth-card-bg;
+      transition: all $auth-transition-fast;
+      
+      &:focus {
+        outline: none;
+        border-color: $auth-primary;
+        box-shadow: 0 0 0 3px rgba($auth-primary, 0.1);
+      }
+      
+      &.is-filled {
+        border-color: $auth-success;
+        background-color: rgba($auth-success, 0.05);
+      }
+    }
+    
+    &__resend {
+      text-align: center;
+      margin-top: $auth-form-spacing;
+      
+      &-text {
+        font-size: $auth-font-size-sm;
+        color: $auth-text-secondary;
+      }
+      
+      &-button {
+        color: $auth-primary;
+        text-decoration: none;
+        font-weight: 500;
+        
+        &:hover {
+          text-decoration: underline;
+        }
+        
+        &:disabled {
+          color: $auth-text-muted;
+          cursor: not-allowed;
+          text-decoration: none;
+        }
+      }
+      
+      &-timer {
+        color: $auth-text-muted;
+        font-variant-numeric: tabular-nums;
+      }
+    }
+  }
+}
+
+// ===================================================================
+// MULTI-STEP FORMS
+// ===================================================================
+
+.auth-steps {
+  &__header {
+    margin-bottom: $auth-form-spacing-lg;
+  }
+  
+  &__progress {
+    display: flex;
+    align-items: center;
+    margin-bottom: $auth-form-spacing;
+  }
+  
+  &__step {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    position: relative;
+    
+    &:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 12px;
+      left: calc(100% - 1rem);
+      width: calc(100% - 2rem);
+      height: 2px;
+      background-color: $auth-border-color;
+      z-index: 1;
+    }
+    
+    &--completed::after {
+      background-color: $auth-success;
+    }
+    
+    &--active::after {
+      background: linear-gradient(to right, $auth-primary 50%, $auth-border-color 50%);
+    }
+    
+    &-circle {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background-color: $auth-border-color;
+      color: $auth-text-white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: $auth-font-size-xs;
+      font-weight: 600;
+      position: relative;
+      z-index: 2;
+      transition: all $auth-transition;
+    }
+    
+    &--completed .auth-steps__step-circle {
+      background-color: $auth-success;
+    }
+    
+    &--active .auth-steps__step-circle {
+      background-color: $auth-primary;
+      box-shadow: 0 0 0 4px rgba($auth-primary, 0.2);
+    }
+    
+    &-label {
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-top: 0.5rem;
+      font-size: $auth-font-size-xs;
+      color: $auth-text-muted;
+      white-space: nowrap;
+      
+      .auth-steps__step--active & {
+        color: $auth-primary;
+        font-weight: 500;
+      }
+      
+      .auth-steps__step--completed & {
+        color: $auth-success;
+      }
+    }
+  }
+  
+  &__content {
+    min-height: 200px;
+  }
+  
+  &__navigation {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: $auth-form-spacing-lg;
+    
+    &-prev {
+      @include auth-button(transparent, $auth-text-secondary, rgba($auth-secondary, 0.1));
+      border: $auth-border-width solid $auth-border-color;
+      flex: 0 0 auto;
+    }
+    
+    &-next {
+      flex: 1;
+    }
+  }
+}
+
+// ===================================================================
+// HEADER Y FOOTER DE AUTH
+// ===================================================================
+
+.auth-header {
+  text-align: center;
+  margin-bottom: $auth-form-spacing-lg;
+  
+  &__logo {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1.5rem auto;
+    background-color: $auth-primary-light;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    svg {
+      width: 32px;
+      height: 32px;
+      fill: $auth-primary;
+    }
+  }
+  
+  &__title {
+    font-size: $auth-font-size-2xl;
+    font-weight: 700;
+    color: $auth-text-primary;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.2;
+  }
+  
+  &__subtitle {
+    font-size: $auth-font-size-base;
+    color: $auth-text-secondary;
+    margin: 0;
+    line-height: 1.5;
+  }
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: $auth-form-spacing-lg;
+  
+  &__text {
+    font-size: $auth-font-size-sm;
+    color: $auth-text-secondary;
+    margin: 0 0 0.5rem 0;
+  }
+  
+  &__link {
+    color: $auth-primary;
+    text-decoration: none;
+    font-weight: 500;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+  
+  &__links {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    
+    a {
+      font-size: $auth-font-size-xs;
+      color: $auth-text-muted;
+      text-decoration: none;
+      
+      &:hover {
+        color: $auth-primary;
+      }
+    }
+  }
+}
+
+// ===================================================================
+// ESTADOS Y MENSAJES
+// ===================================================================
+
+.auth-alert {
+  padding: 1rem;
+  border-radius: $auth-border-radius-sm;
+  margin-bottom: $auth-form-spacing;
+  display: flex;
+  align-items: flex-start;
+  
+  &__icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  
+  &__content {
+    flex: 1;
+  }
+  
+  &__title {
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+    font-size: $auth-font-size-sm;
+  }
+  
+  &__message {
+    margin: 0;
+    font-size: $auth-font-size-sm;
+    line-height: 1.4;
+  }
+  
+  // Variantes
+  &--success {
+    background-color: rgba($auth-success, 0.1);
+    border: $auth-border-width solid rgba($auth-success, 0.2);
+    color: $auth-success;
+  }
+  
+  &--error {
+    background-color: rgba($auth-error, 0.1);
+    border: $auth-border-width solid rgba($auth-error, 0.2);
+    color: $auth-error;
+  }
+  
+  &--warning {
+    background-color: rgba($auth-warning, 0.1);
+    border: $auth-border-width solid rgba($auth-warning, 0.2);
+    color: darken($auth-warning, 20%);
+  }
+  
+  &--info {
+    background-color: rgba($auth-info, 0.1);
+    border: $auth-border-width solid rgba($auth-info, 0.2);
+    color: $auth-info;
+  }
+}
+
+// Loading overlay
+.auth-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba($auth-card-bg, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: inherit;
+  
+  &__spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba($auth-primary, 0.2);
+    border-top-color: $auth-primary;
+    border-radius: 50%;
+    animation: auth-spin 1s linear infinite;
+  }
+  
+  &__text {
+    margin-top: 1rem;
+    color: $auth-text-secondary;
+    font-size: $auth-font-size-sm;
+  }
+}
+
+// ===================================================================
+// TEMA OSCURO
+// ===================================================================
+
+@if $auth-enable-dark-mode {
+  .auth-layout--dark {
+    background-color: $auth-dark-bg;
+    color: $auth-dark-text-primary;
+    
+    .auth-layout__card {
+      background-color: $auth-dark-card-bg;
+      border-color: $auth-dark-border;
+    }
+    
+    .auth-form__label {
+      color: $auth-dark-text-primary;
+    }
+    
+    .auth-form__input {
+      background-color: $auth-dark-card-bg;
+      border-color: $auth-dark-border;
+      color: $auth-dark-text-primary;
+      
+      &::placeholder {
+        color: $auth-dark-text-muted;
+      }
+    }
+    
+    .auth-form__help {
+      color: $auth-dark-text-secondary;
+    }
+    
+    .auth-checkbox__checkmark,
+    .auth-radio__checkmark {
+      background-color: $auth-dark-card-bg;
+      border-color: $auth-dark-border;
+    }
+    
+    .auth-checkbox__text,
+    .auth-radio__text {
+      color: $auth-dark-text-primary;
+    }
+    
+    .auth-header {
+      &__title {
+        color: $auth-dark-text-primary;
+      }
+      
+      &__subtitle {
+        color: $auth-dark-text-secondary;
+      }
+    }
+    
+    .auth-footer {
+      &__text {
+        color: $auth-dark-text-secondary;
+      }
+      
+      &__links a {
+        color: $auth-dark-text-muted;
+      }
+    }
+    
+    .auth-social__divider {
+      &::before {
+        background-color: $auth-dark-border;
+      }
+      
+      &-text {
+        background-color: $auth-dark-card-bg;
+        color: $auth-dark-text-muted;
+      }
+    }
+    
+    .auth-social__button {
+      background-color: $auth-dark-card-bg;
+      border-color: $auth-dark-border;
+      color: $auth-dark-text-primary;
+      
+      &:hover {
+        background-color: lighten($auth-dark-card-bg, 5%);
+      }
+    }
+    
+    .auth-2fa__digit {
+      background-color: $auth-dark-card-bg;
+      border-color: $auth-dark-border;
+      color: $auth-dark-text-primary;
+    }
+    
+    .auth-loading-overlay {
+      background-color: rgba($auth-dark-card-bg, 0.8);
+      
+      &__text {
+        color: $auth-dark-text-secondary;
+      }
+    }
+  }
+  
+  // Auto dark mode
+  @media (prefers-color-scheme: dark) {
+    .auth-layout:not(.auth-layout--light) {
+      @extend .auth-layout--dark;
+    }
+  }
+}
+
+// ===================================================================
+// RESPONSIVE DESIGN
+// ===================================================================
+
+@if $auth-enable-responsive {
+  @include auth-breakpoint-down(md) {
+    .auth-layout {
+      &__container {
+        padding: 1rem;
+      }
+      
+      &__card {
+        padding: $auth-card-padding-sm;
+      }
+    }
+    
+    .auth-layout--split {
+      .auth-layout--split__side {
+        padding: 1.5rem;
+      }
+      
+      .auth-layout--split__content {
+        &-title {
+          font-size: $auth-font-size-2xl;
+        }
+        
+        &-subtitle {
+          font-size: $auth-font-size-base;
+        }
+      }
+    }
+    
+    .auth-header {
+      margin-bottom: $auth-form-spacing;
+      
+      &__logo {
+        width: 48px;
+        height: 48px;
+        margin-bottom: 1rem;
+        
+        svg {
+          width: 24px;
+          height: 24px;
+        }
+      }
+      
+      &__title {
+        font-size: $auth-font-size-xl;
+      }
+      
+      &__subtitle {
+        font-size: $auth-font-size-sm;
+      }
+    }
+    
+    .auth-social {
+      gap: 0.5rem;
+      
+      &__button {
+        padding: 0.625rem 1rem;
+        font-size: $auth-font-size-sm;
+      }
+    }
+    
+    .auth-2fa__digit {
+      width: 2.5rem;
+      height: 2.5rem;
+      font-size: $auth-font-size-lg;
+    }
+    
+    .auth-steps {
+      &__step-label {
+        font-size: 0.625rem;
+      }
+      
+      &__navigation {
+        flex-direction: column;
+        
+        &-prev {
+          order: 2;
+        }
+        
+        &-next {
+          order: 1;
+        }
+      }
+    }
+  }
+  
+  @include auth-breakpoint-down(sm) {
+    .auth-layout {
+      &__container {
+        padding: 0.5rem;
+      }
+      
+      &__card {
+        padding: 1rem;
+        border-radius: $auth-border-radius-sm;
+      }
+    }
+    
+    .auth-form__group {
+      margin-bottom: $auth-form-spacing-sm;
+    }
+    
+    .auth-2fa {
+      &__code-input {
+        gap: 0.25rem;
+      }
+      
+      &__digit {
+        width: 2rem;
+        height: 2rem;
+        font-size: $auth-font-size-base;
+      }
+    }
+    
+    .auth-footer__links {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+  }
+}
+
+// ===================================================================
+// ANIMACIONES
+// ===================================================================
+
+@if $auth-enable-animations {
+  @keyframes auth-spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  
+  @keyframes auth-float {
+    0%, 100% {
+      transform: translateY(0) rotate(0deg);
+    }
+    33% {
+      transform: translateY(-10px) rotate(1deg);
+    }
+    66% {
+      transform: translateY(5px) rotate(-1deg);
+    }
+  }
+  
+  @keyframes auth-slide-up {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes auth-scale-in {
+    0% {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  // Aplicar animaciones
+  .auth-layout__card {
+    animation: auth-scale-in 0.3s $auth-transition-timing;
+  }
+  
+  .auth-alert {
+    animation: auth-slide-up 0.3s $auth-transition-timing;
+  }
+  
+  .auth-form__group {
+    animation: auth-slide-up 0.3s $auth-transition-timing;
+    
+    @for $i from 1 through 10 {
+      &:nth-child(#{$i}) {
+        animation-delay: #{$i * 0.05}s;
+      }
+    }
+  }
+}
+
+// ===================================================================
+// UTILIDADES Y HELPERS
+// ===================================================================
+
+// Password strength indicator
+.auth-password-strength {
+  margin-top: 0.5rem;
+  
+  &__bar {
+    height: 4px;
+    background-color: rgba($auth-border-color, 0.3);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+  }
+  
+  &__fill {
+    height: 100%;
+    transition: all $auth-transition;
+    border-radius: 2px;
+    
+    &--weak {
+      width: 25%;
+      background-color: $auth-error;
+    }
+    
+    &--fair {
+      width: 50%;
+      background-color: $auth-warning;
+    }
+    
+    &--good {
+      width: 75%;
+      background-color: $auth-info;
+    }
+    
+    &--strong {
+      width: 100%;
+      background-color: $auth-success;
+    }
+  }
+  
+  &__text {
+    font-size: $auth-font-size-xs;
+    
+    &--weak {
+      color: $auth-error;
+    }
+    
+    &--fair {
+      color: $auth-warning;
+    }
+    
+    &--good {
+      color: $auth-info;
+    }
+    
+    &--strong {
+      color: $auth-success;
+    }
+  }
+}
+
+// Forgot password link
+.auth-forgot-link {
+  display: block;
+  text-align: right;
+  margin-top: 0.5rem;
+  font-size: $auth-font-size-sm;
+  color: $auth-primary;
+  text-decoration: none;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// Terms and privacy
+.auth-terms {
+  font-size: $auth-font-size-xs;
+  color: $auth-text-muted;
+  text-align: center;
+  line-height: 1.4;
+  margin-top: $auth-form-spacing;
+  
+  a {
+    color: $auth-primary;
+    text-decoration: none;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// ===================================================================
+// ACCESIBILIDAD
+// ===================================================================
+
+// Reducir animaciones para usuarios sensibles
+@media (prefers-reduced-motion: reduce) {
+  .auth-layout__card,
+  .auth-alert,
+  .auth-form__group,
+  .auth-button,
+  .auth-form__input,
+  .auth-loading-overlay__spinner {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+// Alto contraste
+@media (prefers-contrast: high) {
+  .auth-layout__card {
+    border-width: 2px;
+  }
+  
+  .auth-form__input {
+    border-width: 2px;
+  }
+  
+  .auth-button {
+    border-width: 2px;
+  }
+}
+
+// Focus visible para navegación por teclado
+.auth-form__input:focus-visible,
+.auth-button:focus-visible,
+.auth-checkbox__input:focus-visible + .auth-checkbox__checkmark,
+.auth-radio__input:focus-visible + .auth-radio__checkmark {
+  outline: 2px solid $auth-primary;
+  outline-offset: 2px;
+}
+
+// ===================================================================
+// PRINT STYLES
+// ===================================================================
+
+@media print {
+  .auth-layout {
+    background: white !important;
+    min-height: auto;
+  }
+  
+  .auth-layout__card {
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+  }
+  
+  .auth-button,
+  .auth-social__button {
+    background: white !important;
+    color: #000 !important;
+    border: 1px solid #000 !important;
+  }
+  
+  .auth-loading-overlay,
+  .auth-2fa__resend {
+    display: none !important;
+  }
+}

@@ -1,0 +1,1737 @@
+// =============================================================================
+// HIGH CONTRAST THEME STYLES
+// =============================================================================
+// Sistema completo de tema de alto contraste para el ecosistema de emprendimiento
+// Cumple con WCAG AA/AAA para máxima accesibilidad y legibilidad
+
+// Variables de color para tema de alto contraste
+// =============================================================================
+
+// Colores base de alto contraste (ratios WCAG AAA: 7:1+)
+$hc-black: #000000;              // Negro puro
+$hc-white: #ffffff;              // Blanco puro
+$hc-gray-dark: #1a1a1a;          // Gris muy oscuro
+$hc-gray-medium: #4a4a4a;        // Gris medio para elementos secundarios
+$hc-gray-light: #e6e6e6;        // Gris claro para fondos alternativos
+
+// Colores de fondo
+$hc-bg-primary: $hc-white;       // Fondo principal blanco
+$hc-bg-secondary: #f0f0f0;       // Fondo secundario gris muy claro
+$hc-bg-tertiary: #e0e0e0;        // Fondo terciario
+$hc-bg-inverse: $hc-black;       // Fondo inverso negro
+$hc-bg-disabled: #cccccc;        // Fondo para elementos deshabilitados
+
+// Colores de texto (máximo contraste)
+$hc-text-primary: $hc-black;     // Texto principal negro
+$hc-text-secondary: $hc-black;   // Texto secundario también negro
+$hc-text-inverse: $hc-white;     // Texto inverso blanco
+$hc-text-disabled: #666666;      // Texto deshabilitado (4.5:1 ratio mínimo)
+$hc-text-link: #0000ee;          // Enlaces azul intenso (estándar web)
+$hc-text-visited: #551a8b;       // Enlaces visitados púrpura intenso
+
+// Colores de borde (gruesos y definidos)
+$hc-border-primary: $hc-black;   // Bordes principales negros
+$hc-border-secondary: #333333;   // Bordes secundarios gris oscuro
+$hc-border-focus: #ff6600;       // Bordes de focus naranja intenso
+$hc-border-disabled: #999999;    // Bordes deshabilitados
+
+// Colores funcionales de alto contraste (cumpliendo WCAG AA mínimo)
+$hc-primary: #0066cc;            // Azul intenso (contraste 4.5:1)
+$hc-primary-hover: #004499;      // Hover más oscuro
+$hc-primary-active: #003366;     // Active aún más oscuro
+$hc-primary-text: $hc-white;     // Texto sobre primary
+
+$hc-secondary: #333333;          // Gris oscuro
+$hc-secondary-hover: #1a1a1a;
+$hc-secondary-active: $hc-black;
+$hc-secondary-text: $hc-white;
+
+$hc-success: #006600;            // Verde intenso
+$hc-success-hover: #004400;
+$hc-success-active: #002200;
+$hc-success-text: $hc-white;
+
+$hc-warning: #cc6600;            // Naranja intenso
+$hc-warning-hover: #994400;
+$hc-warning-active: #662200;
+$hc-warning-text: $hc-white;
+
+$hc-danger: #cc0000;             // Rojo intenso
+$hc-danger-hover: #990000;
+$hc-danger-active: #660000;
+$hc-danger-text: $hc-white;
+
+$hc-info: #0066cc;               // Azul información
+$hc-info-hover: #004499;
+$hc-info-active: #003366;
+$hc-info-text: $hc-white;
+
+// Colores específicos por tipo de usuario (alto contraste)
+$hc-role-admin: #cc0000;         // Rojo intenso para admin
+$hc-role-admin-text: $hc-white;
+
+$hc-role-entrepreneur: #0066cc;  // Azul intenso para entrepreneur
+$hc-role-entrepreneur-text: $hc-white;
+
+$hc-role-ally: #006600;          // Verde intenso para ally
+$hc-role-ally-text: $hc-white;
+
+$hc-role-client: #6600cc;        // Púrpura intenso para client
+$hc-role-client-text: $hc-white;
+
+// Configuraciones específicas de alto contraste
+$hc-border-width: 3px;           // Bordes más gruesos
+$hc-focus-width: 4px;            // Focus aún más grueso
+$hc-font-weight-normal: 500;     // Peso de fuente más grueso
+$hc-font-weight-bold: 700;       // Negrita más pronunciada
+$hc-line-height: 1.6;            // Interlineado mayor para legibilidad
+
+// Eliminación de efectos visuales complejos
+$hc-shadow-none: none;           // Sin sombras
+$hc-gradient-none: none;         // Sin gradientes
+$hc-blur-none: none;             // Sin blur/glassmorphism
+$hc-opacity-disabled: 1;         // Sin transparencias
+
+// Mixins específicos para alto contraste
+// =============================================================================
+
+// Mixin para elementos de alto contraste
+@mixin hc-element {
+  background: $hc-bg-primary;
+  color: $hc-text-primary;
+  border: $hc-border-width solid $hc-border-primary;
+  box-shadow: $hc-shadow-none;
+  backdrop-filter: $hc-blur-none;
+  font-weight: $hc-font-weight-normal;
+  line-height: $hc-line-height;
+}
+
+// Mixin para inputs de alto contraste
+@mixin hc-input {
+  @include hc-element();
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border-radius: 4px;
+  
+  &::placeholder {
+    color: $hc-text-disabled;
+    font-weight: $hc-font-weight-normal;
+  }
+  
+  &:focus {
+    outline: $hc-focus-width solid $hc-border-focus;
+    outline-offset: 2px;
+    border-color: $hc-border-focus;
+  }
+  
+  &:disabled {
+    background: $hc-bg-disabled;
+    color: $hc-text-disabled;
+    border-color: $hc-border-disabled;
+    cursor: not-allowed;
+  }
+  
+  &.valid {
+    border-color: $hc-success;
+  }
+  
+  &.invalid {
+    border-color: $hc-danger;
+  }
+}
+
+// Mixin para botones de alto contraste
+@mixin hc-button($bg-color: $hc-primary, $text-color: $hc-primary-text, $hover-color: $hc-primary-hover) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  background: $bg-color;
+  color: $text-color;
+  border: $hc-border-width solid $bg-color;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: $hc-font-weight-bold;
+  line-height: $hc-line-height;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: $hover-color;
+    border-color: $hover-color;
+    transform: none; // Sin efectos de transformación
+  }
+  
+  &:focus {
+    outline: $hc-focus-width solid $hc-border-focus;
+    outline-offset: 2px;
+  }
+  
+  &:active {
+    background: darken($hover-color, 10%);
+    border-color: darken($hover-color, 10%);
+  }
+  
+  &:disabled {
+    background: $hc-bg-disabled;
+    color: $hc-text-disabled;
+    border-color: $hc-border-disabled;
+    cursor: not-allowed;
+  }
+}
+
+// Mixin para texto de alto contraste
+@mixin hc-text($size: 1rem, $weight: $hc-font-weight-normal) {
+  font-size: $size;
+  font-weight: $weight;
+  line-height: $hc-line-height;
+  color: $hc-text-primary;
+  text-shadow: none;
+}
+
+// Mixin para cards de alto contraste
+@mixin hc-card {
+  @include hc-element();
+  padding: 1.5rem;
+  border-radius: 8px;
+  
+  &:hover {
+    border-color: $hc-border-secondary;
+    transform: none;
+    box-shadow: $hc-shadow-none;
+  }
+}
+
+// Mixin para badges de alto contraste
+@mixin hc-badge($bg-color: $hc-primary, $text-color: $hc-primary-text) {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  background: $bg-color;
+  color: $text-color;
+  border: 2px solid $bg-color;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: $hc-font-weight-bold;
+  line-height: 1.2;
+}
+
+// Aplicación del tema de alto contraste
+// =============================================================================
+
+// Selector principal para activar el tema de alto contraste
+.high-contrast-theme,
+[data-theme="high-contrast"],
+@media (prefers-contrast: high) {
+  
+  // Variables CSS custom properties para alto contraste
+  :root {
+    // Colores base
+    --bg-primary: #{$hc-bg-primary};
+    --bg-secondary: #{$hc-bg-secondary};
+    --text-primary: #{$hc-text-primary};
+    --text-secondary: #{$hc-text-primary}; // Mismo color para máximo contraste
+    --border-primary: #{$hc-border-primary};
+    
+    // Colores funcionales
+    --color-primary: #{$hc-primary};
+    --color-success: #{$hc-success};
+    --color-warning: #{$hc-warning};
+    --color-danger: #{$hc-danger};
+    --color-info: #{$hc-info};
+    
+    // Configuraciones específicas
+    --border-width: #{$hc-border-width};
+    --focus-width: #{$hc-focus-width};
+    --font-weight-normal: #{$hc-font-weight-normal};
+    --font-weight-bold: #{$hc-font-weight-bold};
+  }
+  
+  // Estilos base del body
+  body {
+    background: $hc-bg-primary;
+    color: $hc-text-primary;
+    font-weight: $hc-font-weight-normal;
+    line-height: $hc-line-height;
+  }
+  
+  // Eliminar todas las transiciones para usuarios con preferencias de movimiento reducido
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+  
+  // =============================================================================
+  // COMPONENTES BÁSICOS EN ALTO CONTRASTE
+  // =============================================================================
+  
+  // Headings con mayor peso
+  h1, h2, h3, h4, h5, h6 {
+    @include hc-text(inherit, $hc-font-weight-bold);
+    margin-bottom: 1rem;
+  }
+  
+  h1 { font-size: 2.25rem; }
+  h2 { font-size: 1.875rem; }
+  h3 { font-size: 1.5rem; }
+  h4 { font-size: 1.25rem; }
+  h5 { font-size: 1.125rem; }
+  h6 { font-size: 1rem; }
+  
+  // Párrafos y texto general
+  p, span, div, li {
+    @include hc-text();
+  }
+  
+  // Enlaces con máximo contraste
+  a {
+    color: $hc-text-link;
+    text-decoration: underline;
+    font-weight: $hc-font-weight-bold;
+    
+    &:hover {
+      color: darken($hc-text-link, 20%);
+      text-decoration: underline;
+    }
+    
+    &:visited {
+      color: $hc-text-visited;
+    }
+    
+    &:focus {
+      outline: $hc-focus-width solid $hc-border-focus;
+      outline-offset: 2px;
+      background: lighten($hc-border-focus, 40%);
+    }
+  }
+  
+  // Cards y superficies
+  .card,
+  .widget,
+  .panel,
+  .modal-content,
+  .dropdown-menu {
+    @include hc-card();
+  }
+  
+  // Inputs y formularios
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="date"],
+  input[type="time"],
+  textarea,
+  select {
+    @include hc-input();
+  }
+  
+  // Select específico con indicador visible
+  select {
+    appearance: none;
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#{$hc-black}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,9 12,15 18,9"></polyline></svg>');
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem;
+    padding-right: 3rem;
+  }
+  
+  // Checkboxes y radios personalizados
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    border: $hc-border-width solid $hc-border-primary;
+    background: $hc-bg-primary;
+    
+    &:checked {
+      background: $hc-primary;
+      border-color: $hc-primary;
+    }
+    
+    &:focus {
+      outline: $hc-focus-width solid $hc-border-focus;
+      outline-offset: 2px;
+    }
+  }
+  
+  input[type="radio"] {
+    border-radius: 50%;
+  }
+  
+  // Botones
+  .btn,
+  button {
+    &:not([class*="btn-"]) {
+      @include hc-button();
+    }
+    
+    &--primary,
+    &.primary {
+      @include hc-button($hc-primary, $hc-primary-text, $hc-primary-hover);
+    }
+    
+    &--secondary,
+    &.secondary {
+      @include hc-button($hc-secondary, $hc-secondary-text, $hc-secondary-hover);
+    }
+    
+    &--success,
+    &.success {
+      @include hc-button($hc-success, $hc-success-text, $hc-success-hover);
+    }
+    
+    &--warning,
+    &.warning {
+      @include hc-button($hc-warning, $hc-warning-text, $hc-warning-hover);
+    }
+    
+    &--danger,
+    &.danger {
+      @include hc-button($hc-danger, $hc-danger-text, $hc-danger-hover);
+    }
+    
+    &--info,
+    &.info {
+      @include hc-button($hc-info, $hc-info-text, $hc-info-hover);
+    }
+  }
+  
+  // Badges y pills
+  .badge,
+  .pill,
+  .tag {
+    @include hc-badge();
+    
+    &--success { @include hc-badge($hc-success, $hc-success-text); }
+    &--warning { @include hc-badge($hc-warning, $hc-warning-text); }
+    &--danger { @include hc-badge($hc-danger, $hc-danger-text); }
+    &--info { @include hc-badge($hc-info, $hc-info-text); }
+    &--secondary { @include hc-badge($hc-secondary, $hc-secondary-text); }
+  }
+  
+  // =============================================================================
+  // COMPONENTES DE NAVEGACIÓN
+  // =============================================================================
+  
+  // Navbar principal
+  .navbar,
+  .header {
+    background: $hc-bg-primary;
+    border-bottom: $hc-border-width solid $hc-border-primary;
+    box-shadow: $hc-shadow-none;
+    
+    .navbar-brand {
+      color: $hc-text-primary;
+      font-weight: $hc-font-weight-bold;
+      text-decoration: none;
+      
+      &:hover {
+        color: $hc-text-primary;
+      }
+    }
+    
+    .nav-link {
+      color: $hc-text-primary;
+      font-weight: $hc-font-weight-normal;
+      padding: 0.75rem 1rem;
+      border: 2px solid transparent;
+      
+      &:hover {
+        color: $hc-text-primary;
+        background: $hc-bg-secondary;
+        border-color: $hc-border-secondary;
+      }
+      
+      &.active {
+        color: $hc-primary-text;
+        background: $hc-primary;
+        border-color: $hc-primary;
+        font-weight: $hc-font-weight-bold;
+      }
+      
+      &:focus {
+        outline: $hc-focus-width solid $hc-border-focus;
+        outline-offset: 2px;
+      }
+    }
+  }
+  
+  // Sidebar
+  .sidebar {
+    background: $hc-bg-primary;
+    border-right: $hc-border-width solid $hc-border-primary;
+    
+    .sidebar-header {
+      border-bottom: $hc-border-width solid $hc-border-primary;
+      font-weight: $hc-font-weight-bold;
+    }
+    
+    .nav-item {
+      .nav-link {
+        color: $hc-text-primary;
+        padding: 0.75rem 1rem;
+        border: 2px solid transparent;
+        border-radius: 4px;
+        margin: 0.25rem;
+        
+        &:hover {
+          background: $hc-bg-secondary;
+          border-color: $hc-border-secondary;
+        }
+        
+        &.active {
+          background: $hc-primary;
+          color: $hc-primary-text;
+          border-color: $hc-primary;
+          font-weight: $hc-font-weight-bold;
+        }
+        
+        &:focus {
+          outline: $hc-focus-width solid $hc-border-focus;
+          outline-offset: 2px;
+        }
+      }
+    }
+    
+    .nav-divider {
+      border-color: $hc-border-primary;
+      border-width: 2px;
+    }
+  }
+  
+  // Breadcrumbs
+  .breadcrumb {
+    background: $hc-bg-secondary;
+    border: $hc-border-width solid $hc-border-primary;
+    padding: 0.75rem 1rem;
+    
+    .breadcrumb-item {
+      color: $hc-text-primary;
+      font-weight: $hc-font-weight-normal;
+      
+      &.active {
+        color: $hc-text-primary;
+        font-weight: $hc-font-weight-bold;
+      }
+      
+      a {
+        color: $hc-text-link;
+        font-weight: $hc-font-weight-bold;
+      }
+      
+      &:not(:last-child)::after {
+        content: ' / ';
+        color: $hc-text-primary;
+        font-weight: $hc-font-weight-bold;
+      }
+    }
+  }
+  
+  // =============================================================================
+  // PÁGINAS ESPECÍFICAS EN ALTO CONTRASTE
+  // =============================================================================
+  
+  // Dashboard
+  .dashboard-page {
+    background: $hc-bg-primary;
+    
+    .stats-card {
+      @include hc-card();
+      
+      .stat-value {
+        color: $hc-text-primary;
+        font-weight: $hc-font-weight-bold;
+        font-size: 2rem;
+      }
+      
+      .stat-label {
+        color: $hc-text-primary;
+        font-weight: $hc-font-weight-normal;
+      }
+      
+      .stat-trend {
+        font-weight: $hc-font-weight-bold;
+        
+        &.positive {
+          color: $hc-success;
+        }
+        
+        &.negative {
+          color: $hc-danger;
+        }
+        
+        &.neutral {
+          color: $hc-text-primary;
+        }
+      }
+    }
+    
+    .chart-widget {
+      @include hc-card();
+      
+      .chart-title {
+        color: $hc-text-primary;
+        font-weight: $hc-font-weight-bold;
+      }
+      
+      .chart-container {
+        background: $hc-bg-secondary;
+        border: $hc-border-width solid $hc-border-primary;
+        
+        // Placeholder para gráficos
+        &::before {
+          content: 'Gráfico - Datos visuales disponibles en tabla alternativa';
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 200px;
+          color: $hc-text-primary;
+          font-weight: $hc-font-weight-bold;
+          text-align: center;
+        }
+      }
+    }
+    
+    .recent-activity {
+      @include hc-card();
+      
+      .activity-item {
+        border-bottom: 2px solid $hc-border-primary;
+        padding: 1rem;
+        
+        &:hover {
+          background: $hc-bg-secondary;
+        }
+        
+        .activity-title {
+          font-weight: $hc-font-weight-bold;
+        }
+      }
+    }
+  }
+  
+  // Página de login
+  .login-page {
+    background: $hc-bg-primary;
+    
+    .login-card {
+      @include hc-card();
+      max-width: 500px;
+      margin: 2rem auto;
+      
+      .login-title {
+        color: $hc-text-primary;
+        font-weight: $hc-font-weight-bold;
+        text-align: center;
+        margin-bottom: 1.5rem;
+      }
+      
+      .login-subtitle {
+        color: $hc-text-primary;
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+    }
+    
+    .user-type-selector {
+      .selector-option {
+        @include hc-card();
+        margin-bottom: 1rem;
+        cursor: pointer;
+        text-align: center;
+        
+        &:hover {
+          border-color: $hc-border-secondary;
+        }
+        
+        &.selected {
+          background: $hc-primary;
+          color: $hc-primary-text;
+          border-color: $hc-primary;
+          font-weight: $hc-font-weight-bold;
+        }
+        
+        &:focus {
+          outline: $hc-focus-width solid $hc-border-focus;
+          outline-offset: 2px;
+        }
+      }
+    }
+    
+    .social-auth {
+      .social-button {
+        @include hc-button($hc-secondary, $hc-secondary-text, $hc-secondary-hover);
+        width: 100%;
+        margin-bottom: 0.75rem;
+        
+        &:focus {
+          outline: $hc-focus-width solid $hc-border-focus;
+          outline-offset: 2px;
+        }
+      }
+    }
+  }
+  
+  // Página de perfil
+  .profile-page {
+    background: $hc-bg-primary;
+    
+    .profile-header {
+      background: $hc-bg-secondary;
+      border: $hc-border-width solid $hc-border-primary;
+      color: $hc-text-primary;
+      
+      &--admin {
+        background: $hc-role-admin;
+        color: $hc-role-admin-text;
+      }
+      
+      &--entrepreneur {
+        background: $hc-role-entrepreneur;
+        color: $hc-role-entrepreneur-text;
+      }
+      
+      &--ally {
+        background: $hc-role-ally;
+        color: $hc-role-ally-text;
+      }
+      
+      &--client {
+        background: $hc-role-client;
+        color: $hc-role-client-text;
+      }
+      
+      .profile-name {
+        font-weight: $hc-font-weight-bold;
+        font-size: 2rem;
+      }
+      
+      .profile-role {
+        font-weight: $hc-font-weight-bold;
+      }
+    }
+    
+    .profile-section {
+      @include hc-card();
+      margin-bottom: 2rem;
+      
+      .section-header {
+        border-bottom: $hc-border-width solid $hc-border-primary;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        
+        h3 {
+          font-weight: $hc-font-weight-bold;
+        }
+      }
+    }
+    
+    .profile-field {
+      margin-bottom: 1rem;
+      padding: 0.75rem;
+      border: 2px solid transparent;
+      
+      &:hover {
+        background: $hc-bg-secondary;
+        border-color: $hc-border-secondary;
+      }
+      
+      &.editing {
+        background: $hc-bg-secondary;
+        border-color: $hc-primary;
+      }
+      
+      .field-label {
+        font-weight: $hc-font-weight-bold;
+        margin-bottom: 0.25rem;
+      }
+      
+      .field-value {
+        color: $hc-text-primary;
+      }
+    }
+  }
+  
+  // Página de configuraciones
+  .settings-page {
+    background: $hc-bg-primary;
+    
+    .settings-nav {
+      @include hc-card();
+      
+      .nav-link {
+        color: $hc-text-primary;
+        padding: 0.75rem 1rem;
+        border: 2px solid transparent;
+        border-radius: 4px;
+        margin-bottom: 0.25rem;
+        display: block;
+        text-decoration: none;
+        
+        &:hover {
+          background: $hc-bg-secondary;
+          border-color: $hc-border-secondary;
+        }
+        
+        &.active {
+          background: $hc-primary;
+          color: $hc-primary-text;
+          border-color: $hc-primary;
+          font-weight: $hc-font-weight-bold;
+        }
+        
+        &:focus {
+          outline: $hc-focus-width solid $hc-border-focus;
+          outline-offset: 2px;
+        }
+      }
+    }
+    
+    .settings-section {
+      @include hc-card();
+      margin-bottom: 2rem;
+      
+      .section-header {
+        border-bottom: $hc-border-width solid $hc-border-primary;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        
+        h3 {
+          font-weight: $hc-font-weight-bold;
+        }
+      }
+    }
+    
+    .setting-item {
+      @include hc-card();
+      margin-bottom: 1rem;
+      
+      &--warning {
+        border-color: $hc-warning;
+        background: lighten($hc-warning, 45%);
+      }
+      
+      &--danger {
+        border-color: $hc-danger;
+        background: lighten($hc-danger, 45%);
+      }
+      
+      .setting-title {
+        font-weight: $hc-font-weight-bold;
+        margin-bottom: 0.5rem;
+      }
+      
+      .setting-description {
+        color: $hc-text-primary;
+        margin-bottom: 1rem;
+      }
+    }
+    
+    .toggle-switch {
+      .slider {
+        width: 3rem;
+        height: 1.5rem;
+        background: $hc-bg-disabled;
+        border: $hc-border-width solid $hc-border-primary;
+        border-radius: 4px;
+        position: relative;
+        cursor: pointer;
+        
+        &:before {
+          content: '';
+          position: absolute;
+          width: 1rem;
+          height: 1rem;
+          background: $hc-text-primary;
+          border: 2px solid $hc-border-primary;
+          border-radius: 2px;
+          top: 50%;
+          left: 0.25rem;
+          transform: translateY(-50%);
+          transition: left 0.2s ease;
+        }
+      }
+      
+      input:checked + .slider {
+        background: $hc-primary;
+        border-color: $hc-primary;
+        
+        &:before {
+          left: 1.5rem;
+          background: $hc-white;
+          border-color: $hc-white;
+        }
+      }
+      
+      input:focus + .slider {
+        outline: $hc-focus-width solid $hc-border-focus;
+        outline-offset: 2px;
+      }
+    }
+  }
+  
+  // =============================================================================
+  // COMPONENTES DE UI ESPECÍFICOS
+  // =============================================================================
+  
+  // Modales
+  .modal {
+    .modal-backdrop {
+      background: rgba(0, 0, 0, 0.8);
+    }
+    
+    .modal-content {
+      @include hc-card();
+      box-shadow: $hc-shadow-none;
+      border-width: $hc-border-width;
+    }
+    
+    .modal-header {
+      border-bottom: $hc-border-width solid $hc-border-primary;
+      
+      .modal-title {
+        color: $hc-text-primary;
+        font-weight: $hc-font-weight-bold;
+      }
+      
+      .modal-close {
+        @include hc-button($hc-secondary, $hc-secondary-text);
+        padding: 0.5rem;
+        
+        &:focus {
+          outline: $hc-focus-width solid $hc-border-focus;
+          outline-offset: 2px;
+        }
+      }
+    }
+    
+    .modal-footer {
+      border-top: $hc-border-width solid $hc-border-primary;
+    }
+  }
+  
+  // Tooltips (simplificados para alto contraste)
+  .tooltip {
+    .tooltip-inner {
+      background: $hc-text-primary;
+      color: $hc-white;
+      border: $hc-border-width solid $hc-border-primary;
+      font-weight: $hc-font-weight-bold;
+      box-shadow: $hc-shadow-none;
+    }
+  }
+  
+  // Dropdowns
+  .dropdown-menu {
+    @include hc-card();
+    
+    .dropdown-item {
+      color: $hc-text-primary;
+      padding: 0.75rem 1rem;
+      border: 2px solid transparent;
+      font-weight: $hc-font-weight-normal;
+      
+      &:hover {
+        background: $hc-bg-secondary;
+        border-color: $hc-border-secondary;
+        color: $hc-text-primary;
+      }
+      
+      &.active {
+        background: $hc-primary;
+        color: $hc-primary-text;
+        border-color: $hc-primary;
+        font-weight: $hc-font-weight-bold;
+      }
+      
+      &:focus {
+        outline: $hc-focus-width solid $hc-border-focus;
+        outline-offset: 2px;
+      }
+      
+      &:disabled {
+        color: $hc-text-disabled;
+        background: $hc-bg-disabled;
+        cursor: not-allowed;
+      }
+    }
+    
+    .dropdown-divider {
+      border-color: $hc-border-primary;
+      border-width: 2px;
+    }
+  }
+  
+  // Tabs
+  .nav-tabs {
+    border-bottom: $hc-border-width solid $hc-border-primary;
+    
+    .nav-link {
+      color: $hc-text-primary;
+      border: $hc-border-width solid transparent;
+      padding: 0.75rem 1rem;
+      font-weight: $hc-font-weight-normal;
+      
+      &:hover {
+        background: $hc-bg-secondary;
+        border-color: $hc-border-secondary;
+      }
+      
+      &.active {
+        background: $hc-bg-primary;
+        color: $hc-primary;
+        border-color: $hc-border-primary $hc-border-primary $hc-bg-primary;
+        font-weight: $hc-font-weight-bold;
+      }
+      
+      &:focus {
+        outline: $hc-focus-width solid $hc-border-focus;
+        outline-offset: 2px;
+      }
+    }
+  }
+  
+  .tab-content {
+    .tab-pane {
+      background: $hc-bg-primary;
+      border: $hc-border-width solid $hc-border-primary;
+      border-top: none;
+      padding: 1rem;
+    }
+  }
+  
+  // Acordeones
+  .accordion {
+    .accordion-item {
+      background: $hc-bg-primary;
+      border: $hc-border-width solid $hc-border-primary;
+      margin-bottom: 0.5rem;
+    }
+    
+    .accordion-header {
+      .accordion-button {
+        background: $hc-bg-secondary;
+        color: $hc-text-primary;
+        border: none;
+        border-bottom: $hc-border-width solid $hc-border-primary;
+        font-weight: $hc-font-weight-bold;
+        padding: 1rem;
+        
+        &:hover {
+          background: darken($hc-bg-secondary, 5%);
+        }
+        
+        &:focus {
+          outline: $hc-focus-width solid $hc-border-focus;
+          outline-offset: 2px;
+        }
+        
+        &:not(.collapsed) {
+          background: $hc-primary;
+          color: $hc-primary-text;
+        }
+      }
+    }
+    
+    .accordion-body {
+      background: $hc-bg-primary;
+      color: $hc-text-primary;
+      padding: 1rem;
+    }
+  }
+  
+  // Alertas
+  .alert {
+    border-width: $hc-border-width;
+    padding: 1rem;
+    border-radius: 4px;
+    font-weight: $hc-font-weight-normal;
+    
+    &-primary {
+      background: lighten($hc-primary, 45%);
+      border-color: $hc-primary;
+      color: $hc-text-primary;
+    }
+    
+    &-success {
+      background: lighten($hc-success, 45%);
+      border-color: $hc-success;
+      color: $hc-text-primary;
+    }
+    
+    &-warning {
+      background: lighten($hc-warning, 45%);
+      border-color: $hc-warning;
+      color: $hc-text-primary;
+    }
+    
+    &-danger {
+      background: lighten($hc-danger, 45%);
+      border-color: $hc-danger;
+      color: $hc-text-primary;
+    }
+    
+    &-info {
+      background: lighten($hc-info, 45%);
+      border-color: $hc-info;
+      color: $hc-text-primary;
+    }
+  }
+  
+  // Progress bars
+  .progress {
+    background: $hc-bg-secondary;
+    border: $hc-border-width solid $hc-border-primary;
+    height: 2rem;
+    
+    .progress-bar {
+      background: $hc-primary;
+      color: $hc-primary-text;
+      font-weight: $hc-font-weight-bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      &-success {
+        background: $hc-success;
+        color: $hc-success-text;
+      }
+      
+      &-warning {
+        background: $hc-warning;
+        color: $hc-warning-text;
+      }
+      
+      &-danger {
+        background: $hc-danger;
+        color: $hc-danger-text;
+      }
+    }
+  }
+  
+  // =============================================================================
+  // COMPONENTES ESPECÍFICOS DEL ECOSISTEMA
+  // =============================================================================
+  
+  // Timeline de actividades
+  .activity-timeline {
+    .timeline-container {
+      &::before {
+        background: $hc-border-primary;
+        width: 4px;
+      }
+    }
+    
+    .timeline-item {
+      .timeline-marker {
+        background: $hc-primary;
+        border: $hc-border-width solid $hc-border-primary;
+        width: 1.5rem;
+        height: 1.5rem;
+        
+        &--success {
+          background: $hc-success;
+          border-color: $hc-success;
+        }
+        
+        &--warning {
+          background: $hc-warning;
+          border-color: $hc-warning;
+        }
+        
+        &--danger {
+          background: $hc-danger;
+          border-color: $hc-danger;
+        }
+      }
+      
+      .timeline-content {
+        @include hc-card();
+        margin-left: 2rem;
+        
+        .timeline-title {
+          color: $hc-text-primary;
+          font-weight: $hc-font-weight-bold;
+        }
+        
+        .timeline-description {
+          color: $hc-text-primary;
+        }
+        
+        .timeline-meta {
+          color: $hc-text-primary;
+          font-size: 0.875rem;
+        }
+      }
+    }
+  }
+  
+  // Cards de proyectos
+  .project-card {
+    @include hc-card();
+    
+    .project-header {
+      border-bottom: $hc-border-width solid $hc-border-primary;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      
+      .project-title {
+        color: $hc-text-primary;
+        font-weight: $hc-font-weight-bold;
+      }
+      
+      .project-status {
+        &.active {
+          @include hc-badge($hc-success, $hc-success-text);
+        }
+        
+        &.pending {
+          @include hc-badge($hc-warning, $hc-warning-text);
+        }
+        
+        &.completed {
+          @include hc-badge($hc-primary, $hc-primary-text);
+        }
+      }
+    }
+    
+    .project-description {
+      color: $hc-text-primary;
+      margin-bottom: 1rem;
+    }
+    
+    .project-metrics {
+      .metric-item {
+        .metric-value {
+          color: $hc-text-primary;
+          font-weight: $hc-font-weight-bold;
+        }
+        
+        .metric-label {
+          color: $hc-text-primary;
+        }
+      }
+    }
+  }
+  
+  // Widgets de métricas
+  .metrics-widget {
+    @include hc-card();
+    
+    .metric-header {
+      .metric-icon {
+        background: $hc-bg-secondary;
+        color: $hc-primary;
+        border: $hc-border-width solid $hc-border-primary;
+        padding: 0.5rem;
+      }
+      
+      .metric-trend {
+        font-weight: $hc-font-weight-bold;
+        
+        &.up {
+          color: $hc-success;
+        }
+        
+        &.down {
+          color: $hc-danger;
+        }
+        
+        &.neutral {
+          color: $hc-text-primary;
+        }
+      }
+    }
+    
+    .metric-value {
+      font-size: 2rem;
+      font-weight: $hc-font-weight-bold;
+      color: $hc-text-primary;
+    }
+    
+    .metric-chart {
+      .chart-area {
+        background: $hc-bg-secondary;
+        border: $hc-border-width solid $hc-border-primary;
+        min-height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        &::before {
+          content: 'Datos del gráfico disponibles en formato de tabla';
+          color: $hc-text-primary;
+          font-weight: $hc-font-weight-bold;
+          text-align: center;
+        }
+      }
+    }
+  }
+  
+  // Tablas de datos
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: $hc-border-width solid $hc-border-primary;
+    
+    thead {
+      background: $hc-bg-secondary;
+      
+      th {
+        color: $hc-text-primary;
+        font-weight: $hc-font-weight-bold;
+        padding: 1rem;
+        border-bottom: $hc-border-width solid $hc-border-primary;
+        border-right: 2px solid $hc-border-primary;
+        text-align: left;
+        
+        &:last-child {
+          border-right: none;
+        }
+      }
+    }
+    
+    tbody {
+      tr {
+        &:hover {
+          background: $hc-bg-secondary;
+        }
+        
+        &:not(:last-child) {
+          border-bottom: 2px solid $hc-border-primary;
+        }
+      }
+      
+      td {
+        color: $hc-text-primary;
+        padding: 1rem;
+        border-right: 2px solid $hc-border-primary;
+        
+        &:last-child {
+          border-right: none;
+        }
+      }
+    }
+  }
+  
+  // =============================================================================
+  // ESTADOS ESPECÍFICOS Y UTILIDADES
+  // =============================================================================
+  
+  // Estados de carga
+  .loading {
+    .spinner {
+      width: 3rem;
+      height: 3rem;
+      border: 4px solid $hc-bg-disabled;
+      border-top: 4px solid $hc-primary;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    .skeleton {
+      background: repeating-linear-gradient(
+        90deg,
+        $hc-bg-secondary 0px,
+        $hc-bg-secondary 40px,
+        $hc-bg-tertiary 40px,
+        $hc-bg-tertiary 80px
+      );
+      border: 2px solid $hc-border-primary;
+    }
+  }
+  
+  // Estados vacíos
+  .empty-state {
+    text-align: center;
+    padding: 2rem;
+    border: $hc-border-width solid $hc-border-primary;
+    
+    .empty-icon {
+      color: $hc-text-primary;
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    
+    .empty-title {
+      color: $hc-text-primary;
+      font-weight: $hc-font-weight-bold;
+      margin-bottom: 0.5rem;
+    }
+    
+    .empty-description {
+      color: $hc-text-primary;
+    }
+  }
+  
+  // Estados de error
+  .error-state {
+    text-align: center;
+    padding: 2rem;
+    border: $hc-border-width solid $hc-danger;
+    background: lighten($hc-danger, 45%);
+    
+    .error-icon {
+      color: $hc-danger;
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    
+    .error-title {
+      color: $hc-text-primary;
+      font-weight: $hc-font-weight-bold;
+      margin-bottom: 0.5rem;
+    }
+    
+    .error-message {
+      color: $hc-text-primary;
+    }
+  }
+  
+  // Dividers y separadores
+  .divider,
+  hr {
+    border: none;
+    border-top: $hc-border-width solid $hc-border-primary;
+    margin: 1rem 0;
+  }
+  
+  // Scrollbars personalizados
+  ::-webkit-scrollbar {
+    width: 16px;
+    height: 16px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: $hc-bg-secondary;
+    border: 2px solid $hc-border-primary;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: $hc-border-primary;
+    border: 2px solid $hc-bg-primary;
+    
+    &:hover {
+      background: $hc-text-primary;
+    }
+  }
+  
+  ::-webkit-scrollbar-corner {
+    background: $hc-bg-secondary;
+  }
+  
+  // Selecciones de texto
+  ::selection {
+    background: $hc-primary;
+    color: $hc-primary-text;
+  }
+  
+  ::-moz-selection {
+    background: $hc-primary;
+    color: $hc-primary-text;
+  }
+  
+  // =============================================================================
+  // UTILIDADES ESPECÍFICAS PARA ALTO CONTRASTE
+  // =============================================================================
+  
+  // Clases de utilidad específicas
+  .hc-text-primary { color: $hc-text-primary !important; }
+  .hc-text-inverse { color: $hc-text-inverse !important; }
+  .hc-text-disabled { color: $hc-text-disabled !important; }
+  .hc-text-link { color: $hc-text-link !important; }
+  
+  .hc-bg-primary { background: $hc-bg-primary !important; }
+  .hc-bg-secondary { background: $hc-bg-secondary !important; }
+  .hc-bg-inverse { background: $hc-bg-inverse !important; }
+  
+  .hc-border-primary { border-color: $hc-border-primary !important; }
+  .hc-border-focus { border-color: $hc-border-focus !important; }
+  .hc-border-thick { border-width: $hc-border-width !important; }
+  
+  .hc-font-normal { font-weight: $hc-font-weight-normal !important; }
+  .hc-font-bold { font-weight: $hc-font-weight-bold !important; }
+  
+  .hc-no-shadow { box-shadow: $hc-shadow-none !important; }
+  .hc-no-transform { transform: none !important; }
+  .hc-no-transition { transition: none !important; }
+  
+  // Utilidades para roles específicos
+  .hc-role-admin {
+    background: $hc-role-admin !important;
+    color: $hc-role-admin-text !important;
+    border-color: $hc-role-admin !important;
+  }
+  
+  .hc-role-entrepreneur {
+    background: $hc-role-entrepreneur !important;
+    color: $hc-role-entrepreneur-text !important;
+    border-color: $hc-role-entrepreneur !important;
+  }
+  
+  .hc-role-ally {
+    background: $hc-role-ally !important;
+    color: $hc-role-ally-text !important;
+    border-color: $hc-role-ally !important;
+  }
+  
+  .hc-role-client {
+    background: $hc-role-client !important;
+    color: $hc-role-client-text !important;
+    border-color: $hc-role-client !important;
+  }
+  
+  // Utilidades para elementos interactivos
+  .hc-interactive {
+    border: $hc-border-width solid $hc-border-primary;
+    padding: 0.75rem;
+    
+    &:hover {
+      border-color: $hc-border-secondary;
+      background: $hc-bg-secondary;
+    }
+    
+    &:focus {
+      outline: $hc-focus-width solid $hc-border-focus;
+      outline-offset: 2px;
+    }
+  }
+  
+  .hc-clickable {
+    cursor: pointer;
+    
+    &:hover {
+      background: $hc-bg-secondary;
+    }
+  }
+  
+  // Utilidades para separación de contenido
+  .hc-section {
+    border: $hc-border-width solid $hc-border-primary;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .hc-divider {
+    border-top: $hc-border-width solid $hc-border-primary;
+    margin: 1.5rem 0;
+  }
+  
+  // =============================================================================
+  // CONSIDERACIONES ESPECIALES DE ACCESIBILIDAD
+  // =============================================================================
+  
+  // Ocultar elementos decorativos que pueden confundir lectores de pantalla
+  .decorative,
+  .bg-decoration,
+  .visual-only {
+    display: none !important;
+  }
+  
+  // Asegurar que todos los elementos interactivos tengan suficiente área de toque
+  .btn,
+  .nav-link,
+  .dropdown-item,
+  input,
+  select,
+  textarea,
+  .accordion-button,
+  .tab-link {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  // Mejorar la visibilidad de elementos de formulario
+  label {
+    font-weight: $hc-font-weight-bold;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+  
+  // Asegurar contraste en elementos de lista
+  ul, ol {
+    li {
+      margin-bottom: 0.5rem;
+      line-height: $hc-line-height;
+    }
+  }
+  
+  // Mejorar la navegación por teclado
+  *:focus {
+    outline: $hc-focus-width solid $hc-border-focus !important;
+    outline-offset: 2px !important;
+  }
+  
+  // Eliminar elementos que pueden causar problemas de accesibilidad
+  img {
+    border: 2px solid $hc-border-primary;
+    
+    &[alt=""],
+    &:not([alt]) {
+      display: none;
+    }
+  }
+  
+  // Asegurar que el texto sea legible sobre cualquier fondo
+  .overlay-text {
+    background: $hc-bg-primary;
+    color: $hc-text-primary;
+    padding: 0.5rem;
+    border: 2px solid $hc-border-primary;
+  }
+}
+
+// =============================================================================
+// ANIMACIONES LIMITADAS PARA ALTO CONTRASTE
+// =============================================================================
+
+// Solo animaciones esenciales y lentas
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+// Aplicar animaciones solo cuando sea estrictamente necesario
+.high-contrast-theme {
+  .loading .spinner {
+    animation: spin 2s linear infinite; // Más lento que normal
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.5s ease-in;
+  }
+}
+
+// =============================================================================
+// PRINT STYLES PARA ALTO CONTRASTE
+// =============================================================================
+
+@media print {
+  .high-contrast-theme,
+  [data-theme="high-contrast"] {
+    
+    // Forzar colores de alto contraste para impresión
+    * {
+      background: white !important;
+      color: black !important;
+      border-color: black !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+    
+    // Mantener estructura con bordes
+    .card,
+    .widget,
+    .panel,
+    table,
+    .border {
+      border: 2px solid black !important;
+    }
+    
+    // Ocultar elementos no imprimibles
+    .no-print,
+    .sidebar,
+    .navbar,
+    .modal,
+    .tooltip,
+    .dropdown,
+    .btn:not(.btn-print) {
+      display: none !important;
+    }
+    
+    // Asegurar legibilidad de títulos
+    h1, h2, h3, h4, h5, h6 {
+      color: black !important;
+      font-weight: bold !important;
+      page-break-after: avoid;
+    }
+    
+    // Optimizar enlaces para impresión
+    a {
+      color: black !important;
+      text-decoration: underline !important;
+      
+      &::after {
+        content: ' (' attr(href) ')';
+        font-size: 0.8em;
+      }
+    }
+    
+    // Asegurar que las tablas se vean correctamente
+    table {
+      border-collapse: collapse !important;
+      
+      th, td {
+        border: 1px solid black !important;
+        padding: 0.5rem !important;
+      }
+    }
+  }
+}
+
+// =============================================================================
+// DEBUGGING Y DESARROLLO PARA ALTO CONTRASTE
+// =============================================================================
+
+@if $env == 'development' {
+  .high-contrast-theme {
+    
+    // Indicador de que el tema de alto contraste está activo
+    &::before {
+      content: 'MODO ALTO CONTRASTE ACTIVO';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: $hc-warning;
+      color: $hc-warning-text;
+      text-align: center;
+      padding: 0.5rem;
+      font-weight: $hc-font-weight-bold;
+      z-index: 10000;
+      border-bottom: $hc-border-width solid $hc-border-primary;
+    }
+    
+    // Outline para debugging de layout
+    .debug-layout * {
+      outline: 2px solid $hc-danger;
+    }
+    
+    // Mostrar información de contraste
+    .debug-contrast {
+      [style*="background"],
+      [style*="color"] {
+        position: relative;
+        
+        &::after {
+          content: 'Revisar contraste';
+          position: absolute;
+          top: 0;
+          right: 0;
+          background: $hc-warning;
+          color: $hc-warning-text;
+          font-size: 0.75rem;
+          padding: 0.25rem;
+          z-index: 9999;
+        }
+      }
+    }
+  }
+}

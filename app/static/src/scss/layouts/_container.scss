@@ -1,0 +1,1381 @@
+/**
+ * ===================================================================
+ * CONTAINER LAYOUT SYSTEM - SISTEMA COMPLETO DE CONTENEDORES
+ * ===================================================================
+ * Desarrollado por: jusga
+ * Versión: 8.0.0
+ * Compatibilidad: IE11+, Chrome, Firefox, Safari, Edge
+ * Características: Responsive, Fluid, Constrained, Container Queries
+ * ===================================================================
+ */
+
+// ===================================================================
+// VARIABLES SCSS PARA CONTAINER SYSTEM
+// ===================================================================
+
+// Breakpoints del sistema
+$container-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px,
+  xxxl: 1600px,
+  xxxxl: 1920px
+) !default;
+
+// Max-widths para containers
+$container-max-widths: (
+  sm: 540px,
+  md: 720px,
+  lg: 960px,
+  xl: 1140px,
+  xxl: 1320px,
+  xxxl: 1520px,
+  xxxxl: 1720px
+) !default;
+
+// Padding horizontal por defecto
+$container-padding-x: 1rem !default;
+$container-padding-x-sm: 1.25rem !default;
+$container-padding-x-lg: 1.5rem !default;
+$container-padding-x-xl: 2rem !default;
+
+// Padding vertical para secciones
+$container-padding-y: 2rem !default;
+$container-padding-y-sm: 1.5rem !default;
+$container-padding-y-lg: 3rem !default;
+$container-padding-y-xl: 4rem !default;
+
+// Margins para containers
+$container-margin-y: 2rem !default;
+$container-margin-y-sm: 1rem !default;
+$container-margin-y-lg: 3rem !default;
+$container-margin-y-xl: 4rem !default;
+
+// Tamaños de spacing
+$container-spacers: (
+  0: 0,
+  1: 0.25rem,
+  2: 0.5rem,
+  3: 1rem,
+  4: 1.5rem,
+  5: 3rem,
+  6: 4rem,
+  7: 5rem,
+  8: 6rem,
+  auto: auto
+) !default;
+
+// Container específicos
+$container-sizes: (
+  xs: 320px,
+  sm: 480px,
+  md: 640px,
+  lg: 768px,
+  xl: 1024px,
+  "2xl": 1280px,
+  "3xl": 1536px,
+  "4xl": 1792px,
+  "5xl": 2048px,
+  "6xl": 2304px,
+  "7xl": 2560px,
+  full: 100%,
+  screen: 100vw,
+  min: min-content,
+  max: max-content,
+  fit: fit-content
+) !default;
+
+// Container queries breakpoints
+$container-query-breakpoints: (
+  xs: 20rem,    // 320px
+  sm: 24rem,    // 384px
+  md: 28rem,    // 448px
+  lg: 32rem,    // 512px
+  xl: 36rem,    // 576px
+  "2xl": 42rem, // 672px
+  "3xl": 48rem, // 768px
+  "4xl": 56rem, // 896px
+  "5xl": 64rem, // 1024px
+  "6xl": 72rem, // 1152px
+  "7xl": 80rem  // 1280px
+) !default;
+
+// Z-index para containers especiales
+$container-z-index-sticky: 1010 !default;
+$container-z-index-fixed: 1020 !default;
+$container-z-index-modal: 1050 !default;
+
+// Performance y features flags
+$container-enable-responsive: true !default;
+$container-enable-fluid: true !default;
+$container-enable-constrained: true !default;
+$container-enable-queries: true !default;
+$container-enable-utilities: true !default;
+
+// ===================================================================
+// FUNCIONES HELPER
+// ===================================================================
+
+// Función para obtener breakpoint values
+@function breakpoint-min($name, $breakpoints: $container-breakpoints) {
+  $min: map-get($breakpoints, $name);
+  @return if($min != 0, $min, null);
+}
+
+@function breakpoint-max($name, $breakpoints: $container-breakpoints) {
+  $names: map-keys($breakpoints);
+  $n: index($names, $name);
+  $next: if($n < length($names), nth($names, $n + 1), null);
+  @return if($next, breakpoint-min($next, $breakpoints) - 0.02, null);
+}
+
+@function breakpoint-next($name, $breakpoints: $container-breakpoints) {
+  $names: map-keys($breakpoints);
+  $n: index($names, $name);
+  @return if($n < length($names), nth($names, $n + 1), null);
+}
+
+// ===================================================================
+// MIXINS PARA CONTAINERS
+// ===================================================================
+
+// Breakpoint mixins
+@mixin media-breakpoint-up($name, $breakpoints: $container-breakpoints) {
+  $min: breakpoint-min($name, $breakpoints);
+  @if $min {
+    @media (min-width: $min) {
+      @content;
+    }
+  } @else {
+    @content;
+  }
+}
+
+@mixin media-breakpoint-down($name, $breakpoints: $container-breakpoints) {
+  $max: breakpoint-max($name, $breakpoints);
+  @if $max {
+    @media (max-width: $max) {
+      @content;
+    }
+  }
+}
+
+@mixin media-breakpoint-between($lower, $upper, $breakpoints: $container-breakpoints) {
+  $min: breakpoint-min($lower, $breakpoints);
+  $max: breakpoint-max($upper, $breakpoints);
+
+  @if $min != null and $max != null {
+    @media (min-width: $min) and (max-width: $max) {
+      @content;
+    }
+  } @else if $max == null {
+    @include media-breakpoint-up($lower, $breakpoints) {
+      @content;
+    }
+  } @else if $min == null {
+    @include media-breakpoint-down($upper, $breakpoints) {
+      @content;
+    }
+  }
+}
+
+@mixin media-breakpoint-only($name, $breakpoints: $container-breakpoints) {
+  $min: breakpoint-min($name, $breakpoints);
+  $next: breakpoint-next($name, $breakpoints);
+  $max: breakpoint-max($next, $breakpoints);
+
+  @if $min != null and $max != null {
+    @media (min-width: $min) and (max-width: $max) {
+      @content;
+    }
+  } @else if $max == null {
+    @include media-breakpoint-up($name, $breakpoints) {
+      @content;
+    }
+  } @else if $min == null {
+    @include media-breakpoint-down($next, $breakpoints) {
+      @content;
+    }
+  }
+}
+
+// Mixin base para containers
+@mixin make-container(
+  $padding-x: $container-padding-x,
+  $max-width: null,
+  $margin-x: auto
+) {
+  width: 100%;
+  padding-right: $padding-x;
+  padding-left: $padding-x;
+  margin-right: $margin-x;
+  margin-left: $margin-x;
+  
+  @if $max-width {
+    max-width: $max-width;
+  }
+}
+
+// Mixin para container fluid
+@mixin make-container-fluid($padding-x: $container-padding-x) {
+  @include make-container($padding-x);
+  max-width: 100%;
+}
+
+// Mixin para container con max-widths responsive
+@mixin make-container-responsive(
+  $padding-x: $container-padding-x,
+  $max-widths: $container-max-widths
+) {
+  @include make-container($padding-x);
+  
+  @each $breakpoint, $max-width in $max-widths {
+    @include media-breakpoint-up($breakpoint) {
+      max-width: $max-width;
+    }
+  }
+}
+
+// Mixin para container constrained
+@mixin make-container-constrained(
+  $max-width,
+  $padding-x: $container-padding-x
+) {
+  @include make-container($padding-x, $max-width);
+}
+
+// Mixin para secciones con container
+@mixin make-section(
+  $padding-y: $container-padding-y,
+  $padding-x: $container-padding-x,
+  $margin-y: null
+) {
+  padding-top: $padding-y;
+  padding-bottom: $padding-y;
+  padding-left: $padding-x;
+  padding-right: $padding-x;
+  
+  @if $margin-y {
+    margin-top: $margin-y;
+    margin-bottom: $margin-y;
+  }
+}
+
+// Mixin para spacing utilities
+@mixin make-spacing-utilities($property, $prefix, $sizes: $container-spacers) {
+  @each $key, $value in $sizes {
+    .#{$prefix}-#{$key} {
+      #{$property}: $value !important;
+    }
+  }
+}
+
+// Mixin para container queries
+@mixin container-query($min-width) {
+  @supports (container-type: inline-size) {
+    @container (min-width: #{$min-width}) {
+      @content;
+    }
+  }
+}
+
+// Mixin para aspect ratio containers
+@mixin aspect-ratio-container($width: 16, $height: 9) {
+  position: relative;
+  
+  &::before {
+    content: "";
+    display: block;
+    padding-bottom: percentage($height / $width);
+  }
+  
+  > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+// ===================================================================
+// CONTAINERS BASE
+// ===================================================================
+
+// Container principal responsive
+.container {
+  @include make-container-responsive();
+}
+
+// Container fluid
+@if $container-enable-fluid {
+  .container-fluid {
+    @include make-container-fluid();
+  }
+}
+
+// Containers específicos por breakpoint
+@if $container-enable-responsive {
+  @each $breakpoint, $max-width in $container-max-widths {
+    .container-#{$breakpoint} {
+      @include make-container();
+      
+      @include media-breakpoint-up($breakpoint) {
+        max-width: $max-width;
+      }
+    }
+  }
+}
+
+// ===================================================================
+// CONTAINERS CONSTRAINED (tamaños fijos)
+// ===================================================================
+
+@if $container-enable-constrained {
+  @each $name, $size in $container-sizes {
+    .container-#{$name} {
+      @include make-container-constrained($size);
+    }
+  }
+  
+  // Container con tamaños responsive específicos
+  .container-responsive {
+    @include make-container();
+    
+    @include media-breakpoint-up(sm) {
+      max-width: map-get($container-sizes, sm);
+    }
+    
+    @include media-breakpoint-up(md) {
+      max-width: map-get($container-sizes, md);
+    }
+    
+    @include media-breakpoint-up(lg) {
+      max-width: map-get($container-sizes, lg);
+    }
+    
+    @include media-breakpoint-up(xl) {
+      max-width: map-get($container-sizes, xl);
+    }
+  }
+}
+
+// ===================================================================
+// CONTAINERS CON PADDING VARIABLE
+// ===================================================================
+
+// Container con padding pequeño
+.container-sm {
+  @include make-container-responsive($container-padding-x-sm);
+}
+
+// Container con padding grande
+.container-lg {
+  @include make-container-responsive($container-padding-x-lg);
+}
+
+// Container con padding extra grande
+.container-xl {
+  @include make-container-responsive($container-padding-x-xl);
+}
+
+// Container sin padding
+.container-flush {
+  @include make-container-responsive(0);
+}
+
+// ===================================================================
+// SECCIONES Y WRAPPERS
+// ===================================================================
+
+// Sección básica
+.section {
+  @include make-section();
+  
+  // Variantes de tamaño
+  &.section--sm {
+    @include make-section($container-padding-y-sm);
+  }
+  
+  &.section--lg {
+    @include make-section($container-padding-y-lg);
+  }
+  
+  &.section--xl {
+    @include make-section($container-padding-y-xl);
+  }
+  
+  // Sección sin padding vertical
+  &.section--flush-y {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  
+  // Sección sin padding horizontal
+  &.section--flush-x {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  
+  // Sección sin padding
+  &.section--flush {
+    padding: 0;
+  }
+}
+
+// Wrapper para contenido
+.wrapper {
+  @include make-container-responsive();
+  
+  &.wrapper--narrow {
+    max-width: 65ch;
+  }
+  
+  &.wrapper--wide {
+    max-width: 90rem;
+  }
+  
+  &.wrapper--full {
+    max-width: 100%;
+  }
+}
+
+// ===================================================================
+// CONTAINERS ESPECIALIZADOS
+// ===================================================================
+
+// Container para hero sections
+.hero-container {
+  @include make-container-fluid();
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+  
+  &.hero-container--75vh {
+    min-height: 75vh;
+  }
+  
+  &.hero-container--50vh {
+    min-height: 50vh;
+  }
+  
+  .hero-content {
+    @include make-container();
+    max-width: 48rem;
+  }
+}
+
+// Container para cards
+.card-container {
+  @include make-container();
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  
+  &.card-container--2 {
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    
+    @include media-breakpoint-up(lg) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  &.card-container--3 {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    
+    @include media-breakpoint-up(lg) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  &.card-container--4 {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    
+    @include media-breakpoint-up(xl) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+}
+
+// Container para formularios
+.form-container {
+  @include make-container();
+  max-width: 28rem;
+  
+  &.form-container--wide {
+    max-width: 42rem;
+  }
+  
+  &.form-container--narrow {
+    max-width: 20rem;
+  }
+}
+
+// Container para texto/artículos
+.prose-container {
+  @include make-container();
+  max-width: 65ch;
+  
+  &.prose-container--narrow {
+    max-width: 55ch;
+  }
+  
+  &.prose-container--wide {
+    max-width: 75ch;
+  }
+}
+
+// Container para galería
+.gallery-container {
+  @include make-container();
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  
+  &.gallery-container--masonry {
+    column-count: 3;
+    column-gap: 1rem;
+    
+    @include media-breakpoint-down(md) {
+      column-count: 2;
+    }
+    
+    @include media-breakpoint-down(sm) {
+      column-count: 1;
+    }
+    
+    > * {
+      break-inside: avoid;
+      margin-bottom: 1rem;
+    }
+  }
+}
+
+// Container para modal/overlay
+.modal-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: $container-z-index-modal;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  
+  .modal-content {
+    @include make-container();
+    max-width: 32rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    background: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+  
+  &.modal-container--sm .modal-content {
+    max-width: 20rem;
+  }
+  
+  &.modal-container--lg .modal-content {
+    max-width: 48rem;
+  }
+  
+  &.modal-container--xl .modal-content {
+    max-width: 64rem;
+  }
+  
+  &.modal-container--full .modal-content {
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100vh - 2rem);
+  }
+}
+
+// ===================================================================
+// CONTAINER QUERIES MODERNAS
+// ===================================================================
+
+@if $container-enable-queries {
+  .container-query {
+    container-type: inline-size;
+    
+    &.container-query-normal {
+      container-type: normal;
+    }
+    
+    &.container-query-size {
+      container-type: size;
+    }
+  }
+  
+  // Utilities basadas en container queries
+  @supports (container-type: inline-size) {
+    @each $name, $size in $container-query-breakpoints {
+      @container (min-width: #{$size}) {
+        .cq-#{$name}\:block {
+          display: block !important;
+        }
+        
+        .cq-#{$name}\:hidden {
+          display: none !important;
+        }
+        
+        .cq-#{$name}\:flex {
+          display: flex !important;
+        }
+        
+        .cq-#{$name}\:grid {
+          display: grid !important;
+        }
+        
+        .cq-#{$name}\:text-sm {
+          font-size: 0.875rem !important;
+        }
+        
+        .cq-#{$name}\:text-base {
+          font-size: 1rem !important;
+        }
+        
+        .cq-#{$name}\:text-lg {
+          font-size: 1.125rem !important;
+        }
+        
+        .cq-#{$name}\:text-xl {
+          font-size: 1.25rem !important;
+        }
+        
+        .cq-#{$name}\:cols-1 {
+          grid-template-columns: repeat(1, 1fr) !important;
+        }
+        
+        .cq-#{$name}\:cols-2 {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        
+        .cq-#{$name}\:cols-3 {
+          grid-template-columns: repeat(3, 1fr) !important;
+        }
+        
+        .cq-#{$name}\:cols-4 {
+          grid-template-columns: repeat(4, 1fr) !important;
+        }
+      }
+    }
+  }
+}
+
+// ===================================================================
+// ASPECT RATIO CONTAINERS
+// ===================================================================
+
+.aspect-container {
+  @include aspect-ratio-container();
+  
+  &.aspect-1x1 {
+    @include aspect-ratio-container(1, 1);
+  }
+  
+  &.aspect-4x3 {
+    @include aspect-ratio-container(4, 3);
+  }
+  
+  &.aspect-3x2 {
+    @include aspect-ratio-container(3, 2);
+  }
+  
+  &.aspect-16x9 {
+    @include aspect-ratio-container(16, 9);
+  }
+  
+  &.aspect-21x9 {
+    @include aspect-ratio-container(21, 9);
+  }
+  
+  &.aspect-3x4 {
+    @include aspect-ratio-container(3, 4);
+  }
+  
+  &.aspect-2x3 {
+    @include aspect-ratio-container(2, 3);
+  }
+  
+  &.aspect-9x16 {
+    @include aspect-ratio-container(9, 16);
+  }
+}
+
+// ===================================================================
+// SPACING UTILITIES
+// ===================================================================
+
+@if $container-enable-utilities {
+  
+  // Margin utilities
+  @include make-spacing-utilities(margin, m, $container-spacers);
+  @include make-spacing-utilities(margin-top, mt, $container-spacers);
+  @include make-spacing-utilities(margin-right, mr, $container-spacers);
+  @include make-spacing-utilities(margin-bottom, mb, $container-spacers);
+  @include make-spacing-utilities(margin-left, ml, $container-spacers);
+  
+  // Margin X axis
+  @each $key, $value in $container-spacers {
+    .mx-#{$key} {
+      margin-left: $value !important;
+      margin-right: $value !important;
+    }
+  }
+  
+  // Margin Y axis
+  @each $key, $value in $container-spacers {
+    .my-#{$key} {
+      margin-top: $value !important;
+      margin-bottom: $value !important;
+    }
+  }
+  
+  // Padding utilities
+  @include make-spacing-utilities(padding, p, $container-spacers);
+  @include make-spacing-utilities(padding-top, pt, $container-spacers);
+  @include make-spacing-utilities(padding-right, pr, $container-spacers);
+  @include make-spacing-utilities(padding-bottom, pb, $container-spacers);
+  @include make-spacing-utilities(padding-left, pl, $container-spacers);
+  
+  // Padding X axis
+  @each $key, $value in $container-spacers {
+    .px-#{$key} {
+      padding-left: $value !important;
+      padding-right: $value !important;
+    }
+  }
+  
+  // Padding Y axis
+  @each $key, $value in $container-spacers {
+    .py-#{$key} {
+      padding-top: $value !important;
+      padding-bottom: $value !important;
+    }
+  }
+  
+  // Width utilities
+  .w-auto {
+    width: auto !important;
+  }
+  
+  .w-full {
+    width: 100% !important;
+  }
+  
+  .w-screen {
+    width: 100vw !important;
+  }
+  
+  .w-min {
+    width: min-content !important;
+  }
+  
+  .w-max {
+    width: max-content !important;
+  }
+  
+  .w-fit {
+    width: fit-content !important;
+  }
+  
+  // Max-width utilities
+  @each $name, $size in $container-sizes {
+    .max-w-#{$name} {
+      max-width: $size !important;
+    }
+  }
+  
+  .max-w-none {
+    max-width: none !important;
+  }
+  
+  // Min-width utilities
+  .min-w-0 {
+    min-width: 0 !important;
+  }
+  
+  .min-w-full {
+    min-width: 100% !important;
+  }
+  
+  .min-w-min {
+    min-width: min-content !important;
+  }
+  
+  .min-w-max {
+    min-width: max-content !important;
+  }
+  
+  .min-w-fit {
+    min-width: fit-content !important;
+  }
+  
+  // Height utilities
+  .h-auto {
+    height: auto !important;
+  }
+  
+  .h-full {
+    height: 100% !important;
+  }
+  
+  .h-screen {
+    height: 100vh !important;
+  }
+  
+  .h-min {
+    height: min-content !important;
+  }
+  
+  .h-max {
+    height: max-content !important;
+  }
+  
+  .h-fit {
+    height: fit-content !important;
+  }
+  
+  // Min-height utilities
+  .min-h-0 {
+    min-height: 0 !important;
+  }
+  
+  .min-h-full {
+    min-height: 100% !important;
+  }
+  
+  .min-h-screen {
+    min-height: 100vh !important;
+  }
+  
+  // Max-height utilities
+  .max-h-full {
+    max-height: 100% !important;
+  }
+  
+  .max-h-screen {
+    max-height: 100vh !important;
+  }
+  
+  .max-h-none {
+    max-height: none !important;
+  }
+}
+
+// ===================================================================
+// RESPONSIVE SPACING UTILITIES
+// ===================================================================
+
+@if $container-enable-utilities and $container-enable-responsive {
+  @each $breakpoint in map-keys($container-breakpoints) {
+    $infix: if($breakpoint == xs, "", "-#{$breakpoint}");
+    
+    @include media-breakpoint-up($breakpoint) {
+      // Responsive margin utilities
+      @each $key, $value in $container-spacers {
+        .m#{$infix}-#{$key} {
+          margin: $value !important;
+        }
+        
+        .mt#{$infix}-#{$key} {
+          margin-top: $value !important;
+        }
+        
+        .mr#{$infix}-#{$key} {
+          margin-right: $value !important;
+        }
+        
+        .mb#{$infix}-#{$key} {
+          margin-bottom: $value !important;
+        }
+        
+        .ml#{$infix}-#{$key} {
+          margin-left: $value !important;
+        }
+        
+        .mx#{$infix}-#{$key} {
+          margin-left: $value !important;
+          margin-right: $value !important;
+        }
+        
+        .my#{$infix}-#{$key} {
+          margin-top: $value !important;
+          margin-bottom: $value !important;
+        }
+      }
+      
+      // Responsive padding utilities
+      @each $key, $value in $container-spacers {
+        .p#{$infix}-#{$key} {
+          padding: $value !important;
+        }
+        
+        .pt#{$infix}-#{$key} {
+          padding-top: $value !important;
+        }
+        
+        .pr#{$infix}-#{$key} {
+          padding-right: $value !important;
+        }
+        
+        .pb#{$infix}-#{$key} {
+          padding-bottom: $value !important;
+        }
+        
+        .pl#{$infix}-#{$key} {
+          padding-left: $value !important;
+        }
+        
+        .px#{$infix}-#{$key} {
+          padding-left: $value !important;
+          padding-right: $value !important;
+        }
+        
+        .py#{$infix}-#{$key} {
+          padding-top: $value !important;
+          padding-bottom: $value !important;
+        }
+      }
+      
+      // Responsive width utilities
+      .w#{$infix}-auto {
+        width: auto !important;
+      }
+      
+      .w#{$infix}-full {
+        width: 100% !important;
+      }
+      
+      .w#{$infix}-screen {
+        width: 100vw !important;
+      }
+      
+      // Responsive max-width utilities
+      @each $name, $size in $container-sizes {
+        .max-w#{$infix}-#{$name} {
+          max-width: $size !important;
+        }
+      }
+    }
+  }
+}
+
+// ===================================================================
+// POSITION UTILITIES
+// ===================================================================
+
+.position-static {
+  position: static !important;
+}
+
+.position-relative {
+  position: relative !important;
+}
+
+.position-absolute {
+  position: absolute !important;
+}
+
+.position-fixed {
+  position: fixed !important;
+}
+
+.position-sticky {
+  position: sticky !important;
+}
+
+// Position values
+.top-0 {
+  top: 0 !important;
+}
+
+.top-auto {
+  top: auto !important;
+}
+
+.right-0 {
+  right: 0 !important;
+}
+
+.right-auto {
+  right: auto !important;
+}
+
+.bottom-0 {
+  bottom: 0 !important;
+}
+
+.bottom-auto {
+  bottom: auto !important;
+}
+
+.left-0 {
+  left: 0 !important;
+}
+
+.left-auto {
+  left: auto !important;
+}
+
+// Inset utilities
+.inset-0 {
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+}
+
+.inset-auto {
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+}
+
+.inset-x-0 {
+  right: 0 !important;
+  left: 0 !important;
+}
+
+.inset-x-auto {
+  right: auto !important;
+  left: auto !important;
+}
+
+.inset-y-0 {
+  top: 0 !important;
+  bottom: 0 !important;
+}
+
+.inset-y-auto {
+  top: auto !important;
+  bottom: auto !important;
+}
+
+// ===================================================================
+// OVERFLOW UTILITIES
+// ===================================================================
+
+.overflow-auto {
+  overflow: auto !important;
+}
+
+.overflow-hidden {
+  overflow: hidden !important;
+}
+
+.overflow-visible {
+  overflow: visible !important;
+}
+
+.overflow-scroll {
+  overflow: scroll !important;
+}
+
+.overflow-x-auto {
+  overflow-x: auto !important;
+}
+
+.overflow-x-hidden {
+  overflow-x: hidden !important;
+}
+
+.overflow-x-visible {
+  overflow-x: visible !important;
+}
+
+.overflow-x-scroll {
+  overflow-x: scroll !important;
+}
+
+.overflow-y-auto {
+  overflow-y: auto !important;
+}
+
+.overflow-y-hidden {
+  overflow-y: hidden !important;
+}
+
+.overflow-y-visible {
+  overflow-y: visible !important;
+}
+
+.overflow-y-scroll {
+  overflow-y: scroll !important;
+}
+
+// ===================================================================
+// Z-INDEX UTILITIES
+// ===================================================================
+
+.z-0 {
+  z-index: 0 !important;
+}
+
+.z-10 {
+  z-index: 10 !important;
+}
+
+.z-20 {
+  z-index: 20 !important;
+}
+
+.z-30 {
+  z-index: 30 !important;
+}
+
+.z-40 {
+  z-index: 40 !important;
+}
+
+.z-50 {
+  z-index: 50 !important;
+}
+
+.z-auto {
+  z-index: auto !important;
+}
+
+// ===================================================================
+// VISIBILITY UTILITIES
+// ===================================================================
+
+.visible {
+  visibility: visible !important;
+}
+
+.invisible {
+  visibility: hidden !important;
+}
+
+// Screen reader only
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.not-sr-only {
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  clip: auto !important;
+  white-space: normal !important;
+}
+
+// ===================================================================
+// RESPONSIVE VISIBILITY
+// ===================================================================
+
+@each $breakpoint in map-keys($container-breakpoints) {
+  $infix: if($breakpoint == xs, "", "-#{$breakpoint}");
+  
+  @include media-breakpoint-up($breakpoint) {
+    .d#{$infix}-block {
+      display: block !important;
+    }
+    
+    .d#{$infix}-inline {
+      display: inline !important;
+    }
+    
+    .d#{$infix}-inline-block {
+      display: inline-block !important;
+    }
+    
+    .d#{$infix}-flex {
+      display: flex !important;
+    }
+    
+    .d#{$infix}-inline-flex {
+      display: inline-flex !important;
+    }
+    
+    .d#{$infix}-grid {
+      display: grid !important;
+    }
+    
+    .d#{$infix}-inline-grid {
+      display: inline-grid !important;
+    }
+    
+    .d#{$infix}-none {
+      display: none !important;
+    }
+  }
+}
+
+// ===================================================================
+// PRINT UTILITIES
+// ===================================================================
+
+@media print {
+  .d-print-block {
+    display: block !important;
+  }
+  
+  .d-print-inline {
+    display: inline !important;
+  }
+  
+  .d-print-inline-block {
+    display: inline-block !important;
+  }
+  
+  .d-print-none {
+    display: none !important;
+  }
+  
+  // Container específico para print
+  .container,
+  .container-fluid {
+    max-width: 100% !important;
+    padding-left: 0.5in !important;
+    padding-right: 0.5in !important;
+  }
+  
+  .section {
+    padding-top: 0.25in !important;
+    padding-bottom: 0.25in !important;
+  }
+  
+  // Evitar breaks
+  .print-break-inside-avoid {
+    break-inside: avoid !important;
+  }
+  
+  .print-break-after-page {
+    break-after: page !important;
+  }
+  
+  .print-break-before-page {
+    break-before: page !important;
+  }
+}
+
+// ===================================================================
+// ACCESIBILIDAD Y PERFORMANCE
+// ===================================================================
+
+// Reducir movimiento para usuarios sensibles
+@media (prefers-reduced-motion: reduce) {
+  .modal-container {
+    .modal-content {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+}
+
+// Modo de alto contraste
+@media (prefers-contrast: high) {
+  .container,
+  .section,
+  .wrapper {
+    border: 1px solid transparent;
+  }
+}
+
+// Optimización para dispositivos de baja potencia
+@media (prefers-reduced-data: reduce) {
+  .hero-container {
+    background-image: none !important;
+  }
+}
+
+// ===================================================================
+// DEBUG UTILITIES
+// ===================================================================
+
+.debug-containers {
+  .container,
+  .container-fluid,
+  [class^="container-"] {
+    outline: 2px solid rgba(255, 0, 0, 0.3) !important;
+    background: rgba(255, 0, 0, 0.05) !important;
+    
+    &::before {
+      content: attr(class);
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: rgba(255, 0, 0, 0.8);
+      color: white;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      font-family: monospace;
+      z-index: 9999;
+    }
+  }
+  
+  .section {
+    outline: 2px solid rgba(0, 255, 0, 0.3) !important;
+    background: rgba(0, 255, 0, 0.05) !important;
+  }
+  
+  .wrapper {
+    outline: 2px solid rgba(0, 0, 255, 0.3) !important;
+    background: rgba(0, 0, 255, 0.05) !important;
+  }
+}
+
+// ===================================================================
+// CONTAINER MODERNO CON SUBGRID
+// ===================================================================
+
+@supports (display: subgrid) {
+  .container-subgrid {
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-template-rows: subgrid;
+  }
+}
+
+// ===================================================================
+// FALLBACKS PARA NAVEGADORES ANTIGUOS
+// ===================================================================
+
+// IE11 fallbacks
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+  .container,
+  .container-fluid {
+    display: block;
+  }
+  
+  .card-container {
+    display: block;
+    
+    > * {
+      display: inline-block;
+      width: calc(33.333% - 1rem);
+      vertical-align: top;
+    }
+  }
+  
+  .hero-container {
+    display: table;
+    
+    .hero-content {
+      display: table-cell;
+      vertical-align: middle;
+    }
+  }
+}

@@ -1,0 +1,1976 @@
+// =============================================================================
+// LIGHT THEME STYLES
+// =============================================================================
+// Sistema completo de tema claro para el ecosistema de emprendimiento
+// Incluye variables, componentes, estados y adaptaciones específicas
+
+// Variables de color para tema claro
+// =============================================================================
+
+// Colores base del tema claro
+$light-bg-primary: #ffffff;       // Fondo principal blanco puro
+$light-bg-secondary: #f8fafc;     // Fondo secundario gris muy claro
+$light-bg-tertiary: #f1f5f9;      // Fondo terciario
+$light-bg-elevated: #e2e8f0;      // Elementos elevados
+$light-bg-overlay: #cbd5e1;       // Overlays y modales
+
+// Colores de superficie
+$light-surface-primary: #ffffff;   // Superficie principal (cards, etc.)
+$light-surface-secondary: #f8fafc; // Superficie secundaria
+$light-surface-tertiary: #f1f5f9;  // Superficie terciaria
+$light-surface-hover: #f1f5f9;     // Estados hover
+$light-surface-active: #e2e8f0;    // Estados activos
+$light-surface-disabled: #f3f4f6;  // Estados deshabilitados
+
+// Colores de texto
+$light-text-primary: #0f172a;      // Texto principal oscuro
+$light-text-secondary: #1e293b;    // Texto secundario
+$light-text-tertiary: #334155;     // Texto terciario
+$light-text-muted: #64748b;        // Texto atenuado
+$light-text-placeholder: #94a3b8;  // Placeholders
+$light-text-disabled: #cbd5e1;     // Texto deshabilitado
+
+// Colores de borde
+$light-border-primary: #e2e8f0;    // Bordes principales
+$light-border-secondary: #cbd5e1;  // Bordes secundarios
+$light-border-focus: #3b82f6;      // Bordes de focus
+$light-border-hover: #94a3b8;      // Bordes hover
+$light-border-disabled: #f1f5f9;   // Bordes deshabilitados
+
+// Colores funcionales para modo claro
+$light-primary: #2563eb;           // Azul principal más profundo
+$light-primary-hover: #1d4ed8;     // Hover del primary
+$light-primary-active: #1e40af;    // Active del primary
+$light-primary-light: rgba(37, 99, 235, 0.1);
+$light-primary-medium: rgba(37, 99, 235, 0.2);
+
+$light-secondary: #475569;         // Gris azulado
+$light-secondary-hover: #334155;
+$light-secondary-active: #1e293b;
+
+$light-success: #059669;           // Verde más profundo
+$light-success-hover: #047857;
+$light-success-active: #065f46;
+$light-success-light: rgba(5, 150, 105, 0.1);
+$light-success-medium: rgba(5, 150, 105, 0.2);
+
+$light-warning: #d97706;           // Naranja más profundo
+$light-warning-hover: #b45309;
+$light-warning-active: #92400e;
+$light-warning-light: rgba(217, 119, 6, 0.1);
+$light-warning-medium: rgba(217, 119, 6, 0.2);
+
+$light-danger: #dc2626;            // Rojo más profundo
+$light-danger-hover: #b91c1c;
+$light-danger-active: #991b1b;
+$light-danger-light: rgba(220, 38, 38, 0.1);
+$light-danger-medium: rgba(220, 38, 38, 0.2);
+
+$light-info: #4f46e5;             // Púrpura más profundo
+$light-info-hover: #4338ca;
+$light-info-active: #3730a3;
+$light-info-light: rgba(79, 70, 229, 0.1);
+$light-info-medium: rgba(79, 70, 229, 0.2);
+
+// Colores específicos por tipo de usuario para modo claro
+$light-role-admin: #dc2626;
+$light-role-admin-hover: #b91c1c;
+$light-role-admin-light: rgba(220, 38, 38, 0.1);
+$light-role-admin-medium: rgba(220, 38, 38, 0.2);
+
+$light-role-entrepreneur: #2563eb;
+$light-role-entrepreneur-hover: #1d4ed8;
+$light-role-entrepreneur-light: rgba(37, 99, 235, 0.1);
+$light-role-entrepreneur-medium: rgba(37, 99, 235, 0.2);
+
+$light-role-ally: #059669;
+$light-role-ally-hover: #047857;
+$light-role-ally-light: rgba(5, 150, 105, 0.1);
+$light-role-ally-medium: rgba(5, 150, 105, 0.2);
+
+$light-role-client: #7c3aed;
+$light-role-client-hover: #6d28d9;
+$light-role-client-light: rgba(124, 58, 237, 0.1);
+$light-role-client-medium: rgba(124, 58, 237, 0.2);
+
+// Gradientes para modo claro
+$light-gradient-primary: linear-gradient(135deg, #2563eb, #1e40af);
+$light-gradient-secondary: linear-gradient(135deg, #4f46e5, #4338ca);
+$light-gradient-success: linear-gradient(135deg, #059669, #047857);
+$light-gradient-warning: linear-gradient(135deg, #d97706, #b45309);
+$light-gradient-danger: linear-gradient(135deg, #dc2626, #b91c1c);
+
+$light-gradient-admin: linear-gradient(135deg, #dc2626, #b91c1c);
+$light-gradient-entrepreneur: linear-gradient(135deg, #2563eb, #1e40af);
+$light-gradient-ally: linear-gradient(135deg, #059669, #047857);
+$light-gradient-client: linear-gradient(135deg, #7c3aed, #6d28d9);
+
+// Gradientes de fondo para páginas
+$light-gradient-page-primary: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+$light-gradient-page-secondary: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+$light-gradient-page-glass: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(255, 255, 255, 0.9) 100%);
+
+// Sombras optimizadas para modo claro
+$light-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+$light-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+$light-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+$light-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+$light-shadow-glow: 0 0 20px rgba(37, 99, 235, 0.15);
+$light-shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+
+// Colores para gráficos y visualizaciones en modo claro
+$light-chart-colors: (
+  blue: #2563eb,
+  green: #059669,
+  yellow: #d97706,
+  red: #dc2626,
+  purple: #7c3aed,
+  cyan: #0891b2,
+  pink: #db2777,
+  indigo: #4f46e5,
+  orange: #ea580c,
+  teal: #0d9488
+);
+
+// Mixins específicos para tema claro
+// =============================================================================
+
+// Mixin para glassmorphism en modo claro
+@mixin light-glassmorphism($opacity: 0.7, $blur: 20px) {
+  background: rgba(255, 255, 255, $opacity);
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: $light-shadow-lg;
+}
+
+// Mixin para cards en modo claro
+@mixin light-card {
+  background: $light-surface-primary;
+  border: 1px solid $light-border-primary;
+  color: $light-text-primary;
+  box-shadow: $light-shadow-sm;
+  
+  &:hover {
+    background: $light-surface-hover;
+    border-color: $light-border-hover;
+    box-shadow: $light-shadow-md;
+  }
+}
+
+// Mixin para inputs en modo claro
+@mixin light-input {
+  background: $light-surface-primary;
+  border: 2px solid $light-border-primary;
+  color: $light-text-primary;
+  
+  &::placeholder {
+    color: $light-text-placeholder;
+  }
+  
+  &:focus {
+    background: $light-surface-primary;
+    border-color: $light-primary;
+    box-shadow: 0 0 0 3px $light-primary-light;
+    color: $light-text-primary;
+  }
+  
+  &:disabled {
+    background: $light-surface-disabled;
+    border-color: $light-border-disabled;
+    color: $light-text-disabled;
+    cursor: not-allowed;
+  }
+}
+
+// Mixin para botones en modo claro
+@mixin light-button($variant: primary) {
+  @if $variant == primary {
+    background: $light-primary;
+    border-color: $light-primary;
+    color: white;
+    
+    &:hover {
+      background: $light-primary-hover;
+      border-color: $light-primary-hover;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+    
+    &:active {
+      background: $light-primary-active;
+      border-color: $light-primary-active;
+    }
+  } @else if $variant == secondary {
+    background: $light-surface-primary;
+    border-color: $light-border-primary;
+    color: $light-text-primary;
+    
+    &:hover {
+      background: $light-surface-hover;
+      border-color: $light-border-hover;
+    }
+    
+    &:active {
+      background: $light-surface-active;
+    }
+  } @else if $variant == danger {
+    background: $light-danger;
+    border-color: $light-danger;
+    color: white;
+    
+    &:hover {
+      background: $light-danger-hover;
+      border-color: $light-danger-hover;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+    }
+    
+    &:active {
+      background: $light-danger-active;
+      border-color: $light-danger-active;
+    }
+  } @else if $variant == success {
+    background: $light-success;
+    border-color: $light-success;
+    color: white;
+    
+    &:hover {
+      background: $light-success-hover;
+      border-color: $light-success-hover;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+    }
+    
+    &:active {
+      background: $light-success-active;
+      border-color: $light-success-active;
+    }
+  }
+  
+  &:disabled {
+    background: $light-surface-disabled;
+    border-color: $light-border-disabled;
+    color: $light-text-disabled;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+}
+
+// Mixin para badges/pills en modo claro
+@mixin light-badge($color: $light-primary) {
+  background: rgba($color, 0.1);
+  color: darken($color, 5%);
+  border: 1px solid rgba($color, 0.2);
+  
+  &::before {
+    background: $color;
+  }
+}
+
+// Aplicación del tema claro (default)
+// =============================================================================
+
+// Selector principal para el tema claro (por defecto)
+.light-theme,
+[data-theme="light"],
+:root,
+@media (prefers-color-scheme: light) {
+  
+  // Variables CSS custom properties para modo claro
+  :root {
+    // Colores base
+    --bg-primary: #{$light-bg-primary};
+    --bg-secondary: #{$light-bg-secondary};
+    --bg-tertiary: #{$light-bg-tertiary};
+    --surface-primary: #{$light-surface-primary};
+    --surface-secondary: #{$light-surface-secondary};
+    --text-primary: #{$light-text-primary};
+    --text-secondary: #{$light-text-secondary};
+    --text-muted: #{$light-text-muted};
+    --border-primary: #{$light-border-primary};
+    --border-secondary: #{$light-border-secondary};
+    
+    // Colores funcionales
+    --color-primary: #{$light-primary};
+    --color-success: #{$light-success};
+    --color-warning: #{$light-warning};
+    --color-danger: #{$light-danger};
+    --color-info: #{$light-info};
+    
+    // Sombras
+    --shadow-sm: #{$light-shadow-sm};
+    --shadow-md: #{$light-shadow-md};
+    --shadow-lg: #{$light-shadow-lg};
+  }
+  
+  // Estilos base del body
+  body {
+    background: $light-bg-primary;
+    color: $light-text-primary;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  // Layout principal y contenedores
+  .main-layout,
+  .dashboard-container,
+  .page-container {
+    background: $light-gradient-page-primary;
+    color: $light-text-primary;
+  }
+  
+  // =============================================================================
+  // COMPONENTES BÁSICOS EN MODO CLARO
+  // =============================================================================
+  
+  // Cards y superficies
+  .card,
+  .widget,
+  .panel,
+  .modal-content,
+  .dropdown-menu {
+    @include light-card();
+  }
+  
+  // Inputs y formularios
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  textarea,
+  select {
+    @include light-input();
+  }
+  
+  // Botones
+  .btn {
+    &--primary,
+    &.primary {
+      @include light-button(primary);
+    }
+    
+    &--secondary,
+    &.secondary {
+      @include light-button(secondary);
+    }
+    
+    &--danger,
+    &.danger {
+      @include light-button(danger);
+    }
+    
+    &--success,
+    &.success {
+      @include light-button(success);
+    }
+  }
+  
+  // Badges y pills
+  .badge,
+  .pill,
+  .tag {
+    @include light-badge();
+    
+    &--success { @include light-badge($light-success); }
+    &--warning { @include light-badge($light-warning); }
+    &--danger { @include light-badge($light-danger); }
+    &--info { @include light-badge($light-info); }
+  }
+  
+  // Enlaces
+  a {
+    color: $light-primary;
+    
+    &:hover {
+      color: $light-primary-hover;
+    }
+    
+    &:visited {
+      color: darken($light-primary, 15%);
+    }
+  }
+  
+  // Texto general
+  h1, h2, h3, h4, h5, h6 {
+    color: $light-text-primary;
+  }
+  
+  p, span, div {
+    color: $light-text-secondary;
+  }
+  
+  .text-muted,
+  .muted {
+    color: $light-text-muted;
+  }
+  
+  // =============================================================================
+  // COMPONENTES ESPECÍFICOS DE NAVEGACIÓN
+  // =============================================================================
+  
+  // Navbar principal
+  .navbar,
+  .header {
+    background: $light-surface-primary;
+    border-bottom: 1px solid $light-border-primary;
+    box-shadow: $light-shadow-sm;
+    
+    .navbar-brand {
+      color: $light-text-primary;
+    }
+    
+    .nav-link {
+      color: $light-text-secondary;
+      
+      &:hover {
+        color: $light-text-primary;
+        background: $light-surface-hover;
+      }
+      
+      &.active {
+        color: $light-primary;
+        background: $light-primary-light;
+      }
+    }
+  }
+  
+  // Sidebar
+  .sidebar {
+    background: $light-surface-primary;
+    border-right: 1px solid $light-border-primary;
+    
+    .sidebar-header {
+      border-bottom: 1px solid $light-border-primary;
+    }
+    
+    .nav-item {
+      .nav-link {
+        color: $light-text-secondary;
+        
+        &:hover {
+          background: $light-surface-hover;
+          color: $light-text-primary;
+        }
+        
+        &.active {
+          background: $light-primary-light;
+          color: $light-primary;
+          border-color: $light-primary;
+        }
+      }
+    }
+    
+    .nav-divider {
+      border-color: $light-border-primary;
+    }
+  }
+  
+  // Breadcrumbs
+  .breadcrumb {
+    background: $light-surface-secondary;
+    
+    .breadcrumb-item {
+      color: $light-text-muted;
+      
+      &.active {
+        color: $light-text-primary;
+      }
+      
+      a {
+        color: $light-primary;
+      }
+    }
+  }
+  
+  // =============================================================================
+  // PÁGINAS ESPECÍFICAS EN MODO CLARO
+  // =============================================================================
+  
+  // Dashboard
+  .dashboard-page {
+    background: $light-gradient-page-primary;
+    
+    .stats-card {
+      @include light-card();
+      
+      .stat-value {
+        color: $light-text-primary;
+      }
+      
+      .stat-label {
+        color: $light-text-muted;
+      }
+      
+      .stat-trend {
+        &.positive {
+          color: $light-success;
+        }
+        
+        &.negative {
+          color: $light-danger;
+        }
+      }
+    }
+    
+    .chart-widget {
+      @include light-card();
+      
+      .chart-title {
+        color: $light-text-primary;
+      }
+      
+      .chart-container {
+        background: $light-surface-secondary;
+        border-color: $light-border-primary;
+      }
+    }
+    
+    .recent-activity {
+      @include light-card();
+      
+      .activity-item {
+        border-bottom: 1px solid $light-border-primary;
+        
+        &:hover {
+          background: $light-surface-hover;
+        }
+      }
+    }
+  }
+  
+  // Página de login
+  .login-page {
+    background: $light-gradient-page-primary;
+    
+    .login-card {
+      @include light-glassmorphism(0.9);
+      
+      .login-title {
+        color: $light-text-primary;
+      }
+      
+      .login-subtitle {
+        color: $light-text-secondary;
+      }
+    }
+    
+    .user-type-selector {
+      .selector-option {
+        background: $light-surface-primary;
+        border-color: $light-border-primary;
+        color: $light-text-primary;
+        
+        &:hover {
+          background: $light-surface-hover;
+          border-color: $light-border-hover;
+        }
+        
+        &.selected {
+          background: $light-primary-light;
+          border-color: $light-primary;
+          color: $light-primary;
+        }
+      }
+    }
+    
+    .social-auth {
+      .social-button {
+        background: $light-surface-primary;
+        border-color: $light-border-primary;
+        color: $light-text-primary;
+        
+        &:hover {
+          background: $light-surface-hover;
+        }
+      }
+    }
+  }
+  
+  // Página de registro
+  .register-page {
+    background: $light-gradient-page-primary;
+    
+    .register-card {
+      @include light-glassmorphism(0.9);
+    }
+    
+    .progress-indicator {
+      .step-circle {
+        background: $light-surface-primary;
+        border-color: $light-border-primary;
+        color: $light-text-muted;
+        
+        &.active {
+          background: $light-primary;
+          border-color: $light-primary;
+          color: white;
+        }
+        
+        &.completed {
+          background: $light-success;
+          border-color: $light-success;
+          color: white;
+        }
+      }
+      
+      .progress-line {
+        background: $light-border-primary;
+        
+        &.completed {
+          background: $light-success;
+        }
+      }
+    }
+    
+    .file-upload {
+      .upload-area {
+        background: $light-surface-secondary;
+        border-color: $light-border-primary;
+        
+        &:hover,
+        &.dragover {
+          background: $light-surface-hover;
+          border-color: $light-primary;
+        }
+      }
+      
+      .file-preview {
+        .file-item {
+          background: $light-surface-tertiary;
+          border-color: $light-border-primary;
+        }
+      }
+    }
+  }
+  
+  // Página de perfil
+  .profile-page {
+    background: $light-gradient-page-primary;
+    
+    .profile-header {
+      &--admin {
+        background: $light-gradient-admin;
+      }
+      
+      &--entrepreneur {
+        background: $light-gradient-entrepreneur;
+      }
+      
+      &--ally {
+        background: $light-gradient-ally;
+      }
+      
+      &--client {
+        background: $light-gradient-client;
+      }
+    }
+    
+    .profile-sidebar {
+      .nav-card {
+        @include light-card();
+      }
+      
+      .completion-widget {
+        @include light-card();
+        
+        .progress-bar {
+          background: $light-surface-tertiary;
+          
+          .progress-fill {
+            background: $light-gradient-primary;
+          }
+        }
+      }
+    }
+    
+    .profile-section {
+      @include light-card();
+      
+      .section-header {
+        border-bottom: 1px solid $light-border-primary;
+      }
+    }
+    
+    .profile-field {
+      &:hover {
+        background: $light-surface-hover;
+      }
+      
+      &.editing {
+        background: $light-surface-primary;
+        border-color: $light-primary;
+      }
+    }
+  }
+  
+  // Página de configuraciones
+  .settings-page {
+    background: $light-gradient-page-primary;
+    
+    .settings-nav {
+      @include light-card();
+      
+      .nav-link {
+        color: $light-text-secondary;
+        
+        &:hover {
+          background: $light-surface-hover;
+          color: $light-text-primary;
+        }
+        
+        &.active {
+          background: $light-primary;
+          color: white;
+        }
+      }
+    }
+    
+    .settings-section {
+      @include light-card();
+      
+      .section-header {
+        border-bottom: 1px solid $light-border-primary;
+      }
+    }
+    
+    .setting-item {
+      background: $light-surface-secondary;
+      border-color: $light-border-primary;
+      
+      &:hover {
+        background: $light-surface-hover;
+      }
+      
+      &--warning {
+        background: $light-warning-light;
+        border-color: $light-warning-medium;
+      }
+      
+      &--danger {
+        background: $light-danger-light;
+        border-color: $light-danger-medium;
+      }
+    }
+    
+    .toggle-switch {
+      .slider {
+        background: $light-border-secondary;
+        
+        &:before {
+          background: white;
+        }
+      }
+      
+      input:checked + .slider {
+        background: $light-primary;
+      }
+    }
+  }
+  
+  // Página de analytics
+  .analytics-page {
+    background: $light-gradient-page-primary;
+    
+    .kpi-card {
+      @include light-card();
+      
+      &--revenue {
+        background: $light-gradient-success;
+      }
+      
+      &--growth {
+        background: $light-gradient-primary;
+      }
+      
+      &--engagement {
+        background: linear-gradient(135deg, $light-role-client, darken($light-role-client, 10%));
+      }
+    }
+    
+    .chart-widget {
+      @include light-card();
+      
+      .chart-container {
+        background: $light-surface-secondary;
+        border-color: $light-border-primary;
+      }
+    }
+    
+    .data-table {
+      @include light-card();
+      
+      table {
+        thead {
+          background: $light-surface-secondary;
+          
+          th {
+            color: $light-text-primary;
+            border-bottom: 1px solid $light-border-primary;
+          }
+        }
+        
+        tbody {
+          tr {
+            &:hover {
+              background: $light-surface-hover;
+            }
+            
+            &:not(:last-child) {
+              border-bottom: 1px solid $light-border-primary;
+            }
+          }
+          
+          td {
+            color: $light-text-secondary;
+          }
+        }
+      }
+    }
+  }
+  
+  // =============================================================================
+  // COMPONENTES ESPECÍFICOS DE FORMULARIOS
+  // =============================================================================
+  
+  // Grupos de campos
+  .form-group {
+    label {
+      color: $light-text-primary;
+    }
+    
+    .form-help {
+      color: $light-text-muted;
+    }
+    
+    .form-error {
+      color: $light-danger;
+      background: $light-danger-light;
+      border-color: $light-danger-medium;
+    }
+    
+    .form-success {
+      color: $light-success;
+      background: $light-success-light;
+      border-color: $light-success-medium;
+    }
+  }
+  
+  // Checkboxes y radios personalizados
+  .custom-checkbox,
+  .custom-radio {
+    input[type="checkbox"],
+    input[type="radio"] {
+      &:checked {
+        background: $light-primary;
+        border-color: $light-primary;
+      }
+    }
+    
+    label {
+      color: $light-text-primary;
+    }
+  }
+  
+  // Selectores múltiples
+  .multi-select {
+    .select-option {
+      background: $light-surface-primary;
+      border-color: $light-border-primary;
+      color: $light-text-primary;
+      
+      &:hover {
+        background: $light-surface-hover;
+      }
+      
+      &.selected {
+        background: $light-primary-light;
+        border-color: $light-primary;
+        color: $light-primary;
+      }
+    }
+  }
+  
+  // Subida de archivos
+  .file-upload {
+    .drop-zone {
+      background: $light-surface-secondary;
+      border: 2px dashed $light-border-primary;
+      color: $light-text-muted;
+      
+      &.dragover {
+        background: $light-surface-hover;
+        border-color: $light-primary;
+        color: $light-primary;
+      }
+    }
+    
+    .file-list {
+      .file-item {
+        background: $light-surface-tertiary;
+        border-color: $light-border-primary;
+        
+        .file-progress {
+          background: $light-surface-primary;
+          
+          .progress-bar {
+            background: $light-primary;
+          }
+        }
+      }
+    }
+  }
+  
+  // =============================================================================
+  // COMPONENTES DE UI ESPECÍFICOS
+  // =============================================================================
+  
+  // Modales
+  .modal {
+    .modal-backdrop {
+      background: rgba(15, 23, 42, 0.5);
+    }
+    
+    .modal-content {
+      @include light-card();
+      box-shadow: $light-shadow-xl;
+    }
+    
+    .modal-header {
+      border-bottom: 1px solid $light-border-primary;
+      
+      .modal-title {
+        color: $light-text-primary;
+      }
+      
+      .modal-close {
+        color: $light-text-muted;
+        
+        &:hover {
+          color: $light-text-primary;
+        }
+      }
+    }
+    
+    .modal-footer {
+      border-top: 1px solid $light-border-primary;
+    }
+  }
+  
+  // Tooltips
+  .tooltip {
+    .tooltip-inner {
+      background: $light-text-primary;
+      color: white;
+      border: 1px solid $light-border-primary;
+      box-shadow: $light-shadow-md;
+    }
+    
+    .tooltip-arrow {
+      border-color: $light-text-primary;
+    }
+  }
+  
+  // Popovers
+  .popover {
+    background: $light-surface-primary;
+    border-color: $light-border-primary;
+    box-shadow: $light-shadow-lg;
+    
+    .popover-header {
+      background: $light-surface-secondary;
+      border-bottom: 1px solid $light-border-primary;
+      color: $light-text-primary;
+    }
+    
+    .popover-body {
+      color: $light-text-secondary;
+    }
+    
+    .popover-arrow {
+      border-color: $light-border-primary;
+    }
+  }
+  
+  // Dropdowns
+  .dropdown-menu {
+    background: $light-surface-primary;
+    border-color: $light-border-primary;
+    box-shadow: $light-shadow-lg;
+    
+    .dropdown-item {
+      color: $light-text-secondary;
+      
+      &:hover {
+        background: $light-surface-hover;
+        color: $light-text-primary;
+      }
+      
+      &.active {
+        background: $light-primary;
+        color: white;
+      }
+      
+      &:disabled {
+        color: $light-text-disabled;
+      }
+    }
+    
+    .dropdown-divider {
+      border-color: $light-border-primary;
+    }
+  }
+  
+  // Tabs
+  .nav-tabs {
+    border-bottom: 1px solid $light-border-primary;
+    
+    .nav-link {
+      color: $light-text-secondary;
+      border-color: transparent;
+      
+      &:hover {
+        background: $light-surface-hover;
+        color: $light-text-primary;
+        border-color: $light-border-hover;
+      }
+      
+      &.active {
+        background: $light-surface-primary;
+        color: $light-primary;
+        border-color: $light-border-primary $light-border-primary $light-surface-primary;
+      }
+    }
+  }
+  
+  .tab-content {
+    .tab-pane {
+      background: $light-surface-primary;
+      border: 1px solid $light-border-primary;
+      border-top: none;
+    }
+  }
+  
+  // Acordeones
+  .accordion {
+    .accordion-item {
+      background: $light-surface-primary;
+      border-color: $light-border-primary;
+    }
+    
+    .accordion-header {
+      .accordion-button {
+        background: $light-surface-secondary;
+        color: $light-text-primary;
+        border-bottom: 1px solid $light-border-primary;
+        
+        &:hover {
+          background: $light-surface-hover;
+        }
+        
+        &:not(.collapsed) {
+          background: $light-primary-light;
+          color: $light-primary;
+        }
+      }
+    }
+    
+    .accordion-body {
+      background: $light-surface-primary;
+      color: $light-text-secondary;
+    }
+  }
+  
+  // Alertas
+  .alert {
+    border-color: $light-border-primary;
+    
+    &-primary {
+      background: $light-primary-light;
+      border-color: $light-primary-medium;
+      color: $light-primary;
+    }
+    
+    &-success {
+      background: $light-success-light;
+      border-color: $light-success-medium;
+      color: $light-success;
+    }
+    
+    &-warning {
+      background: $light-warning-light;
+      border-color: $light-warning-medium;
+      color: $light-warning;
+    }
+    
+    &-danger {
+      background: $light-danger-light;
+      border-color: $light-danger-medium;
+      color: $light-danger;
+    }
+    
+    &-info {
+      background: $light-info-light;
+      border-color: $light-info-medium;
+      color: $light-info;
+    }
+  }
+  
+  // Progress bars
+  .progress {
+    background: $light-surface-tertiary;
+    
+    .progress-bar {
+      background: $light-primary;
+      
+      &-success {
+        background: $light-success;
+      }
+      
+      &-warning {
+        background: $light-warning;
+      }
+      
+      &-danger {
+        background: $light-danger;
+      }
+    }
+  }
+  
+  // =============================================================================
+  // COMPONENTES ESPECÍFICOS DEL ECOSISTEMA
+  // =============================================================================
+  
+  // Timeline de actividades
+  .activity-timeline {
+    .timeline-container {
+      &::before {
+        background: $light-border-primary;
+      }
+    }
+    
+    .timeline-item {
+      .timeline-marker {
+        background: $light-primary;
+        border-color: $light-surface-primary;
+        box-shadow: 0 0 0 3px $light-surface-primary;
+        
+        &--success {
+          background: $light-success;
+        }
+        
+        &--warning {
+          background: $light-warning;
+        }
+        
+        &--danger {
+          background: $light-danger;
+        }
+      }
+      
+      .timeline-content {
+        background: $light-surface-primary;
+        border-color: $light-border-primary;
+        
+        .timeline-title {
+          color: $light-text-primary;
+        }
+        
+        .timeline-description {
+          color: $light-text-secondary;
+        }
+        
+        .timeline-meta {
+          color: $light-text-muted;
+        }
+      }
+    }
+  }
+  
+  // Cards de proyectos
+  .project-card {
+    @include light-card();
+    
+    .project-header {
+      border-bottom: 1px solid $light-border-primary;
+      
+      .project-title {
+        color: $light-text-primary;
+      }
+      
+      .project-status {
+        &.active {
+          @include light-badge($light-success);
+        }
+        
+        &.pending {
+          @include light-badge($light-warning);
+        }
+        
+        &.completed {
+          @include light-badge($light-primary);
+        }
+      }
+    }
+    
+    .project-description {
+      color: $light-text-secondary;
+    }
+    
+    .project-metrics {
+      .metric-item {
+        .metric-value {
+          color: $light-text-primary;
+        }
+        
+        .metric-label {
+          color: $light-text-muted;
+        }
+      }
+    }
+    
+    .project-team {
+      .team-avatar {
+        border: 2px solid $light-surface-primary;
+      }
+    }
+  }
+  
+  // Cards de mentores/aliados
+  .mentor-card {
+    @include light-card();
+    
+    .mentor-avatar {
+      border: 3px solid $light-surface-primary;
+    }
+    
+    .mentor-name {
+      color: $light-text-primary;
+    }
+    
+    .mentor-title {
+      color: $light-text-secondary;
+    }
+    
+    .mentor-skills {
+      .skill-tag {
+        @include light-badge($light-info);
+      }
+    }
+    
+    .mentor-rating {
+      .star {
+        color: $light-warning;
+        
+        &.empty {
+          color: $light-border-secondary;
+        }
+      }
+    }
+  }
+  
+  // Widgets de métricas
+  .metrics-widget {
+    @include light-card();
+    
+    .metric-header {
+      .metric-icon {
+        background: $light-surface-secondary;
+        color: $light-primary;
+      }
+      
+      .metric-trend {
+        &.up {
+          color: $light-success;
+        }
+        
+        &.down {
+          color: $light-danger;
+        }
+      }
+    }
+    
+    .metric-chart {
+      .chart-area {
+        background: $light-surface-secondary;
+        border-color: $light-border-primary;
+      }
+    }
+  }
+  
+  // Calendario de eventos
+  .calendar-widget {
+    @include light-card();
+    
+    .calendar-header {
+      background: $light-surface-secondary;
+      border-bottom: 1px solid $light-border-primary;
+      
+      .calendar-title {
+        color: $light-text-primary;
+      }
+      
+      .calendar-nav {
+        .nav-button {
+          background: $light-surface-primary;
+          color: $light-text-primary;
+          border-color: $light-border-primary;
+          
+          &:hover {
+            background: $light-surface-hover;
+          }
+        }
+      }
+    }
+    
+    .calendar-grid {
+      .calendar-day {
+        background: $light-surface-primary;
+        border-color: $light-border-primary;
+        color: $light-text-secondary;
+        
+        &:hover {
+          background: $light-surface-hover;
+        }
+        
+        &.today {
+          background: $light-primary-light;
+          color: $light-primary;
+        }
+        
+        &.selected {
+          background: $light-primary;
+          color: white;
+        }
+        
+        &.other-month {
+          color: $light-text-disabled;
+        }
+      }
+      
+      .calendar-event {
+        background: $light-primary;
+        color: white;
+        
+        &.meeting {
+          background: $light-warning;
+        }
+        
+        &.deadline {
+          background: $light-danger;
+        }
+        
+        &.milestone {
+          background: $light-success;
+        }
+      }
+    }
+  }
+  
+  // Chat/mensajería
+  .chat-widget {
+    @include light-card();
+    
+    .chat-header {
+      background: $light-surface-secondary;
+      border-bottom: 1px solid $light-border-primary;
+      
+      .chat-title {
+        color: $light-text-primary;
+      }
+      
+      .chat-status {
+        &.online {
+          color: $light-success;
+        }
+        
+        &.away {
+          color: $light-warning;
+        }
+        
+        &.offline {
+          color: $light-text-disabled;
+        }
+      }
+    }
+    
+    .chat-messages {
+      .message-item {
+        &.own {
+          .message-bubble {
+            background: $light-primary;
+            color: white;
+          }
+        }
+        
+        &.other {
+          .message-bubble {
+            background: $light-surface-secondary;
+            color: $light-text-primary;
+            border-color: $light-border-primary;
+          }
+        }
+        
+        .message-time {
+          color: $light-text-muted;
+        }
+      }
+    }
+    
+    .chat-input {
+      background: $light-surface-secondary;
+      border-top: 1px solid $light-border-primary;
+      
+      .input-field {
+        background: $light-surface-primary;
+        border-color: $light-border-primary;
+        color: $light-text-primary;
+        
+        &::placeholder {
+          color: $light-text-placeholder;
+        }
+      }
+      
+      .send-button {
+        background: $light-primary;
+        color: white;
+        
+        &:hover {
+          background: $light-primary-hover;
+        }
+      }
+    }
+  }
+  
+  // =============================================================================
+  // ESTADOS ESPECÍFICOS Y UTILIDADES
+  // =============================================================================
+  
+  // Estados de carga
+  .loading {
+    .spinner {
+      border-color: $light-border-secondary;
+      border-top-color: $light-primary;
+    }
+    
+    .skeleton {
+      background: linear-gradient(
+        90deg,
+        $light-surface-secondary 25%,
+        $light-surface-hover 50%,
+        $light-surface-secondary 75%
+      );
+      background-size: 200% 100%;
+    }
+  }
+  
+  // Estados vacíos
+  .empty-state {
+    color: $light-text-muted;
+    
+    .empty-icon {
+      color: $light-text-disabled;
+    }
+    
+    .empty-title {
+      color: $light-text-secondary;
+    }
+    
+    .empty-description {
+      color: $light-text-muted;
+    }
+  }
+  
+  // Estados de error
+  .error-state {
+    .error-icon {
+      color: $light-danger;
+    }
+    
+    .error-title {
+      color: $light-text-primary;
+    }
+    
+    .error-message {
+      color: $light-text-secondary;
+    }
+  }
+  
+  // Overlays y backdrops
+  .overlay {
+    background: rgba(248, 250, 252, 0.8);
+    backdrop-filter: blur(5px);
+  }
+  
+  .backdrop {
+    background: rgba(15, 23, 42, 0.5);
+  }
+  
+  // Dividers y separadores
+  .divider,
+  hr {
+    border-color: $light-border-primary;
+  }
+  
+  // Scrollbars personalizados
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: $light-surface-secondary;
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: $light-border-secondary;
+    border-radius: 4px;
+    
+    &:hover {
+      background: $light-text-muted;
+    }
+  }
+  
+  ::-webkit-scrollbar-corner {
+    background: $light-surface-secondary;
+  }
+  
+  // Selecciones de texto
+  ::selection {
+    background: rgba($light-primary, 0.2);
+    color: $light-text-primary;
+  }
+  
+  ::-moz-selection {
+    background: rgba($light-primary, 0.2);
+    color: $light-text-primary;
+  }
+}
+
+// =============================================================================
+// MODO DE ALTO CONTRASTE PARA TEMA CLARO
+// =============================================================================
+
+@media (prefers-contrast: high) {
+  .light-theme,
+  [data-theme="light"],
+  :root {
+    
+    // Incrementar contrastes en modo claro
+    --bg-primary: #{white};
+    --bg-secondary: #{darken($light-bg-secondary, 3%)};
+    --text-primary: #{black};
+    --text-secondary: #{darken($light-text-secondary, 10%)};
+    --border-primary: #{darken($light-border-primary, 20%)};
+    
+    // Bordes más gruesos para mejor visibilidad
+    .card,
+    .widget,
+    .panel,
+    input,
+    select,
+    textarea,
+    .btn {
+      border-width: 2px;
+    }
+    
+    // Sombras más pronunciadas
+    .card,
+    .widget,
+    .modal-content {
+      box-shadow: $light-shadow-lg;
+    }
+    
+    // Mayor contraste en textos
+    h1, h2, h3, h4, h5, h6 {
+      color: black;
+      font-weight: 700;
+    }
+    
+    // Focus más visible
+    *:focus {
+      outline: 3px solid $light-primary !important;
+      outline-offset: 2px !important;
+    }
+  }
+}
+
+// =============================================================================
+// UTILIDADES ESPECÍFICAS PARA TEMA CLARO
+// =============================================================================
+
+// Clases de utilidad que solo se aplican en tema claro
+.light-theme,
+[data-theme="light"],
+:root {
+  
+  // Utilidades de color específicas
+  .text-light-primary { color: $light-text-primary !important; }
+  .text-light-secondary { color: $light-text-secondary !important; }
+  .text-light-muted { color: $light-text-muted !important; }
+  
+  .bg-light-primary { background: $light-bg-primary !important; }
+  .bg-light-secondary { background: $light-bg-secondary !important; }
+  .bg-light-surface { background: $light-surface-primary !important; }
+  
+  .border-light-primary { border-color: $light-border-primary !important; }
+  .border-light-secondary { border-color: $light-border-secondary !important; }
+  
+  // Utilidades de sombra específicas
+  .shadow-light-sm { box-shadow: $light-shadow-sm !important; }
+  .shadow-light-md { box-shadow: $light-shadow-md !important; }
+  .shadow-light-lg { box-shadow: $light-shadow-lg !important; }
+  .shadow-light-xl { box-shadow: $light-shadow-xl !important; }
+  
+  // Utilidades de gradiente específicas
+  .bg-gradient-light-primary { background: $light-gradient-primary !important; }
+  .bg-gradient-light-secondary { background: $light-gradient-secondary !important; }
+  .bg-gradient-light-success { background: $light-gradient-success !important; }
+  .bg-gradient-light-warning { background: $light-gradient-warning !important; }
+  .bg-gradient-light-danger { background: $light-gradient-danger !important; }
+  
+  // Utilidades para roles específicos
+  .bg-role-light-admin { background: $light-gradient-admin !important; }
+  .bg-role-light-entrepreneur { background: $light-gradient-entrepreneur !important; }
+  .bg-role-light-ally { background: $light-gradient-ally !important; }
+  .bg-role-light-client { background: $light-gradient-client !important; }
+  
+  .text-role-light-admin { color: $light-role-admin !important; }
+  .text-role-light-entrepreneur { color: $light-role-entrepreneur !important; }
+  .text-role-light-ally { color: $light-role-ally !important; }
+  .text-role-light-client { color: $light-role-client !important; }
+  
+  // Utilidades para gráficos
+  @each $name, $color in $light-chart-colors {
+    .chart-color-light-#{$name} {
+      color: #{$color} !important;
+      fill: #{$color} !important;
+      stroke: #{$color} !important;
+    }
+    
+    .bg-chart-light-#{$name} {
+      background: #{$color} !important;
+    }
+  }
+  
+  // Utilidades específicas para branding
+  .brand-shadow {
+    box-shadow: 0 8px 32px rgba(37, 99, 235, 0.15);
+  }
+  
+  .brand-glow {
+    box-shadow: $light-shadow-glow;
+  }
+  
+  .glass-light {
+    @include light-glassmorphism(0.8);
+  }
+  
+  .glass-light-strong {
+    @include light-glassmorphism(0.95);
+  }
+}
+
+// =============================================================================
+// ESPECIALIZACIÓN POR ROLES DE USUARIO
+// =============================================================================
+
+// Tema específico para Administradores
+.user-role-admin {
+  .light-theme,
+  [data-theme="light"] {
+    --accent-color: #{$light-role-admin};
+    --accent-hover: #{$light-role-admin-hover};
+    --accent-light: #{$light-role-admin-light};
+    
+    .role-specific {
+      color: $light-role-admin;
+      
+      &:hover {
+        color: $light-role-admin-hover;
+      }
+    }
+    
+    .btn-role {
+      @include light-button();
+      background: $light-role-admin;
+      border-color: $light-role-admin;
+      
+      &:hover {
+        background: $light-role-admin-hover;
+        border-color: $light-role-admin-hover;
+      }
+    }
+  }
+}
+
+// Tema específico para Emprendedores
+.user-role-entrepreneur {
+  .light-theme,
+  [data-theme="light"] {
+    --accent-color: #{$light-role-entrepreneur};
+    --accent-hover: #{$light-role-entrepreneur-hover};
+    --accent-light: #{$light-role-entrepreneur-light};
+    
+    .role-specific {
+      color: $light-role-entrepreneur;
+      
+      &:hover {
+        color: $light-role-entrepreneur-hover;
+      }
+    }
+    
+    .btn-role {
+      @include light-button();
+      background: $light-role-entrepreneur;
+      border-color: $light-role-entrepreneur;
+      
+      &:hover {
+        background: $light-role-entrepreneur-hover;
+        border-color: $light-role-entrepreneur-hover;
+      }
+    }
+  }
+}
+
+// Tema específico para Aliados
+.user-role-ally {
+  .light-theme,
+  [data-theme="light"] {
+    --accent-color: #{$light-role-ally};
+    --accent-hover: #{$light-role-ally-hover};
+    --accent-light: #{$light-role-ally-light};
+    
+    .role-specific {
+      color: $light-role-ally;
+      
+      &:hover {
+        color: $light-role-ally-hover;
+      }
+    }
+    
+    .btn-role {
+      @include light-button();
+      background: $light-role-ally;
+      border-color: $light-role-ally;
+      
+      &:hover {
+        background: $light-role-ally-hover;
+        border-color: $light-role-ally-hover;
+      }
+    }
+  }
+}
+
+// Tema específico para Clientes
+.user-role-client {
+  .light-theme,
+  [data-theme="light"] {
+    --accent-color: #{$light-role-client};
+    --accent-hover: #{$light-role-client-hover};
+    --accent-light: #{$light-role-client-light};
+    
+    .role-specific {
+      color: $light-role-client;
+      
+      &:hover {
+        color: $light-role-client-hover;
+      }
+    }
+    
+    .btn-role {
+      @include light-button();
+      background: $light-role-client;
+      border-color: $light-role-client;
+      
+      &:hover {
+        background: $light-role-client-hover;
+        border-color: $light-role-client-hover;
+      }
+    }
+  }
+}
+
+// =============================================================================
+// OPTIMIZACIONES ESPECÍFICAS PARA RENDIMIENTO
+// =============================================================================
+
+// Preload de colores críticos
+.light-theme,
+[data-theme="light"] {
+  
+  // Precarga de variables CSS más utilizadas
+  --primary-rgb: 37, 99, 235;
+  --success-rgb: 5, 150, 105;
+  --warning-rgb: 217, 119, 6;
+  --danger-rgb: 220, 38, 38;
+  
+  // Utilidades de color con RGB para transparencias
+  .bg-primary-alpha-10 { background: rgba(var(--primary-rgb), 0.1) !important; }
+  .bg-primary-alpha-20 { background: rgba(var(--primary-rgb), 0.2) !important; }
+  .bg-primary-alpha-30 { background: rgba(var(--primary-rgb), 0.3) !important; }
+  
+  .bg-success-alpha-10 { background: rgba(var(--success-rgb), 0.1) !important; }
+  .bg-success-alpha-20 { background: rgba(var(--success-rgb), 0.2) !important; }
+  
+  .bg-warning-alpha-10 { background: rgba(var(--warning-rgb), 0.1) !important; }
+  .bg-warning-alpha-20 { background: rgba(var(--warning-rgb), 0.2) !important; }
+  
+  .bg-danger-alpha-10 { background: rgba(var(--danger-rgb), 0.1) !important; }
+  .bg-danger-alpha-20 { background: rgba(var(--danger-rgb), 0.2) !important; }
+}
+
+// =============================================================================
+// PRINT STYLES PARA TEMA CLARO
+// =============================================================================
+
+@media print {
+  .light-theme,
+  [data-theme="light"],
+  :root {
+    
+    // Optimizar colores para impresión
+    * {
+      background: white !important;
+      color: black !important;
+      text-shadow: none !important;
+      box-shadow: none !important;
+    }
+    
+    // Mantener colores esenciales para brandeo
+    .text-primary,
+    .btn-primary,
+    .badge-primary {
+      color: $light-primary !important;
+    }
+    
+    .text-success,
+    .btn-success,
+    .badge-success {
+      color: $light-success !important;
+    }
+    
+    .text-warning,
+    .btn-warning,
+    .badge-warning {
+      color: $light-warning !important;
+    }
+    
+    .text-danger,
+    .btn-danger,
+    .badge-danger {
+      color: $light-danger !important;
+    }
+    
+    // Bordes visibles para estructura
+    .card,
+    .table,
+    .border {
+      border: 1px solid #ccc !important;
+    }
+    
+    // Ocultar elementos no imprimibles
+    .no-print,
+    .sidebar,
+    .navbar,
+    .modal,
+    .tooltip,
+    .popover,
+    .btn:not(.btn-print) {
+      display: none !important;
+    }
+    
+    // Ajustar tamaños para impresión
+    .container,
+    .container-fluid {
+      width: 100% !important;
+      max-width: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    
+    // Optimizar tipografía para impresión
+    body {
+      font-size: 12pt !important;
+      line-height: 1.4 !important;
+    }
+    
+    h1 { font-size: 18pt !important; }
+    h2 { font-size: 16pt !important; }
+    h3 { font-size: 14pt !important; }
+    h4 { font-size: 13pt !important; }
+    h5 { font-size: 12pt !important; }
+    h6 { font-size: 11pt !important; }
+  }
+}
+
+// =============================================================================
+// DEBUG Y DESARROLLO PARA TEMA CLARO
+// =============================================================================
+
+// Utilidades para debugging en desarrollo
+@if $env == 'development' {
+  .light-theme,
+  [data-theme="light"] {
+    
+    // Outline para debugging de layout
+    .debug-layout * {
+      outline: 1px solid rgba($light-primary, 0.3);
+    }
+    
+    // Mostrar nombres de componentes
+    .debug-components {
+      [class*="card"]::before,
+      [class*="widget"]::before,
+      [class*="panel"]::before {
+        content: attr(class);
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: $light-primary;
+        color: white;
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+        z-index: 9999;
+      }
+    }
+    
+    // Grid overlay para alineación
+    .debug-grid {
+      background-image: 
+        linear-gradient(rgba($light-primary, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba($light-primary, 0.1) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    
+    // Indicators de viewport
+    .debug-breakpoints {
+      &::before {
+        content: 'Mobile';
+        position: fixed;
+        top: 0;
+        right: 0;
+        background: $light-danger;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        z-index: 9999;
+        
+        @media (min-width: 768px) {
+          content: 'Tablet';
+          background: $light-warning;
+        }
+        
+        @media (min-width: 1024px) {
+          content: 'Desktop';
+          background: $light-success;
+        }
+        
+        @media (min-width: 1280px) {
+          content: 'Large';
+          background: $light-primary;
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1375 @@
+/**
+ * ===================================================================
+ * GRID LAYOUT SYSTEM - SISTEMA COMPLETO DE GRIDS RESPONSIVE
+ * ===================================================================
+ * Desarrollado por: jusga
+ * Versión: 6.0.0
+ * Compatibilidad: IE11+, Chrome, Firefox, Safari, Edge
+ * Sistemas: Flexbox Grid, CSS Grid, Container Queries
+ * ===================================================================
+ */
+
+// ===================================================================
+// VARIABLES SCSS PARA GRID SYSTEM
+// ===================================================================
+
+// Breakpoints principales
+$grid-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px,
+  xxxl: 1600px
+) !default;
+
+// Container max-widths
+$container-max-widths: (
+  sm: 540px,
+  md: 720px,
+  lg: 960px,
+  xl: 1140px,
+  xxl: 1320px,
+  xxxl: 1520px
+) !default;
+
+// Grid configuration
+$grid-columns: 12 !default;
+$grid-gutter-width: 1.5rem !default;
+$grid-row-columns: 6 !default;
+
+// Container padding
+$container-padding-x: 0.75rem !default;
+$container-padding-x-sm: 1rem !default;
+$container-padding-x-lg: 1.5rem !default;
+
+// Gutters variaciones
+$grid-gutters: (
+  0: 0,
+  1: 0.25rem,
+  2: 0.5rem,
+  3: 1rem,
+  4: 1.5rem,
+  5: 3rem
+) !default;
+
+// CSS Grid específico
+$css-grid-columns: 12 !default;
+$css-grid-rows: 6 !default;
+$css-grid-gap: 1rem !default;
+
+// Grid areas predefinidas
+$grid-areas: (
+  header: "header header header",
+  sidebar: "sidebar content content",
+  footer: "footer footer footer",
+  three-col: "sidebar content aside",
+  full: "content content content"
+) !default;
+
+// Aspect ratios comunes
+$aspect-ratios: (
+  "1x1": (1, 1),
+  "4x3": (4, 3),
+  "3x2": (3, 2),
+  "16x9": (16, 9),
+  "21x9": (21, 9),
+  "3x4": (3, 4),
+  "2x3": (2, 3),
+  "9x16": (9, 16)
+) !default;
+
+// Z-index layers
+$grid-z-index-sticky: 1020 !default;
+$grid-z-index-fixed: 1030 !default;
+$grid-z-index-overlay: 1040 !default;
+
+// Performance optimizations
+$grid-enable-flex: true !default;
+$grid-enable-css-grid: true !default;
+$grid-enable-subgrid: true !default;
+$grid-enable-container-queries: true !default;
+
+// ===================================================================
+// MIXINS PARA GRID SYSTEM
+// ===================================================================
+
+// Breakpoint mixins
+@mixin media-breakpoint-up($name, $breakpoints: $grid-breakpoints) {
+  $min: map-get($breakpoints, $name);
+  @if $min != 0 {
+    @media (min-width: $min) {
+      @content;
+    }
+  } @else {
+    @content;
+  }
+}
+
+@mixin media-breakpoint-down($name, $breakpoints: $grid-breakpoints) {
+  $max: map-get($breakpoints, $name);
+  @if $max and $max > 0 {
+    @media (max-width: $max - 0.02) {
+      @content;
+    }
+  }
+}
+
+@mixin media-breakpoint-between($lower, $upper, $breakpoints: $grid-breakpoints) {
+  $min: map-get($breakpoints, $lower);
+  $max: map-get($breakpoints, $upper);
+  
+  @if $min != null and $max != null {
+    @media (min-width: $min) and (max-width: $max - 0.02) {
+      @content;
+    }
+  } @else if $max == null {
+    @include media-breakpoint-up($lower, $breakpoints) {
+      @content;
+    }
+  } @else if $min == null {
+    @include media-breakpoint-down($upper, $breakpoints) {
+      @content;
+    }
+  }
+}
+
+@mixin media-breakpoint-only($name, $breakpoints: $grid-breakpoints) {
+  $min: map-get($breakpoints, $name);
+  $next: breakpoint-next($name, $breakpoints);
+  $max: map-get($breakpoints, $next);
+  
+  @if $min != null and $max != null {
+    @media (min-width: $min) and (max-width: $max - 0.02) {
+      @content;
+    }
+  } @else if $max == null {
+    @include media-breakpoint-up($name, $breakpoints) {
+      @content;
+    }
+  } @else if $min == null {
+    @include media-breakpoint-down($next, $breakpoints) {
+      @content;
+    }
+  }
+}
+
+// Función para obtener el siguiente breakpoint
+@function breakpoint-next($name, $breakpoints: $grid-breakpoints, $breakpoint-names: map-keys($breakpoints)) {
+  $n: index($breakpoint-names, $name);
+  @if not $n {
+    @error "breakpoint `#{$name}` not found in `#{$breakpoints}`";
+  }
+  @return if($n < length($breakpoint-names), nth($breakpoint-names, $n + 1), null);
+}
+
+// Mixin para crear columnas flexbox
+@mixin make-col($size: false, $columns: $grid-columns) {
+  @if $size {
+    flex: 0 0 auto;
+    width: percentage(divide($size, $columns));
+  } @else {
+    flex: 1 1 0;
+    max-width: 100%;
+  }
+}
+
+// Mixin para offset de columnas
+@mixin make-col-offset($size, $columns: $grid-columns) {
+  $num: divide($size, $columns);
+  margin-left: if($num == 0, 0, percentage($num));
+}
+
+// Mixin para row
+@mixin make-row($gutter: $grid-gutter-width) {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: calc(#{$gutter} * -0.5);
+  margin-right: calc(#{$gutter} * -0.5);
+  margin-left: calc(#{$gutter} * -0.5);
+}
+
+// Mixin para gutters
+@mixin make-gutters($gutter: $grid-gutter-width) {
+  > * {
+    padding-top: calc(#{$gutter} * 0.5);
+    padding-right: calc(#{$gutter} * 0.5);
+    padding-left: calc(#{$gutter} * 0.5);
+  }
+}
+
+// Mixin para container
+@mixin make-container($padding-x: $container-padding-x) {
+  width: 100%;
+  padding-right: $padding-x;
+  padding-left: $padding-x;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+// Mixin para CSS Grid
+@mixin css-grid($columns: $css-grid-columns, $rows: auto, $gap: $css-grid-gap) {
+  display: grid;
+  grid-template-columns: repeat($columns, 1fr);
+  @if $rows != auto {
+    grid-template-rows: repeat($rows, 1fr);
+  }
+  gap: $gap;
+}
+
+// Mixin para grid areas
+@mixin grid-area($area) {
+  grid-area: $area;
+}
+
+// Mixin para aspect ratio
+@mixin aspect-ratio($width, $height) {
+  aspect-ratio: #{$width} / #{$height};
+  
+  // Fallback para navegadores sin soporte
+  @supports not (aspect-ratio: 1) {
+    position: relative;
+    
+    &::before {
+      content: "";
+      display: block;
+      padding-bottom: percentage(divide($height, $width));
+    }
+    
+    > * {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
+// Función helper para división
+@function divide($dividend, $divisor) {
+  @return calc($dividend / $divisor);
+}
+
+// ===================================================================
+// CONTAINER SYSTEM
+// ===================================================================
+
+.container,
+.container-fluid {
+  @include make-container();
+}
+
+.container {
+  @each $breakpoint, $container-max-width in $container-max-widths {
+    @include media-breakpoint-up($breakpoint, $grid-breakpoints) {
+      max-width: $container-max-width;
+    }
+  }
+}
+
+.container-fluid {
+  max-width: 100%;
+}
+
+// Container específicos por breakpoint
+@each $breakpoint, $container-max-width in $container-max-widths {
+  .container-#{$breakpoint} {
+    @extend .container-fluid;
+    
+    @include media-breakpoint-up($breakpoint, $grid-breakpoints) {
+      max-width: $container-max-width;
+    }
+  }
+}
+
+// Container con padding responsive
+.container-sm {
+  @include make-container($container-padding-x-sm);
+}
+
+.container-lg {
+  @include make-container($container-padding-x-lg);
+}
+
+// ===================================================================
+// FLEXBOX GRID SYSTEM
+// ===================================================================
+
+@if $grid-enable-flex {
+  .row {
+    @include make-row();
+    @include make-gutters();
+  }
+  
+  // Row sin gutters
+  .row.no-gutters {
+    margin-right: 0;
+    margin-left: 0;
+    
+    > * {
+      padding-right: 0;
+      padding-left: 0;
+    }
+  }
+  
+  // Gutters variables
+  @each $key, $value in $grid-gutters {
+    .row.g-#{$key} {
+      @include make-row($value);
+      @include make-gutters($value);
+    }
+    
+    .row.gx-#{$key} {
+      margin-right: calc(#{$value} * -0.5);
+      margin-left: calc(#{$value} * -0.5);
+      
+      > * {
+        padding-right: calc(#{$value} * 0.5);
+        padding-left: calc(#{$value} * 0.5);
+      }
+    }
+    
+    .row.gy-#{$key} {
+      margin-top: calc(#{$value} * -0.5);
+      
+      > * {
+        padding-top: calc(#{$value} * 0.5);
+      }
+    }
+  }
+  
+  // Columnas base
+  %col-base {
+    position: relative;
+    width: 100%;
+    min-height: 1px;
+  }
+  
+  .col {
+    @extend %col-base;
+    @include make-col();
+  }
+  
+  // Columnas auto-sizing
+  @for $i from 1 through $grid-row-columns {
+    .col-auto-#{$i} {
+      @extend %col-base;
+      flex: 0 0 auto;
+      width: auto;
+    }
+  }
+  
+  .col-auto {
+    @extend %col-base;
+    flex: 0 0 auto;
+    width: auto;
+  }
+  
+  // Columnas con tamaño específico
+  @include media-breakpoint-up(xs) {
+    @for $i from 1 through $grid-columns {
+      .col-#{$i} {
+        @extend %col-base;
+        @include make-col($i, $grid-columns);
+      }
+    }
+    
+    @for $i from 0 through ($grid-columns - 1) {
+      @if not ($i == 0) {
+        .offset-#{$i} {
+          @include make-col-offset($i, $grid-columns);
+        }
+      }
+    }
+  }
+  
+  // Columnas responsive
+  @each $breakpoint in map-keys($grid-breakpoints) {
+    $infix: if($breakpoint == xs, "", "-#{$breakpoint}");
+    
+    @include media-breakpoint-up($breakpoint, $grid-breakpoints) {
+      // Columnas auto
+      .col#{$infix} {
+        @extend %col-base;
+        @include make-col();
+      }
+      
+      .col#{$infix}-auto {
+        @extend %col-base;
+        flex: 0 0 auto;
+        width: auto;
+      }
+      
+      // Columnas numeradas
+      @for $i from 1 through $grid-columns {
+        .col#{$infix}-#{$i} {
+          @extend %col-base;
+          @include make-col($i, $grid-columns);
+        }
+      }
+      
+      // Offsets
+      @for $i from 0 through ($grid-columns - 1) {
+        @if not ($infix == "" and $i == 0) {
+          .offset#{$infix}-#{$i} {
+            @include make-col-offset($i, $grid-columns);
+          }
+        }
+      }
+      
+      // Order utilities
+      @for $i from 0 through $grid-columns {
+        .order#{$infix}-#{$i} {
+          order: $i;
+        }
+      }
+      
+      .order#{$infix}-first {
+        order: -1;
+      }
+      
+      .order#{$infix}-last {
+        order: $grid-columns + 1;
+      }
+    }
+  }
+}
+
+// ===================================================================
+// CSS GRID SYSTEM
+// ===================================================================
+
+@if $grid-enable-css-grid {
+  .grid {
+    @include css-grid();
+    
+    // Grid con número específico de columnas
+    @for $i from 1 through $css-grid-columns {
+      &.grid-cols-#{$i} {
+        grid-template-columns: repeat($i, 1fr);
+      }
+    }
+    
+    // Grid con número específico de filas
+    @for $i from 1 through $css-grid-rows {
+      &.grid-rows-#{$i} {
+        grid-template-rows: repeat($i, 1fr);
+      }
+    }
+    
+    // Auto-fit y auto-fill
+    &.grid-auto-fit {
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+    
+    &.grid-auto-fill {
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+    
+    // Dense layout
+    &.grid-dense {
+      grid-auto-flow: dense;
+    }
+    
+    // Column flow
+    &.grid-flow-col {
+      grid-auto-flow: column;
+    }
+    
+    // Row flow
+    &.grid-flow-row {
+      grid-auto-flow: row;
+    }
+  }
+  
+  // Gap utilities
+  @each $key, $value in $grid-gutters {
+    .gap-#{$key} {
+      gap: $value;
+    }
+    
+    .gap-x-#{$key} {
+      column-gap: $value;
+    }
+    
+    .gap-y-#{$key} {
+      row-gap: $value;
+    }
+  }
+  
+  // Grid item spanning
+  @for $i from 1 through $css-grid-columns {
+    .col-span-#{$i} {
+      grid-column: span #{$i} / span #{$i};
+    }
+    
+    .col-start-#{$i} {
+      grid-column-start: #{$i};
+    }
+    
+    .col-end-#{$i} {
+      grid-column-end: #{$i};
+    }
+  }
+  
+  @for $i from 1 through $css-grid-rows {
+    .row-span-#{$i} {
+      grid-row: span #{$i} / span #{$i};
+    }
+    
+    .row-start-#{$i} {
+      grid-row-start: #{$i};
+    }
+    
+    .row-end-#{$i} {
+      grid-row-end: #{$i};
+    }
+  }
+  
+  // Full span utilities
+  .col-span-full {
+    grid-column: 1 / -1;
+  }
+  
+  .row-span-full {
+    grid-row: 1 / -1;
+  }
+  
+  // Auto sizing
+  .col-auto {
+    grid-column: auto;
+  }
+  
+  .row-auto {
+    grid-row: auto;
+  }
+  
+  // Grid responsive
+  @each $breakpoint in map-keys($grid-breakpoints) {
+    $infix: if($breakpoint == xs, "", "-#{$breakpoint}");
+    
+    @include media-breakpoint-up($breakpoint, $grid-breakpoints) {
+      @for $i from 1 through $css-grid-columns {
+        .grid#{$infix}-cols-#{$i} {
+          grid-template-columns: repeat($i, 1fr);
+        }
+        
+        .col#{$infix}-span-#{$i} {
+          grid-column: span #{$i} / span #{$i};
+        }
+        
+        .col#{$infix}-start-#{$i} {
+          grid-column-start: #{$i};
+        }
+        
+        .col#{$infix}-end-#{$i} {
+          grid-column-end: #{$i};
+        }
+      }
+      
+      @for $i from 1 through $css-grid-rows {
+        .grid#{$infix}-rows-#{$i} {
+          grid-template-rows: repeat($i, 1fr);
+        }
+        
+        .row#{$infix}-span-#{$i} {
+          grid-row: span #{$i} / span #{$i};
+        }
+        
+        .row#{$infix}-start-#{$i} {
+          grid-row-start: #{$i};
+        }
+        
+        .row#{$infix}-end-#{$i} {
+          grid-row-end: #{$i};
+        }
+      }
+    }
+  }
+}
+
+// ===================================================================
+// SUBGRID SUPPORT
+// ===================================================================
+
+@if $grid-enable-subgrid {
+  @supports (grid-template-columns: subgrid) {
+    .subgrid {
+      display: grid;
+      
+      &.subgrid-cols {
+        grid-template-columns: subgrid;
+      }
+      
+      &.subgrid-rows {
+        grid-template-rows: subgrid;
+      }
+    }
+  }
+}
+
+// ===================================================================
+// GRID AREAS PREDEFINIDAS
+// ===================================================================
+
+// Layout básico con header, main, footer
+.grid-layout-basic {
+  @include css-grid(1, auto 1fr auto);
+  min-height: 100vh;
+  grid-template-areas: 
+    "header"
+    "main"
+    "footer";
+  
+  .grid-header {
+    @include grid-area(header);
+  }
+  
+  .grid-main {
+    @include grid-area(main);
+  }
+  
+  .grid-footer {
+    @include grid-area(footer);
+  }
+}
+
+// Layout con sidebar
+.grid-layout-sidebar {
+  @include css-grid(auto 1fr, auto 1fr auto);
+  min-height: 100vh;
+  grid-template-areas: 
+    "header header"
+    "sidebar main"
+    "footer footer";
+  
+  .grid-header {
+    @include grid-area(header);
+  }
+  
+  .grid-sidebar {
+    @include grid-area(sidebar);
+    min-width: 250px;
+  }
+  
+  .grid-main {
+    @include grid-area(main);
+  }
+  
+  .grid-footer {
+    @include grid-area(footer);
+  }
+  
+  // Responsive: colapsar sidebar en móvil
+  @include media-breakpoint-down(md) {
+    grid-template-columns: 1fr;
+    grid-template-areas: 
+      "header"
+      "main"
+      "footer";
+    
+    .grid-sidebar {
+      display: none;
+    }
+  }
+}
+
+// Layout de tres columnas
+.grid-layout-three-col {
+  @include css-grid(auto 1fr auto, auto 1fr auto);
+  min-height: 100vh;
+  grid-template-areas: 
+    "header header header"
+    "sidebar main aside"
+    "footer footer footer";
+  
+  .grid-header {
+    @include grid-area(header);
+  }
+  
+  .grid-sidebar {
+    @include grid-area(sidebar);
+    min-width: 200px;
+  }
+  
+  .grid-main {
+    @include grid-area(main);
+  }
+  
+  .grid-aside {
+    @include grid-area(aside);
+    min-width: 200px;
+  }
+  
+  .grid-footer {
+    @include grid-area(footer);
+  }
+  
+  // Responsive
+  @include media-breakpoint-down(lg) {
+    grid-template-columns: 1fr;
+    grid-template-areas: 
+      "header"
+      "main"
+      "footer";
+    
+    .grid-sidebar,
+    .grid-aside {
+      display: none;
+    }
+  }
+}
+
+// Holy Grail Layout
+.grid-layout-holy-grail {
+  @include css-grid(auto 1fr auto, auto 1fr auto);
+  min-height: 100vh;
+  grid-template-areas: 
+    "header header header"
+    "nav main aside"
+    "footer footer footer";
+  
+  .grid-header {
+    @include grid-area(header);
+  }
+  
+  .grid-nav {
+    @include grid-area(nav);
+    min-width: 180px;
+  }
+  
+  .grid-main {
+    @include grid-area(main);
+    min-width: 0; // Prevent overflow
+  }
+  
+  .grid-aside {
+    @include grid-area(aside);
+    min-width: 200px;
+  }
+  
+  .grid-footer {
+    @include grid-area(footer);
+  }
+}
+
+// ===================================================================
+// UTILITY CLASSES
+// ===================================================================
+
+// Display utilities
+.d-none {
+  display: none !important;
+}
+
+.d-block {
+  display: block !important;
+}
+
+.d-flex {
+  display: flex !important;
+}
+
+.d-grid {
+  display: grid !important;
+}
+
+.d-inline {
+  display: inline !important;
+}
+
+.d-inline-block {
+  display: inline-block !important;
+}
+
+.d-inline-flex {
+  display: inline-flex !important;
+}
+
+.d-inline-grid {
+  display: inline-grid !important;
+}
+
+// Responsive display utilities
+@each $breakpoint in map-keys($grid-breakpoints) {
+  $infix: if($breakpoint == xs, "", "-#{$breakpoint}");
+  
+  @include media-breakpoint-up($breakpoint, $grid-breakpoints) {
+    .d#{$infix}-none {
+      display: none !important;
+    }
+    
+    .d#{$infix}-block {
+      display: block !important;
+    }
+    
+    .d#{$infix}-flex {
+      display: flex !important;
+    }
+    
+    .d#{$infix}-grid {
+      display: grid !important;
+    }
+    
+    .d#{$infix}-inline {
+      display: inline !important;
+    }
+    
+    .d#{$infix}-inline-block {
+      display: inline-block !important;
+    }
+    
+    .d#{$infix}-inline-flex {
+      display: inline-flex !important;
+    }
+    
+    .d#{$infix}-inline-grid {
+      display: inline-grid !important;
+    }
+  }
+}
+
+// Flex utilities
+.flex-row {
+  flex-direction: row !important;
+}
+
+.flex-row-reverse {
+  flex-direction: row-reverse !important;
+}
+
+.flex-column {
+  flex-direction: column !important;
+}
+
+.flex-column-reverse {
+  flex-direction: column-reverse !important;
+}
+
+.flex-wrap {
+  flex-wrap: wrap !important;
+}
+
+.flex-nowrap {
+  flex-wrap: nowrap !important;
+}
+
+.flex-wrap-reverse {
+  flex-wrap: wrap-reverse !important;
+}
+
+.justify-content-start {
+  justify-content: flex-start !important;
+}
+
+.justify-content-end {
+  justify-content: flex-end !important;
+}
+
+.justify-content-center {
+  justify-content: center !important;
+}
+
+.justify-content-between {
+  justify-content: space-between !important;
+}
+
+.justify-content-around {
+  justify-content: space-around !important;
+}
+
+.justify-content-evenly {
+  justify-content: space-evenly !important;
+}
+
+.align-items-start {
+  align-items: flex-start !important;
+}
+
+.align-items-end {
+  align-items: flex-end !important;
+}
+
+.align-items-center {
+  align-items: center !important;
+}
+
+.align-items-baseline {
+  align-items: baseline !important;
+}
+
+.align-items-stretch {
+  align-items: stretch !important;
+}
+
+.align-content-start {
+  align-content: flex-start !important;
+}
+
+.align-content-end {
+  align-content: flex-end !important;
+}
+
+.align-content-center {
+  align-content: center !important;
+}
+
+.align-content-between {
+  align-content: space-between !important;
+}
+
+.align-content-around {
+  align-content: space-around !important;
+}
+
+.align-content-stretch {
+  align-content: stretch !important;
+}
+
+.align-self-auto {
+  align-self: auto !important;
+}
+
+.align-self-start {
+  align-self: flex-start !important;
+}
+
+.align-self-end {
+  align-self: flex-end !important;
+}
+
+.align-self-center {
+  align-self: center !important;
+}
+
+.align-self-baseline {
+  align-self: baseline !important;
+}
+
+.align-self-stretch {
+  align-self: stretch !important;
+}
+
+// Grid utilities para justify y align
+.justify-items-start {
+  justify-items: start !important;
+}
+
+.justify-items-end {
+  justify-items: end !important;
+}
+
+.justify-items-center {
+  justify-items: center !important;
+}
+
+.justify-items-stretch {
+  justify-items: stretch !important;
+}
+
+.justify-self-auto {
+  justify-self: auto !important;
+}
+
+.justify-self-start {
+  justify-self: start !important;
+}
+
+.justify-self-end {
+  justify-self: end !important;
+}
+
+.justify-self-center {
+  justify-self: center !important;
+}
+
+.justify-self-stretch {
+  justify-self: stretch !important;
+}
+
+.place-content-start {
+  place-content: start !important;
+}
+
+.place-content-end {
+  place-content: end !important;
+}
+
+.place-content-center {
+  place-content: center !important;
+}
+
+.place-content-between {
+  place-content: space-between !important;
+}
+
+.place-content-around {
+  place-content: space-around !important;
+}
+
+.place-content-evenly {
+  place-content: space-evenly !important;
+}
+
+.place-content-stretch {
+  place-content: stretch !important;
+}
+
+.place-items-start {
+  place-items: start !important;
+}
+
+.place-items-end {
+  place-items: end !important;
+}
+
+.place-items-center {
+  place-items: center !important;
+}
+
+.place-items-stretch {
+  place-items: stretch !important;
+}
+
+.place-self-auto {
+  place-self: auto !important;
+}
+
+.place-self-start {
+  place-self: start !important;
+}
+
+.place-self-end {
+  place-self: end !important;
+}
+
+.place-self-center {
+  place-self: center !important;
+}
+
+.place-self-stretch {
+  place-self: stretch !important;
+}
+
+// ===================================================================
+// ASPECT RATIO UTILITIES
+// ===================================================================
+
+@each $name, $ratio in $aspect-ratios {
+  .aspect-#{$name} {
+    @include aspect-ratio(nth($ratio, 1), nth($ratio, 2));
+  }
+}
+
+// ===================================================================
+// POSITION UTILITIES
+// ===================================================================
+
+.position-static {
+  position: static !important;
+}
+
+.position-relative {
+  position: relative !important;
+}
+
+.position-absolute {
+  position: absolute !important;
+}
+
+.position-fixed {
+  position: fixed !important;
+}
+
+.position-sticky {
+  position: sticky !important;
+}
+
+// Position values
+.top-0 {
+  top: 0 !important;
+}
+
+.top-50 {
+  top: 50% !important;
+}
+
+.top-100 {
+  top: 100% !important;
+}
+
+.bottom-0 {
+  bottom: 0 !important;
+}
+
+.bottom-50 {
+  bottom: 50% !important;
+}
+
+.bottom-100 {
+  bottom: 100% !important;
+}
+
+.start-0 {
+  left: 0 !important;
+}
+
+.start-50 {
+  left: 50% !important;
+}
+
+.start-100 {
+  left: 100% !important;
+}
+
+.end-0 {
+  right: 0 !important;
+}
+
+.end-50 {
+  right: 50% !important;
+}
+
+.end-100 {
+  right: 100% !important;
+}
+
+.translate-middle {
+  transform: translate(-50%, -50%) !important;
+}
+
+.translate-middle-x {
+  transform: translateX(-50%) !important;
+}
+
+.translate-middle-y {
+  transform: translateY(-50%) !important;
+}
+
+// ===================================================================
+// OVERFLOW UTILITIES
+// ===================================================================
+
+.overflow-auto {
+  overflow: auto !important;
+}
+
+.overflow-hidden {
+  overflow: hidden !important;
+}
+
+.overflow-visible {
+  overflow: visible !important;
+}
+
+.overflow-scroll {
+  overflow: scroll !important;
+}
+
+.overflow-x-auto {
+  overflow-x: auto !important;
+}
+
+.overflow-x-hidden {
+  overflow-x: hidden !important;
+}
+
+.overflow-x-visible {
+  overflow-x: visible !important;
+}
+
+.overflow-x-scroll {
+  overflow-x: scroll !important;
+}
+
+.overflow-y-auto {
+  overflow-y: auto !important;
+}
+
+.overflow-y-hidden {
+  overflow-y: hidden !important;
+}
+
+.overflow-y-visible {
+  overflow-y: visible !important;
+}
+
+.overflow-y-scroll {
+  overflow-y: scroll !important;
+}
+
+// ===================================================================
+// CONTAINER QUERIES (Experimental)
+// ===================================================================
+
+@if $grid-enable-container-queries {
+  @supports (container-type: inline-size) {
+    .container-query {
+      container-type: inline-size;
+      
+      &.container-query-normal {
+        container-type: normal;
+      }
+      
+      &.container-query-size {
+        container-type: size;
+      }
+    }
+    
+    // Container query breakpoints
+    @container (min-width: 320px) {
+      .cq-sm\:block {
+        display: block;
+      }
+      
+      .cq-sm\:grid {
+        display: grid;
+      }
+      
+      .cq-sm\:flex {
+        display: flex;
+      }
+    }
+    
+    @container (min-width: 480px) {
+      .cq-md\:block {
+        display: block;
+      }
+      
+      .cq-md\:grid {
+        display: grid;
+      }
+      
+      .cq-md\:flex {
+        display: flex;
+      }
+    }
+    
+    @container (min-width: 640px) {
+      .cq-lg\:block {
+        display: block;
+      }
+      
+      .cq-lg\:grid {
+        display: grid;
+      }
+      
+      .cq-lg\:flex {
+        display: flex;
+      }
+    }
+  }
+}
+
+// ===================================================================
+// PRINT UTILITIES
+// ===================================================================
+
+@media print {
+  .d-print-none {
+    display: none !important;
+  }
+  
+  .d-print-block {
+    display: block !important;
+  }
+  
+  .d-print-inline {
+    display: inline !important;
+  }
+  
+  .d-print-inline-block {
+    display: inline-block !important;
+  }
+  
+  // Evitar breaks en elementos importantes
+  .print-break-inside-avoid {
+    break-inside: avoid;
+  }
+  
+  .print-break-after-page {
+    break-after: page;
+  }
+  
+  .print-break-before-page {
+    break-before: page;
+  }
+}
+
+// ===================================================================
+// RESPONSIVE UTILITIES ADICIONALES
+// ===================================================================
+
+// Hide/show en breakpoints específicos
+@each $breakpoint in map-keys($grid-breakpoints) {
+  $infix: if($breakpoint == xs, "", "-#{$breakpoint}");
+  
+  @include media-breakpoint-up($breakpoint, $grid-breakpoints) {
+    .visible#{$infix} {
+      display: block !important;
+    }
+    
+    .hidden#{$infix} {
+      display: none !important;
+    }
+  }
+  
+  @include media-breakpoint-down($breakpoint, $grid-breakpoints) {
+    .visible#{$infix}-down {
+      display: block !important;
+    }
+    
+    .hidden#{$infix}-down {
+      display: none !important;
+    }
+  }
+}
+
+// ===================================================================
+// ACCESIBILIDAD Y PERFORMANCE
+// ===================================================================
+
+// Reducir movimiento para usuarios con preferencias de accesibilidad
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// Optimización para pantallas de alta densidad
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .grid,
+  .row {
+    // Optimizaciones específicas para pantallas Retina
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+// ===================================================================
+// DEBUGGING UTILITIES (Solo en desarrollo)
+// ===================================================================
+
+.debug-grid {
+  * {
+    outline: 1px solid rgba(255, 0, 0, 0.3) !important;
+  }
+  
+  .container,
+  .container-fluid {
+    outline-color: rgba(0, 255, 0, 0.3) !important;
+  }
+  
+  .row {
+    outline-color: rgba(0, 0, 255, 0.3) !important;
+  }
+  
+  [class^="col-"],
+  [class*=" col-"] {
+    outline-color: rgba(255, 165, 0, 0.3) !important;
+  }
+}

@@ -1,0 +1,1410 @@
+/**
+ * ===================================================================
+ * FLEXBOX LAYOUT SYSTEM - SISTEMA COMPLETO DE FLEXBOX
+ * ===================================================================
+ * Desarrollado por: jusga
+ * Versión: 7.0.0
+ * Compatibilidad: IE11+, Chrome, Firefox, Safari, Edge
+ * Características: Utilities, Components, Layouts, Responsive
+ * ===================================================================
+ */
+
+// ===================================================================
+// VARIABLES SCSS PARA FLEXBOX SYSTEM
+// ===================================================================
+
+// Breakpoints para responsive flexbox
+$flex-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px
+) !default;
+
+// Gaps para flex containers
+$flex-gaps: (
+  0: 0,
+  1: 0.25rem,
+  2: 0.5rem,
+  3: 1rem,
+  4: 1.5rem,
+  5: 3rem,
+  auto: auto
+) !default;
+
+// Flex basis valores comunes
+$flex-basis-values: (
+  0: 0,
+  auto: auto,
+  full: 100%,
+  "1/2": 50%,
+  "1/3": 33.333333%,
+  "2/3": 66.666667%,
+  "1/4": 25%,
+  "3/4": 75%,
+  "1/5": 20%,
+  "2/5": 40%,
+  "3/5": 60%,
+  "4/5": 80%,
+  "1/6": 16.666667%,
+  "5/6": 83.333333%,
+  "1/12": 8.333333%,
+  "5/12": 41.666667%,
+  "7/12": 58.333333%,
+  "11/12": 91.666667%
+) !default;
+
+// Flex grow valores
+$flex-grow-values: (
+  0: 0,
+  1: 1,
+  2: 2,
+  3: 3,
+  4: 4,
+  5: 5
+) !default;
+
+// Flex shrink valores
+$flex-shrink-values: (
+  0: 0,
+  1: 1,
+  2: 2,
+  3: 3
+) !default;
+
+// Order valores
+$flex-order-values: (
+  first: -1,
+  0: 0,
+  1: 1,
+  2: 2,
+  3: 3,
+  4: 4,
+  5: 5,
+  6: 6,
+  7: 7,
+  8: 8,
+  9: 9,
+  10: 10,
+  11: 11,
+  12: 12,
+  last: 9999
+) !default;
+
+// Tamaños predefinidos para componentes flex
+$flex-component-sizes: (
+  xs: (
+    gap: 0.25rem,
+    padding: 0.5rem,
+    font-size: 0.75rem
+  ),
+  sm: (
+    gap: 0.5rem,
+    padding: 0.75rem,
+    font-size: 0.875rem
+  ),
+  md: (
+    gap: 1rem,
+    padding: 1rem,
+    font-size: 1rem
+  ),
+  lg: (
+    gap: 1.5rem,
+    padding: 1.25rem,
+    font-size: 1.125rem
+  ),
+  xl: (
+    gap: 2rem,
+    padding: 1.5rem,
+    font-size: 1.25rem
+  )
+) !default;
+
+// Configuración de performance
+$flex-enable-utilities: true !default;
+$flex-enable-responsive: true !default;
+$flex-enable-components: true !default;
+$flex-enable-layouts: true !default;
+$flex-enable-grid-fallback: true !default;
+
+// ===================================================================
+// MIXINS PARA FLEXBOX
+// ===================================================================
+
+// Breakpoint mixins
+@mixin flex-breakpoint-up($name, $breakpoints: $flex-breakpoints) {
+  $min: map-get($breakpoints, $name);
+  @if $min != 0 {
+    @media (min-width: $min) {
+      @content;
+    }
+  } @else {
+    @content;
+  }
+}
+
+@mixin flex-breakpoint-down($name, $breakpoints: $flex-breakpoints) {
+  $max: map-get($breakpoints, $name);
+  @if $max and $max > 0 {
+    @media (max-width: $max - 0.02) {
+      @content;
+    }
+  }
+}
+
+// Mixin base para flex containers
+@mixin flex-container(
+  $direction: row,
+  $wrap: nowrap,
+  $justify: flex-start,
+  $align: stretch,
+  $align-content: stretch,
+  $gap: null
+) {
+  display: flex;
+  flex-direction: $direction;
+  flex-wrap: $wrap;
+  justify-content: $justify;
+  align-items: $align;
+  align-content: $align-content;
+  
+  @if $gap {
+    gap: $gap;
+  }
+}
+
+// Mixin para flex items
+@mixin flex-item(
+  $grow: 0,
+  $shrink: 1,
+  $basis: auto,
+  $align: auto,
+  $order: 0
+) {
+  flex-grow: $grow;
+  flex-shrink: $shrink;
+  flex-basis: $basis;
+  align-self: $align;
+  order: $order;
+}
+
+// Mixin para centrado perfecto
+@mixin flex-center($direction: row) {
+  @include flex-container(
+    $direction: $direction,
+    $justify: center,
+    $align: center
+  );
+}
+
+// Mixin para distribución equitativa
+@mixin flex-distribute($direction: row, $gap: null) {
+  @include flex-container(
+    $direction: $direction,
+    $justify: space-between,
+    $align: center,
+    $gap: $gap
+  );
+}
+
+// Mixin para flex wrap responsivo
+@mixin flex-wrap-responsive($breakpoint: md) {
+  flex-direction: column;
+  
+  @include flex-breakpoint-up($breakpoint) {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+// Mixin para flex grid emulation
+@mixin flex-grid($columns: 12, $gap: 1rem) {
+  @include flex-container($wrap: wrap, $gap: $gap);
+  
+  > * {
+    flex: 0 0 calc(100% / #{$columns} - #{$gap});
+  }
+}
+
+// Mixin para sticky footer con flex
+@mixin flex-sticky-footer() {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  
+  main,
+  .main-content {
+    flex: 1 0 auto;
+  }
+  
+  footer,
+  .footer {
+    flex-shrink: 0;
+  }
+}
+
+// Mixin para truncate text en flex items
+@mixin flex-truncate() {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+// Mixin para aspect ratio con flex
+@mixin flex-aspect-ratio($width: 16, $height: 9) {
+  position: relative;
+  
+  &::before {
+    content: "";
+    display: block;
+    padding-bottom: percentage($height / $width);
+  }
+  
+  > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+// ===================================================================
+// UTILIDADES BASE DE FLEXBOX
+// ===================================================================
+
+@if $flex-enable-utilities {
+  
+  // Display flex
+  .d-flex {
+    display: flex !important;
+  }
+  
+  .d-inline-flex {
+    display: inline-flex !important;
+  }
+  
+  // Flex direction
+  .flex-row {
+    flex-direction: row !important;
+  }
+  
+  .flex-row-reverse {
+    flex-direction: row-reverse !important;
+  }
+  
+  .flex-column {
+    flex-direction: column !important;
+  }
+  
+  .flex-column-reverse {
+    flex-direction: column-reverse !important;
+  }
+  
+  // Flex wrap
+  .flex-wrap {
+    flex-wrap: wrap !important;
+  }
+  
+  .flex-wrap-reverse {
+    flex-wrap: wrap-reverse !important;
+  }
+  
+  .flex-nowrap {
+    flex-wrap: nowrap !important;
+  }
+  
+  // Justify content
+  .justify-content-start {
+    justify-content: flex-start !important;
+  }
+  
+  .justify-content-end {
+    justify-content: flex-end !important;
+  }
+  
+  .justify-content-center {
+    justify-content: center !important;
+  }
+  
+  .justify-content-between {
+    justify-content: space-between !important;
+  }
+  
+  .justify-content-around {
+    justify-content: space-around !important;
+  }
+  
+  .justify-content-evenly {
+    justify-content: space-evenly !important;
+  }
+  
+  // Align items
+  .align-items-start {
+    align-items: flex-start !important;
+  }
+  
+  .align-items-end {
+    align-items: flex-end !important;
+  }
+  
+  .align-items-center {
+    align-items: center !important;
+  }
+  
+  .align-items-baseline {
+    align-items: baseline !important;
+  }
+  
+  .align-items-stretch {
+    align-items: stretch !important;
+  }
+  
+  // Align content
+  .align-content-start {
+    align-content: flex-start !important;
+  }
+  
+  .align-content-end {
+    align-content: flex-end !important;
+  }
+  
+  .align-content-center {
+    align-content: center !important;
+  }
+  
+  .align-content-between {
+    align-content: space-between !important;
+  }
+  
+  .align-content-around {
+    align-content: space-around !important;
+  }
+  
+  .align-content-stretch {
+    align-content: stretch !important;
+  }
+  
+  // Align self
+  .align-self-auto {
+    align-self: auto !important;
+  }
+  
+  .align-self-start {
+    align-self: flex-start !important;
+  }
+  
+  .align-self-end {
+    align-self: flex-end !important;
+  }
+  
+  .align-self-center {
+    align-self: center !important;
+  }
+  
+  .align-self-baseline {
+    align-self: baseline !important;
+  }
+  
+  .align-self-stretch {
+    align-self: stretch !important;
+  }
+  
+  // Flex grow
+  @each $key, $value in $flex-grow-values {
+    .flex-grow-#{$key} {
+      flex-grow: $value !important;
+    }
+  }
+  
+  // Flex shrink
+  @each $key, $value in $flex-shrink-values {
+    .flex-shrink-#{$key} {
+      flex-shrink: $value !important;
+    }
+  }
+  
+  // Flex basis
+  @each $key, $value in $flex-basis-values {
+    .flex-basis-#{$key} {
+      flex-basis: $value !important;
+    }
+  }
+  
+  // Flex shorthand
+  .flex-auto {
+    flex: 1 1 auto !important;
+  }
+  
+  .flex-initial {
+    flex: 0 1 auto !important;
+  }
+  
+  .flex-none {
+    flex: none !important;
+  }
+  
+  .flex-fill {
+    flex: 1 1 auto !important;
+  }
+  
+  // Order
+  @each $key, $value in $flex-order-values {
+    .order-#{$key} {
+      order: $value !important;
+    }
+  }
+  
+  // Gap utilities
+  @each $key, $value in $flex-gaps {
+    .gap-#{$key} {
+      gap: $value !important;
+    }
+    
+    .gap-x-#{$key} {
+      column-gap: $value !important;
+    }
+    
+    .gap-y-#{$key} {
+      row-gap: $value !important;
+    }
+  }
+}
+
+// ===================================================================
+// UTILIDADES RESPONSIVE
+// ===================================================================
+
+@if $flex-enable-responsive {
+  @each $breakpoint in map-keys($flex-breakpoints) {
+    $infix: if($breakpoint == xs, "", "-#{$breakpoint}");
+    
+    @include flex-breakpoint-up($breakpoint, $flex-breakpoints) {
+      
+      // Display flex responsive
+      .d#{$infix}-flex {
+        display: flex !important;
+      }
+      
+      .d#{$infix}-inline-flex {
+        display: inline-flex !important;
+      }
+      
+      // Flex direction responsive
+      .flex#{$infix}-row {
+        flex-direction: row !important;
+      }
+      
+      .flex#{$infix}-row-reverse {
+        flex-direction: row-reverse !important;
+      }
+      
+      .flex#{$infix}-column {
+        flex-direction: column !important;
+      }
+      
+      .flex#{$infix}-column-reverse {
+        flex-direction: column-reverse !important;
+      }
+      
+      // Flex wrap responsive
+      .flex#{$infix}-wrap {
+        flex-wrap: wrap !important;
+      }
+      
+      .flex#{$infix}-wrap-reverse {
+        flex-wrap: wrap-reverse !important;
+      }
+      
+      .flex#{$infix}-nowrap {
+        flex-wrap: nowrap !important;
+      }
+      
+      // Justify content responsive
+      .justify-content#{$infix}-start {
+        justify-content: flex-start !important;
+      }
+      
+      .justify-content#{$infix}-end {
+        justify-content: flex-end !important;
+      }
+      
+      .justify-content#{$infix}-center {
+        justify-content: center !important;
+      }
+      
+      .justify-content#{$infix}-between {
+        justify-content: space-between !important;
+      }
+      
+      .justify-content#{$infix}-around {
+        justify-content: space-around !important;
+      }
+      
+      .justify-content#{$infix}-evenly {
+        justify-content: space-evenly !important;
+      }
+      
+      // Align items responsive
+      .align-items#{$infix}-start {
+        align-items: flex-start !important;
+      }
+      
+      .align-items#{$infix}-end {
+        align-items: flex-end !important;
+      }
+      
+      .align-items#{$infix}-center {
+        align-items: center !important;
+      }
+      
+      .align-items#{$infix}-baseline {
+        align-items: baseline !important;
+      }
+      
+      .align-items#{$infix}-stretch {
+        align-items: stretch !important;
+      }
+      
+      // Align content responsive
+      .align-content#{$infix}-start {
+        align-content: flex-start !important;
+      }
+      
+      .align-content#{$infix}-end {
+        align-content: flex-end !important;
+      }
+      
+      .align-content#{$infix}-center {
+        align-content: center !important;
+      }
+      
+      .align-content#{$infix}-between {
+        align-content: space-between !important;
+      }
+      
+      .align-content#{$infix}-around {
+        align-content: space-around !important;
+      }
+      
+      .align-content#{$infix}-stretch {
+        align-content: stretch !important;
+      }
+      
+      // Align self responsive
+      .align-self#{$infix}-auto {
+        align-self: auto !important;
+      }
+      
+      .align-self#{$infix}-start {
+        align-self: flex-start !important;
+      }
+      
+      .align-self#{$infix}-end {
+        align-self: flex-end !important;
+      }
+      
+      .align-self#{$infix}-center {
+        align-self: center !important;
+      }
+      
+      .align-self#{$infix}-baseline {
+        align-self: baseline !important;
+      }
+      
+      .align-self#{$infix}-stretch {
+        align-self: stretch !important;
+      }
+      
+      // Flex grow responsive
+      @each $key, $value in $flex-grow-values {
+        .flex#{$infix}-grow-#{$key} {
+          flex-grow: $value !important;
+        }
+      }
+      
+      // Flex shrink responsive
+      @each $key, $value in $flex-shrink-values {
+        .flex#{$infix}-shrink-#{$key} {
+          flex-shrink: $value !important;
+        }
+      }
+      
+      // Order responsive
+      @each $key, $value in $flex-order-values {
+        .order#{$infix}-#{$key} {
+          order: $value !important;
+        }
+      }
+      
+      // Gap responsive
+      @each $key, $value in $flex-gaps {
+        .gap#{$infix}-#{$key} {
+          gap: $value !important;
+        }
+        
+        .gap#{$infix}-x-#{$key} {
+          column-gap: $value !important;
+        }
+        
+        .gap#{$infix}-y-#{$key} {
+          row-gap: $value !important;
+        }
+      }
+    }
+  }
+}
+
+// ===================================================================
+// COMPONENTES FLEXBOX PREDEFINIDOS
+// ===================================================================
+
+@if $flex-enable-components {
+  
+  // Flex stack - contenedor vertical básico
+  .flex-stack {
+    @include flex-container($direction: column, $gap: 1rem);
+    
+    @each $size, $props in $flex-component-sizes {
+      &.flex-stack--#{$size} {
+        gap: map-get($props, gap);
+      }
+    }
+  }
+  
+  // Flex inline - contenedor horizontal básico
+  .flex-inline {
+    @include flex-container($direction: row, $align: center, $gap: 1rem);
+    
+    @each $size, $props in $flex-component-sizes {
+      &.flex-inline--#{$size} {
+        gap: map-get($props, gap);
+      }
+    }
+  }
+  
+  // Flex center - centrado perfecto
+  .flex-center {
+    @include flex-center();
+    min-height: 200px;
+    
+    &.flex-center--full {
+      min-height: 100vh;
+    }
+    
+    &.flex-center--column {
+      @include flex-center(column);
+    }
+  }
+  
+  // Flex between - distribución con space-between
+  .flex-between {
+    @include flex-distribute();
+    
+    &.flex-between--column {
+      @include flex-distribute(column);
+    }
+  }
+  
+  // Flex grid - emulación de grid con flexbox
+  .flex-grid {
+    @include flex-grid();
+    
+    &.flex-grid--2 {
+      @include flex-grid(2);
+    }
+    
+    &.flex-grid--3 {
+      @include flex-grid(3);
+    }
+    
+    &.flex-grid--4 {
+      @include flex-grid(4);
+    }
+    
+    &.flex-grid--6 {
+      @include flex-grid(6);
+    }
+    
+    // Responsive flex grid
+    &.flex-grid--responsive {
+      > * {
+        flex: 1 1 100%;
+        
+        @include flex-breakpoint-up(sm) {
+          flex: 1 1 calc(50% - 1rem);
+        }
+        
+        @include flex-breakpoint-up(md) {
+          flex: 1 1 calc(33.333% - 1rem);
+        }
+        
+        @include flex-breakpoint-up(lg) {
+          flex: 1 1 calc(25% - 1rem);
+        }
+      }
+    }
+  }
+  
+  // Flex card - card component con flexbox
+  .flex-card {
+    @include flex-container($direction: column);
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    
+    &__header {
+      padding: 1rem;
+      border-bottom: 1px solid #e5e7eb;
+      flex-shrink: 0;
+    }
+    
+    &__body {
+      padding: 1rem;
+      flex: 1 1 auto;
+    }
+    
+    &__footer {
+      padding: 1rem;
+      border-top: 1px solid #e5e7eb;
+      flex-shrink: 0;
+      @include flex-container($justify: flex-end, $gap: 0.5rem);
+    }
+    
+    // Variantes de tamaño
+    @each $size, $props in $flex-component-sizes {
+      &--#{$size} {
+        .flex-card__header,
+        .flex-card__body,
+        .flex-card__footer {
+          padding: map-get($props, padding);
+        }
+        
+        .flex-card__footer {
+          gap: map-get($props, gap);
+        }
+      }
+    }
+  }
+  
+  // Flex navbar - barra de navegación
+  .flex-navbar {
+    @include flex-container($justify: space-between, $align: center);
+    padding: 1rem;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    
+    &__brand {
+      @include flex-container($align: center, $gap: 0.5rem);
+      font-weight: 600;
+      font-size: 1.25rem;
+    }
+    
+    &__nav {
+      @include flex-container($gap: 2rem);
+      
+      @include flex-breakpoint-down(md) {
+        display: none;
+        
+        &.is-open {
+          display: flex;
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          background: #ffffff;
+          border-top: 1px solid #e5e7eb;
+          flex-direction: column;
+          padding: 1rem;
+          gap: 1rem;
+        }
+      }
+    }
+    
+    &__actions {
+      @include flex-container($gap: 1rem, $align: center);
+    }
+    
+    &__toggle {
+      display: none;
+      
+      @include flex-breakpoint-down(md) {
+        display: flex;
+      }
+    }
+  }
+  
+  // Flex list - lista con flexbox
+  .flex-list {
+    @include flex-container($direction: column);
+    
+    &__item {
+      @include flex-container($justify: space-between, $align: center);
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #e5e7eb;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      &:hover {
+        background-color: #f9fafb;
+      }
+    }
+    
+    &__content {
+      @include flex-container($direction: column);
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    
+    &__title {
+      font-weight: 500;
+      @include flex-truncate();
+    }
+    
+    &__subtitle {
+      font-size: 0.875rem;
+      color: #6b7280;
+      @include flex-truncate();
+    }
+    
+    &__actions {
+      @include flex-container($gap: 0.5rem);
+      flex-shrink: 0;
+    }
+  }
+  
+  // Flex form - formulario con flexbox
+  .flex-form {
+    @include flex-container($direction: column, $gap: 1rem);
+    
+    &__group {
+      @include flex-container($direction: column, $gap: 0.25rem);
+      
+      &--inline {
+        @include flex-container($direction: row, $align: center, $gap: 1rem);
+        
+        label {
+          flex-shrink: 0;
+          min-width: 120px;
+        }
+        
+        input,
+        select,
+        textarea {
+          flex: 1 1 auto;
+        }
+      }
+    }
+    
+    &__actions {
+      @include flex-container($gap: 1rem, $justify: flex-end);
+      
+      &--center {
+        justify-content: center;
+      }
+      
+      &--start {
+        justify-content: flex-start;
+      }
+      
+      &--between {
+        justify-content: space-between;
+      }
+    }
+    
+    // Responsive form
+    &--responsive {
+      .flex-form__group--inline {
+        flex-direction: column;
+        align-items: stretch;
+        
+        @include flex-breakpoint-up(md) {
+          flex-direction: row;
+          align-items: center;
+        }
+        
+        label {
+          min-width: auto;
+          
+          @include flex-breakpoint-up(md) {
+            min-width: 120px;
+          }
+        }
+      }
+    }
+  }
+  
+  // Flex media - objeto media con flexbox
+  .flex-media {
+    @include flex-container($gap: 1rem);
+    
+    &__figure {
+      flex-shrink: 0;
+      
+      img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+      }
+    }
+    
+    &__body {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    
+    &__title {
+      margin: 0 0 0.25rem 0;
+      font-weight: 500;
+    }
+    
+    &__text {
+      margin: 0;
+      color: #6b7280;
+    }
+    
+    // Variantes de alineación
+    &--top {
+      align-items: flex-start;
+    }
+    
+    &--center {
+      align-items: center;
+    }
+    
+    &--bottom {
+      align-items: flex-end;
+    }
+    
+    // Variante inversa
+    &--reverse {
+      flex-direction: row-reverse;
+    }
+  }
+}
+
+// ===================================================================
+// LAYOUTS PREDEFINIDOS CON FLEXBOX
+// ===================================================================
+
+@if $flex-enable-layouts {
+  
+  // Sticky footer layout
+  .flex-layout-sticky-footer {
+    @include flex-sticky-footer();
+  }
+  
+  // Holy grail layout con flexbox
+  .flex-layout-holy-grail {
+    @include flex-container($direction: column);
+    min-height: 100vh;
+    
+    .flex-header {
+      flex-shrink: 0;
+      background: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .flex-main {
+      @include flex-container();
+      flex: 1 1 auto;
+      
+      .flex-nav {
+        flex: 0 0 250px;
+        background: #f9fafb;
+        border-right: 1px solid #e5e7eb;
+        
+        @include flex-breakpoint-down(lg) {
+          display: none;
+        }
+      }
+      
+      .flex-content {
+        flex: 1 1 auto;
+        padding: 2rem;
+        min-width: 0;
+      }
+      
+      .flex-aside {
+        flex: 0 0 300px;
+        background: #f9fafb;
+        border-left: 1px solid #e5e7eb;
+        
+        @include flex-breakpoint-down(xl) {
+          display: none;
+        }
+      }
+    }
+    
+    .flex-footer {
+      flex-shrink: 0;
+      background: #f9fafb;
+      border-top: 1px solid #e5e7eb;
+    }
+  }
+  
+  // Dashboard layout
+  .flex-layout-dashboard {
+    @include flex-container();
+    min-height: 100vh;
+    
+    .flex-sidebar {
+      @include flex-container($direction: column);
+      width: 280px;
+      background: #1f2937;
+      color: #ffffff;
+      flex-shrink: 0;
+      
+      @include flex-breakpoint-down(lg) {
+        position: fixed;
+        top: 0;
+        left: -280px;
+        height: 100vh;
+        z-index: 1000;
+        transition: left 0.3s ease;
+        
+        &.is-open {
+          left: 0;
+        }
+      }
+      
+      &__header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      &__nav {
+        flex: 1 1 auto;
+        padding: 1rem 0;
+      }
+      
+      &__footer {
+        padding: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    }
+    
+    .flex-main {
+      @include flex-container($direction: column);
+      flex: 1 1 auto;
+      min-width: 0;
+      
+      .flex-topbar {
+        @include flex-container($justify: space-between, $align: center);
+        padding: 1rem 2rem;
+        background: #ffffff;
+        border-bottom: 1px solid #e5e7eb;
+        flex-shrink: 0;
+      }
+      
+      .flex-content {
+        flex: 1 1 auto;
+        padding: 2rem;
+        background: #f9fafb;
+        overflow: auto;
+      }
+    }
+  }
+  
+  // Magazine layout
+  .flex-layout-magazine {
+    @include flex-container($direction: column, $gap: 2rem);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    
+    .flex-hero {
+      @include flex-aspect-ratio(16, 9);
+      background: #e5e7eb;
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+    
+    .flex-articles {
+      @include flex-container($wrap: wrap, $gap: 2rem);
+      
+      .flex-featured {
+        flex: 1 1 100%;
+        
+        @include flex-breakpoint-up(lg) {
+          flex: 1 1 60%;
+        }
+      }
+      
+      .flex-sidebar-articles {
+        @include flex-container($direction: column, $gap: 1rem);
+        flex: 1 1 100%;
+        
+        @include flex-breakpoint-up(lg) {
+          flex: 1 1 35%;
+        }
+      }
+    }
+    
+    .flex-grid-articles {
+      @include flex-container($wrap: wrap, $gap: 2rem);
+      
+      > * {
+        flex: 1 1 100%;
+        
+        @include flex-breakpoint-up(sm) {
+          flex: 1 1 calc(50% - 1rem);
+        }
+        
+        @include flex-breakpoint-up(lg) {
+          flex: 1 1 calc(33.333% - 1rem);
+        }
+      }
+    }
+  }
+  
+  // Pricing layout
+  .flex-layout-pricing {
+    @include flex-container($wrap: wrap, $justify: center, $gap: 2rem);
+    padding: 2rem;
+    
+    .flex-pricing-card {
+      @include flex-container($direction: column);
+      flex: 1 1 300px;
+      max-width: 400px;
+      background: #ffffff;
+      border: 2px solid #e5e7eb;
+      border-radius: 0.75rem;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      }
+      
+      &--featured {
+        border-color: #3b82f6;
+        transform: scale(1.05);
+        
+        .flex-pricing-header {
+          background: #3b82f6;
+          color: #ffffff;
+        }
+      }
+      
+      &__header {
+        padding: 2rem;
+        text-align: center;
+        background: #f9fafb;
+      }
+      
+      &__body {
+        padding: 2rem;
+        flex: 1 1 auto;
+      }
+      
+      &__footer {
+        padding: 2rem;
+        background: #f9fafb;
+      }
+      
+      &__features {
+        @include flex-container($direction: column, $gap: 0.75rem);
+        margin: 1.5rem 0;
+      }
+    }
+  }
+}
+
+// ===================================================================
+// UTILIDADES AVANZADAS
+// ===================================================================
+
+// Flex truncate para texto
+.flex-truncate {
+  @include flex-truncate();
+}
+
+// Full height containers
+.flex-vh-100 {
+  min-height: 100vh;
+}
+
+.flex-h-100 {
+  height: 100%;
+}
+
+// Flex equal - elementos de igual altura
+.flex-equal {
+  @include flex-container();
+  
+  > * {
+    flex: 1 1 0;
+  }
+}
+
+// Flex auto margins para centrado
+.flex-center-x {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.flex-center-y {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+// Flex baseline alignment para inputs
+.flex-baseline {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+// ===================================================================
+// RESPONSIVE HELPERS
+// ===================================================================
+
+// Stack en móvil, horizontal en desktop
+.flex-stack-sm {
+  @include flex-wrap-responsive(sm);
+}
+
+.flex-stack-md {
+  @include flex-wrap-responsive(md);
+}
+
+.flex-stack-lg {
+  @include flex-wrap-responsive(lg);
+}
+
+// Ocultar en móvil para flex items
+@include flex-breakpoint-down(sm) {
+  .flex-hide-sm {
+    display: none !important;
+  }
+}
+
+@include flex-breakpoint-down(md) {
+  .flex-hide-md {
+    display: none !important;
+  }
+}
+
+// ===================================================================
+// FALLBACKS PARA NAVEGADORES SIN FLEXBOX
+// ===================================================================
+
+@if $flex-enable-grid-fallback {
+  @supports not (display: flex) {
+    .d-flex {
+      display: block;
+      
+      &::after {
+        content: "";
+        display: table;
+        clear: both;
+      }
+    }
+    
+    [class*="col-"] {
+      float: left;
+    }
+    
+    .justify-content-center {
+      text-align: center;
+    }
+    
+    .align-items-center {
+      vertical-align: middle;
+    }
+  }
+}
+
+// ===================================================================
+// ACCESIBILIDAD Y PERFORMANCE
+// ===================================================================
+
+// Reducir movimiento para usuarios con preferencias de accesibilidad
+@media (prefers-reduced-motion: reduce) {
+  .flex-layout-dashboard .flex-sidebar {
+    transition: none !important;
+  }
+  
+  .flex-pricing-card {
+    transition: none !important;
+    
+    &:hover {
+      transform: none !important;
+    }
+  }
+}
+
+// Optimización para pantallas táctiles
+@media (hover: none) and (pointer: coarse) {
+  .flex-list__item:hover {
+    background-color: transparent;
+  }
+  
+  .flex-pricing-card:hover {
+    transform: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+}
+
+// ===================================================================
+// DEBUG UTILITIES
+// ===================================================================
+
+.debug-flex {
+  * {
+    outline: 1px solid rgba(255, 0, 0, 0.3) !important;
+  }
+  
+  .d-flex,
+  .d-inline-flex {
+    outline-color: rgba(0, 255, 0, 0.5) !important;
+  }
+  
+  [class*="flex-"] {
+    outline-color: rgba(0, 0, 255, 0.3) !important;
+  }
+}
+
+// ===================================================================
+// PRINT STYLES
+// ===================================================================
+
+@media print {
+  .d-flex,
+  .d-inline-flex {
+    display: block !important;
+  }
+  
+  .flex-layout-dashboard .flex-sidebar {
+    display: none !important;
+  }
+  
+  .flex-layout-holy-grail {
+    .flex-nav,
+    .flex-aside {
+      display: none !important;
+    }
+    
+    .flex-main {
+      flex-direction: column !important;
+    }
+  }
+  
+  .flex-pricing-card {
+    break-inside: avoid;
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
+  }
+}

@@ -1,0 +1,1295 @@
+// =============================================================================
+// ALLY MESSAGES PAGE - SCSS STYLES
+// =============================================================================
+// Desarrollado por: jusga
+// Descripción: Estilos para la página de mensajes entre aliados/socios
+// Versión: 1.0.0
+// =============================================================================
+
+// Variables específicas para ally-messages
+$ally-primary-color: #2563eb;
+$ally-secondary-color: #64748b;
+$ally-success-color: #059669;
+$ally-warning-color: #d97706;
+$ally-danger-color: #dc2626;
+$ally-bg-light: #f8fafc;
+$ally-bg-dark: #1e293b;
+$ally-border-color: #e2e8f0;
+$ally-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+$ally-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+$ally-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+// Mixins específicos
+@mixin ally-card($padding: 1.5rem) {
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: $ally-shadow;
+  padding: $padding;
+  transition: $ally-transition;
+  
+  &:hover {
+    box-shadow: $ally-shadow-lg;
+    transform: translateY(-2px);
+  }
+}
+
+@mixin ally-message-status($color) {
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 100%;
+    background: $color;
+    border-radius: 0 2px 2px 0;
+  }
+}
+
+// =============================================================================
+// CONTENEDOR PRINCIPAL
+// =============================================================================
+.ally-messages {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  padding: 2rem 0;
+  
+  &__container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    
+    @media (min-width: 768px) {
+      padding: 0 2rem;
+    }
+  }
+  
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+    
+    h1 {
+      color: #1e293b;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin: 0;
+      background: linear-gradient(135deg, $ally-primary-color, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      
+      @media (max-width: 768px) {
+        font-size: 2rem;
+      }
+    }
+    
+    &-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+  }
+}
+
+// =============================================================================
+// LAYOUT PRINCIPAL (SIDEBAR + CONTENT)
+// =============================================================================
+.ally-messages__layout {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 2rem;
+  align-items: start;
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: 300px 1fr;
+    gap: 1.5rem;
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+// =============================================================================
+// SIDEBAR - LISTA DE ALIADOS
+// =============================================================================
+.ally-sidebar {
+  @include ally-card;
+  position: sticky;
+  top: 2rem;
+  max-height: calc(100vh - 4rem);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  
+  @media (max-width: 768px) {
+    position: relative;
+    top: 0;
+    max-height: none;
+  }
+  
+  &__header {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid $ally-border-color;
+    margin-bottom: 1rem;
+    
+    h3 {
+      margin: 0;
+      color: #1e293b;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    
+    .search-box {
+      margin-top: 0.75rem;
+      position: relative;
+      
+      input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        border: 1px solid $ally-border-color;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        transition: $ally-transition;
+        
+        &:focus {
+          outline: none;
+          border-color: $ally-primary-color;
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+      }
+      
+      .search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: $ally-secondary-color;
+        font-size: 1rem;
+      }
+    }
+  }
+  
+  &__list {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    margin-right: -0.5rem;
+    
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+      
+      &:hover {
+        background: #94a3b8;
+      }
+    }
+  }
+}
+
+// =============================================================================
+// ITEM DE ALIADO
+// =============================================================================
+.ally-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: $ally-transition;
+  position: relative;
+  
+  &:hover {
+    background: #f8fafc;
+    transform: translateX(4px);
+  }
+  
+  &.active {
+    background: linear-gradient(135deg, $ally-primary-color, #3b82f6);
+    color: white;
+    
+    .ally-item__info {
+      h4, p, .ally-item__time {
+        color: white;
+      }
+    }
+    
+    .ally-item__avatar {
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+    }
+  }
+  
+  &.unread {
+    @include ally-message-status($ally-primary-color);
+    background: #eff6ff;
+    
+    .ally-item__info h4 {
+      font-weight: 700;
+    }
+  }
+  
+  &__avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    margin-right: 0.75rem;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 1.125rem;
+    flex-shrink: 0;
+    position: relative;
+    
+    &.online::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      width: 12px;
+      height: 12px;
+      background: $ally-success-color;
+      border: 2px solid white;
+      border-radius: 50%;
+    }
+    
+    img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+  }
+  
+  &__info {
+    flex: 1;
+    min-width: 0;
+    
+    h4 {
+      margin: 0;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    p {
+      margin: 0.25rem 0 0;
+      font-size: 0.75rem;
+      color: $ally-secondary-color;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.3;
+    }
+  }
+  
+  &__meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+    
+    .ally-item__time {
+      font-size: 0.625rem;
+      color: $ally-secondary-color;
+      white-space: nowrap;
+    }
+    
+    .ally-item__badge {
+      background: $ally-primary-color;
+      color: white;
+      font-size: 0.625rem;
+      padding: 0.125rem 0.375rem;
+      border-radius: 0.75rem;
+      min-width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+  }
+}
+
+// =============================================================================
+// ÁREA DE CHAT
+// =============================================================================
+.ally-chat {
+  @include ally-card(0);
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 8rem);
+  
+  @media (max-width: 768px) {
+    height: 600px;
+  }
+  
+  &__header {
+    padding: 1.5rem;
+    border-bottom: 1px solid $ally-border-color;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fafbfc;
+    border-radius: 0.75rem 0.75rem 0 0;
+    
+    &-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      
+      .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        position: relative;
+        
+        &.online::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          width: 10px;
+          height: 10px;
+          background: $ally-success-color;
+          border: 2px solid white;
+          border-radius: 50%;
+        }
+        
+        img {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          object-fit: cover;
+        }
+      }
+      
+      .info {
+        h3 {
+          margin: 0;
+          font-size: 1.125rem;
+          font-weight: 600;
+          color: #1e293b;
+        }
+        
+        p {
+          margin: 0.125rem 0 0;
+          font-size: 0.75rem;
+          color: $ally-success-color;
+          font-weight: 500;
+        }
+      }
+    }
+    
+    &-actions {
+      display: flex;
+      gap: 0.5rem;
+      
+      button {
+        width: 36px;
+        height: 36px;
+        border: none;
+        background: transparent;
+        border-radius: 0.375rem;
+        color: $ally-secondary-color;
+        cursor: pointer;
+        transition: $ally-transition;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        &:hover {
+          background: #f1f5f9;
+          color: $ally-primary-color;
+        }
+      }
+    }
+  }
+  
+  &__messages {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    background: #fafbfc;
+    
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+      
+      &:hover {
+        background: #94a3b8;
+      }
+    }
+  }
+  
+  &__input {
+    padding: 1.5rem;
+    border-top: 1px solid $ally-border-color;
+    background: white;
+    border-radius: 0 0 0.75rem 0.75rem;
+    
+    .input-group {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-end;
+      
+      .input-wrapper {
+        flex: 1;
+        position: relative;
+        
+        textarea {
+          width: 100%;
+          min-height: 44px;
+          max-height: 120px;
+          padding: 0.75rem 3rem 0.75rem 1rem;
+          border: 1px solid $ally-border-color;
+          border-radius: 1.375rem;
+          resize: none;
+          font-family: inherit;
+          font-size: 0.875rem;
+          line-height: 1.4;
+          transition: $ally-transition;
+          
+          &:focus {
+            outline: none;
+            border-color: $ally-primary-color;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+          }
+          
+          &::placeholder {
+            color: #94a3b8;
+          }
+        }
+        
+        .attachment-btn {
+          position: absolute;
+          right: 0.75rem;
+          bottom: 0.75rem;
+          width: 32px;
+          height: 32px;
+          border: none;
+          background: transparent;
+          color: $ally-secondary-color;
+          cursor: pointer;
+          border-radius: 50%;
+          transition: $ally-transition;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          
+          &:hover {
+            background: #f1f5f9;
+            color: $ally-primary-color;
+          }
+        }
+      }
+      
+      .send-btn {
+        width: 44px;
+        height: 44px;
+        border: none;
+        background: $ally-primary-color;
+        color: white;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: $ally-transition;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        
+        &:hover:not(:disabled) {
+          background: #1d4ed8;
+          transform: scale(1.05);
+        }
+        
+        &:disabled {
+          background: #94a3b8;
+          cursor: not-allowed;
+          transform: none;
+        }
+      }
+    }
+  }
+}
+
+// =============================================================================
+// MENSAJES
+// =============================================================================
+.message {
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+  
+  &.sent {
+    flex-direction: row-reverse;
+    
+    .message__content {
+      background: linear-gradient(135deg, $ally-primary-color, #3b82f6);
+      color: white;
+      border-radius: 1.125rem 1.125rem 0.25rem 1.125rem;
+    }
+    
+    .message__avatar {
+      display: none;
+    }
+    
+    .message__info {
+      text-align: right;
+    }
+  }
+  
+  &.received {
+    .message__content {
+      background: white;
+      color: #1e293b;
+      border: 1px solid $ally-border-color;
+      border-radius: 1.125rem 1.125rem 1.125rem 0.25rem;
+    }
+  }
+  
+  &__avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    align-self: flex-end;
+    
+    img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+  }
+  
+  &__wrapper {
+    flex: 1;
+    max-width: 70%;
+    
+    @media (max-width: 768px) {
+      max-width: 85%;
+    }
+  }
+  
+  &__content {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    word-wrap: break-word;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    
+    // Enlaces
+    a {
+      color: inherit;
+      text-decoration: underline;
+      opacity: 0.9;
+      
+      &:hover {
+        opacity: 1;
+      }
+    }
+    
+    // Archivos adjuntos
+    .attachment {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 0.5rem;
+      
+      .attachment__icon {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 0.25rem;
+      }
+      
+      .attachment__info {
+        flex: 1;
+        min-width: 0;
+        
+        .name {
+          font-size: 0.75rem;
+          font-weight: 500;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        
+        .size {
+          font-size: 0.625rem;
+          opacity: 0.8;
+        }
+      }
+    }
+  }
+  
+  &__info {
+    margin-top: 0.25rem;
+    font-size: 0.625rem;
+    color: $ally-secondary-color;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    .time {
+      opacity: 0.8;
+    }
+    
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      
+      &.delivered {
+        color: $ally-secondary-color;
+      }
+      
+      &.read {
+        color: $ally-primary-color;
+      }
+    }
+  }
+}
+
+// =============================================================================
+// ESTADOS ESPECIALES
+// =============================================================================
+.ally-chat__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: $ally-secondary-color;
+  text-align: center;
+  padding: 2rem;
+  
+  .icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+  
+  h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+    opacity: 0.8;
+  }
+}
+
+.ally-chat__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: $ally-secondary-color;
+  
+  .spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid $ally-border-color;
+    border-top: 2px solid $ally-primary-color;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 0.75rem;
+  }
+}
+
+// =============================================================================
+// BOTONES DE ACCIÓN
+// =============================================================================
+.ally-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: $ally-transition;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  
+  &--primary {
+    background: $ally-primary-color;
+    color: white;
+    
+    &:hover:not(:disabled) {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    }
+  }
+  
+  &--secondary {
+    background: #f8fafc;
+    color: $ally-secondary-color;
+    border: 1px solid $ally-border-color;
+    
+    &:hover:not(:disabled) {
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+  }
+  
+  &--success {
+    background: $ally-success-color;
+    color: white;
+    
+    &:hover:not(:disabled) {
+      background: #047857;
+    }
+  }
+  
+  &--warning {
+    background: $ally-warning-color;
+    color: white;
+    
+    &:hover:not(:disabled) {
+      background: #b45309;
+    }
+  }
+  
+  &--danger {
+    background: $ally-danger-color;
+    color: white;
+    
+    &:hover:not(:disabled) {
+      background: #b91c1c;
+    }
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  
+  &--sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+  }
+  
+  &--lg {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+  }
+}
+
+// =============================================================================
+// NOTIFICACIONES
+// =============================================================================
+.ally-notification {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: $ally-shadow-lg;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 400px;
+  z-index: 1000;
+  transform: translateX(100%);
+  opacity: 0;
+  transition: $ally-transition;
+  
+  &.show {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  
+  &--success {
+    border-left: 4px solid $ally-success-color;
+    
+    .icon {
+      color: $ally-success-color;
+    }
+  }
+  
+  &--warning {
+    border-left: 4px solid $ally-warning-color;
+    
+    .icon {
+      color: $ally-warning-color;
+    }
+  }
+  
+  &--error {
+    border-left: 4px solid $ally-danger-color;
+    
+    .icon {
+      color: $ally-danger-color;
+    }
+  }
+  
+  &--info {
+    border-left: 4px solid $ally-primary-color;
+    
+    .icon {
+      color: $ally-primary-color;
+    }
+  }
+  
+  .icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+  
+  .content {
+    flex: 1;
+    
+    h4 {
+      margin: 0 0 0.25rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    
+    p {
+      margin: 0;
+      font-size: 0.75rem;
+      color: $ally-secondary-color;
+    }
+  }
+  
+  .close {
+    background: none;
+    border: none;
+    color: $ally-secondary-color;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    transition: $ally-transition;
+    
+    &:hover {
+      background: #f1f5f9;
+    }
+  }
+}
+
+// =============================================================================
+// ANIMACIONES
+// =============================================================================
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// =============================================================================
+// TEMA OSCURO
+// =============================================================================
+[data-theme="dark"] {
+  .ally-messages {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    
+    &__header h1 {
+      color: white;
+    }
+  }
+  
+  .ally-sidebar,
+  .ally-chat {
+    background: #1e293b;
+    border: 1px solid #334155;
+    
+    &__header {
+      background: #334155;
+      border-bottom-color: #475569;
+    }
+  }
+  
+  .ally-item {
+    &:hover {
+      background: #334155;
+    }
+    
+    &.unread {
+      background: #1e40af;
+    }
+    
+    &__info {
+      h4 {
+        color: #f1f5f9;
+      }
+    }
+  }
+  
+  .ally-chat {
+    &__messages {
+      background: #334155;
+    }
+    
+    &__input {
+      background: #1e293b;
+      border-top-color: #475569;
+      
+      textarea {
+        background: #334155;
+        border-color: #475569;
+        color: #f1f5f9;
+        
+        &::placeholder {
+          color: #64748b;
+        }
+      }
+    }
+  }
+  
+  .message {
+    &.received {
+      .message__content {
+        background: #334155;
+        border-color: #475569;
+        color: #f1f5f9;
+      }
+    }
+  }
+  
+  .ally-btn {
+    &--secondary {
+      background: #334155;
+      border-color: #475569;
+      color: #f1f5f9;
+      
+      &:hover:not(:disabled) {
+        background: #475569;
+      }
+    }
+  }
+  
+  .ally-notification {
+    background: #1e293b;
+    border: 1px solid #334155;
+    
+    .content {
+      h4 {
+        color: #f1f5f9;
+      }
+    }
+  }
+}
+
+// =============================================================================
+// RESPONSIVE DESIGN
+// =============================================================================
+@media (max-width: 1024px) {
+  .ally-messages__container {
+    padding: 0 1rem;
+  }
+  
+  .ally-sidebar {
+    width: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .ally-messages {
+    padding: 1rem 0;
+    
+    &__header {
+      h1 {
+        font-size: 1.75rem;
+      }
+      
+      &-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+    
+    &__layout {
+      gap: 1rem;
+    }
+  }
+  
+  .ally-sidebar {
+    order: 2;
+    position: relative;
+    top: 0;
+    max-height: 300px;
+    
+    &__header {
+      .search-box {
+        margin-top: 0.5rem;
+      }
+    }
+  }
+  
+  .ally-chat {
+    order: 1;
+    height: 500px;
+    
+    &__header {
+      padding: 1rem;
+      
+      &-info {
+        .info h3 {
+          font-size: 1rem;
+        }
+      }
+    }
+    
+    &__messages {
+      padding: 1rem;
+    }
+    
+    &__input {
+      padding: 1rem;
+      
+      .input-group {
+        gap: 0.5rem;
+        
+        .input-wrapper textarea {
+          padding: 0.625rem 2.5rem 0.625rem 0.875rem;
+        }
+        
+        .send-btn {
+          width: 40px;
+          height: 40px;
+        }
+      }
+    }
+  }
+  
+  .message {
+    &__wrapper {
+      max-width: 90%;
+    }
+    
+    &__content {
+      padding: 0.625rem 0.875rem;
+      font-size: 0.8125rem;
+    }
+  }
+  
+  .ally-notification {
+    top: 1rem;
+    right: 1rem;
+    left: 1rem;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .ally-messages {
+    &__header {
+      flex-direction: column;
+      align-items: flex-start;
+      
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+  }
+  
+  .ally-chat {
+    height: 400px;
+    
+    &__input {
+      .input-group {
+        .send-btn {
+          width: 36px;
+          height: 36px;
+        }
+      }
+    }
+  }
+  
+  .ally-item {
+    padding: 0.75rem;
+    
+    &__avatar {
+      width: 40px;
+      height: 40px;
+      font-size: 1rem;
+    }
+    
+    &__info {
+      h4 {
+        font-size: 0.8125rem;
+      }
+      
+      p {
+        font-size: 0.6875rem;
+      }
+    }
+  }
+}
+
+// =============================================================================
+// PRINT STYLES
+// =============================================================================
+@media print {
+  .ally-messages {
+    background: white !important;
+    
+    &__header {
+      &-actions {
+        display: none !important;
+      }
+    }
+    
+    &__layout {
+      display: block !important;
+    }
+  }
+  
+  .ally-sidebar {
+    display: none !important;
+  }
+  
+  .ally-chat {
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+    height: auto !important;
+    
+    &__header {
+      &-actions {
+        display: none !important;
+      }
+    }
+    
+    &__input {
+      display: none !important;
+    }
+    
+    &__messages {
+      height: auto !important;
+      overflow: visible !important;
+    }
+  }
+  
+  .message {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+
+// =============================================================================
+// ACCESIBILIDAD
+// =============================================================================
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// Focus styles para teclado
+.ally-item:focus,
+.ally-btn:focus,
+input:focus,
+textarea:focus,
+button:focus {
+  outline: 2px solid $ally-primary-color;
+  outline-offset: 2px;
+}
+
+// Alto contraste
+@media (prefers-contrast: high) {
+  .ally-messages {
+    --ally-border-color: #000000;
+    --ally-shadow: 0 0 0 1px #000000;
+  }
+  
+  .message {
+    &.sent .message__content {
+      background: #000000 !important;
+      color: #ffffff !important;
+    }
+    
+    &.received .message__content {
+      background: #ffffff !important;
+      color: #000000 !important;
+      border: 2px solid #000000 !important;
+    }
+  }
+}

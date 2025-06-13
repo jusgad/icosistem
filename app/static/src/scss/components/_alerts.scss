@@ -1,0 +1,1043 @@
+/**
+ * ===================================================================
+ * ALERTS COMPONENT - SISTEMA COMPLETO DE ALERTAS Y NOTIFICACIONES
+ * ===================================================================
+ * Desarrollado por: jusga
+ * Versión: 4.0.0
+ * Compatibilidad: IE11+, Chrome, Firefox, Safari, Edge
+ * Tipos: Inline, Toast, Banner, Modal, Floating
+ * ===================================================================
+ */
+
+// ===================================================================
+// VARIABLES SCSS PARA ALERTAS
+// ===================================================================
+
+// Colores base para alertas
+$alert-success-bg: #d1fae5 !default;
+$alert-success-border: #10b981 !default;
+$alert-success-text: #064e3b !default;
+$alert-success-icon: #10b981 !default;
+
+$alert-error-bg: #fee2e2 !default;
+$alert-error-border: #ef4444 !default;
+$alert-error-text: #7f1d1d !default;
+$alert-error-icon: #ef4444 !default;
+
+$alert-warning-bg: #fef3c7 !default;
+$alert-warning-border: #f59e0b !default;
+$alert-warning-text: #78350f !default;
+$alert-warning-icon: #f59e0b !default;
+
+$alert-info-bg: #dbeafe !default;
+$alert-info-border: #3b82f6 !default;
+$alert-info-text: #1e3a8a !default;
+$alert-info-icon: #3b82f6 !default;
+
+$alert-neutral-bg: #f3f4f6 !default;
+$alert-neutral-border: #6b7280 !default;
+$alert-neutral-text: #374151 !default;
+$alert-neutral-icon: #6b7280 !default;
+
+// Versiones sólidas para alertas más prominentes
+$alert-success-solid-bg: #10b981 !default;
+$alert-success-solid-text: #ffffff !default;
+
+$alert-error-solid-bg: #ef4444 !default;
+$alert-error-solid-text: #ffffff !default;
+
+$alert-warning-solid-bg: #f59e0b !default;
+$alert-warning-solid-text: #ffffff !default;
+
+$alert-info-solid-bg: #3b82f6 !default;
+$alert-info-solid-text: #ffffff !default;
+
+$alert-neutral-solid-bg: #6b7280 !default;
+$alert-neutral-solid-text: #ffffff !default;
+
+// Tema oscuro
+$alert-dark-success-bg: rgba(16, 185, 129, 0.1) !default;
+$alert-dark-success-border: #10b981 !default;
+$alert-dark-success-text: #a7f3d0 !default;
+
+$alert-dark-error-bg: rgba(239, 68, 68, 0.1) !default;
+$alert-dark-error-border: #ef4444 !default;
+$alert-dark-error-text: #fecaca !default;
+
+$alert-dark-warning-bg: rgba(245, 158, 11, 0.1) !default;
+$alert-dark-warning-border: #f59e0b !default;
+$alert-dark-warning-text: #fde68a !default;
+
+$alert-dark-info-bg: rgba(59, 130, 246, 0.1) !default;
+$alert-dark-info-border: #3b82f6 !default;
+$alert-dark-info-text: #bfdbfe !default;
+
+$alert-dark-neutral-bg: rgba(107, 114, 128, 0.1) !default;
+$alert-dark-neutral-border: #6b7280 !default;
+$alert-dark-neutral-text: #d1d5db !default;
+
+// Dimensiones y espaciado
+$alert-padding-y: 1rem !default;
+$alert-padding-x: 1rem !default;
+$alert-margin-bottom: 1rem !default;
+$alert-border-radius: 0.5rem !default;
+$alert-border-width: 1px !default;
+
+// Tamaños específicos
+$alert-sm-padding-y: 0.75rem !default;
+$alert-sm-padding-x: 0.75rem !default;
+$alert-sm-font-size: 0.875rem !default;
+
+$alert-lg-padding-y: 1.25rem !default;
+$alert-lg-padding-x: 1.25rem !default;
+$alert-lg-font-size: 1.125rem !default;
+
+$alert-xl-padding-y: 1.5rem !default;
+$alert-xl-padding-x: 1.5rem !default;
+$alert-xl-font-size: 1.25rem !default;
+
+// Tipografía
+$alert-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !default;
+$alert-font-size: 1rem !default;
+$alert-font-weight: 400 !default;
+$alert-line-height: 1.5 !default;
+
+$alert-title-font-weight: 600 !default;
+$alert-title-margin-bottom: 0.25rem !default;
+
+// Iconos
+$alert-icon-size: 1.25rem !default;
+$alert-icon-margin-right: 0.75rem !default;
+$alert-close-size: 1.5rem !default;
+
+// Animaciones
+$alert-transition-duration: 0.3s !default;
+$alert-transition-timing: cubic-bezier(0.4, 0, 0.2, 1) !default;
+$alert-slide-distance: 1rem !default;
+$alert-fade-duration: 0.15s !default;
+
+// Sombras
+$alert-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !default;
+$alert-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !default;
+
+// Toast específico
+$toast-width: 400px !default;
+$toast-max-width: calc(100vw - 2rem) !default;
+$toast-gap: 1rem !default;
+$toast-z-index: 9999 !default;
+
+// Banner específico
+$banner-z-index: 1000 !default;
+$banner-padding-y: 0.75rem !default;
+$banner-padding-x: 1rem !default;
+
+// Breakpoints
+$alert-mobile-breakpoint: 768px !default;
+
+// ===================================================================
+// MIXINS REUTILIZABLES
+// ===================================================================
+
+// Mixin base para alertas
+@mixin alert-base() {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  padding: $alert-padding-y $alert-padding-x;
+  margin-bottom: $alert-margin-bottom;
+  border: $alert-border-width solid transparent;
+  border-radius: $alert-border-radius;
+  font-family: $alert-font-family;
+  font-size: $alert-font-size;
+  font-weight: $alert-font-weight;
+  line-height: $alert-line-height;
+  word-wrap: break-word;
+  box-shadow: $alert-shadow;
+}
+
+// Mixin para variante de alerta
+@mixin alert-variant($bg, $border, $text, $icon: $border) {
+  background-color: $bg;
+  border-color: $border;
+  color: $text;
+  
+  .alert__icon {
+    color: $icon;
+  }
+  
+  .alert__close {
+    color: $text;
+    opacity: 0.7;
+    
+    &:hover,
+    &:focus {
+      opacity: 1;
+      color: $text;
+    }
+  }
+  
+  .alert__link {
+    color: darken($text, 10%);
+    text-decoration: underline;
+    
+    &:hover,
+    &:focus {
+      color: darken($text, 20%);
+    }
+  }
+}
+
+// Mixin para alertas sólidas
+@mixin alert-solid-variant($bg, $text) {
+  background-color: $bg;
+  border-color: $bg;
+  color: $text;
+  
+  .alert__icon {
+    color: $text;
+  }
+  
+  .alert__close {
+    color: $text;
+    opacity: 0.8;
+    
+    &:hover,
+    &:focus {
+      opacity: 1;
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+  
+  .alert__link {
+    color: $text;
+    text-decoration: underline;
+    
+    &:hover,
+    &:focus {
+      color: rgba($text, 0.8);
+    }
+  }
+}
+
+// Mixin para animaciones de entrada
+@mixin alert-enter-animation($direction: 'fade') {
+  @if $direction == 'fade' {
+    opacity: 0;
+    animation: alert-fade-in $alert-fade-duration $alert-transition-timing forwards;
+  } @else if $direction == 'slide-down' {
+    opacity: 0;
+    transform: translateY(-$alert-slide-distance);
+    animation: alert-slide-down $alert-transition-duration $alert-transition-timing forwards;
+  } @else if $direction == 'slide-up' {
+    opacity: 0;
+    transform: translateY($alert-slide-distance);
+    animation: alert-slide-up $alert-transition-duration $alert-transition-timing forwards;
+  } @else if $direction == 'slide-right' {
+    opacity: 0;
+    transform: translateX(-$alert-slide-distance);
+    animation: alert-slide-right $alert-transition-duration $alert-transition-timing forwards;
+  } @else if $direction == 'slide-left' {
+    opacity: 0;
+    transform: translateX($alert-slide-distance);
+    animation: alert-slide-left $alert-transition-duration $alert-transition-timing forwards;
+  } @else if $direction == 'scale' {
+    opacity: 0;
+    transform: scale(0.95);
+    animation: alert-scale-in $alert-transition-duration $alert-transition-timing forwards;
+  }
+}
+
+// Mixin para responsive
+@mixin alert-responsive() {
+  @media (max-width: $alert-mobile-breakpoint - 1px) {
+    margin-left: 1rem;
+    margin-right: 1rem;
+    font-size: $alert-sm-font-size;
+    
+    .alert__content {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .alert__title {
+      font-size: 1em;
+    }
+    
+    .alert__description {
+      font-size: 0.9em;
+    }
+  }
+}
+
+// ===================================================================
+// CLASES BASE DE LA ALERTA
+// ===================================================================
+
+.alert {
+  @include alert-base();
+  @include alert-responsive();
+  
+  // Estado inicial para animaciones
+  &--animate {
+    @include alert-enter-animation('fade');
+  }
+  
+  // Estados de animación específicos
+  &--animate-slide-down {
+    @include alert-enter-animation('slide-down');
+  }
+  
+  &--animate-slide-up {
+    @include alert-enter-animation('slide-up');
+  }
+  
+  &--animate-slide-right {
+    @include alert-enter-animation('slide-right');
+  }
+  
+  &--animate-slide-left {
+    @include alert-enter-animation('slide-left');
+  }
+  
+  &--animate-scale {
+    @include alert-enter-animation('scale');
+  }
+  
+  // Contenedor del icono
+  &__icon {
+    flex-shrink: 0;
+    width: $alert-icon-size;
+    height: $alert-icon-size;
+    margin-right: $alert-icon-margin-right;
+    margin-top: 0.125rem; // Alineación visual
+    
+    svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+  }
+  
+  // Contenido principal
+  &__content {
+    flex: 1;
+    min-width: 0; // Para text-overflow
+  }
+  
+  // Título de la alerta
+  &__title {
+    font-weight: $alert-title-font-weight;
+    margin-bottom: $alert-title-margin-bottom;
+    line-height: 1.25;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  // Descripción/mensaje
+  &__description {
+    margin: 0;
+    
+    &:not(:first-child) {
+      margin-top: 0.25rem;
+    }
+  }
+  
+  // Lista dentro de alertas
+  &__list {
+    margin: 0.5rem 0 0 0;
+    padding-left: 1.25rem;
+    
+    li {
+      margin-bottom: 0.25rem;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+  
+  // Acciones/botones
+  &__actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    
+    .btn {
+      font-size: 0.875rem;
+      padding: 0.375rem 0.75rem;
+    }
+  }
+  
+  // Botón de cerrar
+  &__close {
+    flex-shrink: 0;
+    width: $alert-close-size;
+    height: $alert-close-size;
+    margin-left: auto;
+    margin-right: -0.25rem;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all $alert-fade-duration $alert-transition-timing;
+    
+    &:hover,
+    &:focus {
+      background-color: rgba(0, 0, 0, 0.05);
+      outline: none;
+    }
+    
+    &:focus-visible {
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+    }
+    
+    svg {
+      width: 1rem;
+      height: 1rem;
+      fill: currentColor;
+    }
+  }
+  
+  // Enlaces dentro de alertas
+  &__link {
+    font-weight: 500;
+    transition: color $alert-fade-duration $alert-transition-timing;
+    
+    &:focus {
+      outline: 2px solid currentColor;
+      outline-offset: 2px;
+    }
+  }
+}
+
+// ===================================================================
+// VARIANTES DE TIPO
+// ===================================================================
+
+.alert--success {
+  @include alert-variant($alert-success-bg, $alert-success-border, $alert-success-text, $alert-success-icon);
+}
+
+.alert--error {
+  @include alert-variant($alert-error-bg, $alert-error-border, $alert-error-text, $alert-error-icon);
+}
+
+.alert--warning {
+  @include alert-variant($alert-warning-bg, $alert-warning-border, $alert-warning-text, $alert-warning-icon);
+}
+
+.alert--info {
+  @include alert-variant($alert-info-bg, $alert-info-border, $alert-info-text, $alert-info-icon);
+}
+
+.alert--neutral {
+  @include alert-variant($alert-neutral-bg, $alert-neutral-border, $alert-neutral-text, $alert-neutral-icon);
+}
+
+// ===================================================================
+// VARIANTES SÓLIDAS
+// ===================================================================
+
+.alert--success.alert--solid {
+  @include alert-solid-variant($alert-success-solid-bg, $alert-success-solid-text);
+}
+
+.alert--error.alert--solid {
+  @include alert-solid-variant($alert-error-solid-bg, $alert-error-solid-text);
+}
+
+.alert--warning.alert--solid {
+  @include alert-solid-variant($alert-warning-solid-bg, $alert-warning-solid-text);
+}
+
+.alert--info.alert--solid {
+  @include alert-solid-variant($alert-info-solid-bg, $alert-info-solid-text);
+}
+
+.alert--neutral.alert--solid {
+  @include alert-solid-variant($alert-neutral-solid-bg, $alert-neutral-solid-text);
+}
+
+// ===================================================================
+// VARIANTES DE TAMAÑO
+// ===================================================================
+
+.alert--sm {
+  padding: $alert-sm-padding-y $alert-sm-padding-x;
+  font-size: $alert-sm-font-size;
+  
+  .alert__icon {
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.5rem;
+  }
+  
+  .alert__close {
+    width: 1.25rem;
+    height: 1.25rem;
+    
+    svg {
+      width: 0.875rem;
+      height: 0.875rem;
+    }
+  }
+  
+  .alert__actions {
+    margin-top: 0.5rem;
+    
+    .btn {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+    }
+  }
+}
+
+.alert--lg {
+  padding: $alert-lg-padding-y $alert-lg-padding-x;
+  font-size: $alert-lg-font-size;
+  
+  .alert__icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-right: 1rem;
+  }
+  
+  .alert__close {
+    width: 2rem;
+    height: 2rem;
+    
+    svg {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
+  
+  .alert__title {
+    font-size: 1.25rem;
+  }
+}
+
+.alert--xl {
+  padding: $alert-xl-padding-y $alert-xl-padding-x;
+  font-size: $alert-xl-font-size;
+  
+  .alert__icon {
+    width: 2rem;
+    height: 2rem;
+    margin-right: 1.25rem;
+  }
+  
+  .alert__close {
+    width: 2.5rem;
+    height: 2.5rem;
+    
+    svg {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+  
+  .alert__title {
+    font-size: 1.5rem;
+  }
+}
+
+// ===================================================================
+// VARIANTES DE ESTILO
+// ===================================================================
+
+// Alerta sin borde
+.alert--borderless {
+  border: none;
+}
+
+// Alerta con borde izquierdo
+.alert--left-accent {
+  border-left-width: 4px;
+  border-top-width: 0;
+  border-right-width: 0;
+  border-bottom-width: 0;
+  border-radius: 0;
+}
+
+// Alerta con esquinas rectas
+.alert--square {
+  border-radius: 0;
+}
+
+// Alerta con esquinas más redondeadas
+.alert--rounded {
+  border-radius: 1rem;
+}
+
+// Alerta sin sombra
+.alert--flat {
+  box-shadow: none;
+}
+
+// Alerta con sombra más prominente
+.alert--elevated {
+  box-shadow: $alert-shadow-lg;
+}
+
+// ===================================================================
+// TOAST NOTIFICATIONS
+// ===================================================================
+
+.toast-container {
+  position: fixed;
+  z-index: $toast-z-index;
+  pointer-events: none;
+  
+  // Posiciones predefinidas
+  &--top-right {
+    top: 1rem;
+    right: 1rem;
+  }
+  
+  &--top-left {
+    top: 1rem;
+    left: 1rem;
+  }
+  
+  &--top-center {
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  &--bottom-right {
+    bottom: 1rem;
+    right: 1rem;
+  }
+  
+  &--bottom-left {
+    bottom: 1rem;
+    left: 1rem;
+  }
+  
+  &--bottom-center {
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  @media (max-width: $alert-mobile-breakpoint - 1px) {
+    left: 1rem !important;
+    right: 1rem !important;
+    transform: none !important;
+    
+    &--top-center {
+      top: 1rem;
+    }
+    
+    &--bottom-center {
+      bottom: 1rem;
+    }
+  }
+}
+
+.toast {
+  @extend .alert;
+  width: $toast-width;
+  max-width: $toast-max-width;
+  margin-bottom: $toast-gap;
+  pointer-events: auto;
+  
+  // Animación específica para toasts
+  &--show {
+    @include alert-enter-animation('slide-right');
+  }
+  
+  &--hide {
+    animation: alert-slide-out-right $alert-transition-duration $alert-transition-timing forwards;
+  }
+  
+  // Progress bar para auto-dismiss
+  &__progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background-color: currentColor;
+    opacity: 0.3;
+    border-bottom-left-radius: inherit;
+    border-bottom-right-radius: inherit;
+    animation: toast-progress linear;
+  }
+  
+  @media (max-width: $alert-mobile-breakpoint - 1px) {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+// ===================================================================
+// BANNER ALERTS
+// ===================================================================
+
+.alert-banner {
+  @extend .alert;
+  position: relative;
+  width: 100%;
+  margin-bottom: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  padding: $banner-padding-y $banner-padding-x;
+  
+  // Banner fijo en la parte superior
+  &--fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: $banner-z-index;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  // Banner sticky
+  &--sticky {
+    position: sticky;
+    top: 0;
+    z-index: $banner-z-index;
+  }
+}
+
+// ===================================================================
+// FLOATING ALERTS
+// ===================================================================
+
+.alert-floating {
+  @extend .alert;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: $toast-z-index;
+  max-width: 90vw;
+  box-shadow: $alert-shadow-lg;
+  
+  &--show {
+    @include alert-enter-animation('scale');
+  }
+  
+  &--hide {
+    animation: alert-scale-out $alert-transition-duration $alert-transition-timing forwards;
+  }
+}
+
+// ===================================================================
+// OVERLAY PARA ALERTS MODALES
+// ===================================================================
+
+.alert-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: $toast-z-index - 1;
+  opacity: 0;
+  animation: alert-fade-in $alert-fade-duration $alert-transition-timing forwards;
+  
+  &--hide {
+    animation: alert-fade-out $alert-fade-duration $alert-transition-timing forwards;
+  }
+}
+
+// ===================================================================
+// TEMA OSCURO
+// ===================================================================
+
+.alert--dark {
+  &.alert--success {
+    @include alert-variant($alert-dark-success-bg, $alert-dark-success-border, $alert-dark-success-text);
+  }
+  
+  &.alert--error {
+    @include alert-variant($alert-dark-error-bg, $alert-dark-error-border, $alert-dark-error-text);
+  }
+  
+  &.alert--warning {
+    @include alert-variant($alert-dark-warning-bg, $alert-dark-warning-border, $alert-dark-warning-text);
+  }
+  
+  &.alert--info {
+    @include alert-variant($alert-dark-info-bg, $alert-dark-info-border, $alert-dark-info-text);
+  }
+  
+  &.alert--neutral {
+    @include alert-variant($alert-dark-neutral-bg, $alert-dark-neutral-border, $alert-dark-neutral-text);
+  }
+}
+
+// ===================================================================
+// ESTADOS ESPECIALES
+// ===================================================================
+
+// Alerta colapsible
+.alert--collapsible {
+  .alert__content {
+    cursor: pointer;
+  }
+  
+  .alert__collapse-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height $alert-transition-duration $alert-transition-timing;
+  }
+  
+  &.alert--expanded {
+    .alert__collapse-content {
+      max-height: 200px; // Ajustar según necesidades
+    }
+  }
+}
+
+// Alerta con countdown
+.alert--countdown {
+  .alert__countdown {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// Alerta persistente (no se puede cerrar)
+.alert--persistent {
+  .alert__close {
+    display: none;
+  }
+}
+
+// Alerta con loading
+.alert--loading {
+  .alert__icon {
+    animation: spin 1s linear infinite;
+  }
+}
+
+// ===================================================================
+// UTILIDADES
+// ===================================================================
+
+// Ocultar alertas con transición
+.alert--hidden {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: all $alert-transition-duration $alert-transition-timing;
+  pointer-events: none;
+}
+
+// Alerta de ancho completo
+.alert--full-width {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+// Alerta centrada
+.alert--centered {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: fit-content;
+}
+
+// ===================================================================
+// ANIMACIONES
+// ===================================================================
+
+@keyframes alert-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes alert-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes alert-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-$alert-slide-distance);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes alert-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY($alert-slide-distance);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes alert-slide-right {
+  from {
+    opacity: 0;
+    transform: translateX(-$alert-slide-distance);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes alert-slide-left {
+  from {
+    opacity: 0;
+    transform: translateX($alert-slide-distance);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes alert-slide-out-right {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX($alert-slide-distance);
+  }
+}
+
+@keyframes alert-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes alert-scale-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes toast-progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+// ===================================================================
+// MODO OSCURO AUTOMÁTICO
+// ===================================================================
+
+@media (prefers-color-scheme: dark) {
+  .alert:not(.alert--dark):not([class*="alert--solid"]) {
+    @extend .alert--dark;
+  }
+  
+  .toast:not(.toast--dark):not([class*="toast--solid"]) {
+    @extend .alert--dark;
+  }
+  
+  .alert-banner:not(.alert-banner--dark):not([class*="alert-banner--solid"]) {
+    @extend .alert--dark;
+  }
+  
+  .alert-floating:not(.alert-floating--dark):not([class*="alert-floating--solid"]) {
+    @extend .alert--dark;
+  }
+}
+
+// ===================================================================
+// ACCESIBILIDAD
+// ===================================================================
+
+@media (prefers-reduced-motion: reduce) {
+  .alert,
+  .toast,
+  .alert-banner,
+  .alert-floating {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .alert__icon {
+    animation: none !important;
+  }
+  
+  .toast__progress {
+    animation: none !important;
+  }
+}
+
+// Focus visible para navegación por teclado
+.alert__close:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+// ===================================================================
+// PRINT STYLES
+// ===================================================================
+
+@media print {
+  .toast,
+  .alert-floating,
+  .alert-banner--fixed,
+  .alert-overlay {
+    display: none !important;
+  }
+  
+  .alert {
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+    background: transparent !important;
+    color: #000 !important;
+    
+    .alert__icon,
+    .alert__close {
+      display: none !important;
+    }
+  }
+}

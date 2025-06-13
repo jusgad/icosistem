@@ -1,0 +1,1364 @@
+/**
+ * Animate.css Custom Styles for Ecosistema Emprendimiento
+ * ======================================================
+ * 
+ * Personalización completa de Animate.css para el ecosistema de emprendimiento
+ * Incluye animaciones contextuales, estados, performance y accesibilidad
+ * 
+ * @author: Ecosistema Emprendimiento Team
+ * @version: 1.0.0
+ * @updated: 2025
+ * @requires: Animate.css 4.x (opcional - implementación custom incluida)
+ */
+
+// ============================================================================
+// VARIABLES ANIMATE.CSS
+// ============================================================================
+
+// Configuración base de animaciones
+$animate-duration: 1s !default;
+$animate-delay: 1s !default;
+$animate-repeat: 1 !default;
+$animate-fill-mode: both !default;
+
+// Duraciones específicas del ecosistema
+$animate-durations: (
+  // Micro-interacciones (hover, click)
+  micro: 0.15s,
+  // Transiciones rápidas (cambio de estado)
+  fast: 0.3s,
+  // Animaciones estándar (modales, dropdown)
+  base: 0.5s,
+  // Animaciones de entrada/salida
+  medium: 0.75s,
+  // Animaciones complejas (hero, onboarding)
+  slow: 1s,
+  // Animaciones de atención (notificaciones)
+  attention: 1.5s,
+  // Animaciones de fondo/decorativas
+  background: 2s,
+  // Animaciones de carga
+  loading: 3s
+) !default;
+
+// Delays escalonados para secuencias
+$animate-delays: (
+  0: 0s,
+  1: 0.1s,
+  2: 0.2s,
+  3: 0.3s,
+  4: 0.4s,
+  5: 0.5s,
+  6: 0.6s,
+  7: 0.7s,
+  8: 0.8s,
+  9: 0.9s,
+  10: 1s
+) !default;
+
+// Timing functions del ecosistema
+$animate-easings: (
+  // Easings estándar
+  linear: linear,
+  ease: ease,
+  ease-in: ease-in,
+  ease-out: ease-out,
+  ease-in-out: ease-in-out,
+  
+  // Easings personalizados para emprendimiento
+  smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94),
+  crisp: cubic-bezier(0.55, 0, 0.1, 1),
+  bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55),
+  elastic: cubic-bezier(0.175, 0.885, 0.32, 1.275),
+  back: cubic-bezier(0.68, -0.55, 0.265, 1.55),
+  
+  // Easings específicos por contexto
+  entrepreneur: cubic-bezier(0.23, 1, 0.32, 1),     // Suave y confiado
+  mentor: cubic-bezier(0.55, 0.085, 0.68, 0.53),    // Firme y estable
+  admin: cubic-bezier(0.25, 0.46, 0.45, 0.94),      // Profesional
+  client: cubic-bezier(0.175, 0.885, 0.32, 1.275),  // Acogedor
+  
+  // Easings por tipo de animación
+  entrance: cubic-bezier(0.25, 0.46, 0.45, 0.94),
+  exit: cubic-bezier(0.55, 0.055, 0.675, 0.19),
+  attention: cubic-bezier(0.68, -0.55, 0.265, 1.55),
+  loading: linear
+) !default;
+
+// Breakpoints responsivos
+$animate-breakpoints: (
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px
+) !default;
+
+// Configuración de performance
+$animate-will-change: transform, opacity !default;
+$animate-backface-visibility: hidden !default;
+$animate-perspective: 1000px !default;
+
+// ============================================================================
+// MIXINS ANIMATE.CSS
+// ============================================================================
+
+// Mixin base para animaciones
+@mixin animate(
+  $name,
+  $duration: map-get($animate-durations, base),
+  $timing: map-get($animate-easings, smooth),
+  $delay: 0s,
+  $iteration: 1,
+  $direction: normal,
+  $fill-mode: both
+) {
+  animation-name: $name;
+  animation-duration: $duration;
+  animation-timing-function: $timing;
+  animation-delay: $delay;
+  animation-iteration-count: $iteration;
+  animation-direction: $direction;
+  animation-fill-mode: $fill-mode;
+  
+  // Optimizaciones de performance
+  will-change: $animate-will-change;
+  backface-visibility: $animate-backface-visibility;
+}
+
+// Mixin para animaciones responsivas
+@mixin animate-responsive($breakpoint, $enabled: true) {
+  @media (max-width: map-get($animate-breakpoints, $breakpoint)) {
+    @if $enabled {
+      @content;
+    } @else {
+      animation: none !important;
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+}
+
+// Mixin para animaciones con reducción de movimiento
+@mixin animate-reduced-motion($fallback: none) {
+  @media (prefers-reduced-motion: reduce) {
+    @if $fallback == none {
+      animation: none !important;
+      transform: none !important;
+      transition: opacity 0.3s ease !important;
+    } @else {
+      animation: $fallback !important;
+    }
+  }
+}
+
+// Mixin para secuencias de animación
+@mixin animate-sequence($base-delay: 0.1s) {
+  @for $i from 1 through 10 {
+    &:nth-child(#{$i}) {
+      animation-delay: $base-delay * $i;
+    }
+  }
+}
+
+// Mixin para hover animations
+@mixin animate-hover($animation, $duration: map-get($animate-durations, micro)) {
+  transition: all $duration map-get($animate-easings, smooth);
+  
+  &:hover {
+    @include animate($animation, $duration);
+  }
+}
+
+// Mixin para animaciones infinitas
+@mixin animate-infinite($name, $duration: map-get($animate-durations, attention)) {
+  @include animate($name, $duration, map-get($animate-easings, ease-in-out), 0s, infinite);
+}
+
+// Mixin para animaciones condicionales
+@mixin animate-when($condition: true, $animation, $duration: map-get($animate-durations, base)) {
+  @if $condition {
+    @include animate($animation, $duration);
+  }
+}
+
+// ============================================================================
+// CLASES BASE ANIMATE.CSS
+// ============================================================================
+
+// Clase base para todas las animaciones
+.animated {
+  animation-duration: $animate-duration;
+  animation-fill-mode: $animate-fill-mode;
+  
+  // Optimizaciones de performance
+  will-change: $animate-will-change;
+  backface-visibility: $animate-backface-visibility;
+  
+  // Accesibilidad
+  @include animate-reduced-motion();
+}
+
+// Configuración de duraciones
+@each $name, $duration in $animate-durations {
+  .animate-#{$name} {
+    animation-duration: $duration !important;
+  }
+}
+
+// Configuración de delays
+@each $name, $delay in $animate-delays {
+  .animate-delay-#{$name} {
+    animation-delay: $delay !important;
+  }
+}
+
+// Configuración de timing functions
+@each $name, $timing in $animate-easings {
+  .animate-#{$name} {
+    animation-timing-function: $timing !important;
+  }
+}
+
+// Configuración de repeticiones
+.animate-infinite {
+  animation-iteration-count: infinite !important;
+}
+
+.animate-repeat-1 { animation-iteration-count: 1 !important; }
+.animate-repeat-2 { animation-iteration-count: 2 !important; }
+.animate-repeat-3 { animation-iteration-count: 3 !important; }
+
+// ============================================================================
+// ANIMACIONES DE ENTRADA (FADE IN)
+// ============================================================================
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -100%, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translate3d(-100%, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translate3d(100%, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+// Clases de entrada
+.fadeIn { @include animate(fadeIn); }
+.fadeInDown { @include animate(fadeInDown); }
+.fadeInLeft { @include animate(fadeInLeft); }
+.fadeInRight { @include animate(fadeInRight); }
+.fadeInUp { @include animate(fadeInUp); }
+
+// ============================================================================
+// ANIMACIONES DE SALIDA (FADE OUT)
+// ============================================================================
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes fadeOutDown {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+}
+
+@keyframes fadeOutLeft {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+
+@keyframes fadeOutRight {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+@keyframes fadeOutUp {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(0, -100%, 0);
+  }
+}
+
+// Clases de salida
+.fadeOut { @include animate(fadeOut); }
+.fadeOutDown { @include animate(fadeOutDown); }
+.fadeOutLeft { @include animate(fadeOutLeft); }
+.fadeOutRight { @include animate(fadeOutRight); }
+.fadeOutUp { @include animate(fadeOutUp); }
+
+// ============================================================================
+// ANIMACIONES DE DESLIZAMIENTO (SLIDE)
+// ============================================================================
+
+@keyframes slideInDown {
+  from {
+    transform: translate3d(0, -100%, 0);
+    visibility: visible;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translate3d(-100%, 0, 0);
+    visibility: visible;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translate3d(100%, 0, 0);
+    visibility: visible;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translate3d(0, 100%, 0);
+    visibility: visible;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+// Clases de deslizamiento
+.slideInDown { @include animate(slideInDown); }
+.slideInLeft { @include animate(slideInLeft); }
+.slideInRight { @include animate(slideInRight); }
+.slideInUp { @include animate(slideInUp); }
+
+// ============================================================================
+// ANIMACIONES DE ZOOM
+// ============================================================================
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale3d(0.3, 0.3, 0.3);
+  }
+  50% {
+    opacity: 1;
+  }
+  to {
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+@keyframes zoomOut {
+  from {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+  }
+  50% {
+    opacity: 0;
+    transform: scale3d(0.3, 0.3, 0.3);
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes zoomInDown {
+  from {
+    opacity: 0;
+    transform: scale3d(0.1, 0.1, 0.1) translate3d(0, -1000px, 0);
+    animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+  }
+  60% {
+    opacity: 1;
+    transform: scale3d(0.475, 0.475, 0.475) translate3d(0, 60px, 0);
+    animation-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1);
+  }
+  to {
+    transform: scale3d(1, 1, 1) translate3d(0, 0, 0);
+    animation-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1);
+  }
+}
+
+@keyframes zoomInUp {
+  from {
+    opacity: 0;
+    transform: scale3d(0.1, 0.1, 0.1) translate3d(0, 1000px, 0);
+    animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+  }
+  60% {
+    opacity: 1;
+    transform: scale3d(0.475, 0.475, 0.475) translate3d(0, -60px, 0);
+    animation-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1);
+  }
+  to {
+    transform: scale3d(1, 1, 1) translate3d(0, 0, 0);
+    animation-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1);
+  }
+}
+
+// Clases de zoom
+.zoomIn { @include animate(zoomIn); }
+.zoomOut { @include animate(zoomOut); }
+.zoomInDown { @include animate(zoomInDown); }
+.zoomInUp { @include animate(zoomInUp); }
+
+// ============================================================================
+// ANIMACIONES DE REBOTE (BOUNCE)
+// ============================================================================
+
+@keyframes bounce {
+  from,
+  20%,
+  53%,
+  to {
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+    transform: translate3d(0, 0, 0);
+  }
+  40%,
+  43% {
+    animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+    transform: translate3d(0, -30px, 0) scaleY(1.1);
+  }
+  70% {
+    animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+    transform: translate3d(0, -15px, 0) scaleY(1.05);
+  }
+  80% {
+    transition-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+    transform: translate3d(0, 0, 0) scaleY(0.95);
+  }
+  90% {
+    transform: translate3d(0, -4px, 0) scaleY(1.02);
+  }
+}
+
+@keyframes bounceIn {
+  from,
+  20%,
+  40%,
+  60%,
+  80%,
+  to {
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+  0% {
+    opacity: 0;
+    transform: scale3d(0.3, 0.3, 0.3);
+  }
+  20% {
+    transform: scale3d(1.1, 1.1, 1.1);
+  }
+  40% {
+    transform: scale3d(0.9, 0.9, 0.9);
+  }
+  60% {
+    opacity: 1;
+    transform: scale3d(1.03, 1.03, 1.03);
+  }
+  80% {
+    transform: scale3d(0.97, 0.97, 0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+@keyframes bounceInDown {
+  from,
+  60%,
+  75%,
+  90%,
+  to {
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -3000px, 0) scaleY(3);
+  }
+  60% {
+    opacity: 1;
+    transform: translate3d(0, 25px, 0) scaleY(0.9);
+  }
+  75% {
+    transform: translate3d(0, -10px, 0) scaleY(0.95);
+  }
+  90% {
+    transform: translate3d(0, 5px, 0) scaleY(0.985);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+// Clases de rebote
+.bounce { @include animate(bounce); }
+.bounceIn { @include animate(bounceIn); }
+.bounceInDown { @include animate(bounceInDown); }
+
+// ============================================================================
+// ANIMACIONES DE ATENCIÓN
+// ============================================================================
+
+@keyframes flash {
+  from,
+  50%,
+  to {
+    opacity: 1;
+  }
+  25%,
+  75% {
+    opacity: 0;
+  }
+}
+
+@keyframes pulse {
+  from {
+    transform: scale3d(1, 1, 1);
+  }
+  50% {
+    transform: scale3d(1.05, 1.05, 1.05);
+  }
+  to {
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+@keyframes rubberBand {
+  from {
+    transform: scale3d(1, 1, 1);
+  }
+  30% {
+    transform: scale3d(1.25, 0.75, 1);
+  }
+  40% {
+    transform: scale3d(0.75, 1.25, 1);
+  }
+  50% {
+    transform: scale3d(1.15, 0.85, 1);
+  }
+  65% {
+    transform: scale3d(0.95, 1.05, 1);
+  }
+  75% {
+    transform: scale3d(1.05, 0.95, 1);
+  }
+  to {
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+@keyframes shakeX {
+  from,
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translate3d(-10px, 0, 0);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translate3d(10px, 0, 0);
+  }
+}
+
+@keyframes shakeY {
+  from,
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translate3d(0, -10px, 0);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translate3d(0, 10px, 0);
+  }
+}
+
+@keyframes swing {
+  20% {
+    transform: rotate3d(0, 0, 1, 15deg);
+  }
+  40% {
+    transform: rotate3d(0, 0, 1, -10deg);
+  }
+  60% {
+    transform: rotate3d(0, 0, 1, 5deg);
+  }
+  80% {
+    transform: rotate3d(0, 0, 1, -5deg);
+  }
+  to {
+    transform: rotate3d(0, 0, 1, 0deg);
+  }
+}
+
+@keyframes tada {
+  from {
+    transform: scale3d(1, 1, 1);
+  }
+  10%,
+  20% {
+    transform: scale3d(0.9, 0.9, 0.9) rotate3d(0, 0, 1, -3deg);
+  }
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, 3deg);
+  }
+  40%,
+  60%,
+  80% {
+    transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, -3deg);
+  }
+  to {
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+@keyframes wobble {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  15% {
+    transform: translate3d(-25%, 0, 0) rotate3d(0, 0, 1, -5deg);
+  }
+  30% {
+    transform: translate3d(20%, 0, 0) rotate3d(0, 0, 1, 3deg);
+  }
+  45% {
+    transform: translate3d(-15%, 0, 0) rotate3d(0, 0, 1, -3deg);
+  }
+  60% {
+    transform: translate3d(10%, 0, 0) rotate3d(0, 0, 1, 2deg);
+  }
+  75% {
+    transform: translate3d(-5%, 0, 0) rotate3d(0, 0, 1, -1deg);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes jello {
+  from,
+  11.1%,
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+  22.2% {
+    transform: skewX(-12.5deg) skewY(-12.5deg);
+  }
+  33.3% {
+    transform: skewX(6.25deg) skewY(6.25deg);
+  }
+  44.4% {
+    transform: skewX(-3.125deg) skewY(-3.125deg);
+  }
+  55.5% {
+    transform: skewX(1.5625deg) skewY(1.5625deg);
+  }
+  66.6% {
+    transform: skewX(-0.78125deg) skewY(-0.78125deg);
+  }
+  77.7% {
+    transform: skewX(0.390625deg) skewY(0.390625deg);
+  }
+  88.8% {
+    transform: skewX(-0.1953125deg) skewY(-0.1953125deg);
+  }
+}
+
+@keyframes heartBeat {
+  0% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.3);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.3);
+  }
+  70% {
+    transform: scale(1);
+  }
+}
+
+// Clases de atención
+.flash { @include animate(flash); }
+.pulse { @include animate(pulse); }
+.rubberBand { @include animate(rubberBand); }
+.shakeX { @include animate(shakeX); }
+.shakeY { @include animate(shakeY); }
+.swing { @include animate(swing); }
+.tada { @include animate(tada); }
+.wobble { @include animate(wobble); }
+.jello { @include animate(jello); }
+.heartBeat { @include animate(heartBeat); }
+
+// ============================================================================
+// ANIMACIONES ESPECÍFICAS DEL ECOSISTEMA
+// ============================================================================
+
+// Animación de progreso para emprendedores
+@keyframes entrepreneurProgress {
+  0% {
+    transform: translateX(-100%) scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(0) scale(1.05);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+// Animación de crecimiento para métricas
+@keyframes metricGrowth {
+  0% {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(-90deg);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+// Animación de conexión para networking
+@keyframes networkConnection {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(1.1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  75% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// Animación de éxito para logros
+@keyframes achievementSuccess {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(1.2) rotate(90deg);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(0.8) rotate(180deg);
+    opacity: 0.7;
+  }
+  75% {
+    transform: scale(1.1) rotate(270deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+    opacity: 1;
+  }
+}
+
+// Animación de notificación urgente
+@keyframes urgentNotification {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    background-color: #dc2626;
+  }
+  25% {
+    transform: scale(1.1) rotate(5deg);
+    background-color: #ef4444;
+  }
+  50% {
+    transform: scale(1.2) rotate(-5deg);
+    background-color: #f87171;
+  }
+  75% {
+    transform: scale(1.1) rotate(5deg);
+    background-color: #ef4444;
+  }
+}
+
+// Animación de carga de datos
+@keyframes dataLoading {
+  0% {
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+  }
+  100% {
+    transform: translateX(100%);
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
+  }
+}
+
+// Animación de hover para cards
+@keyframes cardHover {
+  0% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  100% {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+}
+
+// Animación de typing para chat
+@keyframes typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-10px);
+  }
+}
+
+// Clases específicas del ecosistema
+.entrepreneur-progress { @include animate(entrepreneurProgress, map-get($animate-durations, medium), map-get($animate-easings, entrepreneur)); }
+.metric-growth { @include animate(metricGrowth, map-get($animate-durations, slow), map-get($animate-easings, bounce)); }
+.network-connection { @include animate(networkConnection, map-get($animate-durations, medium), map-get($animate-easings, elastic)); }
+.achievement-success { @include animate(achievementSuccess, map-get($animate-durations, slow), map-get($animate-easings, back)); }
+.urgent-notification { @include animate(urgentNotification, map-get($animate-durations, attention), map-get($animate-easings, ease-in-out), 0s, infinite); }
+.data-loading { @include animate(dataLoading, map-get($animate-durations, loading), map-get($animate-easings, loading), 0s, infinite); }
+.card-hover { @include animate(cardHover, map-get($animate-durations, micro), map-get($animate-easings, smooth)); }
+.typing { @include animate(typing, 1.4s, map-get($animate-easings, ease-in-out), 0s, infinite); }
+
+// ============================================================================
+// COMPONENTES ANIMADOS DEL ECOSISTEMA
+// ============================================================================
+
+// Dashboard metrics con animación secuencial
+.dashboard-metrics {
+  .metric-card {
+    opacity: 0;
+    transform: translateY(30px);
+    
+    &.animate-in {
+      @include animate(fadeInUp, map-get($animate-durations, medium), map-get($animate-easings, smooth));
+      @include animate-sequence(0.1s);
+    }
+  }
+}
+
+// Lista de emprendedores con animación en cascada
+.entrepreneur-list {
+  .entrepreneur-item {
+    opacity: 0;
+    transform: translateX(-50px);
+    
+    &.animate-in {
+      @include animate(slideInLeft, map-get($animate-durations, base), map-get($animate-easings, entrepreneur));
+      @include animate-sequence(0.05s);
+    }
+  }
+}
+
+// Formularios con validación animada
+.form-animated {
+  .form-group {
+    &.success {
+      .form-control {
+        @include animate(pulse, map-get($animate-durations, fast), map-get($animate-easings, smooth));
+        border-color: #10b981;
+      }
+    }
+    
+    &.error {
+      .form-control {
+        @include animate(shakeX, map-get($animate-durations, fast), map-get($animate-easings, crisp));
+        border-color: #dc2626;
+      }
+    }
+  }
+}
+
+// Notificaciones toast animadas
+.toast-notifications {
+  .toast {
+    &.toast-enter {
+      @include animate(slideInRight, map-get($animate-durations, fast), map-get($animate-easings, back));
+    }
+    
+    &.toast-exit {
+      @include animate(slideOutRight, map-get($animate-durations, fast), map-get($animate-easings, smooth));
+    }
+    
+    &.toast-success {
+      @include animate(bounceIn, map-get($animate-durations, medium), map-get($animate-easings, bounce));
+    }
+    
+    &.toast-error {
+      @include animate(shakeX, map-get($animate-durations, fast), map-get($animate-easings, crisp));
+    }
+  }
+}
+
+// Modales con backdrop animado
+.modal-animated {
+  .modal-backdrop {
+    @include animate(fadeIn, map-get($animate-durations, fast), map-get($animate-easings, smooth));
+  }
+  
+  .modal-dialog {
+    @include animate(zoomIn, map-get($animate-durations, medium), map-get($animate-easings, back));
+  }
+  
+  &.modal-exit {
+    .modal-backdrop {
+      @include animate(fadeOut, map-get($animate-durations, fast), map-get($animate-easings, smooth));
+    }
+    
+    .modal-dialog {
+      @include animate(zoomOut, map-get($animate-durations, medium), map-get($animate-easings, smooth));
+    }
+  }
+}
+
+// Sidebar de navegación animado
+.sidebar-animated {
+  &.sidebar-enter {
+    @include animate(slideInLeft, map-get($animate-durations, medium), map-get($animate-easings, smooth));
+  }
+  
+  &.sidebar-exit {
+    @include animate(slideOutLeft, map-get($animate-durations, medium), map-get($animate-easings, smooth));
+  }
+  
+  .nav-item {
+    opacity: 0;
+    transform: translateX(-20px);
+    
+    &.animate-in {
+      @include animate(fadeInLeft, map-get($animate-durations, base), map-get($animate-easings, smooth));
+      @include animate-sequence(0.05s);
+    }
+  }
+}
+
+// Chat en tiempo real animado
+.chat-animated {
+  .message {
+    &.message-incoming {
+      @include animate(fadeInLeft, map-get($animate-durations, fast), map-get($animate-easings, smooth));
+    }
+    
+    &.message-outgoing {
+      @include animate(fadeInRight, map-get($animate-durations, fast), map-get($animate-easings, smooth));
+    }
+  }
+  
+  .typing-indicator {
+    .dot {
+      @include animate(typing, 1.4s, map-get($animate-easings, ease-in-out), 0s, infinite);
+      
+      &:nth-child(2) { animation-delay: 0.2s; }
+      &:nth-child(3) { animation-delay: 0.4s; }
+    }
+  }
+}
+
+// Progress bars animados
+.progress-animated {
+  .progress-bar {
+    width: 0%;
+    transition: width 2s map-get($animate-easings, smooth);
+    
+    &.animate-progress {
+      width: var(--progress-width, 0%);
+    }
+  }
+  
+  &.progress-pulse .progress-bar {
+    @include animate-infinite(pulse, 2s);
+  }
+}
+
+// ============================================================================
+// ESTADOS HOVER ANIMADOS
+// ============================================================================
+
+// Botones con animaciones hover
+.btn-animated {
+  @include animate-hover(pulse, map-get($animate-durations, micro));
+  
+  &.btn-bounce {
+    @include animate-hover(bounce, map-get($animate-durations, fast));
+  }
+  
+  &.btn-shake {
+    @include animate-hover(shakeX, map-get($animate-durations, fast));
+  }
+  
+  &.btn-rubber {
+    @include animate-hover(rubberBand, map-get($animate-durations, medium));
+  }
+}
+
+// Cards con efectos hover
+.card-animated {
+  transition: all map-get($animate-durations, micro) map-get($animate-easings, smooth);
+  
+  &:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  
+  &.card-flip {
+    perspective: $animate-perspective;
+    
+    .card-inner {
+      transition: transform map-get($animate-durations, medium) map-get($animate-easings, smooth);
+      transform-style: preserve-3d;
+    }
+    
+    &:hover .card-inner {
+      transform: rotateY(180deg);
+    }
+    
+    .card-front,
+    .card-back {
+      backface-visibility: hidden;
+    }
+    
+    .card-back {
+      transform: rotateY(180deg);
+    }
+  }
+}
+
+// Links con animaciones
+.link-animated {
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: currentColor;
+    transition: width map-get($animate-durations, micro) map-get($animate-easings, smooth);
+  }
+  
+  &:hover::after {
+    width: 100%;
+  }
+  
+  &.link-underline-center::after {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  &.link-underline-center:hover::after {
+    width: 100%;
+  }
+}
+
+// ============================================================================
+// ANIMACIONES RESPONSIVAS
+// ============================================================================
+
+// Desactivar animaciones complejas en móvil
+@include animate-responsive(md, false) {
+  .animate-complex,
+  .entrepreneur-progress,
+  .metric-growth,
+  .network-connection,
+  .achievement-success {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+// Animaciones simplificadas para móvil
+@include animate-responsive(md) {
+  .fadeIn,
+  .fadeInUp,
+  .fadeInDown,
+  .fadeInLeft,
+  .fadeInRight {
+    animation-duration: map-get($animate-durations, fast) !important;
+  }
+  
+  .bounce,
+  .pulse,
+  .heartBeat {
+    animation-duration: map-get($animate-durations, micro) !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+// Animaciones específicas para tablet
+@include animate-responsive(lg) {
+  .card-animated:hover {
+    transform: translateY(-2px) scale(1.01);
+  }
+  
+  .btn-animated {
+    animation-duration: map-get($animate-durations, fast) !important;
+  }
+}
+
+// ============================================================================
+// UTILIDADES DE PERFORMANCE
+// ============================================================================
+
+// Optimización de performance para animaciones
+.animate-optimized {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  perspective: $animate-perspective;
+  transform: translateZ(0);
+}
+
+// Trigger para GPU acceleration
+.animate-gpu {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+// Preloader para animaciones pesadas
+.animate-preload {
+  &::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
+    background: transparent;
+    z-index: -1;
+  }
+}
+
+// ============================================================================
+// INTERSECTION OBSERVER ANIMATIONS
+// ============================================================================
+
+// Animaciones activadas por scroll
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: all map-get($animate-durations, medium) map-get($animate-easings, smooth);
+  
+  &.in-view {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  &.from-left {
+    transform: translateX(-50px);
+    
+    &.in-view {
+      transform: translateX(0);
+    }
+  }
+  
+  &.from-right {
+    transform: translateX(50px);
+    
+    &.in-view {
+      transform: translateX(0);
+    }
+  }
+  
+  &.scale-up {
+    transform: scale(0.8);
+    
+    &.in-view {
+      transform: scale(1);
+    }
+  }
+}
+
+// Secuencias animadas por scroll
+.animate-sequence-scroll {
+  .sequence-item {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all map-get($animate-durations, medium) map-get($animate-easings, smooth);
+    
+    @for $i from 1 through 10 {
+      &:nth-child(#{$i}) {
+        transition-delay: #{$i * 0.1s};
+      }
+    }
+    
+    &.in-view {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+// ============================================================================
+// DEBUGGING Y DESARROLLO
+// ============================================================================
+
+// Modo debug para visualizar animaciones
+.animate-debug {
+  * {
+    animation-duration: 3s !important;
+    animation-iteration-count: infinite !important;
+    border: 1px dashed red !important;
+  }
+}
+
+// Pausar todas las animaciones
+.animate-paused {
+  *,
+  *::before,
+  *::after {
+    animation-play-state: paused !important;
+  }
+}
+
+// ============================================================================
+// ACCESSIBILITY ENHANCEMENTS
+// ============================================================================
+
+// Mejoras de accesibilidad
+@media (prefers-reduced-motion: reduce) {
+  .animated,
+  .animate-on-scroll,
+  .animate-sequence-scroll .sequence-item {
+    animation: none !important;
+    transition: opacity 0.3s ease !important;
+  }
+  
+  .card-animated:hover,
+  .btn-animated:hover {
+    transform: none !important;
+  }
+}
+
+// Configuración para alto contraste
+@media (prefers-contrast: high) {
+  .animated {
+    animation-duration: map-get($animate-durations, fast) !important;
+  }
+}
+
+// Configuración para transparencia reducida
+@media (prefers-reduced-transparency: reduce) {
+  .animated {
+    opacity: 1 !important;
+  }
+  
+  .fadeIn,
+  .fadeOut,
+  .fadeInUp,
+  .fadeInDown,
+  .fadeInLeft,
+  .fadeInRight {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}

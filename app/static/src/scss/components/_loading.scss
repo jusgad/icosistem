@@ -1,0 +1,1150 @@
+/**
+ * ===================================================================
+ * LOADING COMPONENT - SISTEMA COMPLETO DE ESTADOS DE CARGA
+ * ===================================================================
+ * Desarrollado por: jusga
+ * Versión: 5.0.0
+ * Compatibilidad: IE11+, Chrome, Firefox, Safari, Edge
+ * Tipos: Spinners, Bars, Dots, Skeletons, Overlays, Shimmers
+ * ===================================================================
+ */
+
+// ===================================================================
+// VARIABLES SCSS PARA LOADING STATES
+// ===================================================================
+
+// Colores principales
+$loader-primary: #3b82f6 !default;
+$loader-secondary: #6b7280 !default;
+$loader-success: #10b981 !default;
+$loader-warning: #f59e0b !default;
+$loader-error: #ef4444 !default;
+$loader-white: #ffffff !default;
+$loader-dark: #1f2937 !default;
+
+// Colores para skeleton
+$skeleton-bg: #f3f4f6 !default;
+$skeleton-highlight: #e5e7eb !default;
+$skeleton-dark-bg: #374151 !default;
+$skeleton-dark-highlight: #4b5563 !default;
+
+// Colores para shimmer
+$shimmer-base: #f6f7f8 !default;
+$shimmer-highlight: rgba(255, 255, 255, 0.8) !default;
+$shimmer-dark-base: #2d3748 !default;
+$shimmer-dark-highlight: rgba(255, 255, 255, 0.1) !default;
+
+// Tamaños para spinners
+$spinner-xs: 16px !default;
+$spinner-sm: 20px !default;
+$spinner-md: 24px !default;
+$spinner-lg: 32px !default;
+$spinner-xl: 40px !default;
+$spinner-2xl: 48px !default;
+$spinner-3xl: 64px !default;
+
+// Grosor del spinner
+$spinner-border-xs: 2px !default;
+$spinner-border-sm: 2px !default;
+$spinner-border-md: 3px !default;
+$spinner-border-lg: 3px !default;
+$spinner-border-xl: 4px !default;
+$spinner-border-2xl: 4px !default;
+$spinner-border-3xl: 5px !default;
+
+// Tamaños para dots
+$dots-xs: 4px !default;
+$dots-sm: 6px !default;
+$dots-md: 8px !default;
+$dots-lg: 10px !default;
+$dots-xl: 12px !default;
+
+// Dimensiones para loading bars
+$loading-bar-height: 4px !default;
+$loading-bar-height-sm: 2px !default;
+$loading-bar-height-lg: 6px !default;
+$loading-bar-height-xl: 8px !default;
+
+// Duraciones de animación (optimizadas para performance)
+$spin-duration: 1s !default;
+$pulse-duration: 1.5s !default;
+$bounce-duration: 1.4s !default;
+$wave-duration: 1.5s !default;
+$shimmer-duration: 2s !default;
+$progress-duration: 2s !default;
+
+// Timing functions optimizadas
+$ease-in-out-smooth: cubic-bezier(0.4, 0, 0.2, 1) !default;
+$ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55) !default;
+$ease-linear: linear !default;
+
+// Z-index para overlays
+$loader-overlay-z: 9999 !default;
+$loader-inline-z: 10 !default;
+
+// Overlays
+$overlay-bg: rgba(255, 255, 255, 0.8) !default;
+$overlay-dark-bg: rgba(0, 0, 0, 0.8) !default;
+$overlay-blur: 2px !default;
+
+// Tipografía para loading text
+$loader-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !default;
+$loader-font-size-xs: 0.75rem !default;
+$loader-font-size-sm: 0.875rem !default;
+$loader-font-size-md: 1rem !default;
+$loader-font-size-lg: 1.125rem !default;
+$loader-font-weight: 500 !default;
+
+// Breakpoints
+$loader-mobile-breakpoint: 768px !default;
+
+// ===================================================================
+// MIXINS REUTILIZABLES
+// ===================================================================
+
+// Mixin base para loaders
+@mixin loader-base() {
+  display: inline-block;
+  vertical-align: middle;
+  font-family: $loader-font-family;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+}
+
+// Mixin para centrar loaders
+@mixin loader-center() {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Mixin para animación optimizada por GPU
+@mixin gpu-accelerated() {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+// Mixin para crear spinners circulares
+@mixin spinner-circular($size, $border-width, $color: $loader-primary) {
+  width: $size;
+  height: $size;
+  border: $border-width solid rgba($color, 0.2);
+  border-left-color: $color;
+  border-radius: 50%;
+  animation: spin $spin-duration $ease-linear infinite;
+  @include gpu-accelerated();
+}
+
+// Mixin para dots pulsantes
+@mixin dots-pulse($size, $color: $loader-primary) {
+  width: $size;
+  height: $size;
+  background-color: $color;
+  border-radius: 50%;
+  animation: pulse $pulse-duration $ease-in-out-smooth infinite;
+}
+
+// Mixin para skeleton loading
+@mixin skeleton-base($bg: $skeleton-bg, $highlight: $skeleton-highlight) {
+  background: linear-gradient(90deg, $bg 25%, $highlight 50%, $bg 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading $shimmer-duration $ease-linear infinite;
+}
+
+// Mixin para shimmer effect
+@mixin shimmer-effect($base: $shimmer-base, $highlight: $shimmer-highlight) {
+  background: linear-gradient(90deg, $base 0%, $highlight 50%, $base 100%);
+  background-size: 200% 100%;
+  animation: shimmer $shimmer-duration $ease-linear infinite;
+}
+
+// Mixin para overlay
+@mixin loader-overlay($bg: $overlay-bg, $z-index: $loader-overlay-z) {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: $bg;
+  backdrop-filter: blur($overlay-blur);
+  z-index: $z-index;
+  @include loader-center();
+}
+
+// Mixin responsive para loaders
+@mixin loader-responsive() {
+  @media (max-width: $loader-mobile-breakpoint - 1px) {
+    transform: scale(0.8);
+  }
+}
+
+// ===================================================================
+// CLASE BASE LOADER
+// ===================================================================
+
+.loader {
+  @include loader-base();
+  
+  // Estado de carga activo
+  &--active {
+    display: inline-block;
+  }
+  
+  // Estado oculto
+  &--hidden {
+    display: none;
+  }
+  
+  // Centrado
+  &--center {
+    @include loader-center();
+  }
+  
+  // Con texto
+  &__text {
+    margin-left: 0.5rem;
+    font-size: $loader-font-size-md;
+    font-weight: $loader-font-weight;
+    color: $loader-secondary;
+    
+    &--above {
+      margin-left: 0;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+    
+    &--below {
+      margin-left: 0;
+      margin-top: 0.5rem;
+      text-align: center;
+    }
+  }
+}
+
+// ===================================================================
+// SPINNERS CIRCULARES
+// ===================================================================
+
+.spinner {
+  @include loader-base();
+  @include loader-responsive();
+  
+  // Tamaños
+  &--xs {
+    @include spinner-circular($spinner-xs, $spinner-border-xs);
+  }
+  
+  &--sm {
+    @include spinner-circular($spinner-sm, $spinner-border-sm);
+  }
+  
+  &--md {
+    @include spinner-circular($spinner-md, $spinner-border-md);
+  }
+  
+  &--lg {
+    @include spinner-circular($spinner-lg, $spinner-border-lg);
+  }
+  
+  &--xl {
+    @include spinner-circular($spinner-xl, $spinner-border-xl);
+  }
+  
+  &--2xl {
+    @include spinner-circular($spinner-2xl, $spinner-border-2xl);
+  }
+  
+  &--3xl {
+    @include spinner-circular($spinner-3xl, $spinner-border-3xl);
+  }
+  
+  // Variantes de color
+  &--primary {
+    border-color: rgba($loader-primary, 0.2);
+    border-left-color: $loader-primary;
+  }
+  
+  &--secondary {
+    border-color: rgba($loader-secondary, 0.2);
+    border-left-color: $loader-secondary;
+  }
+  
+  &--success {
+    border-color: rgba($loader-success, 0.2);
+    border-left-color: $loader-success;
+  }
+  
+  &--warning {
+    border-color: rgba($loader-warning, 0.2);
+    border-left-color: $loader-warning;
+  }
+  
+  &--error {
+    border-color: rgba($loader-error, 0.2);
+    border-left-color: $loader-error;
+  }
+  
+  &--white {
+    border-color: rgba($loader-white, 0.3);
+    border-left-color: $loader-white;
+  }
+  
+  &--dark {
+    border-color: rgba($loader-dark, 0.2);
+    border-left-color: $loader-dark;
+  }
+}
+
+// ===================================================================
+// SPINNER DUAL RING
+// ===================================================================
+
+.spinner-dual {
+  @include loader-base();
+  @include gpu-accelerated();
+  position: relative;
+  
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: inherit;
+    animation: spin $spin-duration * 1.5 $ease-linear infinite reverse;
+  }
+  
+  // Tamaños para dual ring
+  &--xs {
+    @include spinner-circular($spinner-xs, $spinner-border-xs);
+  }
+  
+  &--sm {
+    @include spinner-circular($spinner-sm, $spinner-border-sm);
+  }
+  
+  &--md {
+    @include spinner-circular($spinner-md, $spinner-border-md);
+  }
+  
+  &--lg {
+    @include spinner-circular($spinner-lg, $spinner-border-lg);
+  }
+  
+  &--xl {
+    @include spinner-circular($spinner-xl, $spinner-border-xl);
+  }
+}
+
+// ===================================================================
+// LOADING DOTS
+// ===================================================================
+
+.loader-dots {
+  @include loader-base();
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  
+  &__dot {
+    @include gpu-accelerated();
+    border-radius: 50%;
+    
+    // Animación escalonada para cada dot
+    &:nth-child(1) {
+      animation-delay: 0s;
+    }
+    
+    &:nth-child(2) {
+      animation-delay: 0.1s;
+    }
+    
+    &:nth-child(3) {
+      animation-delay: 0.2s;
+    }
+    
+    &:nth-child(4) {
+      animation-delay: 0.3s;
+    }
+    
+    &:nth-child(5) {
+      animation-delay: 0.4s;
+    }
+  }
+  
+  // Variante bouncing
+  &--bounce .loader-dots__dot {
+    animation: bounce $bounce-duration $ease-in-out-smooth infinite;
+  }
+  
+  // Variante pulsing
+  &--pulse .loader-dots__dot {
+    animation: pulse $pulse-duration $ease-in-out-smooth infinite;
+  }
+  
+  // Variante wave
+  &--wave .loader-dots__dot {
+    animation: wave $wave-duration $ease-in-out-smooth infinite;
+  }
+  
+  // Tamaños
+  &--xs .loader-dots__dot {
+    @include dots-pulse($dots-xs);
+  }
+  
+  &--sm .loader-dots__dot {
+    @include dots-pulse($dots-sm);
+  }
+  
+  &--md .loader-dots__dot {
+    @include dots-pulse($dots-md);
+  }
+  
+  &--lg .loader-dots__dot {
+    @include dots-pulse($dots-lg);
+  }
+  
+  &--xl .loader-dots__dot {
+    @include dots-pulse($dots-xl);
+  }
+  
+  // Colores
+  &--primary .loader-dots__dot {
+    background-color: $loader-primary;
+  }
+  
+  &--secondary .loader-dots__dot {
+    background-color: $loader-secondary;
+  }
+  
+  &--success .loader-dots__dot {
+    background-color: $loader-success;
+  }
+  
+  &--warning .loader-dots__dot {
+    background-color: $loader-warning;
+  }
+  
+  &--error .loader-dots__dot {
+    background-color: $loader-error;
+  }
+}
+
+// ===================================================================
+// LOADING BARS
+// ===================================================================
+
+.loader-bar {
+  @include loader-base();
+  position: relative;
+  width: 100%;
+  background-color: rgba($loader-primary, 0.1);
+  border-radius: 9999px;
+  overflow: hidden;
+  
+  &__fill {
+    height: 100%;
+    background-color: $loader-primary;
+    border-radius: inherit;
+    @include gpu-accelerated();
+  }
+  
+  // Variante indeterminada
+  &--indeterminate {
+    .loader-bar__fill {
+      width: 30%;
+      animation: loading-bar-slide $progress-duration $ease-linear infinite;
+    }
+  }
+  
+  // Variante con gradiente
+  &--gradient {
+    .loader-bar__fill {
+      background: linear-gradient(90deg, $loader-primary 0%, lighten($loader-primary, 20%) 100%);
+    }
+  }
+  
+  // Variante pulsante
+  &--pulse {
+    .loader-bar__fill {
+      animation: loading-bar-pulse $pulse-duration $ease-in-out-smooth infinite;
+    }
+  }
+  
+  // Tamaños
+  &--sm {
+    height: $loading-bar-height-sm;
+  }
+  
+  &--md {
+    height: $loading-bar-height;
+  }
+  
+  &--lg {
+    height: $loading-bar-height-lg;
+  }
+  
+  &--xl {
+    height: $loading-bar-height-xl;
+  }
+  
+  // Colores
+  &--primary {
+    background-color: rgba($loader-primary, 0.1);
+    
+    .loader-bar__fill {
+      background-color: $loader-primary;
+    }
+  }
+  
+  &--success {
+    background-color: rgba($loader-success, 0.1);
+    
+    .loader-bar__fill {
+      background-color: $loader-success;
+    }
+  }
+  
+  &--warning {
+    background-color: rgba($loader-warning, 0.1);
+    
+    .loader-bar__fill {
+      background-color: $loader-warning;
+    }
+  }
+  
+  &--error {
+    background-color: rgba($loader-error, 0.1);
+    
+    .loader-bar__fill {
+      background-color: $loader-error;
+    }
+  }
+}
+
+// ===================================================================
+// SKELETON LOADERS
+// ===================================================================
+
+.skeleton {
+  @include skeleton-base();
+  border-radius: 0.25rem;
+  
+  // Variantes de forma
+  &--circle {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+  }
+  
+  &--rounded {
+    border-radius: 0.5rem;
+  }
+  
+  &--pill {
+    border-radius: 9999px;
+  }
+  
+  // Variantes de tamaño común
+  &--text {
+    height: 1rem;
+    margin-bottom: 0.5rem;
+    
+    &:last-child {
+      margin-bottom: 0;
+      width: 60%;
+    }
+  }
+  
+  &--title {
+    height: 1.5rem;
+    width: 80%;
+    margin-bottom: 1rem;
+  }
+  
+  &--paragraph {
+    height: 1rem;
+    margin-bottom: 0.75rem;
+    
+    &:nth-child(1) { width: 100%; }
+    &:nth-child(2) { width: 95%; }
+    &:nth-child(3) { width: 85%; }
+    &:nth-child(4) { width: 70%; }
+  }
+  
+  &--avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+  }
+  
+  &--avatar-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+  }
+  
+  &--avatar-lg {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+  }
+  
+  &--button {
+    height: 2.5rem;
+    width: 6rem;
+    border-radius: 0.375rem;
+  }
+  
+  &--card {
+    height: 200px;
+    border-radius: 0.5rem;
+  }
+  
+  &--image {
+    height: 160px;
+    border-radius: 0.5rem;
+  }
+  
+  // Tema oscuro para skeleton
+  &--dark {
+    @include skeleton-base($skeleton-dark-bg, $skeleton-dark-highlight);
+  }
+}
+
+// ===================================================================
+// SHIMMER LOADERS
+// ===================================================================
+
+.shimmer {
+  @include shimmer-effect();
+  border-radius: 0.25rem;
+  position: relative;
+  overflow: hidden;
+  
+  // Contenedor de shimmer
+  &__container {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  // Elemento shimmer
+  &__element {
+    background-color: $shimmer-base;
+    border-radius: inherit;
+  }
+  
+  // Variantes predefinidas
+  &--text {
+    height: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  &--title {
+    height: 1.5rem;
+    width: 70%;
+    margin-bottom: 1rem;
+  }
+  
+  &--avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+  }
+  
+  &--button {
+    height: 2.5rem;
+    width: 6rem;
+    border-radius: 0.375rem;
+  }
+  
+  &--card {
+    height: 200px;
+    border-radius: 0.5rem;
+  }
+  
+  // Tema oscuro
+  &--dark {
+    @include shimmer-effect($shimmer-dark-base, $shimmer-dark-highlight);
+  }
+}
+
+// ===================================================================
+// OVERLAYS DE LOADING
+// ===================================================================
+
+.loader-overlay {
+  @include loader-overlay();
+  
+  // Variante oscura
+  &--dark {
+    @include loader-overlay($overlay-dark-bg);
+    color: $loader-white;
+  }
+  
+  // Variante sin blur
+  &--no-blur {
+    backdrop-filter: none;
+  }
+  
+  // Overlay inline (para contenedores específicos)
+  &--inline {
+    position: absolute;
+    z-index: $loader-inline-z;
+  }
+  
+  // Contenido del overlay
+  &__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    
+    .loader-overlay--dark & {
+      background-color: rgba(0, 0, 0, 0.8);
+      color: $loader-white;
+    }
+  }
+  
+  &__text {
+    font-size: $loader-font-size-lg;
+    font-weight: $loader-font-weight;
+    text-align: center;
+    color: $loader-secondary;
+    
+    .loader-overlay--dark & {
+      color: rgba($loader-white, 0.9);
+    }
+  }
+  
+  &__subtext {
+    font-size: $loader-font-size-sm;
+    color: rgba($loader-secondary, 0.7);
+    text-align: center;
+    margin-top: -0.5rem;
+    
+    .loader-overlay--dark & {
+      color: rgba($loader-white, 0.7);
+    }
+  }
+}
+
+// ===================================================================
+// LOADING STATES PARA BOTONES
+// ===================================================================
+
+.btn {
+  &--loading {
+    position: relative;
+    pointer-events: none;
+    color: transparent !important;
+    
+    &::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 1rem;
+      height: 1rem;
+      margin-top: -0.5rem;
+      margin-left: -0.5rem;
+      @include spinner-circular(1rem, 2px, currentColor);
+      color: inherit;
+    }
+    
+    // Para botones pequeños
+    &.btn--sm::after {
+      width: 0.875rem;
+      height: 0.875rem;
+      margin-top: -0.4375rem;
+      margin-left: -0.4375rem;
+    }
+    
+    // Para botones grandes
+    &.btn--lg::after {
+      width: 1.25rem;
+      height: 1.25rem;
+      margin-top: -0.625rem;
+      margin-left: -0.625rem;
+    }
+  }
+}
+
+// ===================================================================
+// LOADING CARDS
+// ===================================================================
+
+.loading-card {
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  
+  &__header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  
+  &__avatar {
+    margin-right: 1rem;
+  }
+  
+  &__content {
+    flex: 1;
+  }
+  
+  &__body {
+    margin-bottom: 1rem;
+  }
+  
+  &__footer {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+// ===================================================================
+// LOADING TABLE
+// ===================================================================
+
+.loading-table {
+  width: 100%;
+  
+  &__row {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e5e7eb;
+    
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+  
+  &__cell {
+    flex: 1;
+    margin-right: 1rem;
+    
+    &:last-child {
+      margin-right: 0;
+    }
+    
+    &--avatar {
+      flex: 0 0 auto;
+      margin-right: 1rem;
+    }
+    
+    &--actions {
+      flex: 0 0 auto;
+      display: flex;
+      gap: 0.5rem;
+    }
+  }
+}
+
+// ===================================================================
+// ESTADOS ESPECÍFICOS
+// ===================================================================
+
+// Loading state para inputs
+.input--loading {
+  position: relative;
+  
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    width: 1rem;
+    height: 1rem;
+    margin-top: -0.5rem;
+    @include spinner-circular(1rem, 2px, $loader-secondary);
+  }
+}
+
+// Loading state para imágenes
+.image--loading {
+  position: relative;
+  background-color: $skeleton-bg;
+  
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2rem;
+    height: 2rem;
+    margin-top: -1rem;
+    margin-left: -1rem;
+    @include spinner-circular(2rem, 3px, $loader-secondary);
+  }
+}
+
+// ===================================================================
+// ANIMACIONES
+// ===================================================================
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+@keyframes wave {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes loading-bar-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes loading-bar-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scaleX(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1.05);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+// ===================================================================
+// RESPONSIVE DESIGN
+// ===================================================================
+
+@media (max-width: $loader-mobile-breakpoint - 1px) {
+  .loader-overlay {
+    &__content {
+      padding: 1.5rem;
+      margin: 1rem;
+    }
+    
+    &__text {
+      font-size: $loader-font-size-md;
+    }
+  }
+  
+  .spinner {
+    &--3xl {
+      @include spinner-circular($spinner-xl, $spinner-border-xl);
+    }
+    
+    &--2xl {
+      @include spinner-circular($spinner-lg, $spinner-border-lg);
+    }
+  }
+  
+  .loading-card {
+    padding: 1rem;
+  }
+  
+  .loader-dots {
+    &--xl .loader-dots__dot {
+      @include dots-pulse($dots-md);
+    }
+    
+    &--lg .loader-dots__dot {
+      @include dots-pulse($dots-sm);
+    }
+  }
+}
+
+// ===================================================================
+// TEMA OSCURO AUTOMÁTICO
+// ===================================================================
+
+@media (prefers-color-scheme: dark) {
+  .skeleton:not(.skeleton--dark) {
+    @include skeleton-base($skeleton-dark-bg, $skeleton-dark-highlight);
+  }
+  
+  .shimmer:not(.shimmer--dark) {
+    @include shimmer-effect($shimmer-dark-base, $shimmer-dark-highlight);
+  }
+  
+  .loader-overlay:not(.loader-overlay--dark) {
+    background-color: $overlay-dark-bg;
+    color: $loader-white;
+    
+    .loader-overlay__content {
+      background-color: rgba(0, 0, 0, 0.8);
+      color: $loader-white;
+    }
+  }
+  
+  .loading-card {
+    background-color: #1f2937;
+    color: $loader-white;
+  }
+  
+  .loading-table__row {
+    border-color: #374151;
+  }
+}
+
+// ===================================================================
+// ACCESIBILIDAD
+// ===================================================================
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner,
+  .spinner-dual,
+  .loader-dots__dot,
+  .loader-bar__fill,
+  .skeleton,
+  .shimmer,
+  .btn--loading::after,
+  .input--loading::after,
+  .image--loading::after {
+    animation: none !important;
+  }
+  
+  // Mostrar un estado estático para usuarios que prefieren menos movimiento
+  .spinner,
+  .spinner-dual {
+    &::before {
+      content: "⏳";
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8em;
+    }
+    
+    border: none;
+    background: none;
+  }
+}
+
+// Soporte para lectores de pantalla
+.loader,
+.spinner,
+.loader-dots,
+.skeleton,
+.shimmer {
+  &[aria-label],
+  &[aria-labelledby] {
+    // Los atributos ARIA ya proporcionan la información necesaria
+  }
+  
+  // Texto alternativo para lectores de pantalla
+  &::before {
+    content: "";
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+}
+
+// ===================================================================
+// PRINT STYLES
+// ===================================================================
+
+@media print {
+  .loader,
+  .spinner,
+  .spinner-dual,
+  .loader-dots,
+  .loader-bar,
+  .loader-overlay,
+  .skeleton,
+  .shimmer {
+    display: none !important;
+  }
+  
+  .btn--loading {
+    color: inherit !important;
+    pointer-events: auto;
+    
+    &::after {
+      display: none !important;
+    }
+  }
+}

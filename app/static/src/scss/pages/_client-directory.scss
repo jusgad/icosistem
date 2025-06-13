@@ -1,0 +1,2320 @@
+// =============================================================================
+// CLIENT DIRECTORY PAGE - SCSS STYLES
+// =============================================================================
+// Desarrollado por: jusga
+// Descripción: Directorio completo de clientes con gestión avanzada y múltiples vistas
+// Versión: 1.0.0
+// Fecha: 2025
+// =============================================================================
+
+// Variables específicas para client-directory
+$directory-primary: #1e40af;
+$directory-secondary: #0891b2;
+$directory-success: #059669;
+$directory-warning: #d97706;
+$directory-danger: #dc2626;
+$directory-info: #7c3aed;
+$directory-neutral: #64748b;
+$directory-dark: #0f172a;
+$directory-light: #f8fafc;
+$directory-border: #e2e8f0;
+$directory-muted: #64748b;
+$directory-accent: #f59e0b;
+
+// Gradientes específicos
+$directory-gradient-primary: linear-gradient(135deg, #1e40af, #3b82f6);
+$directory-gradient-secondary: linear-gradient(135deg, #0891b2, #06b6d4);
+$directory-gradient-success: linear-gradient(135deg, #059669, #10b981);
+$directory-gradient-warning: linear-gradient(135deg, #d97706, #f59e0b);
+$directory-gradient-danger: linear-gradient(135deg, #dc2626, #ef4444);
+$directory-gradient-info: linear-gradient(135deg, #7c3aed, #8b5cf6);
+
+// Sombras específicas
+$directory-shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$directory-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+$directory-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+$directory-shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+$directory-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+$directory-shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+// Transiciones
+$directory-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+$directory-transition-fast: all 0.15s ease-out;
+$directory-transition-slow: all 0.5s ease-in-out;
+
+// Mixins específicos para directorio
+@mixin directory-card($padding: 1.5rem, $hover: true) {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: $directory-shadow;
+  padding: $padding;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  transition: $directory-transition;
+  position: relative;
+  overflow: hidden;
+  
+  @if $hover {
+    &:hover {
+      box-shadow: $directory-shadow-md;
+      transform: translateY(-2px);
+      border-color: rgba(30, 64, 175, 0.2);
+    }
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at top right, rgba(30, 64, 175, 0.02) 0%, transparent 50%);
+    pointer-events: none;
+  }
+}
+
+@mixin directory-client-card($size: medium) {
+  @include directory-card(1.25rem);
+  cursor: pointer;
+  
+  @if $size == small {
+    padding: 1rem;
+  } @else if $size == large {
+    padding: 2rem;
+  }
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $directory-shadow-lg;
+    
+    .client-avatar {
+      transform: scale(1.05);
+    }
+    
+    .client-actions {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  &.selected {
+    border-color: $directory-primary;
+    background: rgba(30, 64, 175, 0.02);
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: $directory-gradient-primary;
+      border-radius: 1rem 1rem 0 0;
+    }
+  }
+}
+
+@mixin directory-avatar($size: 48px) {
+  width: $size;
+  height: $size;
+  border-radius: 50%;
+  background: $directory-gradient-primary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: #{$size * 0.4};
+  position: relative;
+  transition: $directory-transition;
+  flex-shrink: 0;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  &.online::after {
+    content: '';
+    position: absolute;
+    bottom: #{$size * 0.05};
+    right: #{$size * 0.05};
+    width: #{$size * 0.25};
+    height: #{$size * 0.25};
+    background: $directory-success;
+    border: 2px solid white;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  
+  &.away::after {
+    background: $directory-warning;
+    animation: none;
+  }
+  
+  &.busy::after {
+    background: $directory-danger;
+    animation: none;
+  }
+  
+  &.offline::after {
+    background: $directory-neutral;
+    animation: none;
+  }
+}
+
+@mixin directory-status-badge($status: active) {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  gap: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  
+  @if $status == active {
+    background: rgba(5, 150, 105, 0.1);
+    color: $directory-success;
+    border: 1px solid rgba(5, 150, 105, 0.2);
+    
+    .dot {
+      background: $directory-success;
+    }
+  } @else if $status == inactive {
+    background: rgba(100, 116, 139, 0.1);
+    color: $directory-neutral;
+    border: 1px solid rgba(100, 116, 139, 0.2);
+    
+    .dot {
+      background: $directory-neutral;
+    }
+  } @else if $status == prospect {
+    background: rgba(124, 58, 237, 0.1);
+    color: $directory-info;
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    
+    .dot {
+      background: $directory-info;
+    }
+  } @else if $status == lead {
+    background: rgba(245, 158, 11, 0.1);
+    color: $directory-accent;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    
+    .dot {
+      background: $directory-accent;
+    }
+  } @else if $status == blocked {
+    background: rgba(220, 38, 38, 0.1);
+    color: $directory-danger;
+    border: 1px solid rgba(220, 38, 38, 0.2);
+    
+    .dot {
+      background: $directory-danger;
+    }
+  }
+}
+
+@mixin directory-scrollbar($width: 8px) {
+  &::-webkit-scrollbar {
+    width: $width;
+    height: $width;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: #{$width / 2};
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: #{$width / 2};
+    
+    &:hover {
+      background: #94a3b8;
+    }
+  }
+}
+
+// =============================================================================
+// CONTENEDOR PRINCIPAL
+// =============================================================================
+.client-directory {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 25%, #e2e8f0 50%, #f8fafc 100%);
+  padding: 2rem 0;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><g fill="%23e2e8f0" fill-opacity="0.4"><path d="M20 20c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10zM30 10c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10z"/></g></svg>') repeat;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.3;
+  }
+  
+  &__container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    position: relative;
+    z-index: 1;
+    
+    @media (min-width: 768px) {
+      padding: 0 2rem;
+    }
+  }
+}
+
+// =============================================================================
+// HEADER DEL DIRECTORIO
+// =============================================================================
+.directory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+  gap: 2rem;
+  
+  &__content {
+    flex: 1;
+    min-width: 300px;
+    
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 0.875rem;
+      
+      a {
+        color: $directory-muted;
+        text-decoration: none;
+        transition: $directory-transition;
+        
+        &:hover {
+          color: $directory-primary;
+        }
+      }
+      
+      .separator {
+        color: #cbd5e1;
+        font-size: 0.75rem;
+      }
+      
+      .current {
+        color: $directory-primary;
+        font-weight: 600;
+      }
+    }
+    
+    h1 {
+      color: #0f172a;
+      font-size: 3.5rem;
+      font-weight: 900;
+      margin: 0 0 0.75rem;
+      background: $directory-gradient-primary;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+      
+      @media (max-width: 768px) {
+        font-size: 2.5rem;
+      }
+    }
+    
+    .subtitle {
+      color: $directory-muted;
+      font-size: 1.25rem;
+      margin: 0 0 1rem;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    
+    .stats-bar {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+      
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        
+        .icon {
+          width: 32px;
+          height: 32px;
+          border-radius: 0.5rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1rem;
+          color: white;
+          background: $directory-gradient-primary;
+        }
+        
+        .details {
+          .number {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1;
+            margin: 0;
+          }
+          
+          .label {
+            font-size: 0.75rem;
+            color: $directory-muted;
+            font-weight: 500;
+            margin: 0.125rem 0 0;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+          }
+        }
+      }
+    }
+  }
+  
+  &__actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+    
+    .action-group {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+  }
+}
+
+// =============================================================================
+// CONTROLES Y FILTROS
+// =============================================================================
+.directory-controls {
+  @include directory-card(1.5rem, false);
+  margin-bottom: 2rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    
+    h3 {
+      margin: 0;
+      color: #0f172a;
+      font-size: 1.25rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      
+      .icon {
+        color: $directory-primary;
+        font-size: 1.125rem;
+      }
+    }
+    
+    .view-toggles {
+      display: flex;
+      background: #f8fafc;
+      border-radius: 0.75rem;
+      padding: 0.25rem;
+      gap: 0.25rem;
+      
+      button {
+        padding: 0.5rem 1rem;
+        border: none;
+        background: transparent;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: $directory-muted;
+        cursor: pointer;
+        transition: $directory-transition;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        
+        &:hover {
+          color: $directory-primary;
+          background: rgba(30, 64, 175, 0.05);
+        }
+        
+        &.active {
+          background: white;
+          color: $directory-primary;
+          box-shadow: $directory-shadow-sm;
+        }
+      }
+    }
+  }
+  
+  &__filters {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr auto;
+    gap: 1.5rem;
+    align-items: end;
+    
+    @media (max-width: 1024px) {
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  &__search {
+    position: relative;
+    
+    .search-input {
+      width: 100%;
+      padding: 0.875rem 1rem 0.875rem 3rem;
+      border: 1px solid $directory-border;
+      border-radius: 0.75rem;
+      font-size: 0.875rem;
+      transition: $directory-transition;
+      background: white;
+      
+      &:focus {
+        outline: none;
+        border-color: $directory-primary;
+        box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+      }
+      
+      &::placeholder {
+        color: #9ca3af;
+      }
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: $directory-muted;
+      font-size: 1.125rem;
+      pointer-events: none;
+    }
+    
+    .clear-search {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: $directory-muted;
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 0.25rem;
+      transition: $directory-transition;
+      
+      &:hover {
+        background: #f1f5f9;
+        color: $directory-primary;
+      }
+    }
+  }
+  
+  &__filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    
+    label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #374151;
+    }
+    
+    select {
+      padding: 0.75rem 1rem;
+      border: 1px solid $directory-border;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      background: white;
+      transition: $directory-transition;
+      
+      &:focus {
+        outline: none;
+        border-color: $directory-primary;
+        box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+      }
+    }
+  }
+  
+  &__actions {
+    display: flex;
+    gap: 0.75rem;
+    
+    .filter-toggle {
+      padding: 0.75rem;
+      border: 1px solid $directory-border;
+      background: white;
+      border-radius: 0.5rem;
+      color: $directory-muted;
+      cursor: pointer;
+      transition: $directory-transition;
+      
+      &:hover {
+        border-color: $directory-primary;
+        color: $directory-primary;
+        background: rgba(30, 64, 175, 0.05);
+      }
+      
+      &.active {
+        background: $directory-primary;
+        border-color: $directory-primary;
+        color: white;
+      }
+    }
+  }
+}
+
+// =============================================================================
+// LISTA DE CLIENTES
+// =============================================================================
+.client-list {
+  margin-bottom: 2rem;
+  
+  &--grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  }
+  
+  &--list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  &--table {
+    @include directory-card(0, false);
+    overflow: hidden;
+  }
+}
+
+// =============================================================================
+// TARJETA DE CLIENTE (VISTA GRID)
+// =============================================================================
+.client-card {
+  @include directory-client-card;
+  
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    
+    .client-avatar {
+      @include directory-avatar(56px);
+    }
+    
+    .client-status {
+      @include directory-status-badge(active);
+    }
+  }
+  
+  &__info {
+    margin-bottom: 1.5rem;
+    
+    .name {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 0.25rem;
+      line-height: 1.3;
+    }
+    
+    .company {
+      font-size: 0.875rem;
+      color: $directory-primary;
+      font-weight: 600;
+      margin: 0 0 0.5rem;
+    }
+    
+    .title {
+      font-size: 0.875rem;
+      color: $directory-muted;
+      margin: 0 0 0.75rem;
+    }
+    
+    .contact-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+      
+      .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8125rem;
+        color: #374151;
+        
+        .icon {
+          color: $directory-muted;
+          font-size: 0.875rem;
+          width: 16px;
+          flex-shrink: 0;
+        }
+        
+        a {
+          color: inherit;
+          text-decoration: none;
+          transition: $directory-transition;
+          
+          &:hover {
+            color: $directory-primary;
+          }
+        }
+      }
+    }
+  }
+  
+  &__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    
+    .tag {
+      padding: 0.25rem 0.75rem;
+      background: rgba(30, 64, 175, 0.1);
+      color: $directory-primary;
+      border-radius: 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border: 1px solid rgba(30, 64, 175, 0.2);
+    }
+  }
+  
+  &__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    .last-contact {
+      font-size: 0.75rem;
+      color: $directory-muted;
+      
+      .label {
+        font-weight: 500;
+      }
+      
+      .date {
+        font-weight: 600;
+        color: #374151;
+      }
+    }
+    
+    .client-rating {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      
+      .stars {
+        display: flex;
+        gap: 0.125rem;
+        
+        .star {
+          color: #fbbf24;
+          font-size: 0.875rem;
+          
+          &.empty {
+            color: #e5e7eb;
+          }
+        }
+      }
+      
+      .rating-number {
+        font-size: 0.75rem;
+        color: $directory-muted;
+        font-weight: 600;
+        margin-left: 0.25rem;
+      }
+    }
+  }
+  
+  &__actions {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: $directory-transition;
+    
+    button {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: white;
+      border-radius: 50%;
+      color: $directory-muted;
+      cursor: pointer;
+      transition: $directory-transition;
+      box-shadow: $directory-shadow-sm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      &:hover {
+        color: white;
+        transform: scale(1.1);
+        
+        &.edit {
+          background: $directory-primary;
+        }
+        
+        &.delete {
+          background: $directory-danger;
+        }
+        
+        &.contact {
+          background: $directory-success;
+        }
+        
+        &.favorite {
+          background: $directory-accent;
+        }
+      }
+    }
+  }
+  
+  // Estados especiales
+  &.vip {
+    border-color: #fbbf24;
+    
+    &::after {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    }
+    
+    .client-avatar {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    }
+  }
+  
+  &.priority {
+    border-color: $directory-danger;
+    
+    &::after {
+      background: $directory-gradient-danger;
+    }
+  }
+  
+  &.inactive {
+    opacity: 0.7;
+    
+    .client-avatar {
+      background: linear-gradient(135deg, $directory-neutral, #94a3b8);
+    }
+  }
+}
+
+// =============================================================================
+// ITEM DE CLIENTE (VISTA LISTA)
+// =============================================================================
+.client-item {
+  @include directory-card;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  cursor: pointer;
+  
+  &:hover {
+    .client-actions {
+      opacity: 1;
+    }
+  }
+  
+  .client-avatar {
+    @include directory-avatar(48px);
+  }
+  
+  .client-info {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1fr 1fr auto;
+    gap: 1.5rem;
+    align-items: center;
+    
+    @media (max-width: 1024px) {
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+    }
+    
+    .basic-info {
+      .name {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 0.25rem;
+      }
+      
+      .company {
+        font-size: 0.875rem;
+        color: $directory-primary;
+        font-weight: 600;
+        margin: 0 0 0.25rem;
+      }
+      
+      .title {
+        font-size: 0.8125rem;
+        color: $directory-muted;
+        margin: 0;
+      }
+    }
+    
+    .contact-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      
+      @media (max-width: 1024px) {
+        display: none;
+      }
+      
+      .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8125rem;
+        color: #374151;
+        
+        .icon {
+          color: $directory-muted;
+          font-size: 0.75rem;
+          width: 14px;
+        }
+        
+        a {
+          color: inherit;
+          text-decoration: none;
+          
+          &:hover {
+            color: $directory-primary;
+          }
+        }
+      }
+    }
+    
+    .client-status {
+      @include directory-status-badge(active);
+      justify-self: center;
+      
+      @media (max-width: 1024px) {
+        justify-self: end;
+      }
+    }
+    
+    .last-contact {
+      text-align: center;
+      font-size: 0.8125rem;
+      color: $directory-muted;
+      
+      @media (max-width: 1024px) {
+        display: none;
+      }
+      
+      .date {
+        font-weight: 600;
+        color: #374151;
+        display: block;
+      }
+      
+      .time {
+        font-size: 0.75rem;
+        margin-top: 0.125rem;
+      }
+    }
+    
+    .client-actions {
+      display: flex;
+      gap: 0.5rem;
+      opacity: 0;
+      transition: $directory-transition;
+      
+      button {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: transparent;
+        color: $directory-muted;
+        cursor: pointer;
+        border-radius: 0.375rem;
+        transition: $directory-transition;
+        
+        &:hover {
+          background: #f1f5f9;
+          color: $directory-primary;
+        }
+      }
+    }
+  }
+}
+
+// =============================================================================
+// VISTA TABLA
+// =============================================================================
+.client-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  
+  thead {
+    background: #f8fafc;
+    
+    th {
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: #374151;
+      border-bottom: 1px solid $directory-border;
+      white-space: nowrap;
+      position: relative;
+      cursor: pointer;
+      transition: $directory-transition;
+      
+      &:hover {
+        background: #f1f5f9;
+      }
+      
+      &.sortable {
+        &::after {
+          content: '';
+          position: absolute;
+          right: 0.75rem;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 0;
+          height: 0;
+          border-left: 4px solid transparent;
+          border-right: 4px solid transparent;
+          border-bottom: 4px solid #cbd5e1;
+          transition: $directory-transition;
+        }
+        
+        &.asc::after {
+          border-bottom: 4px solid $directory-primary;
+          transform: translateY(-50%) rotate(180deg);
+        }
+        
+        &.desc::after {
+          border-bottom: 4px solid $directory-primary;
+        }
+      }
+    }
+  }
+  
+  tbody {
+    tr {
+      transition: $directory-transition;
+      
+      &:nth-child(even) {
+        background: #fafbfc;
+      }
+      
+      &:hover {
+        background: rgba(30, 64, 175, 0.05);
+      }
+      
+      &.selected {
+        background: rgba(30, 64, 175, 0.1);
+      }
+      
+      td {
+        padding: 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        color: #374151;
+        vertical-align: middle;
+        
+        &.client-cell {
+          .client-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            
+            .client-avatar {
+              @include directory-avatar(40px);
+            }
+            
+            .details {
+              .name {
+                font-weight: 700;
+                color: #0f172a;
+                margin: 0;
+                font-size: 0.875rem;
+              }
+              
+              .company {
+                color: $directory-primary;
+                font-size: 0.75rem;
+                font-weight: 600;
+                margin: 0.125rem 0 0;
+              }
+            }
+          }
+        }
+        
+        &.contact-cell {
+          .contact-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            
+            .contact-item {
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              font-size: 0.8125rem;
+              
+              .icon {
+                color: $directory-muted;
+                font-size: 0.75rem;
+                width: 14px;
+              }
+              
+              a {
+                color: inherit;
+                text-decoration: none;
+                
+                &:hover {
+                  color: $directory-primary;
+                }
+              }
+            }
+          }
+        }
+        
+        &.status-cell {
+          .client-status {
+            @include directory-status-badge(active);
+          }
+        }
+        
+        &.actions-cell {
+          .btn-group {
+            display: flex;
+            gap: 0.5rem;
+            
+            button {
+              padding: 0.375rem;
+              border: none;
+              background: transparent;
+              color: $directory-muted;
+              cursor: pointer;
+              border-radius: 0.25rem;
+              transition: $directory-transition;
+              
+              &:hover {
+                background: #f1f5f9;
+                color: $directory-primary;
+              }
+              
+              &.danger:hover {
+                color: $directory-danger;
+              }
+            }
+          }
+        }
+        
+        &.center {
+          text-align: center;
+        }
+        
+        &.number {
+          text-align: right;
+          font-variant-numeric: tabular-nums;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+}
+
+// =============================================================================
+// PAGINACIÓN
+// =============================================================================
+.directory-pagination {
+  @include directory-card(1.5rem, false);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  
+  &__info {
+    color: $directory-muted;
+    font-size: 0.875rem;
+    
+    .highlight {
+      font-weight: 600;
+      color: #374151;
+    }
+  }
+  
+  &__controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+    
+    .page-size {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: $directory-muted;
+      
+      select {
+        padding: 0.375rem 0.5rem;
+        border: 1px solid $directory-border;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        background: white;
+        
+        &:focus {
+          outline: none;
+          border-color: $directory-primary;
+        }
+      }
+    }
+    
+    .pagination {
+      display: flex;
+      gap: 0.25rem;
+      
+      button {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid $directory-border;
+        background: white;
+        color: $directory-muted;
+        cursor: pointer;
+        font-size: 0.875rem;
+        transition: $directory-transition;
+        
+        &:first-child {
+          border-radius: 0.5rem 0 0 0.5rem;
+        }
+        
+        &:last-child {
+          border-radius: 0 0.5rem 0.5rem 0;
+        }
+        
+        &:hover:not(:disabled) {
+          background: #f8fafc;
+          border-color: $directory-primary;
+          color: $directory-primary;
+        }
+        
+        &.active {
+          background: $directory-primary;
+          border-color: $directory-primary;
+          color: white;
+        }
+        
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+}
+
+// =============================================================================
+// SIDEBAR DE FILTROS AVANZADOS
+// =============================================================================
+.directory-sidebar {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 400px;
+  height: 100vh;
+  background: white;
+  box-shadow: $directory-shadow-xl;
+  z-index: 1000;
+  transition: $directory-transition-slow;
+  overflow-y: auto;
+  @include directory-scrollbar;
+  
+  &.open {
+    right: 0;
+  }
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    right: -100%;
+  }
+  
+  &__header {
+    padding: 2rem;
+    border-bottom: 1px solid $directory-border;
+    background: #f8fafc;
+    
+    h3 {
+      margin: 0;
+      color: #0f172a;
+      font-size: 1.25rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      
+      .close-btn {
+        background: none;
+        border: none;
+        color: $directory-muted;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 0.375rem;
+        transition: $directory-transition;
+        
+        &:hover {
+          background: #f1f5f9;
+          color: $directory-primary;
+        }
+      }
+    }
+  }
+  
+  &__content {
+    padding: 2rem;
+    
+    .filter-section {
+      margin-bottom: 2rem;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      h4 {
+        margin: 0 0 1rem;
+        color: #374151;
+        font-size: 1rem;
+        font-weight: 600;
+      }
+      
+      .filter-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        
+        .filter-option {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.75rem;
+          border-radius: 0.5rem;
+          transition: $directory-transition;
+          cursor: pointer;
+          
+          &:hover {
+            background: #f8fafc;
+          }
+          
+          input[type="checkbox"],
+          input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            accent-color: $directory-primary;
+          }
+          
+          label {
+            flex: 1;
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: #374151;
+            
+            .count {
+              color: $directory-muted;
+              font-size: 0.75rem;
+              margin-left: 0.5rem;
+            }
+          }
+        }
+      }
+      
+      .date-range {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        
+        .date-input {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          
+          label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+          }
+          
+          input {
+            padding: 0.75rem;
+            border: 1px solid $directory-border;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            
+            &:focus {
+              outline: none;
+              border-color: $directory-primary;
+              box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  &__footer {
+    padding: 2rem;
+    border-top: 1px solid $directory-border;
+    background: #f8fafc;
+    
+    .actions {
+      display: flex;
+      gap: 1rem;
+      
+      .directory-btn {
+        flex: 1;
+      }
+    }
+  }
+}
+
+.directory-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  visibility: hidden;
+  transition: $directory-transition;
+  
+  &.open {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+// =============================================================================
+// BOTONES
+// =============================================================================
+.directory-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: $directory-transition;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+  
+  &:hover::before {
+    left: 100%;
+  }
+  
+  &--primary {
+    background: $directory-gradient-primary;
+    color: white;
+    box-shadow: 0 4px 14px 0 rgba(30, 64, 175, 0.39);
+    
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px 0 rgba(30, 64, 175, 0.5);
+    }
+  }
+  
+  &--secondary {
+    background: $directory-gradient-secondary;
+    color: white;
+    box-shadow: 0 4px 14px 0 rgba(8, 145, 178, 0.39);
+    
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px 0 rgba(8, 145, 178, 0.5);
+    }
+  }
+  
+  &--success {
+    background: $directory-gradient-success;
+    color: white;
+    box-shadow: 0 4px 14px 0 rgba(5, 150, 105, 0.39);
+    
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px 0 rgba(5, 150, 105, 0.5);
+    }
+  }
+  
+  &--outline {
+    background: white;
+    color: $directory-primary;
+    border: 2px solid $directory-primary;
+    box-shadow: none;
+    
+    &:hover:not(:disabled) {
+      background: $directory-primary;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px 0 rgba(30, 64, 175, 0.4);
+    }
+  }
+  
+  &--ghost {
+    background: transparent;
+    color: $directory-muted;
+    border: none;
+    box-shadow: none;
+    
+    &:hover:not(:disabled) {
+      background: #f8fafc;
+      color: $directory-primary;
+    }
+  }
+  
+  &--danger {
+    background: $directory-gradient-danger;
+    color: white;
+    box-shadow: 0 4px 14px 0 rgba(220, 38, 38, 0.39);
+    
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px 0 rgba(220, 38, 38, 0.5);
+    }
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+    
+    &::before {
+      display: none;
+    }
+  }
+  
+  &--sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+  }
+  
+  &--lg {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+  }
+  
+  .loading {
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+}
+
+// =============================================================================
+// ESTADOS DE CARGA Y VACÍO
+// =============================================================================
+.directory-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: $directory-muted;
+  
+  .spinner {
+    width: 64px;
+    height: 64px;
+    border: 4px solid #f1f5f9;
+    border-top: 4px solid $directory-primary;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 2rem;
+  }
+  
+  .text {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  
+  .subtext {
+    font-size: 0.875rem;
+    opacity: 0.8;
+  }
+}
+
+.directory-empty {
+  @include directory-card;
+  text-align: center;
+  padding: 4rem 2rem;
+  
+  .icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(100, 116, 139, 0.1);
+    color: $directory-muted;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    margin: 0 auto 2rem;
+  }
+  
+  h3 {
+    margin: 0 0 1rem;
+    color: #0f172a;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  
+  p {
+    margin: 0 0 2rem;
+    color: $directory-muted;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  
+  .actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
+
+// =============================================================================
+// NOTIFICACIONES
+// =============================================================================
+.directory-notification {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  background: white;
+  border-radius: 1rem;
+  box-shadow: $directory-shadow-lg;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 420px;
+  z-index: 1000;
+  transform: translateX(100%);
+  opacity: 0;
+  transition: $directory-transition;
+  border-left: 4px solid $directory-primary;
+  
+  &.show {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  
+  &--success {
+    border-left-color: $directory-success;
+    
+    .icon {
+      color: $directory-success;
+    }
+  }
+  
+  &--warning {
+    border-left-color: $directory-warning;
+    
+    .icon {
+      color: $directory-warning;
+    }
+  }
+  
+  &--error {
+    border-left-color: $directory-danger;
+    
+    .icon {
+      color: $directory-danger;
+    }
+  }
+  
+  .icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+    color: $directory-primary;
+    background: rgba(30, 64, 175, 0.1);
+  }
+  
+  .content {
+    flex: 1;
+    
+    h4 {
+      margin: 0 0 0.25rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    
+    p {
+      margin: 0;
+      font-size: 0.75rem;
+      color: $directory-muted;
+      line-height: 1.3;
+    }
+  }
+  
+  .close {
+    background: none;
+    border: none;
+    color: $directory-muted;
+    cursor: pointer;
+    font-size: 1.125rem;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    transition: $directory-transition;
+    
+    &:hover {
+      background: #f1f5f9;
+    }
+  }
+}
+
+// =============================================================================
+// MODALES
+// =============================================================================
+.client-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: $directory-transition;
+  
+  &.open {
+    opacity: 1;
+    visibility: visible;
+    
+    .modal-content {
+      transform: scale(1);
+    }
+  }
+  
+  .modal-content {
+    background: white;
+    border-radius: 1rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: scale(0.9);
+    transition: $directory-transition;
+    @include directory-scrollbar;
+    
+    .modal-header {
+      padding: 2rem 2rem 1rem;
+      border-bottom: 1px solid $directory-border;
+      
+      h3 {
+        margin: 0;
+        color: #0f172a;
+        font-size: 1.25rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        
+        .close-btn {
+          background: none;
+          border: none;
+          color: $directory-muted;
+          cursor: pointer;
+          padding: 0.5rem;
+          border-radius: 0.375rem;
+          transition: $directory-transition;
+          
+          &:hover {
+            background: #f1f5f9;
+            color: $directory-primary;
+          }
+        }
+      }
+    }
+    
+    .modal-body {
+      padding: 2rem;
+    }
+    
+    .modal-footer {
+      padding: 1rem 2rem 2rem;
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+      
+      .directory-btn {
+        min-width: 100px;
+      }
+    }
+  }
+}
+
+// =============================================================================
+// TEMA OSCURO
+// =============================================================================
+[data-theme="dark"] {
+  .client-directory {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #0f172a 50%, #1e293b 100%);
+    
+    &::before {
+      opacity: 0.2;
+    }
+  }
+  
+  .directory-header {
+    &__content {
+      h1 {
+        color: white;
+      }
+      
+      .subtitle {
+        color: #94a3b8;
+      }
+      
+      .stats-bar .stat-item .details .number {
+        color: white;
+      }
+    }
+  }
+  
+  .directory-controls,
+  .client-card,
+  .client-item,
+  .directory-pagination,
+  .directory-empty,
+  .directory-sidebar {
+    background: #1e293b;
+    border-color: #334155;
+    
+    h3, h4, .name, .title {
+      color: white;
+    }
+    
+    p, .subtitle {
+      color: #94a3b8;
+    }
+  }
+  
+  .client-table {
+    thead {
+      background: #334155;
+      
+      th {
+        color: #f1f5f9;
+        border-bottom-color: #475569;
+      }
+    }
+    
+    tbody {
+      tr {
+        &:nth-child(even) {
+          background: #334155;
+        }
+        
+        &:hover {
+          background: rgba(30, 64, 175, 0.1);
+        }
+        
+        td {
+          color: #e2e8f0;
+          border-bottom-color: #334155;
+          
+          .client-info .details .name {
+            color: #f1f5f9;
+          }
+        }
+      }
+    }
+  }
+  
+  .directory-controls,
+  .directory-sidebar {
+    &__header {
+      background: #334155;
+      border-bottom-color: #475569;
+    }
+  }
+  
+  .directory-sidebar {
+    &__footer {
+      background: #334155;
+      border-top-color: #475569;
+    }
+  }
+  
+  .progress-item,
+  .filter-option {
+    background: #334155;
+    border-color: #475569;
+    
+    &:hover {
+      background: #475569;
+    }
+  }
+  
+  .search-input,
+  select,
+  input {
+    background: #334155;
+    border-color: #475569;
+    color: #f1f5f9;
+    
+    &::placeholder {
+      color: #64748b;
+    }
+  }
+  
+  .client-modal .modal-content {
+    background: #1e293b;
+    
+    .modal-header {
+      border-bottom-color: #334155;
+    }
+  }
+  
+  .directory-notification {
+    background: #1e293b;
+    border: 1px solid #334155;
+    
+    .content h4 {
+      color: #f1f5f9;
+    }
+  }
+}
+
+// =============================================================================
+// ANIMACIONES
+// =============================================================================
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// Skeleton loading
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.5rem;
+  
+  &--text {
+    height: 1rem;
+    margin-bottom: 0.5rem;
+    
+    &:last-child {
+      margin-bottom: 0;
+      width: 60%;
+    }
+  }
+  
+  &--title {
+    height: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  &--avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+  }
+  
+  &--card {
+    height: 200px;
+    margin-bottom: 1rem;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+// =============================================================================
+// RESPONSIVE DESIGN
+// =============================================================================
+@media (max-width: 1200px) {
+  .directory-controls__filters {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .client-list--grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .client-directory {
+    padding: 1.5rem 0;
+    
+    &__container {
+      padding: 0 1.5rem;
+    }
+  }
+  
+  .directory-header {
+    margin-bottom: 2rem;
+    
+    &__content h1 {
+      font-size: 2.5rem;
+    }
+    
+    &__actions {
+      width: 100%;
+      justify-content: stretch;
+      
+      .directory-btn {
+        flex: 1;
+      }
+    }
+  }
+  
+  .client-item .client-info {
+    grid-template-columns: 1fr auto;
+    
+    .contact-details,
+    .last-contact {
+      display: none;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .client-directory {
+    padding: 1rem 0;
+    
+    &__container {
+      padding: 0 1rem;
+    }
+  }
+  
+  .directory-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.5rem;
+    
+    &__content {
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .stats-bar {
+        justify-content: center;
+        gap: 1rem;
+      }
+    }
+  }
+  
+  .directory-controls {
+    &__filters {
+      grid-template-columns: 1fr;
+    }
+    
+    &__header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1rem;
+      
+      .view-toggles {
+        justify-self: stretch;
+      }
+    }
+  }
+  
+  .client-list--grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .client-table {
+    font-size: 0.75rem;
+    
+    th, td {
+      padding: 0.75rem 0.5rem;
+    }
+  }
+  
+  .directory-pagination {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    
+    &__controls {
+      justify-content: space-between;
+      
+      .pagination {
+        justify-content: center;
+      }
+    }
+  }
+  
+  .directory-notification {
+    top: 1rem;
+    right: 1rem;
+    left: 1rem;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .directory-header {
+    &__content {
+      h1 {
+        font-size: 1.75rem;
+      }
+      
+      .stats-bar {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        
+        .stat-item {
+          .icon {
+            width: 28px;
+            height: 28px;
+            font-size: 0.875rem;
+          }
+          
+          .details .number {
+            font-size: 1.25rem;
+          }
+        }
+      }
+    }
+  }
+  
+  .client-card {
+    &__header .client-avatar {
+      @include directory-avatar(48px);
+    }
+    
+    &__info .name {
+      font-size: 1rem;
+    }
+  }
+  
+  .client-table {
+    th, td {
+      padding: 0.5rem 0.375rem;
+    }
+  }
+}
+
+// =============================================================================
+// PRINT STYLES
+// =============================================================================
+@media print {
+  .client-directory {
+    background: white !important;
+    
+    &::before {
+      display: none !important;
+    }
+  }
+  
+  .directory-header {
+    &__actions {
+      display: none !important;
+    }
+  }
+  
+  .directory-controls,
+  .directory-pagination,
+  .directory-sidebar {
+    display: none !important;
+  }
+  
+  .client-card,
+  .client-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+    
+    &__actions {
+      display: none !important;
+    }
+  }
+  
+  .client-table {
+    .actions-cell {
+      display: none !important;
+    }
+  }
+  
+  .directory-btn,
+  .directory-notification,
+  .client-modal {
+    display: none !important;
+  }
+}
+
+// =============================================================================
+// ACCESIBILIDAD
+// =============================================================================
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// Focus styles
+.client-card:focus,
+.client-item:focus,
+.directory-btn:focus,
+input:focus,
+select:focus,
+button:focus {
+  outline: 2px solid $directory-primary;
+  outline-offset: 2px;
+}
+
+// Alto contraste
+@media (prefers-contrast: high) {
+  .client-directory {
+    --directory-border: #000000;
+    --directory-shadow: 0 0 0 1px #000000;
+  }
+  
+  .client-card,
+  .client-item,
+  .directory-controls {
+    border: 2px solid #000000 !important;
+  }
+  
+  .directory-btn--primary {
+    background: #000000 !important;
+    color: #ffffff !important;
+  }
+}

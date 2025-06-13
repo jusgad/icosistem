@@ -1,0 +1,1791 @@
+// =============================================================================
+// REGISTER PAGE STYLES
+// =============================================================================
+// Estilos específicos para la página de registro del ecosistema de emprendimiento
+// Incluye formulario multi-step, validaciones avanzadas, subida de archivos y UX optimizada
+
+// Variables específicas para registro
+// =============================================================================
+$register-primary: #3b82f6;
+$register-secondary: #1e40af;
+$register-accent: #06b6d4;
+$register-success: #10b981;
+$register-warning: #f59e0b;
+$register-danger: #ef4444;
+$register-info: #6366f1;
+$register-dark: #1f2937;
+$register-light: #f8fafc;
+
+// Colores específicos para tipos de usuario
+$type-admin: #dc2626;
+$type-entrepreneur: #3b82f6;
+$type-ally: #059669;
+$type-client: #7c3aed;
+
+// Gradientes para diferentes contextos
+$gradient-main: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$gradient-step: linear-gradient(135deg, $register-primary, darken($register-primary, 10%));
+$gradient-admin: linear-gradient(135deg, #dc2626, #b91c1c);
+$gradient-entrepreneur: linear-gradient(135deg, #3b82f6, #1d4ed8);
+$gradient-ally: linear-gradient(135deg, #059669, #047857);
+$gradient-client: linear-gradient(135deg, #7c3aed, #6d28d9);
+
+// Efectos y sombras específicos
+$register-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+$register-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+$register-shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.2);
+$register-shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.15);
+$register-shadow-glow: 0 0 30px rgba(59, 130, 246, 0.3);
+
+// Mixins específicos para registro
+// =============================================================================
+
+// Mixin para efectos glassmorphism mejorado
+@mixin glassmorphism-register($opacity: 0.1, $blur: 20px) {
+  background: rgba(255, 255, 255, $opacity);
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+// Mixin para inputs de formulario con estados avanzados
+@mixin register-input {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: white;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  
+  &:focus {
+    outline: none;
+    border-color: $register-primary;
+    box-shadow: 0 0 0 4px rgba($register-primary, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  &.valid {
+    border-color: $register-success;
+    
+    &:focus {
+      box-shadow: 0 0 0 4px rgba($register-success, 0.1);
+    }
+  }
+  
+  &.invalid {
+    border-color: $register-danger;
+    
+    &:focus {
+      box-shadow: 0 0 0 4px rgba($register-danger, 0.1);
+    }
+  }
+  
+  &.required {
+    &::after {
+      content: '*';
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: $register-danger;
+      font-weight: bold;
+    }
+  }
+  
+  &::placeholder {
+    color: #9ca3af;
+    transition: opacity 0.3s ease;
+  }
+  
+  &:focus::placeholder {
+    opacity: 0.3;
+  }
+}
+
+// Mixin para botones de paso
+@mixin step-button($gradient: $gradient-step) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  background: $gradient;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+  }
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $register-shadow-lg;
+    
+    &::before {
+      left: 100%;
+    }
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    
+    &:hover {
+      box-shadow: none;
+    }
+  }
+}
+
+// Mixin para indicadores de progreso
+@mixin progress-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    z-index: 1;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    height: 2px;
+    background: $register-success;
+    z-index: 2;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+// Layout principal del registro
+// =============================================================================
+.register-page {
+  min-height: 100vh;
+  background: $gradient-main;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  position: relative;
+  overflow: hidden;
+  
+  // Elementos decorativos de fondo más complejos
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    animation: drift 30s ease-in-out infinite;
+    z-index: 1;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.3) 0%, transparent 50%);
+    z-index: 2;
+  }
+  
+  &__container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 42rem;
+    animation: slideInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    @media (min-width: 1024px) {
+      max-width: 48rem;
+    }
+  }
+}
+
+// Card principal del formulario de registro
+// =============================================================================
+.register-card {
+  @include glassmorphism-register(0.15, 25px);
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: $register-shadow-xl;
+  min-height: 600px;
+  
+  @media (min-width: 768px) {
+    padding: 3rem;
+    min-height: 650px;
+  }
+  
+  &__header {
+    text-align: center;
+    margin-bottom: 2rem;
+    
+    &-logo {
+      width: 4rem;
+      height: 4rem;
+      background: white;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      box-shadow: $register-shadow-md;
+      
+      img {
+        width: 2.5rem;
+        height: 2.5rem;
+        object-fit: contain;
+      }
+      
+      &:empty::before {
+        content: '🚀';
+        font-size: 2rem;
+      }
+    }
+    
+    &-title {
+      font-size: 1.875rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      
+      @media (min-width: 768px) {
+        font-size: 2.25rem;
+      }
+    }
+    
+    &-subtitle {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 1.5rem;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.5;
+    }
+  }
+}
+
+// Indicador de progreso multi-step
+// =============================================================================
+.progress-indicator {
+  @include progress-indicator();
+  margin-bottom: 3rem;
+  padding: 0 2rem;
+  
+  &__steps {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    position: relative;
+    z-index: 3;
+  }
+  
+  &__step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    position: relative;
+    
+    &-circle {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      color: rgba(255, 255, 255, 0.7);
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
+      
+      @media (min-width: 640px) {
+        width: 3.5rem;
+        height: 3.5rem;
+        font-size: 1rem;
+      }
+    }
+    
+    &-label {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.7);
+      font-weight: 500;
+      text-align: center;
+      transition: color 0.3s ease;
+      
+      @media (min-width: 640px) {
+        font-size: 0.875rem;
+      }
+    }
+    
+    // Estados del step
+    &--active {
+      .progress-indicator__step-circle {
+        background: $register-primary;
+        border-color: $register-primary;
+        color: white;
+        box-shadow: 0 0 20px rgba($register-primary, 0.5);
+        transform: scale(1.1);
+      }
+      
+      .progress-indicator__step-label {
+        color: white;
+        font-weight: 600;
+      }
+    }
+    
+    &--completed {
+      .progress-indicator__step-circle {
+        background: $register-success;
+        border-color: $register-success;
+        color: white;
+        
+        &::before {
+          content: '✓';
+          font-weight: bold;
+        }
+      }
+      
+      .progress-indicator__step-label {
+        color: rgba(255, 255, 255, 0.9);
+      }
+    }
+    
+    &--error {
+      .progress-indicator__step-circle {
+        background: $register-danger;
+        border-color: $register-danger;
+        color: white;
+        
+        &::before {
+          content: '!';
+          font-weight: bold;
+        }
+      }
+    }
+  }
+  
+  &__progress-bar {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    height: 3px;
+    background: $register-success;
+    transform: translateY(-50%);
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 2px;
+    z-index: 2;
+    
+    &[data-progress="0"] { width: 0%; }
+    &[data-progress="33"] { width: 33%; }
+    &[data-progress="66"] { width: 66%; }
+    &[data-progress="100"] { width: 100%; }
+  }
+}
+
+// Selector de tipo de usuario expandido
+// =============================================================================
+.user-type-selector {
+  margin-bottom: 2.5rem;
+  
+  &__label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 1rem;
+    display: block;
+    text-align: center;
+  }
+  
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    
+    @media (min-width: 640px) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+    
+    @media (min-width: 1024px) {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+  }
+  
+  &__option {
+    input[type="radio"] {
+      display: none;
+      
+      &:checked + label {
+        transform: translateY(-4px);
+        box-shadow: $register-shadow-lg;
+        
+        &.admin { background: $gradient-admin; }
+        &.entrepreneur { background: $gradient-entrepreneur; }
+        &.ally { background: $gradient-ally; }
+        &.client { background: $gradient-client; }
+        
+        .user-type-selector__check {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+    }
+    
+    label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1.5rem 1rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      color: white;
+      text-align: center;
+      position: relative;
+      backdrop-filter: blur(10px);
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+        box-shadow: $register-shadow-md;
+      }
+      
+      .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        
+        &.admin::before { content: '👨‍💼'; }
+        &.entrepreneur::before { content: '🚀'; }
+        &.ally::before { content: '🤝'; }
+        &.client::before { content: '🏢'; }
+      }
+      
+      .title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+      
+      .description {
+        font-size: 0.8125rem;
+        opacity: 0.8;
+        line-height: 1.3;
+      }
+    }
+  }
+  
+  &__check {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: $register-success;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: bold;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    &::before {
+      content: '✓';
+    }
+  }
+}
+
+// Contenedor de pasos del formulario
+// =============================================================================
+.form-steps {
+  position: relative;
+  min-height: 400px;
+  
+  &__step {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(30px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    &--active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0);
+      position: relative;
+    }
+    
+    &--prev {
+      transform: translateX(-30px);
+    }
+  }
+}
+
+// Estilos específicos para cada paso
+// =============================================================================
+
+// Paso 1: Información básica
+.step-basic-info {
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    
+    @media (min-width: 640px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  .form-group {
+    &--full-width {
+      @media (min-width: 640px) {
+        grid-column: 1 / -1;
+      }
+    }
+  }
+}
+
+// Paso 2: Información profesional
+.step-professional-info {
+  .form-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .form-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    
+    &__title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: white;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      
+      i {
+        color: $register-primary;
+      }
+    }
+    
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      
+      @media (min-width: 640px) {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  }
+}
+
+// Paso 3: Verificación y finalización
+.step-verification {
+  text-align: center;
+  
+  .verification-options {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    
+    @media (min-width: 640px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  .verification-option {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+    
+    &.selected {
+      background: rgba($register-primary, 0.2);
+      border-color: $register-primary;
+    }
+    
+    .icon {
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+    
+    .title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+      margin-bottom: 0.5rem;
+    }
+    
+    .description {
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.8);
+    }
+  }
+}
+
+// Formulario principal con validaciones
+// =============================================================================
+.register-form {
+  &__group {
+    margin-bottom: 1.5rem;
+    position: relative;
+    
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 0.5rem;
+      
+      .required {
+        color: $register-danger;
+        margin-left: 0.25rem;
+      }
+    }
+    
+    .input-container {
+      position: relative;
+      
+      input,
+      select,
+      textarea {
+        @include register-input();
+      }
+      
+      textarea {
+        resize: vertical;
+        min-height: 100px;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+      }
+      
+      .input-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 1.25rem;
+        transition: color 0.3s ease;
+        pointer-events: none;
+      }
+      
+      &:focus-within .input-icon {
+        color: $register-primary;
+      }
+      
+      .validation-icon {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.25rem;
+        opacity: 0;
+        transition: all 0.3s ease;
+        
+        &.valid {
+          opacity: 1;
+          color: $register-success;
+          
+          &::before {
+            content: '✓';
+          }
+        }
+        
+        &.invalid {
+          opacity: 1;
+          color: $register-danger;
+          
+          &::before {
+            content: '✗';
+          }
+        }
+        
+        &.loading {
+          opacity: 1;
+          color: $register-info;
+          animation: spin 1s linear infinite;
+          
+          &::before {
+            content: '⟳';
+          }
+        }
+      }
+      
+      .password-strength {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        gap: 2px;
+        
+        .strength-bar {
+          width: 4px;
+          height: 20px;
+          background: #e5e7eb;
+          border-radius: 2px;
+          transition: background-color 0.3s ease;
+          
+          &.weak { background: $register-danger; }
+          &.medium { background: $register-warning; }
+          &.strong { background: $register-success; }
+        }
+      }
+      
+      .password-toggle {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #9ca3af;
+        cursor: pointer;
+        font-size: 1.25rem;
+        transition: color 0.3s ease;
+        
+        &:hover {
+          color: $register-primary;
+        }
+      }
+    }
+    
+    .field-help {
+      font-size: 0.8125rem;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      
+      i {
+        font-size: 0.75rem;
+      }
+    }
+    
+    .field-error {
+      color: $register-danger;
+      font-size: 0.8125rem;
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      opacity: 0;
+      transform: translateY(-5px);
+      transition: all 0.3s ease;
+      
+      &.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      
+      i {
+        font-size: 0.875rem;
+      }
+    }
+    
+    .field-success {
+      color: $register-success;
+      font-size: 0.8125rem;
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      opacity: 0;
+      transform: translateY(-5px);
+      transition: all 0.3s ease;
+      
+      &.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  }
+  
+  // Campos específicos con iconos
+  &__group {
+    &[data-field="email"] .input-icon::before { content: '📧'; }
+    &[data-field="password"] .input-icon::before { content: '🔒'; }
+    &[data-field="phone"] .input-icon::before { content: '📱'; }
+    &[data-field="company"] .input-icon::before { content: '🏢'; }
+    &[data-field="website"] .input-icon::before { content: '🌐'; }
+    &[data-field="location"] .input-icon::before { content: '📍'; }
+  }
+}
+
+// Subida de archivos
+// =============================================================================
+.file-upload {
+  &__container {
+    position: relative;
+    
+    input[type="file"] {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    
+    .upload-area {
+      border: 2px dashed rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.05);
+      
+      &:hover,
+      &.dragover {
+        border-color: $register-primary;
+        background: rgba($register-primary, 0.1);
+        transform: translateY(-2px);
+      }
+      
+      .upload-icon {
+        font-size: 3rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 1rem;
+        display: block;
+      }
+      
+      .upload-text {
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+      
+      .upload-hint {
+        font-size: 0.8125rem;
+        color: rgba(255, 255, 255, 0.7);
+      }
+    }
+    
+    .file-preview {
+      margin-top: 1rem;
+      
+      .file-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        
+        .file-icon {
+          font-size: 1.5rem;
+          color: $register-primary;
+        }
+        
+        .file-info {
+          flex: 1;
+          
+          .file-name {
+            font-size: 0.875rem;
+            color: white;
+            font-weight: 500;
+          }
+          
+          .file-size {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.7);
+          }
+        }
+        
+        .file-actions {
+          display: flex;
+          gap: 0.5rem;
+          
+          button {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0.25rem;
+            transition: color 0.3s ease;
+            
+            &:hover {
+              color: white;
+            }
+            
+            &.delete:hover {
+              color: $register-danger;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Términos y condiciones
+// =============================================================================
+.terms-acceptance {
+  margin: 2rem 0;
+  
+  .terms-scroll {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 1rem;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.8);
+    
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 3px;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.5);
+      }
+    }
+  }
+  
+  .terms-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    
+    .checkbox-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      
+      input[type="checkbox"] {
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 4px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        background: transparent;
+        cursor: pointer;
+        margin-top: 0.125rem;
+        flex-shrink: 0;
+        
+        &:checked {
+          background: $register-primary;
+          border-color: $register-primary;
+        }
+      }
+      
+      label {
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.9);
+        cursor: pointer;
+        line-height: 1.4;
+        margin: 0;
+        
+        a {
+          color: $register-accent;
+          text-decoration: underline;
+          
+          &:hover {
+            color: lighten($register-accent, 10%);
+          }
+        }
+      }
+    }
+  }
+}
+
+// Navegación entre pasos
+// =============================================================================
+.step-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2.5rem;
+  gap: 1rem;
+  
+  &__back {
+    @include step-button(linear-gradient(135deg, #6b7280, #4b5563));
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(107, 114, 128, 0.4);
+    }
+  }
+  
+  &__next {
+    @include step-button();
+    
+    .loading-spinner {
+      width: 1.25rem;
+      height: 1.25rem;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top: 2px solid white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    &.loading {
+      .loading-spinner {
+        opacity: 1;
+      }
+      
+      .btn-text {
+        opacity: 0;
+      }
+    }
+  }
+  
+  &__skip {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.875rem;
+    cursor: pointer;
+    text-decoration: underline;
+    transition: color 0.3s ease;
+    
+    &:hover {
+      color: white;
+    }
+  }
+  
+  @media (max-width: 640px) {
+    flex-direction: column;
+    
+    &__next,
+    &__back {
+      width: 100%;
+    }
+  }
+}
+
+// Estados de éxito y error
+// =============================================================================
+.register-status {
+  text-align: center;
+  padding: 2rem;
+  
+  &__icon {
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 2rem;
+    
+    &--success {
+      background: rgba($register-success, 0.2);
+      color: $register-success;
+      
+      &::before {
+        content: '✓';
+      }
+    }
+    
+    &--error {
+      background: rgba($register-danger, 0.2);
+      color: $register-danger;
+      
+      &::before {
+        content: '✗';
+      }
+    }
+    
+    &--loading {
+      background: rgba($register-primary, 0.2);
+      color: $register-primary;
+      animation: pulse 2s infinite;
+      
+      &::before {
+        content: '⟳';
+        animation: spin 2s linear infinite;
+      }
+    }
+  }
+  
+  &__title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.75rem;
+  }
+  
+  &__message {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 2rem;
+    line-height: 1.5;
+  }
+  
+  &__actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    
+    .btn {
+      @include step-button();
+      
+      &--secondary {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+        
+        &:hover {
+          box-shadow: 0 4px 12px rgba(107, 114, 128, 0.4);
+        }
+      }
+    }
+  }
+}
+
+// Sistema de alertas para registro
+// =============================================================================
+.register-alert {
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  border-left: 4px solid;
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  animation: slideInDown 0.5s ease;
+  
+  &--success {
+    background: rgba($register-success, 0.1);
+    border-color: $register-success;
+    color: white;
+    
+    .alert-icon {
+      color: $register-success;
+    }
+  }
+  
+  &--error {
+    background: rgba($register-danger, 0.1);
+    border-color: $register-danger;
+    color: white;
+    
+    .alert-icon {
+      color: $register-danger;
+    }
+  }
+  
+  &--warning {
+    background: rgba($register-warning, 0.1);
+    border-color: $register-warning;
+    color: white;
+    
+    .alert-icon {
+      color: $register-warning;
+    }
+  }
+  
+  &--info {
+    background: rgba($register-info, 0.1);
+    border-color: $register-info;
+    color: white;
+    
+    .alert-icon {
+      color: $register-info;
+    }
+  }
+  
+  .alert-icon {
+    font-size: 1.25rem;
+    margin-top: 0.125rem;
+    flex-shrink: 0;
+  }
+  
+  .alert-content {
+    flex: 1;
+    
+    .alert-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    
+    .alert-message {
+      font-size: 0.875rem;
+      line-height: 1.4;
+      opacity: 0.9;
+    }
+    
+    .alert-list {
+      list-style: none;
+      padding: 0;
+      margin: 0.5rem 0 0 0;
+      
+      li {
+        font-size: 0.8125rem;
+        margin-bottom: 0.25rem;
+        padding-left: 1rem;
+        position: relative;
+        
+        &::before {
+          content: '•';
+          position: absolute;
+          left: 0;
+          color: inherit;
+        }
+      }
+    }
+  }
+  
+  .alert-close {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 1.25rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+    flex-shrink: 0;
+    
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+// Footer del registro
+// =============================================================================
+.register-footer {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  
+  &__text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+  }
+  
+  &__links {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    
+    a {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.875rem;
+      text-decoration: none;
+      transition: color 0.3s ease;
+      
+      &:hover {
+        color: white;
+        text-decoration: underline;
+      }
+    }
+  }
+  
+  &__social {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    
+    a {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 1.125rem;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        transform: translateY(-2px);
+      }
+    }
+  }
+}
+
+// Animaciones específicas para registro
+// =============================================================================
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drift {
+  0%, 100% {
+    transform: translateX(0) translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateX(5px) translateY(-10px) rotate(1deg);
+  }
+  50% {
+    transform: translateX(-5px) translateY(5px) rotate(-1deg);
+  }
+  75% {
+    transform: translateX(10px) translateY(-5px) rotate(0.5deg);
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes stepTransition {
+  0% {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Clases de animación
+.fade-in {
+  animation: fadeIn 0.5s ease;
+}
+
+.step-transition {
+  animation: stepTransition 0.4s ease;
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+// Responsive design específico para registro
+// =============================================================================
+@media (max-width: 768px) {
+  .register-page {
+    padding: 0.5rem;
+    
+    &__container {
+      max-width: 100%;
+    }
+  }
+  
+  .register-card {
+    padding: 1.5rem;
+    border-radius: 16px;
+    min-height: auto;
+    
+    &__header {
+      margin-bottom: 1.5rem;
+      
+      &-title {
+        font-size: 1.5rem;
+      }
+      
+      &-subtitle {
+        font-size: 0.875rem;
+      }
+    }
+  }
+  
+  .progress-indicator {
+    padding: 0 1rem;
+    margin-bottom: 2rem;
+    
+    &__step {
+      &-circle {
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 0.75rem;
+      }
+      
+      &-label {
+        font-size: 0.7rem;
+      }
+    }
+  }
+  
+  .user-type-selector {
+    &__grid {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+    
+    &__option label {
+      padding: 1rem 0.75rem;
+      
+      .icon {
+        font-size: 1.5rem;
+      }
+      
+      .title {
+        font-size: 0.875rem;
+      }
+      
+      .description {
+        font-size: 0.75rem;
+      }
+    }
+  }
+  
+  .step-basic-info .form-grid,
+  .step-professional-info .form-section .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .step-verification .verification-options {
+    grid-template-columns: 1fr;
+  }
+  
+  .step-navigation {
+    margin-top: 1.5rem;
+  }
+  
+  .register-footer {
+    &__links {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    &__social {
+      gap: 0.75rem;
+      
+      a {
+        width: 2rem;
+        height: 2rem;
+        font-size: 1rem;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .register-card {
+    padding: 1rem;
+    
+    &__header {
+      &-logo {
+        width: 3rem;
+        height: 3rem;
+        
+        img {
+          width: 2rem;
+          height: 2rem;
+        }
+      }
+      
+      &-title {
+        font-size: 1.375rem;
+      }
+    }
+  }
+  
+  .progress-indicator {
+    &__step {
+      &-circle {
+        width: 2rem;
+        height: 2rem;
+        font-size: 0.7rem;
+      }
+      
+      &-label {
+        font-size: 0.65rem;
+      }
+    }
+  }
+  
+  .form-steps {
+    min-height: 300px;
+  }
+  
+  .file-upload .upload-area {
+    padding: 1.5rem 1rem;
+    
+    .upload-icon {
+      font-size: 2rem;
+    }
+  }
+}
+
+// Modo paisaje en móviles
+@media (max-height: 700px) and (orientation: landscape) {
+  .register-page {
+    padding: 0.5rem;
+    align-items: flex-start;
+    
+    &__container {
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+    }
+  }
+  
+  .register-card {
+    min-height: auto;
+    max-height: 90vh;
+    overflow-y: auto;
+    
+    &__header {
+      margin-bottom: 1rem;
+      
+      &-logo {
+        width: 2.5rem;
+        height: 2.5rem;
+        margin-bottom: 0.75rem;
+      }
+      
+      &-title {
+        font-size: 1.25rem;
+      }
+      
+      &-subtitle {
+        margin-bottom: 1rem;
+        font-size: 0.8125rem;
+      }
+    }
+  }
+  
+  .progress-indicator {
+    margin-bottom: 1.5rem;
+  }
+  
+  .form-steps {
+    min-height: 250px;
+  }
+  
+  .step-navigation {
+    margin-top: 1.5rem;
+  }
+  
+  .register-footer {
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
+}
+
+// Estados de accesibilidad mejorada
+// =============================================================================
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .form-steps__step {
+    transition: none;
+  }
+}
+
+// Focus indicators mejorados para formularios largos
+.register-form input:focus,
+.register-form select:focus,
+.register-form textarea:focus,
+.step-navigation button:focus,
+.user-type-selector label:focus,
+.terms-acceptance input:focus,
+.file-upload .upload-area:focus {
+  outline: 3px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 2px;
+}
+
+// Alto contraste para formularios
+@media (prefers-contrast: high) {
+  .register-card {
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid white;
+    
+    &__header-title,
+    &__header-subtitle,
+    .register-form label,
+    .user-type-selector__label {
+      color: #1f2937;
+    }
+  }
+  
+  .register-form input,
+  .register-form select,
+  .register-form textarea {
+    border-width: 3px;
+    background: white;
+    color: #1f2937;
+  }
+  
+  .progress-indicator__step-circle {
+    border-width: 3px;
+  }
+}
+
+// Modo oscuro del sistema
+@media (prefers-color-scheme: dark) {
+  .register-page {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  }
+}
+
+// Print styles
+@media print {
+  .register-page {
+    display: none !important;
+  }
+}
+
+// Estados especiales para validación en tiempo real
+.realtime-validation {
+  .register-form__group {
+    .input-container input {
+      &:valid:not(:placeholder-shown) {
+        border-color: $register-success;
+        
+        & + .validation-icon {
+          opacity: 1;
+          color: $register-success;
+        }
+      }
+      
+      &:invalid:not(:placeholder-shown) {
+        border-color: $register-danger;
+        
+        & + .validation-icon {
+          opacity: 1;
+          color: $register-danger;
+        }
+      }
+    }
+  }
+}
+
+// Compatibilidad con diferentes navegadores
+@supports not (backdrop-filter: blur(20px)) {
+  .register-card {
+    background: rgba(255, 255, 255, 0.25);
+  }
+}
+
+// Estados de carga específicos para cada paso
+.step-loading {
+  pointer-events: none;
+  opacity: 0.7;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: inherit;
+    backdrop-filter: blur(5px);
+  }
+}

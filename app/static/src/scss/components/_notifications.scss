@@ -1,0 +1,1061 @@
+// ============================================================================
+// NOTIFICATIONS COMPONENT
+// ============================================================================
+// Archivo: app/static/src/scss/components/_notifications.scss
+// Descripción: Sistema completo de notificaciones para dashboard
+// Compatible con: Toast, Modal, Inline, Alert, Banner notifications
+// Desarrollado por: jusga
+// ============================================================================
+
+// Variables SCSS para notificaciones
+// ============================================================================
+$notification-z-index: 9999 !default;
+$notification-width: 320px !default;
+$notification-max-width: 100% !default;
+$notification-min-height: 64px !default;
+$notification-padding: 1rem !default;
+$notification-margin: 0.75rem !default;
+$notification-border-radius: 0.5rem !default;
+$notification-border-width: 1px !default;
+$notification-box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !default;
+
+// Variables de animación
+$notification-animation-duration: 0.3s !default;
+$notification-animation-easing: cubic-bezier(0.4, 0.0, 0.2, 1) !default;
+$notification-slide-distance: 100% !default;
+$notification-scale-start: 0.95 !default;
+$notification-fade-start: 0 !default;
+
+// Variables de timing
+$notification-auto-close-delay: 5000ms !default;
+$notification-progress-duration: $notification-auto-close-delay !default;
+
+// Colores base
+$notification-bg: #ffffff !default;
+$notification-text: #374151 !default;
+$notification-border: #e5e7eb !default;
+$notification-shadow: rgba(0, 0, 0, 0.1) !default;
+
+// Colores por tipo
+$notification-success-bg: #f0fdf4 !default;
+$notification-success-border: #bbf7d0 !default;
+$notification-success-text: #166534 !default;
+$notification-success-icon: #22c55e !default;
+
+$notification-error-bg: #fef2f2 !default;
+$notification-error-border: #fecaca !default;
+$notification-error-text: #991b1b !default;
+$notification-error-icon: #ef4444 !default;
+
+$notification-warning-bg: #fffbeb !default;
+$notification-warning-border: #fed7aa !default;
+$notification-warning-text: #92400e !default;
+$notification-warning-icon: #f59e0b !default;
+
+$notification-info-bg: #eff6ff !default;
+$notification-info-border: #bfdbfe !default;
+$notification-info-text: #1e40af !default;
+$notification-info-icon: #3b82f6 !default;
+
+// Variables de tema oscuro
+$notification-dark-bg: #1f2937 !default;
+$notification-dark-text: #f9fafb !default;
+$notification-dark-border: #374151 !default;
+
+// Variables de tipografía
+$notification-title-size: 0.875rem !default;
+$notification-title-weight: 600 !default;
+$notification-message-size: 0.8125rem !default;
+$notification-message-weight: 400 !default;
+$notification-meta-size: 0.75rem !default;
+
+// Mixins
+// ============================================================================
+@mixin notification-variant($bg-color, $border-color, $text-color, $icon-color) {
+  background-color: $bg-color;
+  border-color: $border-color;
+  color: $text-color;
+  
+  .notification-icon {
+    color: $icon-color;
+  }
+  
+  .notification-progress {
+    background-color: $icon-color;
+  }
+  
+  .notification-close {
+    color: $text-color;
+    
+    &:hover {
+      background-color: rgba($icon-color, 0.1);
+      color: $icon-color;
+    }
+  }
+  
+  .notification-action {
+    color: $icon-color;
+    border-color: $icon-color;
+    
+    &:hover {
+      background-color: $icon-color;
+      color: $bg-color;
+    }
+  }
+}
+
+@mixin notification-position($position: 'top-right') {
+  @if $position == 'top-right' {
+    top: $notification-margin;
+    right: $notification-margin;
+    transform-origin: top right;
+  } @else if $position == 'top-left' {
+    top: $notification-margin;
+    left: $notification-margin;
+    transform-origin: top left;
+  } @else if $position == 'top-center' {
+    top: $notification-margin;
+    left: 50%;
+    transform: translateX(-50%);
+    transform-origin: top center;
+  } @else if $position == 'bottom-right' {
+    bottom: $notification-margin;
+    right: $notification-margin;
+    transform-origin: bottom right;
+  } @else if $position == 'bottom-left' {
+    bottom: $notification-margin;
+    left: $notification-margin;
+    transform-origin: bottom left;
+  } @else if $position == 'bottom-center' {
+    bottom: $notification-margin;
+    left: 50%;
+    transform: translateX(-50%);
+    transform-origin: bottom center;
+  } @else if $position == 'center' {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transform-origin: center;
+  }
+}
+
+@mixin notification-animation($type: 'slide', $direction: 'right') {
+  @if $type == 'slide' {
+    @if $direction == 'right' {
+      &.notification-enter {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      
+      &.notification-enter-active {
+        transform: translateX(0);
+        opacity: 1;
+        transition: all $notification-animation-duration $notification-animation-easing;
+      }
+      
+      &.notification-exit {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      
+      &.notification-exit-active {
+        transform: translateX(100%);
+        opacity: 0;
+        transition: all $notification-animation-duration $notification-animation-easing;
+      }
+    } @else if $direction == 'left' {
+      &.notification-enter {
+        transform: translateX(-100%);
+        opacity: 0;
+      }
+      
+      &.notification-enter-active {
+        transform: translateX(0);
+        opacity: 1;
+        transition: all $notification-animation-duration $notification-animation-easing;
+      }
+      
+      &.notification-exit {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      
+      &.notification-exit-active {
+        transform: translateX(-100%);
+        opacity: 0;
+        transition: all $notification-animation-duration $notification-animation-easing;
+      }
+    } @else if $direction == 'up' {
+      &.notification-enter {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+      
+      &.notification-enter-active {
+        transform: translateY(0);
+        opacity: 1;
+        transition: all $notification-animation-duration $notification-animation-easing;
+      }
+      
+      &.notification-exit {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      
+      &.notification-exit-active {
+        transform: translateY(100%);
+        opacity: 0;
+        transition: all $notification-animation-duration $notification-animation-easing;
+      }
+    } @else if $direction == 'down' {
+      &.notification-enter {
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+      
+      &.notification-enter-active {
+        transform: translateY(0);
+        opacity: 1;
+        transition: all $notification-animation-duration $notification-animation-easing;
+      }
+      
+      &.notification-exit {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      
+      &.notification-exit-active {
+        transform: translateY(-100%);
+        opacity: 0;
+        transition: all $notification-animation-duration $notification-animation-easing;
+      }
+    }
+  } @else if $type == 'fade' {
+    &.notification-enter {
+      opacity: 0;
+      transform: scale($notification-scale-start);
+    }
+    
+    &.notification-enter-active {
+      opacity: 1;
+      transform: scale(1);
+      transition: all $notification-animation-duration $notification-animation-easing;
+    }
+    
+    &.notification-exit {
+      opacity: 1;
+      transform: scale(1);
+    }
+    
+    &.notification-exit-active {
+      opacity: 0;
+      transform: scale($notification-scale-start);
+      transition: all $notification-animation-duration $notification-animation-easing;
+    }
+  } @else if $type == 'bounce' {
+    &.notification-enter {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    
+    &.notification-enter-active {
+      opacity: 1;
+      transform: scale(1);
+      transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    
+    &.notification-exit {
+      opacity: 1;
+      transform: scale(1);
+    }
+    
+    &.notification-exit-active {
+      opacity: 0;
+      transform: scale(0.3);
+      transition: all $notification-animation-duration $notification-animation-easing;
+    }
+  }
+}
+
+// Base Notification Styles
+// ============================================================================
+.notification {
+  position: relative;
+  width: $notification-width;
+  max-width: $notification-max-width;
+  min-height: $notification-min-height;
+  padding: $notification-padding;
+  background-color: $notification-bg;
+  border: $notification-border-width solid $notification-border;
+  border-radius: $notification-border-radius;
+  box-shadow: $notification-box-shadow;
+  color: $notification-text;
+  font-family: inherit;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  transition: all $notification-animation-duration $notification-animation-easing;
+  
+  // Estados interactivos
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  
+  &.notification-dismissing {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+  
+  // Contenido principal
+  .notification-content {
+    flex: 1;
+    min-width: 0;
+    
+    .notification-title {
+      font-size: $notification-title-size;
+      font-weight: $notification-title-weight;
+      line-height: 1.25;
+      margin: 0 0 0.25rem 0;
+      color: inherit;
+    }
+    
+    .notification-message {
+      font-size: $notification-message-size;
+      font-weight: $notification-message-weight;
+      line-height: 1.4;
+      margin: 0;
+      color: inherit;
+      opacity: 0.9;
+      
+      // Soporte para HTML/Markdown
+      p {
+        margin: 0 0 0.5rem 0;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+      
+      a {
+        color: inherit;
+        text-decoration: underline;
+        
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+    }
+    
+    .notification-meta {
+      font-size: $notification-meta-size;
+      opacity: 0.7;
+      margin-top: 0.5rem;
+      
+      .notification-timestamp {
+        font-style: italic;
+      }
+      
+      .notification-source {
+        font-weight: 500;
+      }
+    }
+  }
+  
+  // Icono
+  .notification-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    margin-top: 0.125rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    svg, i {
+      width: 100%;
+      height: 100%;
+    }
+  }
+  
+  // Avatar (para notificaciones de usuario)
+  .notification-avatar {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+  
+  // Botón de cerrar
+  .notification-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: none;
+    color: inherit;
+    opacity: 0.5;
+    cursor: pointer;
+    border-radius: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all $notification-animation-duration $notification-animation-easing;
+    
+    &:hover {
+      opacity: 1;
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    &:focus {
+      outline: 2px solid currentColor;
+      outline-offset: 2px;
+    }
+    
+    svg, i {
+      width: 14px;
+      height: 14px;
+    }
+  }
+  
+  // Barra de progreso
+  .notification-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background-color: currentColor;
+    opacity: 0.7;
+    transform-origin: left;
+    animation: notification-progress $notification-progress-duration linear forwards;
+  }
+  
+  // Acciones
+  .notification-actions {
+    margin-top: 0.75rem;
+    display: flex;
+    gap: 0.5rem;
+    
+    .notification-action {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border: 1px solid currentColor;
+      background: none;
+      color: inherit;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      transition: all $notification-animation-duration $notification-animation-easing;
+      
+      &:hover {
+        background-color: currentColor;
+        color: $notification-bg;
+      }
+      
+      &:focus {
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
+      }
+      
+      &.action-primary {
+        background-color: currentColor;
+        color: $notification-bg;
+        
+        &:hover {
+          opacity: 0.9;
+        }
+      }
+    }
+  }
+}
+
+// Notification Types
+// ============================================================================
+.notification-success {
+  @include notification-variant(
+    $notification-success-bg,
+    $notification-success-border,
+    $notification-success-text,
+    $notification-success-icon
+  );
+}
+
+.notification-error {
+  @include notification-variant(
+    $notification-error-bg,
+    $notification-error-border,
+    $notification-error-text,
+    $notification-error-icon
+  );
+}
+
+.notification-warning {
+  @include notification-variant(
+    $notification-warning-bg,
+    $notification-warning-border,
+    $notification-warning-text,
+    $notification-warning-icon
+  );
+}
+
+.notification-info {
+  @include notification-variant(
+    $notification-info-bg,
+    $notification-info-border,
+    $notification-info-text,
+    $notification-info-icon
+  );
+}
+
+// Notification Container/Stack
+// ============================================================================
+.notification-container {
+  position: fixed;
+  z-index: $notification-z-index;
+  pointer-events: none;
+  
+  &.position-top-right {
+    @include notification-position('top-right');
+  }
+  
+  &.position-top-left {
+    @include notification-position('top-left');
+  }
+  
+  &.position-top-center {
+    @include notification-position('top-center');
+  }
+  
+  &.position-bottom-right {
+    @include notification-position('bottom-right');
+  }
+  
+  &.position-bottom-left {
+    @include notification-position('bottom-left');
+  }
+  
+  &.position-bottom-center {
+    @include notification-position('bottom-center');
+  }
+  
+  &.position-center {
+    @include notification-position('center');
+  }
+  
+  .notification {
+    pointer-events: auto;
+    margin-bottom: $notification-margin;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// Notification Styles - Layout Variants
+// ============================================================================
+
+// Compact notification
+.notification-compact {
+  padding: 0.75rem;
+  min-height: auto;
+  
+  .notification-icon {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .notification-content {
+    .notification-title {
+      font-size: 0.8125rem;
+    }
+    
+    .notification-message {
+      font-size: 0.75rem;
+    }
+  }
+  
+  .notification-close {
+    width: 20px;
+    height: 20px;
+    top: 0.375rem;
+    right: 0.375rem;
+    
+    svg, i {
+      width: 12px;
+      height: 12px;
+    }
+  }
+}
+
+// Large notification
+.notification-large {
+  width: 400px;
+  padding: 1.5rem;
+  
+  .notification-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .notification-content {
+    .notification-title {
+      font-size: 1rem;
+    }
+    
+    .notification-message {
+      font-size: 0.875rem;
+    }
+  }
+}
+
+// Full width notification (banner style)
+.notification-banner {
+  width: 100%;
+  max-width: none;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  margin: 0;
+  
+  &.banner-top {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: $notification-z-index;
+    border-top: none;
+  }
+  
+  &.banner-bottom {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: $notification-z-index;
+    border-bottom: none;
+  }
+}
+
+// Inline notification
+.notification-inline {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  margin: 1rem 0;
+  box-shadow: none;
+  border: $notification-border-width solid $notification-border;
+  
+  &:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+// Modal notification
+.notification-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: $notification-z-index + 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 1rem;
+  
+  .notification {
+    position: relative;
+    width: auto;
+    max-width: 500px;
+    margin: 0;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+// Animation Classes
+// ============================================================================
+.notification-slide-right {
+  @include notification-animation('slide', 'right');
+}
+
+.notification-slide-left {
+  @include notification-animation('slide', 'left');
+}
+
+.notification-slide-up {
+  @include notification-animation('slide', 'up');
+}
+
+.notification-slide-down {
+  @include notification-animation('slide', 'down');
+}
+
+.notification-fade {
+  @include notification-animation('fade');
+}
+
+.notification-bounce {
+  @include notification-animation('bounce');
+}
+
+// Loading notification
+.notification-loading {
+  .notification-icon {
+    animation: notification-spin 1s linear infinite;
+  }
+  
+  .notification-progress {
+    animation: notification-loading-progress 2s ease-in-out infinite;
+  }
+}
+
+// Dark Theme
+// ============================================================================
+.notification-dark {
+  background-color: $notification-dark-bg;
+  border-color: $notification-dark-border;
+  color: $notification-dark-text;
+  
+  .notification-close {
+    color: $notification-dark-text;
+    
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+  
+  .notification-action {
+    border-color: $notification-dark-text;
+    color: $notification-dark-text;
+    
+    &:hover {
+      background-color: $notification-dark-text;
+      color: $notification-dark-bg;
+    }
+    
+    &.action-primary {
+      background-color: $notification-dark-text;
+      color: $notification-dark-bg;
+    }
+  }
+  
+  // Variantes oscuras
+  &.notification-success {
+    background-color: rgba(34, 197, 94, 0.2);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #bbf7d0;
+    
+    .notification-icon {
+      color: #22c55e;
+    }
+  }
+  
+  &.notification-error {
+    background-color: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #fecaca;
+    
+    .notification-icon {
+      color: #ef4444;
+    }
+  }
+  
+  &.notification-warning {
+    background-color: rgba(245, 158, 11, 0.2);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #fed7aa;
+    
+    .notification-icon {
+      color: #f59e0b;
+    }
+  }
+  
+  &.notification-info {
+    background-color: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: #bfdbfe;
+    
+    .notification-icon {
+      color: #3b82f6;
+    }
+  }
+}
+
+// Responsive Design
+// ============================================================================
+@media (max-width: 768px) {
+  .notification-container {
+    left: $notification-margin;
+    right: $notification-margin;
+    
+    &.position-top-center,
+    &.position-bottom-center {
+      left: $notification-margin;
+      right: $notification-margin;
+      transform: none;
+    }
+  }
+  
+  .notification {
+    width: 100%;
+    max-width: none;
+    
+    &.notification-large {
+      width: 100%;
+      padding: 1rem;
+    }
+  }
+  
+  .notification-modal {
+    padding: 0.5rem;
+    
+    .notification {
+      max-width: none;
+      width: 100%;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .notification {
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    
+    .notification-content {
+      .notification-title {
+        font-size: 0.8125rem;
+      }
+      
+      .notification-message {
+        font-size: 0.75rem;
+      }
+    }
+    
+    .notification-actions {
+      flex-direction: column;
+      
+      .notification-action {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  }
+  
+  .notification-container {
+    left: 0.5rem;
+    right: 0.5rem;
+    
+    .notification {
+      margin-bottom: 0.5rem;
+    }
+  }
+}
+
+// High Contrast Mode
+// ============================================================================
+@media (prefers-contrast: high) {
+  .notification {
+    border-width: 2px;
+    
+    .notification-close {
+      border: 1px solid currentColor;
+    }
+    
+    .notification-action {
+      border-width: 2px;
+    }
+  }
+}
+
+// Reduced Motion
+// ============================================================================
+@media (prefers-reduced-motion: reduce) {
+  .notification,
+  .notification-close,
+  .notification-action,
+  .notification-icon {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .notification-progress {
+    animation: none !important;
+  }
+  
+  .notification:hover {
+    transform: none !important;
+  }
+}
+
+// Print Styles
+// ============================================================================
+@media print {
+  .notification-container,
+  .notification-modal {
+    display: none !important;
+  }
+  
+  .notification-inline {
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    color: #000 !important;
+    
+    .notification-close,
+    .notification-actions {
+      display: none !important;
+    }
+  }
+}
+
+// Keyframe Animations
+// ============================================================================
+@keyframes notification-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes notification-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes notification-loading-progress {
+  0%, 100% {
+    transform: scaleX(0);
+  }
+  50% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes notification-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes notification-shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-2px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(2px);
+  }
+}
+
+// Utility Classes
+// ============================================================================
+.notification-no-icon {
+  .notification-icon {
+    display: none;
+  }
+}
+
+.notification-no-close {
+  .notification-close {
+    display: none;
+  }
+}
+
+.notification-sticky {
+  position: sticky;
+  top: 1rem;
+  z-index: 100;
+}
+
+.notification-pulse {
+  animation: notification-pulse 2s ease-in-out infinite;
+}
+
+.notification-shake {
+  animation: notification-shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+// Stack Management
+// ============================================================================
+.notification-stack {
+  .notification {
+    margin-bottom: 0.5rem;
+    transform-origin: center;
+    
+    &:nth-child(n+4) {
+      opacity: 0.8;
+      transform: scale(0.95) translateY(-5px);
+    }
+    
+    &:nth-child(n+6) {
+      opacity: 0.6;
+      transform: scale(0.9) translateY(-10px);
+    }
+    
+    &:nth-child(n+8) {
+      display: none;
+    }
+  }
+}
+
+// RTL Support
+// ============================================================================
+[dir="rtl"] {
+  .notification-container {
+    &.position-top-right {
+      right: auto;
+      left: $notification-margin;
+    }
+    
+    &.position-top-left {
+      left: auto;
+      right: $notification-margin;
+    }
+    
+    &.position-bottom-right {
+      right: auto;
+      left: $notification-margin;
+    }
+    
+    &.position-bottom-left {
+      left: auto;
+      right: $notification-margin;
+    }
+  }
+  
+  .notification {
+    .notification-close {
+      right: auto;
+      left: 0.5rem;
+    }
+  }
+}

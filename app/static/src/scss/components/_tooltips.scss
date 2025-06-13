@@ -1,0 +1,662 @@
+/**
+ * ===================================================================
+ * TOOLTIPS COMPONENT - SISTEMA COMPLETO DE TOOLTIPS
+ * ===================================================================
+ * Desarrollado por: jusga
+ * Versión: 2.0.0
+ * Compatibilidad: IE11+, Chrome, Firefox, Safari, Edge
+ * ===================================================================
+ */
+
+// ===================================================================
+// VARIABLES SCSS PARA TOOLTIPS
+// ===================================================================
+
+// Colores principales
+$tooltip-bg-color: rgba(0, 0, 0, 0.9) !default;
+$tooltip-text-color: #ffffff !default;
+$tooltip-border-color: rgba(255, 255, 255, 0.1) !default;
+$tooltip-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06) !default;
+
+// Colores por tema
+$tooltip-light-bg: #f8f9fa !default;
+$tooltip-light-text: #212529 !default;
+$tooltip-light-border: rgba(0, 0, 0, 0.1) !default;
+
+$tooltip-dark-bg: #1a1a1a !default;
+$tooltip-dark-text: #ffffff !default;
+$tooltip-dark-border: rgba(255, 255, 255, 0.1) !default;
+
+// Colores de estado
+$tooltip-error-bg: #dc3545 !default;
+$tooltip-warning-bg: #ffc107 !default;
+$tooltip-warning-text: #212529 !default;
+$tooltip-success-bg: #28a745 !default;
+$tooltip-info-bg: #17a2b8 !default;
+
+// Dimensiones
+$tooltip-max-width: 300px !default;
+$tooltip-min-width: 80px !default;
+$tooltip-padding-vertical: 8px !default;
+$tooltip-padding-horizontal: 12px !default;
+$tooltip-border-radius: 6px !default;
+$tooltip-arrow-size: 6px !default;
+$tooltip-distance: 10px !default;
+
+// Tipografía
+$tooltip-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !default;
+$tooltip-font-size: 0.875rem !default;
+$tooltip-font-weight: 500 !default;
+$tooltip-line-height: 1.4 !default;
+$tooltip-letter-spacing: 0.025em !default;
+
+// Animaciones
+$tooltip-transition-duration: 0.15s !default;
+$tooltip-transition-timing: cubic-bezier(0.4, 0, 0.2, 1) !default;
+$tooltip-animation-distance: 4px !default;
+
+// Z-index
+$tooltip-z-index: 1070 !default;
+
+// Breakpoints responsive
+$tooltip-mobile-breakpoint: 768px !default;
+
+// ===================================================================
+// MIXINS REUTILIZABLES
+// ===================================================================
+
+// Mixin base para tooltip
+@mixin tooltip-base() {
+  position: absolute;
+  z-index: $tooltip-z-index;
+  display: block;
+  max-width: $tooltip-max-width;
+  min-width: $tooltip-min-width;
+  padding: $tooltip-padding-vertical $tooltip-padding-horizontal;
+  font-family: $tooltip-font-family;
+  font-size: $tooltip-font-size;
+  font-weight: $tooltip-font-weight;
+  line-height: $tooltip-line-height;
+  letter-spacing: $tooltip-letter-spacing;
+  text-align: center;
+  text-decoration: none;
+  word-wrap: break-word;
+  background-color: $tooltip-bg-color;
+  color: $tooltip-text-color;
+  border: 1px solid $tooltip-border-color;
+  border-radius: $tooltip-border-radius;
+  box-shadow: $tooltip-shadow;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.8);
+  transition: all $tooltip-transition-duration $tooltip-transition-timing;
+  pointer-events: none;
+  user-select: none;
+  
+  // Mejoras de accesibilidad
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  // Prevenir el text overflow
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+// Mixin para el estado visible del tooltip
+@mixin tooltip-show() {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+// Mixin para crear flechas del tooltip
+@mixin tooltip-arrow($direction, $color: $tooltip-bg-color, $border-color: $tooltip-border-color) {
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    border: solid transparent;
+  }
+  
+  &::before {
+    border-width: $tooltip-arrow-size + 1px;
+    z-index: 1;
+  }
+  
+  &::after {
+    border-width: $tooltip-arrow-size;
+    z-index: 2;
+  }
+  
+  @if $direction == top {
+    &::before {
+      top: 100%;
+      left: 50%;
+      margin-left: -($tooltip-arrow-size + 1px);
+      border-top-color: $border-color;
+    }
+    &::after {
+      top: 100%;
+      left: 50%;
+      margin-left: -$tooltip-arrow-size;
+      border-top-color: $color;
+    }
+  } @else if $direction == bottom {
+    &::before {
+      bottom: 100%;
+      left: 50%;
+      margin-left: -($tooltip-arrow-size + 1px);
+      border-bottom-color: $border-color;
+    }
+    &::after {
+      bottom: 100%;
+      left: 50%;
+      margin-left: -$tooltip-arrow-size;
+      border-bottom-color: $color;
+    }
+  } @else if $direction == left {
+    &::before {
+      top: 50%;
+      left: 100%;
+      margin-top: -($tooltip-arrow-size + 1px);
+      border-left-color: $border-color;
+    }
+    &::after {
+      top: 50%;
+      left: 100%;
+      margin-top: -$tooltip-arrow-size;
+      border-left-color: $color;
+    }
+  } @else if $direction == right {
+    &::before {
+      top: 50%;
+      right: 100%;
+      margin-top: -($tooltip-arrow-size + 1px);
+      border-right-color: $border-color;
+    }
+    &::after {
+      top: 50%;
+      right: 100%;
+      margin-top: -$tooltip-arrow-size;
+      border-right-color: $color;
+    }
+  }
+}
+
+// Mixin para posicionamiento responsive
+@mixin tooltip-responsive() {
+  @media (max-width: $tooltip-mobile-breakpoint - 1px) {
+    max-width: calc(100vw - 40px);
+    font-size: $tooltip-font-size * 0.9;
+    padding: $tooltip-padding-vertical * 0.8 $tooltip-padding-horizontal * 0.8;
+  }
+}
+
+// ===================================================================
+// CLASES BASE DEL TOOLTIP
+// ===================================================================
+
+// Contenedor principal del tooltip
+.tooltip {
+  @include tooltip-base();
+  @include tooltip-responsive();
+  
+  // Estado activo/visible
+  &.tooltip--show,
+  &.show {
+    @include tooltip-show();
+  }
+  
+  // Variante sin animación
+  &.tooltip--no-animation {
+    transition: none;
+  }
+  
+  // Tooltip con contenido HTML
+  &.tooltip--html {
+    text-align: left;
+    
+    .tooltip__content {
+      display: block;
+      
+      h1, h2, h3, h4, h5, h6 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1em;
+        font-weight: 600;
+      }
+      
+      p {
+        margin: 0 0 0.5rem 0;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+      
+      ul, ol {
+        margin: 0 0 0.5rem 1rem;
+        padding: 0;
+      }
+      
+      strong {
+        font-weight: 600;
+      }
+      
+      code {
+        padding: 2px 4px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+        font-family: monospace;
+        font-size: 0.875em;
+      }
+    }
+  }
+}
+
+// ===================================================================
+// POSICIONAMIENTO DEL TOOLTIP
+// ===================================================================
+
+// Tooltip superior
+.tooltip--top {
+  bottom: 100%;
+  left: 50%;
+  margin-bottom: $tooltip-distance;
+  transform: translateX(-50%) translateY(-$tooltip-animation-distance) scale(0.8);
+  
+  @include tooltip-arrow(top);
+  
+  &.tooltip--show,
+  &.show {
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+// Tooltip inferior
+.tooltip--bottom {
+  top: 100%;
+  left: 50%;
+  margin-top: $tooltip-distance;
+  transform: translateX(-50%) translateY($tooltip-animation-distance) scale(0.8);
+  
+  @include tooltip-arrow(bottom);
+  
+  &.tooltip--show,
+  &.show {
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+// Tooltip izquierda
+.tooltip--left {
+  top: 50%;
+  right: 100%;
+  margin-right: $tooltip-distance;
+  transform: translateY(-50%) translateX(-$tooltip-animation-distance) scale(0.8);
+  
+  @include tooltip-arrow(left);
+  
+  &.tooltip--show,
+  &.show {
+    transform: translateY(-50%) translateX(0) scale(1);
+  }
+}
+
+// Tooltip derecha
+.tooltip--right {
+  top: 50%;
+  left: 100%;
+  margin-left: $tooltip-distance;
+  transform: translateY(-50%) translateX($tooltip-animation-distance) scale(0.8);
+  
+  @include tooltip-arrow(right);
+  
+  &.tooltip--show,
+  &.show {
+    transform: translateY(-50%) translateX(0) scale(1);
+  }
+}
+
+// ===================================================================
+// VARIANTES DE TAMAÑO
+// ===================================================================
+
+.tooltip--small {
+  font-size: $tooltip-font-size * 0.85;
+  padding: ($tooltip-padding-vertical * 0.7) ($tooltip-padding-horizontal * 0.8);
+  max-width: $tooltip-max-width * 0.7;
+}
+
+.tooltip--large {
+  font-size: $tooltip-font-size * 1.1;
+  padding: ($tooltip-padding-vertical * 1.3) ($tooltip-padding-horizontal * 1.2);
+  max-width: $tooltip-max-width * 1.5;
+}
+
+.tooltip--extra-large {
+  font-size: $tooltip-font-size * 1.2;
+  padding: ($tooltip-padding-vertical * 1.5) ($tooltip-padding-horizontal * 1.4);
+  max-width: $tooltip-max-width * 2;
+}
+
+// ===================================================================
+// VARIANTES DE TEMA
+// ===================================================================
+
+// Tema claro
+.tooltip--light {
+  background-color: $tooltip-light-bg;
+  color: $tooltip-light-text;
+  border-color: $tooltip-light-border;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.05);
+  
+  &.tooltip--top {
+    @include tooltip-arrow(top, $tooltip-light-bg, $tooltip-light-border);
+  }
+  &.tooltip--bottom {
+    @include tooltip-arrow(bottom, $tooltip-light-bg, $tooltip-light-border);
+  }
+  &.tooltip--left {
+    @include tooltip-arrow(left, $tooltip-light-bg, $tooltip-light-border);
+  }
+  &.tooltip--right {
+    @include tooltip-arrow(right, $tooltip-light-bg, $tooltip-light-border);
+  }
+}
+
+// Tema oscuro
+.tooltip--dark {
+  background-color: $tooltip-dark-bg;
+  color: $tooltip-dark-text;
+  border-color: $tooltip-dark-border;
+  
+  &.tooltip--top {
+    @include tooltip-arrow(top, $tooltip-dark-bg, $tooltip-dark-border);
+  }
+  &.tooltip--bottom {
+    @include tooltip-arrow(bottom, $tooltip-dark-bg, $tooltip-dark-border);
+  }
+  &.tooltip--left {
+    @include tooltip-arrow(left, $tooltip-dark-bg, $tooltip-dark-border);
+  }
+  &.tooltip--right {
+    @include tooltip-arrow(right, $tooltip-dark-bg, $tooltip-dark-border);
+  }
+}
+
+// ===================================================================
+// VARIANTES DE ESTADO
+// ===================================================================
+
+// Tooltip de error
+.tooltip--error {
+  background-color: $tooltip-error-bg;
+  color: #ffffff;
+  border-color: darken($tooltip-error-bg, 10%);
+  
+  &.tooltip--top {
+    @include tooltip-arrow(top, $tooltip-error-bg, darken($tooltip-error-bg, 10%));
+  }
+  &.tooltip--bottom {
+    @include tooltip-arrow(bottom, $tooltip-error-bg, darken($tooltip-error-bg, 10%));
+  }
+  &.tooltip--left {
+    @include tooltip-arrow(left, $tooltip-error-bg, darken($tooltip-error-bg, 10%));
+  }
+  &.tooltip--right {
+    @include tooltip-arrow(right, $tooltip-error-bg, darken($tooltip-error-bg, 10%));
+  }
+}
+
+// Tooltip de advertencia
+.tooltip--warning {
+  background-color: $tooltip-warning-bg;
+  color: $tooltip-warning-text;
+  border-color: darken($tooltip-warning-bg, 10%);
+  
+  &.tooltip--top {
+    @include tooltip-arrow(top, $tooltip-warning-bg, darken($tooltip-warning-bg, 10%));
+  }
+  &.tooltip--bottom {
+    @include tooltip-arrow(bottom, $tooltip-warning-bg, darken($tooltip-warning-bg, 10%));
+  }
+  &.tooltip--left {
+    @include tooltip-arrow(left, $tooltip-warning-bg, darken($tooltip-warning-bg, 10%));
+  }
+  &.tooltip--right {
+    @include tooltip-arrow(right, $tooltip-warning-bg, darken($tooltip-warning-bg, 10%));
+  }
+}
+
+// Tooltip de éxito
+.tooltip--success {
+  background-color: $tooltip-success-bg;
+  color: #ffffff;
+  border-color: darken($tooltip-success-bg, 10%);
+  
+  &.tooltip--top {
+    @include tooltip-arrow(top, $tooltip-success-bg, darken($tooltip-success-bg, 10%));
+  }
+  &.tooltip--bottom {
+    @include tooltip-arrow(bottom, $tooltip-success-bg, darken($tooltip-success-bg, 10%));
+  }
+  &.tooltip--left {
+    @include tooltip-arrow(left, $tooltip-success-bg, darken($tooltip-success-bg, 10%));
+  }
+  &.tooltip--right {
+    @include tooltip-arrow(right, $tooltip-success-bg, darken($tooltip-success-bg, 10%));
+  }
+}
+
+// Tooltip informativo
+.tooltip--info {
+  background-color: $tooltip-info-bg;
+  color: #ffffff;
+  border-color: darken($tooltip-info-bg, 10%);
+  
+  &.tooltip--top {
+    @include tooltip-arrow(top, $tooltip-info-bg, darken($tooltip-info-bg, 10%));
+  }
+  &.tooltip--bottom {
+    @include tooltip-arrow(bottom, $tooltip-info-bg, darken($tooltip-info-bg, 10%));
+  }
+  &.tooltip--left {
+    @include tooltip-arrow(left, $tooltip-info-bg, darken($tooltip-info-bg, 10%));
+  }
+  &.tooltip--right {
+    @include tooltip-arrow(right, $tooltip-info-bg, darken($tooltip-info-bg, 10%));
+  }
+}
+
+// ===================================================================
+// ESTILOS PARA EL ELEMENTO TRIGGER
+// ===================================================================
+
+.tooltip-trigger {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+  
+  // Estados de interacción
+  &:hover,
+  &:focus {
+    .tooltip {
+      @include tooltip-show();
+    }
+  }
+  
+  &:focus {
+    outline: 2px solid #4f46e5;
+    outline-offset: 2px;
+  }
+  
+  // Tooltip siempre visible
+  &.tooltip-trigger--always-show {
+    .tooltip {
+      @include tooltip-show();
+    }
+  }
+  
+  // Tooltip deshabilitado
+  &.tooltip-trigger--disabled {
+    cursor: default;
+    
+    .tooltip {
+      display: none;
+    }
+  }
+}
+
+// ===================================================================
+// UTILIDADES ADICIONALES
+// ===================================================================
+
+// Tooltip con delay personalizado
+.tooltip--delay-short {
+  transition-delay: 0.1s;
+}
+
+.tooltip--delay-medium {
+  transition-delay: 0.3s;
+}
+
+.tooltip--delay-long {
+  transition-delay: 0.5s;
+}
+
+// Tooltip sin flecha
+.tooltip--no-arrow {
+  &::before,
+  &::after {
+    display: none;
+  }
+}
+
+// Tooltip con ancho completo en móvil
+.tooltip--full-width-mobile {
+  @media (max-width: $tooltip-mobile-breakpoint - 1px) {
+    left: 10px !important;
+    right: 10px !important;
+    max-width: none;
+    transform: translateX(0) !important;
+    
+    &.tooltip--show,
+    &.show {
+      transform: translateX(0) scale(1) !important;
+    }
+    
+    &::before,
+    &::after {
+      left: 50% !important;
+      transform: translateX(-50%);
+    }
+  }
+}
+
+// ===================================================================
+// ANIMACIONES PERSONALIZADAS
+// ===================================================================
+
+@keyframes tooltip-fade-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes tooltip-slide-in-top {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+@keyframes tooltip-slide-in-bottom {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+// Clase para animación personalizada
+.tooltip--animate-fade {
+  &.tooltip--show,
+  &.show {
+    animation: tooltip-fade-in $tooltip-transition-duration $tooltip-transition-timing;
+  }
+}
+
+// ===================================================================
+// MODO OSCURO AUTOMÁTICO
+// ===================================================================
+
+@media (prefers-color-scheme: dark) {
+  .tooltip:not(.tooltip--light):not(.tooltip--error):not(.tooltip--warning):not(.tooltip--success):not(.tooltip--info) {
+    background-color: $tooltip-dark-bg;
+    color: $tooltip-dark-text;
+    border-color: $tooltip-dark-border;
+    
+    &.tooltip--top {
+      @include tooltip-arrow(top, $tooltip-dark-bg, $tooltip-dark-border);
+    }
+    &.tooltip--bottom {
+      @include tooltip-arrow(bottom, $tooltip-dark-bg, $tooltip-dark-border);
+    }
+    &.tooltip--left {
+      @include tooltip-arrow(left, $tooltip-dark-bg, $tooltip-dark-border);
+    }
+    &.tooltip--right {
+      @include tooltip-arrow(right, $tooltip-dark-bg, $tooltip-dark-border);
+    }
+  }
+}
+
+// ===================================================================
+// REDUCCIÓN DE MOVIMIENTO PARA ACCESIBILIDAD
+// ===================================================================
+
+@media (prefers-reduced-motion: reduce) {
+  .tooltip {
+    transition: opacity $tooltip-transition-duration ease;
+    
+    &.tooltip--show,
+    &.show {
+      transform: none;
+    }
+  }
+  
+  .tooltip--top,
+  .tooltip--bottom,
+  .tooltip--left,
+  .tooltip--right {
+    transform: none;
+    
+    &.tooltip--show,
+    &.show {
+      transform: none;
+    }
+  }
+}
+
+// ===================================================================
+// PRINT STYLES
+// ===================================================================
+
+@media print {
+  .tooltip {
+    display: none !important;
+  }
+}

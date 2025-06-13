@@ -1,0 +1,1595 @@
+// ============================================================================
+// AVATARS COMPONENT - ENTERPRISE LEVEL
+// ============================================================================
+// Archivo: app/static/src/scss/components/_avatars.scss
+// Descripción: Sistema avanzado de avatars para dashboard empresarial
+// Incluye: Status indicators, Groups, Placeholders, Interactive states
+// Desarrollado por: jusga
+// ============================================================================
+
+// Variables SCSS avanzadas para avatars
+// ============================================================================
+
+// Tamaños base
+$avatar-size-xs: 1.5rem !default;    // 24px
+$avatar-size-sm: 2rem !default;      // 32px
+$avatar-size-md: 2.5rem !default;    // 40px (default)
+$avatar-size-lg: 3rem !default;      // 48px
+$avatar-size-xl: 3.5rem !default;    // 56px
+$avatar-size-2xl: 4rem !default;     // 64px
+$avatar-size-3xl: 5rem !default;     // 80px
+$avatar-size-4xl: 6rem !default;     // 96px
+$avatar-size-5xl: 8rem !default;     // 128px
+
+// Border y spacing
+$avatar-border-width: 2px !default;
+$avatar-border-width-thin: 1px !default;
+$avatar-border-width-thick: 3px !default;
+$avatar-border-color: #ffffff !default;
+$avatar-border-color-dark: #1f2937 !default;
+$avatar-margin: 0.25rem !default;
+$avatar-gap: 0.5rem !default;
+
+// Border radius
+$avatar-border-radius-square: 0 !default;
+$avatar-border-radius-rounded: 0.375rem !default;
+$avatar-border-radius-lg: 0.5rem !default;
+$avatar-border-radius-xl: 0.75rem !default;
+$avatar-border-radius-circle: 50% !default;
+
+// Colores base
+$avatar-bg-default: #e5e7eb !default;
+$avatar-text-default: #374151 !default;
+$avatar-placeholder-bg: #9ca3af !default;
+$avatar-placeholder-text: #ffffff !default;
+
+// Status colors
+$avatar-status-online: #22c55e !default;
+$avatar-status-offline: #6b7280 !default;
+$avatar-status-away: #f59e0b !default;
+$avatar-status-busy: #ef4444 !default;
+$avatar-status-idle: #8b5cf6 !default;
+$avatar-status-dnd: #dc2626 !default;
+
+// Status indicator
+$avatar-status-size: 0.75rem !default;
+$avatar-status-size-sm: 0.625rem !default;
+$avatar-status-size-lg: 1rem !default;
+$avatar-status-border: 2px !default;
+$avatar-status-offset: 0.125rem !default;
+
+// Badge/notification
+$avatar-badge-size: 1rem !default;
+$avatar-badge-size-sm: 0.875rem !default;
+$avatar-badge-size-lg: 1.125rem !default;
+$avatar-badge-offset: 0.25rem !default;
+
+// Typography
+$avatar-font-family: inherit !default;
+$avatar-font-weight: 600 !default;
+$avatar-font-weight-light: 400 !default;
+$avatar-font-weight-bold: 700 !default;
+$avatar-letter-spacing: 0.025em !default;
+
+// Animations
+$avatar-transition-duration: 0.2s !default;
+$avatar-transition-timing: cubic-bezier(0.4, 0.0, 0.2, 1) !default;
+$avatar-animation-duration: 0.3s !default;
+$avatar-hover-scale: 1.05 !default;
+$avatar-active-scale: 0.95 !default;
+
+// Shadows
+$avatar-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !default;
+$avatar-shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !default;
+$avatar-shadow-xl: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !default;
+
+// Group settings
+$avatar-group-overlap: -0.5rem !default;
+$avatar-group-overlap-sm: -0.375rem !default;
+$avatar-group-overlap-lg: -0.75rem !default;
+$avatar-group-max-visible: 5 !default;
+
+// Z-index
+$avatar-z-index: 10 !default;
+$avatar-status-z-index: 20 !default;
+$avatar-badge-z-index: 30 !default;
+
+// Placeholders color palette
+$avatar-placeholder-colors: (
+  1: (#ef4444, #ffffff),  // Red
+  2: (#f97316, #ffffff),  // Orange  
+  3: (#f59e0b, #ffffff),  // Amber
+  4: (#eab308, #000000),  // Yellow
+  5: (#84cc16, #ffffff),  // Lime
+  6: (#22c55e, #ffffff),  // Green
+  7: (#10b981, #ffffff),  // Emerald
+  8: (#14b8a6, #ffffff),  // Teal
+  9: (#06b6d4, #ffffff),  // Cyan
+  10: (#0ea5e9, #ffffff), // Sky
+  11: (#3b82f6, #ffffff), // Blue
+  12: (#6366f1, #ffffff), // Indigo
+  13: (#8b5cf6, #ffffff), // Violet
+  14: (#a855f7, #ffffff), // Purple
+  15: (#c026d3, #ffffff), // Fuchsia
+  16: (#ec4899, #ffffff), // Pink
+  17: (#f43f5e, #ffffff), // Rose
+  18: (#64748b, #ffffff), // Slate
+  19: (#6b7280, #ffffff), // Gray
+  20: (#374151, #ffffff)  // Neutral
+) !default;
+
+// Mixins avanzados
+// ============================================================================
+@mixin avatar-size($size) {
+  width: $size;
+  height: $size;
+  font-size: $size * 0.4;
+  
+  // Status indicator scaling
+  .avatar-status {
+    width: $size * 0.3;
+    height: $size * 0.3;
+    min-width: $avatar-status-size-sm;
+    min-height: $avatar-status-size-sm;
+    
+    @if $size >= $avatar-size-lg {
+      min-width: $avatar-status-size;
+      min-height: $avatar-status-size;
+    }
+    
+    @if $size >= $avatar-size-xl {
+      min-width: $avatar-status-size-lg;
+      min-height: $avatar-status-size-lg;
+    }
+  }
+  
+  // Badge scaling
+  .avatar-badge {
+    width: $size * 0.4;
+    height: $size * 0.4;
+    min-width: $avatar-badge-size-sm;
+    min-height: $avatar-badge-size-sm;
+    font-size: $size * 0.2;
+    
+    @if $size >= $avatar-size-lg {
+      min-width: $avatar-badge-size;
+      min-height: $avatar-badge-size;
+    }
+    
+    @if $size >= $avatar-size-xl {
+      min-width: $avatar-badge-size-lg;
+      min-height: $avatar-badge-size-lg;
+    }
+  }
+  
+  // Icon scaling
+  .avatar-icon {
+    width: $size * 0.6;
+    height: $size * 0.6;
+  }
+}
+
+@mixin avatar-status-variant($color) {
+  background-color: $color;
+  border-color: inherit;
+  
+  &.status-pulse {
+    animation: avatar-status-pulse 2s infinite;
+    
+    &::before {
+      background-color: $color;
+    }
+  }
+  
+  &.status-breathing {
+    animation: avatar-status-breathing 3s ease-in-out infinite;
+  }
+}
+
+@mixin avatar-interactive() {
+  cursor: pointer;
+  transition: all $avatar-transition-duration $avatar-transition-timing;
+  
+  &:hover {
+    transform: scale($avatar-hover-scale);
+    box-shadow: $avatar-shadow-lg;
+    z-index: $avatar-z-index + 5;
+  }
+  
+  &:active {
+    transform: scale($avatar-active-scale);
+  }
+  
+  &:focus {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+    z-index: $avatar-z-index + 10;
+  }
+}
+
+@mixin avatar-placeholder-color($index) {
+  $colors: map-get($avatar-placeholder-colors, $index);
+  @if $colors {
+    background-color: nth($colors, 1);
+    color: nth($colors, 2);
+  }
+}
+
+@mixin avatar-shadow($level: 1) {
+  @if $level == 1 {
+    box-shadow: $avatar-shadow;
+  } @else if $level == 2 {
+    box-shadow: $avatar-shadow-lg;
+  } @else if $level == 3 {
+    box-shadow: $avatar-shadow-xl;
+  }
+}
+
+@mixin avatar-transition($property: all, $duration: $avatar-transition-duration, $timing: $avatar-transition-timing) {
+  transition: $property $duration $timing;
+}
+
+// Helper functions
+// ============================================================================
+@function avatar-contrast-color($color) {
+  @if lightness($color) > 50% {
+    @return #000000;
+  } @else {
+    @return #ffffff;
+  }
+}
+
+@function avatar-placeholder-bg($char) {
+  $char-code: str-index('ABCDEFGHIJKLMNOPQRSTUVWXYZ', to-upper-case($char));
+  @if $char-code == null {
+    $char-code: str-index('0123456789', $char);
+    @if $char-code != null {
+      $char-code: $char-code + 26;
+    }
+  }
+  
+  @if $char-code != null {
+    $color-index: ($char-code - 1) % length($avatar-placeholder-colors) + 1;
+    @return map-get($avatar-placeholder-colors, $color-index);
+  }
+  
+  @return map-get($avatar-placeholder-colors, 1);
+}
+
+// Base Avatar Component
+// ============================================================================
+.avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: $avatar-font-family;
+  font-weight: $avatar-font-weight;
+  letter-spacing: $avatar-letter-spacing;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  vertical-align: middle;
+  background-color: $avatar-bg-default;
+  color: $avatar-text-default;
+  border: $avatar-border-width solid $avatar-border-color;
+  border-radius: $avatar-border-radius-circle;
+  overflow: hidden;
+  user-select: none;
+  z-index: $avatar-z-index;
+  @include avatar-size($avatar-size-md);
+  @include avatar-transition();
+  
+  // Avatar image
+  .avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+  }
+  
+  // Avatar initials/text
+  .avatar-text {
+    line-height: 1;
+    font-weight: inherit;
+    letter-spacing: inherit;
+  }
+  
+  // Avatar icon (for system/bot users)
+  .avatar-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    svg, i {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+  }
+  
+  // Avatar placeholder (when no image)
+  .avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: $avatar-placeholder-bg;
+    color: $avatar-placeholder-text;
+    font-weight: $avatar-font-weight-bold;
+    
+    .placeholder-icon {
+      width: 60%;
+      height: 60%;
+      opacity: 0.7;
+      
+      svg, i {
+        width: 100%;
+        height: 100%;
+        fill: currentColor;
+      }
+    }
+  }
+  
+  // Loading state
+  &.avatar-loading {
+    .avatar-img {
+      opacity: 0.5;
+    }
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      right: 2px;
+      bottom: 2px;
+      border: 2px solid transparent;
+      border-top-color: currentColor;
+      border-radius: inherit;
+      animation: avatar-spin 1s linear infinite;
+    }
+  }
+  
+  // Error state
+  &.avatar-error {
+    background-color: #fef2f2;
+    color: #991b1b;
+    
+    .avatar-img {
+      display: none;
+    }
+    
+    .avatar-placeholder {
+      background-color: transparent;
+      
+      .placeholder-icon {
+        opacity: 1;
+      }
+    }
+  }
+  
+  // Interactive avatar
+  &.avatar-interactive {
+    @include avatar-interactive();
+  }
+  
+  // Link avatar
+  &.avatar-link {
+    text-decoration: none;
+    @include avatar-interactive();
+  }
+}
+
+// Avatar Status Indicator
+// ============================================================================
+.avatar-status {
+  position: absolute;
+  bottom: $avatar-status-offset;
+  right: $avatar-status-offset;
+  width: $avatar-status-size;
+  height: $avatar-status-size;
+  border: $avatar-status-border solid;
+  border-radius: 50%;
+  z-index: $avatar-status-z-index;
+  @include avatar-transition();
+  
+  // Status variants
+  &.status-online {
+    @include avatar-status-variant($avatar-status-online);
+  }
+  
+  &.status-offline {
+    @include avatar-status-variant($avatar-status-offline);
+  }
+  
+  &.status-away {
+    @include avatar-status-variant($avatar-status-away);
+  }
+  
+  &.status-busy {
+    @include avatar-status-variant($avatar-status-busy);
+  }
+  
+  &.status-idle {
+    @include avatar-status-variant($avatar-status-idle);
+  }
+  
+  &.status-dnd {
+    @include avatar-status-variant($avatar-status-dnd);
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 50%;
+      height: 2px;
+      background-color: white;
+      transform: translate(-50%, -50%);
+      border-radius: 1px;
+    }
+  }
+  
+  // Status positioning variants
+  &.status-top-left {
+    top: $avatar-status-offset;
+    right: auto;
+    bottom: auto;
+    left: $avatar-status-offset;
+  }
+  
+  &.status-top-right {
+    top: $avatar-status-offset;
+    bottom: auto;
+  }
+  
+  &.status-bottom-left {
+    right: auto;
+    left: $avatar-status-offset;
+  }
+  
+  // Status animations
+  &.status-pulse {
+    &::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      border-radius: 50%;
+      animation: avatar-status-pulse-ring 2s infinite;
+    }
+  }
+  
+  &.status-breathing {
+    // Defined in mixin
+  }
+  
+  &.status-bounce {
+    animation: avatar-status-bounce 0.6s ease-in-out;
+  }
+}
+
+// Avatar Badge/Notification
+// ============================================================================
+.avatar-badge {
+  position: absolute;
+  top: $avatar-badge-offset;
+  right: $avatar-badge-offset;
+  min-width: $avatar-badge-size;
+  min-height: $avatar-badge-size;
+  padding: 0 0.25rem;
+  font-size: 0.625rem;
+  font-weight: $avatar-font-weight-bold;
+  line-height: 1;
+  text-align: center;
+  background-color: #ef4444;
+  color: #ffffff;
+  border: 2px solid;
+  border-color: inherit;
+  border-radius: 50%;
+  z-index: $avatar-badge-z-index;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  @include avatar-transition();
+  
+  // Badge variants
+  &.badge-success {
+    background-color: $avatar-status-online;
+  }
+  
+  &.badge-warning {
+    background-color: $avatar-status-away;
+  }
+  
+  &.badge-info {
+    background-color: #3b82f6;
+  }
+  
+  &.badge-secondary {
+    background-color: $avatar-status-offline;
+  }
+  
+  // Badge positioning
+  &.badge-top-left {
+    top: $avatar-badge-offset;
+    right: auto;
+    left: $avatar-badge-offset;
+  }
+  
+  &.badge-bottom-right {
+    top: auto;
+    bottom: $avatar-badge-offset;
+  }
+  
+  &.badge-bottom-left {
+    top: auto;
+    bottom: $avatar-badge-offset;
+    right: auto;
+    left: $avatar-badge-offset;
+  }
+  
+  // Badge sizes
+  &.badge-sm {
+    min-width: $avatar-badge-size-sm;
+    min-height: $avatar-badge-size-sm;
+    font-size: 0.5rem;
+  }
+  
+  &.badge-lg {
+    min-width: $avatar-badge-size-lg;
+    min-height: $avatar-badge-size-lg;
+    font-size: 0.75rem;
+  }
+  
+  // Badge animations
+  &.badge-pulse {
+    animation: avatar-badge-pulse 2s infinite;
+  }
+  
+  &.badge-bounce {
+    animation: avatar-badge-bounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+  
+  // Dot badge (no number)
+  &.badge-dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    padding: 0;
+    font-size: 0;
+    
+    &.badge-sm {
+      width: 0.625rem;
+      height: 0.625rem;
+    }
+    
+    &.badge-lg {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+  
+  // Hide zero count
+  &[data-count="0"] {
+    display: none;
+  }
+  
+  // Large numbers
+  &.badge-compact {
+    font-size: 0.5rem;
+    
+    &::after {
+      content: '+';
+    }
+  }
+}
+
+// Avatar Size Variants
+// ============================================================================
+.avatar-xs {
+  @include avatar-size($avatar-size-xs);
+  border-width: $avatar-border-width-thin;
+}
+
+.avatar-sm {
+  @include avatar-size($avatar-size-sm);
+  border-width: $avatar-border-width-thin;
+}
+
+.avatar-md {
+  @include avatar-size($avatar-size-md);
+}
+
+.avatar-lg {
+  @include avatar-size($avatar-size-lg);
+}
+
+.avatar-xl {
+  @include avatar-size($avatar-size-xl);
+  border-width: $avatar-border-width-thick;
+}
+
+.avatar-2xl {
+  @include avatar-size($avatar-size-2xl);
+  border-width: $avatar-border-width-thick;
+}
+
+.avatar-3xl {
+  @include avatar-size($avatar-size-3xl);
+  border-width: $avatar-border-width-thick;
+}
+
+.avatar-4xl {
+  @include avatar-size($avatar-size-4xl);
+  border-width: $avatar-border-width-thick;
+}
+
+.avatar-5xl {
+  @include avatar-size($avatar-size-5xl);
+  border-width: $avatar-border-width-thick;
+}
+
+// Avatar Shape Variants
+// ============================================================================
+.avatar-square {
+  border-radius: $avatar-border-radius-square;
+}
+
+.avatar-rounded {
+  border-radius: $avatar-border-radius-rounded;
+}
+
+.avatar-rounded-lg {
+  border-radius: $avatar-border-radius-lg;
+}
+
+.avatar-rounded-xl {
+  border-radius: $avatar-border-radius-xl;
+}
+
+.avatar-circle {
+  border-radius: $avatar-border-radius-circle;
+}
+
+// Avatar Border Variants
+// ============================================================================
+.avatar-bordered {
+  border-width: $avatar-border-width-thick;
+  
+  &.border-primary {
+    border-color: #3b82f6;
+  }
+  
+  &.border-success {
+    border-color: $avatar-status-online;
+  }
+  
+  &.border-warning {
+    border-color: $avatar-status-away;
+  }
+  
+  &.border-danger {
+    border-color: $avatar-status-busy;
+  }
+  
+  &.border-info {
+    border-color: #3b82f6;
+  }
+  
+  &.border-light {
+    border-color: #f8fafc;
+  }
+  
+  &.border-dark {
+    border-color: #1f2937;
+  }
+}
+
+.avatar-borderless {
+  border: none;
+}
+
+// Avatar Shadow Variants
+// ============================================================================
+.avatar-shadow {
+  @include avatar-shadow(1);
+}
+
+.avatar-shadow-lg {
+  @include avatar-shadow(2);
+}
+
+.avatar-shadow-xl {
+  @include avatar-shadow(3);
+}
+
+.avatar-no-shadow {
+  box-shadow: none;
+}
+
+// Avatar Placeholder Color Variants
+// ============================================================================
+@for $i from 1 through length($avatar-placeholder-colors) {
+  .avatar-placeholder-#{$i} {
+    @include avatar-placeholder-color($i);
+  }
+}
+
+// Auto-generate from initials
+.avatar[data-initials] {
+  $initials: attr(data-initials);
+  $first-char: str-slice($initials, 1, 1);
+  
+  // This would need JavaScript to implement properly
+  // Keeping as example structure
+}
+
+// Avatar Groups
+// ============================================================================
+.avatar-group {
+  display: inline-flex;
+  align-items: center;
+  
+  .avatar {
+    position: relative;
+    margin-left: $avatar-group-overlap;
+    border: $avatar-border-width solid $avatar-border-color;
+    @include avatar-transition();
+    
+    &:first-child {
+      margin-left: 0;
+    }
+    
+    &:hover {
+      z-index: $avatar-z-index + 5;
+      transform: scale($avatar-hover-scale);
+    }
+    
+    &:focus {
+      z-index: $avatar-z-index + 10;
+    }
+  }
+  
+  // Group size variants
+  &.avatar-group-sm {
+    .avatar {
+      margin-left: $avatar-group-overlap-sm;
+    }
+  }
+  
+  &.avatar-group-lg {
+    .avatar {
+      margin-left: $avatar-group-overlap-lg;
+    }
+  }
+  
+  // Reverse order
+  &.avatar-group-reverse {
+    flex-direction: row-reverse;
+    
+    .avatar {
+      margin-left: 0;
+      margin-right: $avatar-group-overlap;
+      
+      &:first-child {
+        margin-right: 0;
+      }
+    }
+  }
+  
+  // Vertical group
+  &.avatar-group-vertical {
+    flex-direction: column;
+    
+    .avatar {
+      margin-left: 0;
+      margin-top: $avatar-group-overlap;
+      
+      &:first-child {
+        margin-top: 0;
+      }
+    }
+  }
+  
+  // Maximum visible avatars
+  .avatar:nth-child(n+#{$avatar-group-max-visible + 1}) {
+    display: none;
+  }
+  
+  // "More" indicator
+  .avatar-more {
+    background-color: $avatar-placeholder-bg;
+    color: $avatar-placeholder-text;
+    font-size: 0.75em;
+    font-weight: $avatar-font-weight-bold;
+    cursor: pointer;
+    
+    &:hover {
+      background-color: darken($avatar-placeholder-bg, 10%);
+    }
+  }
+}
+
+// Avatar Grid (for teams/organizations)
+// ============================================================================
+.avatar-grid {
+  display: grid;
+  gap: $avatar-gap;
+  align-items: center;
+  
+  &.grid-2x2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  &.grid-3x3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  &.grid-4x4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  &.grid-auto {
+    grid-template-columns: repeat(auto-fit, minmax(2.5rem, 1fr));
+  }
+  
+  // Responsive grid
+  @media (max-width: 768px) {
+    &.grid-3x3,
+    &.grid-4x4 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    gap: $avatar-gap * 0.75;
+    
+    &.grid-2x2,
+    &.grid-3x3,
+    &.grid-4x4 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+}
+
+// Avatar Stack (overlapping, card-like)
+// ============================================================================
+.avatar-stack {
+  position: relative;
+  display: inline-block;
+  
+  .avatar {
+    position: absolute;
+    transition: all $avatar-transition-duration $avatar-transition-timing;
+    
+    &:nth-child(1) {
+      z-index: 5;
+      transform: rotate(-6deg);
+    }
+    
+    &:nth-child(2) {
+      z-index: 4;
+      transform: rotate(-3deg) translate(0.5rem, 0.25rem);
+    }
+    
+    &:nth-child(3) {
+      z-index: 3;
+      transform: rotate(2deg) translate(1rem, 0.5rem);
+    }
+    
+    &:nth-child(4) {
+      z-index: 2;
+      transform: rotate(5deg) translate(1.5rem, 0.75rem);
+    }
+    
+    &:nth-child(5) {
+      z-index: 1;
+      transform: rotate(-2deg) translate(2rem, 1rem);
+    }
+    
+    &:hover {
+      z-index: 10;
+      transform: scale(1.1) rotate(0deg);
+    }
+  }
+  
+  // Adjust container size for stack
+  width: calc(2.5rem + 2rem);
+  height: calc(2.5rem + 1rem);
+  
+  &.avatar-stack-sm {
+    width: calc(2rem + 1.5rem);
+    height: calc(2rem + 0.75rem);
+  }
+  
+  &.avatar-stack-lg {
+    width: calc(3rem + 2.5rem);
+    height: calc(3rem + 1.25rem);
+  }
+}
+
+// Avatar with Text/Info
+// ============================================================================
+.avatar-info {
+  display: inline-flex;
+  align-items: center;
+  gap: $avatar-gap;
+  text-decoration: none;
+  color: inherit;
+  @include avatar-transition();
+  
+  .avatar-details {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    
+    .avatar-name {
+      font-weight: $avatar-font-weight;
+      font-size: 0.875rem;
+      line-height: 1.25;
+      margin: 0;
+      color: inherit;
+      
+      &.name-truncate {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 120px;
+      }
+    }
+    
+    .avatar-subtitle {
+      font-size: 0.75rem;
+      line-height: 1.2;
+      opacity: 0.7;
+      margin: 0;
+      color: inherit;
+      
+      &.subtitle-truncate {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100px;
+      }
+    }
+    
+    .avatar-meta {
+      font-size: 0.6875rem;
+      line-height: 1.1;
+      opacity: 0.6;
+      margin: 0.125rem 0 0 0;
+      color: inherit;
+    }
+  }
+  
+  // Interactive info
+  &.avatar-info-interactive {
+    cursor: pointer;
+    border-radius: $avatar-border-radius-rounded;
+    padding: 0.375rem;
+    margin: -0.375rem;
+    
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+      text-decoration: none;
+      color: inherit;
+    }
+    
+    &:focus {
+      outline: 2px solid currentColor;
+      outline-offset: 2px;
+    }
+  }
+  
+  // Reverse layout
+  &.avatar-info-reverse {
+    flex-direction: row-reverse;
+    text-align: right;
+    
+    .avatar-details {
+      align-items: flex-end;
+    }
+  }
+  
+  // Vertical layout
+  &.avatar-info-vertical {
+    flex-direction: column;
+    text-align: center;
+    
+    .avatar-details {
+      align-items: center;
+    }
+  }
+  
+  // Compact layout
+  &.avatar-info-compact {
+    gap: $avatar-gap * 0.75;
+    
+    .avatar-details {
+      .avatar-name {
+        font-size: 0.8125rem;
+      }
+      
+      .avatar-subtitle {
+        font-size: 0.6875rem;
+      }
+    }
+  }
+}
+
+// Special Avatar Types
+// ============================================================================
+
+// Bot/System avatar
+.avatar-bot {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  
+  .avatar-icon {
+    opacity: 0.9;
+  }
+  
+  &::after {
+    content: '🤖';
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    font-size: 0.625rem;
+    background: #ffffff;
+    border-radius: 50%;
+    width: 1rem;
+    height: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid;
+    border-color: inherit;
+  }
+}
+
+// Anonymous/Guest avatar
+.avatar-anonymous {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  border-style: dashed;
+  
+  .avatar-icon {
+    opacity: 0.6;
+  }
+}
+
+// Team/Group avatar
+.avatar-team {
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  color: #8b5000;
+  
+  &::after {
+    content: '👥';
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    font-size: 0.625rem;
+    background: #ffffff;
+    border-radius: 50%;
+    width: 1rem;
+    height: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid;
+    border-color: inherit;
+  }
+}
+
+// Premium/VIP avatar
+.avatar-premium {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #8b5000;
+  box-shadow: 0 0 0 2px #ffd700, $avatar-shadow-lg;
+  
+  &::before {
+    content: '👑';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1rem;
+    z-index: $avatar-z-index + 1;
+  }
+}
+
+// Verified avatar
+.avatar-verified {
+  position: relative;
+  
+  &::after {
+    content: '✓';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 1rem;
+    height: 1rem;
+    background: #22c55e;
+    color: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.625rem;
+    font-weight: bold;
+    border: 2px solid;
+    border-color: inherit;
+    z-index: $avatar-status-z-index;
+  }
+}
+
+// Responsive Design
+// ============================================================================
+@media (max-width: 768px) {
+  .avatar-group {
+    .avatar:nth-child(n+4) {
+      display: none;
+    }
+    
+    .avatar-more {
+      display: flex;
+    }
+  }
+  
+  .avatar-info {
+    gap: $avatar-gap * 0.75;
+    
+    .avatar-details {
+      .avatar-name {
+        font-size: 0.8125rem;
+        
+        &.name-truncate {
+          max-width: 80px;
+        }
+      }
+      
+      .avatar-subtitle {
+        font-size: 0.6875rem;
+        
+        &.subtitle-truncate {
+          max-width: 70px;
+        }
+      }
+    }
+    
+    &.avatar-info-vertical {
+      .avatar-details {
+        .avatar-name.name-truncate,
+        .avatar-subtitle.subtitle-truncate {
+          max-width: none;
+          text-align: center;
+        }
+      }
+    }
+  }
+  
+  .avatar-stack {
+    .avatar {
+      &:nth-child(n+4) {
+        display: none;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .avatar-info {
+    &:not(.avatar-info-vertical) {
+      .avatar-details {
+        .avatar-subtitle,
+        .avatar-meta {
+          display: none;
+        }
+      }
+    }
+  }
+  
+  .avatar-group {
+    .avatar:nth-child(n+3) {
+      display: none;
+    }
+  }
+}
+
+// Dark Mode
+// ============================================================================
+@media (prefers-color-scheme: dark) {
+  .avatar {
+    border-color: $avatar-border-color-dark;
+    
+    &.avatar-borderless {
+      border-color: transparent;
+    }
+  }
+  
+  .avatar-status,
+  .avatar-badge {
+    border-color: $avatar-border-color-dark;
+  }
+  
+  .avatar-placeholder {
+    background-color: #374151;
+    color: #d1d5db;
+  }
+  
+  .avatar-anonymous {
+    background-color: #374151;
+    color: #9ca3af;
+  }
+  
+  .avatar-info-interactive {
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+}
+
+// Accessibility & Reduced Motion
+// ============================================================================
+@media (prefers-reduced-motion: reduce) {
+  .avatar,
+  .avatar-status,
+  .avatar-badge,
+  .avatar-info {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+  
+  .avatar-loading::after {
+    animation: none !important;
+    border: 2px solid currentColor;
+  }
+  
+  .avatar-status.status-pulse,
+  .avatar-badge.badge-pulse {
+    animation: none !important;
+  }
+  
+  .avatar-stack .avatar {
+    position: static;
+    transform: none !important;
+    margin-right: $avatar-group-overlap;
+    
+    &:hover {
+      transform: none !important;
+    }
+  }
+}
+
+// High contrast mode
+@media (prefers-contrast: high) {
+  .avatar {
+    border-width: $avatar-border-width-thick;
+    border-style: solid;
+    border-color: currentColor;
+  }
+  
+  .avatar-status,
+  .avatar-badge {
+    border-width: $avatar-border-width-thick;
+    border-color: currentColor;
+  }
+  
+  .avatar-borderless {
+    border: $avatar-border-width-thick solid currentColor;
+  }
+}
+
+// Print styles
+@media print {
+  .avatar {
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
+    
+    .avatar-img {
+      filter: grayscale(100%);
+    }
+  }
+  
+  .avatar-status,
+  .avatar-badge {
+    display: none !important;
+  }
+  
+  .avatar-info {
+    break-inside: avoid;
+    
+    .avatar-details {
+      .avatar-subtitle,
+      .avatar-meta {
+        color: #666 !important;
+      }
+    }
+  }
+  
+  .avatar-group {
+    .avatar {
+      position: static !important;
+      margin-left: 0.25rem !important;
+      transform: none !important;
+    }
+  }
+}
+
+// Animations
+// ============================================================================
+@keyframes avatar-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes avatar-status-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes avatar-status-pulse-ring {
+  0% {
+    opacity: 1;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+@keyframes avatar-status-breathing {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes avatar-status-bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-4px);
+  }
+  60% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes avatar-badge-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes avatar-badge-bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.2);
+  }
+  60% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes avatar-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes avatar-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Utility Classes
+// ============================================================================
+.avatar-fade-in {
+  animation: avatar-fade-in 0.3s ease-out;
+}
+
+.avatar-slide-in {
+  animation: avatar-slide-in 0.3s ease-out;
+}
+
+.avatar-no-transition {
+  transition: none !important;
+}
+
+.avatar-grayscale {
+  filter: grayscale(100%);
+  
+  &:hover {
+    filter: grayscale(0%);
+  }
+}
+
+.avatar-blur {
+  filter: blur(2px);
+  
+  &:hover {
+    filter: blur(0);
+  }
+}
+
+.avatar-sepia {
+  filter: sepia(100%);
+  
+  &:hover {
+    filter: sepia(0%);
+  }
+}
+
+.avatar-opacity-50 {
+  opacity: 0.5;
+}
+
+.avatar-opacity-75 {
+  opacity: 0.75;
+}
+
+// CSS Variables Support
+// ============================================================================
+:root {
+  --avatar-size: #{$avatar-size-md};
+  --avatar-border-color: #{$avatar-border-color};
+  --avatar-border-width: #{$avatar-border-width};
+  --avatar-border-radius: #{$avatar-border-radius-circle};
+  --avatar-bg: #{$avatar-bg-default};
+  --avatar-text: #{$avatar-text-default};
+  --avatar-status-online: #{$avatar-status-online};
+  --avatar-status-offline: #{$avatar-status-offline};
+  --avatar-status-away: #{$avatar-status-away};
+  --avatar-status-busy: #{$avatar-status-busy};
+  --avatar-transition-duration: #{$avatar-transition-duration};
+}
+
+[data-theme="dark"] {
+  --avatar-border-color: #{$avatar-border-color-dark};
+  --avatar-bg: #374151;
+  --avatar-text: #d1d5db;
+}
+
+// CSS Variables implementation
+.avatar-css-vars {
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  background-color: var(--avatar-bg);
+  color: var(--avatar-text);
+  border: var(--avatar-border-width) solid var(--avatar-border-color);
+  border-radius: var(--avatar-border-radius);
+  transition-duration: var(--avatar-transition-duration);
+  
+  .avatar-status {
+    &.status-online {
+      background-color: var(--avatar-status-online);
+    }
+    
+    &.status-offline {
+      background-color: var(--avatar-status-offline);
+    }
+    
+    &.status-away {
+      background-color: var(--avatar-status-away);
+    }
+    
+    &.status-busy {
+      background-color: var(--avatar-status-busy);
+    }
+  }
+}
+
+// RTL Support
+// ============================================================================
+[dir="rtl"] {
+  .avatar-status {
+    &.status-top-left {
+      left: auto;
+      right: $avatar-status-offset;
+    }
+    
+    &.status-top-right {
+      right: auto;
+      left: $avatar-status-offset;
+    }
+    
+    &.status-bottom-left {
+      left: auto;
+      right: $avatar-status-offset;
+    }
+    
+    &.status-bottom-right {
+      right: auto;
+      left: $avatar-status-offset;
+    }
+  }
+  
+  .avatar-badge {
+    &.badge-top-left {
+      left: auto;
+      right: $avatar-badge-offset;
+    }
+    
+    &.badge-top-right {
+      right: auto;
+      left: $avatar-badge-offset;
+    }
+    
+    &.badge-bottom-left {
+      left: auto;
+      right: $avatar-badge-offset;
+    }
+    
+    &.badge-bottom-right {
+      right: auto;
+      left: $avatar-badge-offset;
+    }
+  }
+  
+  .avatar-group {
+    &.avatar-group-reverse {
+      flex-direction: row;
+      
+      .avatar {
+        margin-right: 0;
+        margin-left: $avatar-group-overlap;
+        
+        &:first-child {
+          margin-left: 0;
+        }
+      }
+    }
+    
+    .avatar {
+      margin-left: 0;
+      margin-right: $avatar-group-overlap;
+      
+      &:first-child {
+        margin-right: 0;
+      }
+    }
+  }
+  
+  .avatar-info {
+    &.avatar-info-reverse {
+      flex-direction: row;
+      text-align: left;
+      
+      .avatar-details {
+        align-items: flex-start;
+      }
+    }
+  }
+}

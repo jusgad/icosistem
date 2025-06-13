@@ -1,0 +1,1235 @@
+// =============================================================================
+// CLIENT IMPACT PAGE STYLES
+// =============================================================================
+// Estilos específicos para la página de medición de impacto de clientes/stakeholders
+// Incluye métricas, KPIs, gráficos, reportes y visualizaciones de datos
+
+// Variables específicas para la página de impacto
+// =============================================================================
+$impact-primary: #2563eb;
+$impact-secondary: #0ea5e9;
+$impact-success: #10b981;
+$impact-warning: #f59e0b;
+$impact-danger: #ef4444;
+$impact-info: #6366f1;
+
+// Colores para diferentes tipos de métricas
+$metric-financial: #059669;
+$metric-social: #7c3aed;
+$metric-environmental: #0891b2;
+$metric-innovation: #dc2626;
+
+// Gradientes para visualizaciones
+$gradient-success: linear-gradient(135deg, #10b981, #059669);
+$gradient-info: linear-gradient(135deg, #3b82f6, #1d4ed8);
+$gradient-warning: linear-gradient(135deg, #f59e0b, #d97706);
+$gradient-purple: linear-gradient(135deg, #8b5cf6, #7c3aed);
+
+// Sombras específicas
+$impact-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+$impact-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+$impact-shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.15);
+$impact-shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.1);
+
+// Mixins específicos para la página de impacto
+// =============================================================================
+
+// Mixin para cards de métricas
+@mixin metric-card($gradient: $gradient-info) {
+  background: $gradient;
+  border-radius: 12px;
+  padding: 1.5rem;
+  color: white;
+  box-shadow: $impact-shadow-md;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $impact-shadow-lg;
+  }
+}
+
+// Mixin para indicadores de progreso
+@mixin progress-indicator($color: $impact-primary) {
+  position: relative;
+  background: rgba($color, 0.1);
+  border-radius: 50px;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: $color;
+    border-radius: inherit;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+// Mixin para charts containers
+@mixin chart-container {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: $impact-shadow-sm;
+  border: 1px solid #e5e7eb;
+  transition: box-shadow 0.3s ease;
+  
+  &:hover {
+    box-shadow: $impact-shadow-md;
+  }
+}
+
+// Layout principal de la página de impacto
+// =============================================================================
+.client-impact {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  
+  &__container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    
+    @media (min-width: 768px) {
+      padding: 2.5rem 2rem;
+    }
+    
+    @media (min-width: 1024px) {
+      padding: 3rem 2rem;
+    }
+  }
+  
+  &__header {
+    margin-bottom: 2.5rem;
+    
+    &-title {
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+      
+      @media (min-width: 768px) {
+        font-size: 2.75rem;
+      }
+    }
+    
+    &-subtitle {
+      font-size: 1.125rem;
+      color: #6b7280;
+      margin-bottom: 1.5rem;
+    }
+    
+    &-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      
+      @media (max-width: 767px) {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  }
+}
+
+// Filtros y controles
+// =============================================================================
+.impact-filters {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: $impact-shadow-sm;
+  margin-bottom: 2rem;
+  border: 1px solid #e5e7eb;
+  
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+  }
+  
+  &__group {
+    display: flex;
+    flex-direction: column;
+    
+    label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.5rem;
+    }
+    
+    select,
+    input {
+      padding: 0.625rem 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+      
+      &:focus {
+        outline: none;
+        border-color: $impact-primary;
+        box-shadow: 0 0 0 3px rgba($impact-primary, 0.1);
+      }
+    }
+  }
+  
+  &__actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+    
+    @media (max-width: 767px) {
+      flex-direction: column;
+    }
+  }
+}
+
+// Grid de métricas principales
+// =============================================================================
+.impact-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+  
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  &__card {
+    @include metric-card();
+    position: relative;
+    overflow: hidden;
+    
+    &--financial {
+      background: $gradient-success;
+    }
+    
+    &--social {
+      background: $gradient-purple;
+    }
+    
+    &--environmental {
+      background: $gradient-info;
+    }
+    
+    &--innovation {
+      background: $gradient-warning;
+    }
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    &:hover::before {
+      opacity: 1;
+    }
+  }
+  
+  &__icon {
+    width: 3rem;
+    height: 3rem;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    
+    i {
+      font-size: 1.5rem;
+    }
+  }
+  
+  &__value {
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    line-height: 1;
+    
+    @media (min-width: 1024px) {
+      font-size: 2.5rem;
+    }
+  }
+  
+  &__label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    margin-bottom: 0.75rem;
+  }
+  
+  &__change {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    
+    &--positive {
+      color: #dcfce7;
+      
+      i {
+        color: #bbf7d0;
+      }
+    }
+    
+    &--negative {
+      color: #fecaca;
+      
+      i {
+        color: #fca5a5;
+      }
+    }
+  }
+}
+
+// Sección de gráficos y visualizaciones
+// =============================================================================
+.impact-charts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+  
+  @media (min-width: 1024px) {
+    grid-template-columns: 2fr 1fr;
+  }
+  
+  &__main {
+    @include chart-container();
+    
+    &-header {
+      display: flex;
+      justify-content: between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+      
+      h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+      }
+      
+      .chart-controls {
+        display: flex;
+        gap: 0.5rem;
+        
+        button {
+          padding: 0.375rem 0.75rem;
+          border: 1px solid #d1d5db;
+          background: white;
+          border-radius: 6px;
+          font-size: 0.8125rem;
+          font-weight: 500;
+          color: #6b7280;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          
+          &:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+          }
+          
+          &.active {
+            background: $impact-primary;
+            border-color: $impact-primary;
+            color: white;
+          }
+        }
+      }
+    }
+    
+    &-content {
+      height: 400px;
+      position: relative;
+      
+      .chart-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        background: #f8fafc;
+        border-radius: 8px;
+        color: #6b7280;
+        font-size: 0.875rem;
+        border: 2px dashed #d1d5db;
+      }
+    }
+  }
+  
+  &__sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  &__mini {
+    @include chart-container();
+    padding: 1.25rem;
+    
+    &-header {
+      display: flex;
+      justify-content: between;
+      align-items: center;
+      margin-bottom: 1rem;
+      
+      h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1f2937;
+      }
+      
+      .trend-indicator {
+        font-size: 0.75rem;
+        font-weight: 600;
+        
+        &--up {
+          color: $metric-financial;
+        }
+        
+        &--down {
+          color: $impact-danger;
+        }
+      }
+    }
+    
+    &-content {
+      height: 150px;
+      background: #f8fafc;
+      border-radius: 6px;
+      border: 2px dashed #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9ca3af;
+      font-size: 0.8125rem;
+    }
+  }
+}
+
+// Sección de progreso e hitos
+// =============================================================================
+.impact-progress {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: $impact-shadow-sm;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 2.5rem;
+  
+  &__header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+    
+    h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #1f2937;
+    }
+    
+    .progress-summary {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+  }
+  
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    @media (min-width: 1024px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  &__item {
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      background: white;
+      box-shadow: $impact-shadow-sm;
+    }
+    
+    &-header {
+      display: flex;
+      justify-content: between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+      
+      h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1f2937;
+        flex: 1;
+      }
+      
+      .status-badge {
+        padding: 0.25rem 0.625rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        
+        &--completed {
+          background: #dcfce7;
+          color: #166534;
+        }
+        
+        &--in-progress {
+          background: #dbeafe;
+          color: #1e40af;
+        }
+        
+        &--pending {
+          background: #fef3c7;
+          color: #92400e;
+        }
+      }
+    }
+    
+    &-progress {
+      margin-bottom: 1rem;
+      
+      .progress-bar {
+        @include progress-indicator();
+        height: 8px;
+        
+        &[data-progress="0"]::before { width: 0%; }
+        &[data-progress="25"]::before { width: 25%; }
+        &[data-progress="50"]::before { width: 50%; }
+        &[data-progress="75"]::before { width: 75%; }
+        &[data-progress="100"]::before { width: 100%; }
+      }
+      
+      .progress-text {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-top: 0.5rem;
+        font-size: 0.8125rem;
+        color: #6b7280;
+      }
+    }
+    
+    &-meta {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.8125rem;
+      color: #6b7280;
+      
+      span {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        
+        i {
+          font-size: 0.75rem;
+        }
+      }
+    }
+  }
+}
+
+// Tabla de datos detallados
+// =============================================================================
+.impact-data-table {
+  background: white;
+  border-radius: 12px;
+  box-shadow: $impact-shadow-sm;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  margin-bottom: 2.5rem;
+  
+  &__header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f8fafc;
+    
+    h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+    
+    p {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+  }
+  
+  &__content {
+    overflow-x: auto;
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      
+      thead {
+        background: #f8fafc;
+        
+        th {
+          padding: 1rem 1.5rem;
+          text-align: left;
+          font-size: 0.8125rem;
+          font-weight: 600;
+          color: #374151;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          border-bottom: 1px solid #e5e7eb;
+          white-space: nowrap;
+          
+          &.sortable {
+            cursor: pointer;
+            position: relative;
+            
+            &:hover {
+              background: #e5e7eb;
+            }
+            
+            &::after {
+              content: '\f0dc';
+              font-family: 'Font Awesome 5 Free';
+              font-weight: 900;
+              position: absolute;
+              right: 0.5rem;
+              opacity: 0.3;
+              transition: opacity 0.2s ease;
+            }
+            
+            &.sorted::after {
+              opacity: 1;
+            }
+          }
+        }
+      }
+      
+      tbody {
+        tr {
+          transition: background-color 0.2s ease;
+          
+          &:hover {
+            background: #f8fafc;
+          }
+          
+          &:not(:last-child) {
+            border-bottom: 1px solid #f3f4f6;
+          }
+        }
+        
+        td {
+          padding: 1rem 1.5rem;
+          font-size: 0.875rem;
+          color: #374151;
+          vertical-align: middle;
+          
+          &.number {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-weight: 500;
+            text-align: right;
+          }
+          
+          &.status {
+            .status-indicator {
+              display: inline-flex;
+              align-items: center;
+              gap: 0.375rem;
+              padding: 0.25rem 0.625rem;
+              border-radius: 12px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              
+              &::before {
+                content: '';
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+              }
+              
+              &--active {
+                background: #dcfce7;
+                color: #166534;
+                
+                &::before {
+                  background: #22c55e;
+                }
+              }
+              
+              &--inactive {
+                background: #f3f4f6;
+                color: #6b7280;
+                
+                &::before {
+                  background: #9ca3af;
+                }
+              }
+              
+              &--pending {
+                background: #fef3c7;
+                color: #92400e;
+                
+                &::before {
+                  background: #f59e0b;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  &__footer {
+    padding: 1rem 2rem;
+    border-top: 1px solid #e5e7eb;
+    background: #f8fafc;
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    
+    .pagination {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      
+      button {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        background: white;
+        border-radius: 6px;
+        font-size: 0.8125rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        &:hover:not(:disabled) {
+          background: #f9fafb;
+          border-color: #9ca3af;
+        }
+        
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        
+        &.active {
+          background: $impact-primary;
+          border-color: $impact-primary;
+          color: white;
+        }
+      }
+    }
+    
+    .table-info {
+      font-size: 0.8125rem;
+      color: #6b7280;
+    }
+  }
+}
+
+// Panel de exportación y acciones
+// =============================================================================
+.impact-actions {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: $impact-shadow-sm;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 2rem;
+  
+  &__header {
+    margin-bottom: 1.5rem;
+    
+    h3 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+    
+    p {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+  }
+  
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+  }
+  
+  &__button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1rem;
+    border: 1px solid #d1d5db;
+    background: white;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    
+    &:hover {
+      background: #f9fafb;
+      border-color: #9ca3af;
+      transform: translateY(-1px);
+    }
+    
+    &--primary {
+      background: $impact-primary;
+      border-color: $impact-primary;
+      color: white;
+      
+      &:hover {
+        background: darken($impact-primary, 5%);
+        border-color: darken($impact-primary, 5%);
+      }
+    }
+    
+    &--success {
+      background: $impact-success;
+      border-color: $impact-success;
+      color: white;
+      
+      &:hover {
+        background: darken($impact-success, 5%);
+        border-color: darken($impact-success, 5%);
+      }
+    }
+    
+    i {
+      font-size: 1rem;
+    }
+  }
+}
+
+// Sección de insights y análisis
+// =============================================================================
+.impact-insights {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+  
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  &__card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: $impact-shadow-sm;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      box-shadow: $impact-shadow-md;
+      transform: translateY(-2px);
+    }
+    
+    &-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      
+      .icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.125rem;
+        
+        &--positive {
+          background: rgba($impact-success, 0.1);
+          color: $impact-success;
+        }
+        
+        &--warning {
+          background: rgba($impact-warning, 0.1);
+          color: $impact-warning;
+        }
+        
+        &--info {
+          background: rgba($impact-info, 0.1);
+          color: $impact-info;
+        }
+      }
+      
+      h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1f2937;
+      }
+    }
+    
+    &-content {
+      p {
+        font-size: 0.875rem;
+        color: #6b7280;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+      }
+      
+      .insight-metric {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        padding: 0.75rem;
+        background: #f8fafc;
+        border-radius: 6px;
+        margin-bottom: 0.75rem;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+        
+        .label {
+          font-size: 0.8125rem;
+          color: #6b7280;
+        }
+        
+        .value {
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: #1f2937;
+        }
+      }
+    }
+  }
+}
+
+// Footer de la página
+// =============================================================================
+.impact-footer {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: $impact-shadow-sm;
+  border: 1px solid #e5e7eb;
+  text-align: center;
+  
+  &__content {
+    max-width: 600px;
+    margin: 0 auto;
+    
+    h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 0.75rem;
+    }
+    
+    p {
+      font-size: 0.875rem;
+      color: #6b7280;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+    
+    .footer-actions {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      
+      a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        
+        &.primary {
+          background: $impact-primary;
+          color: white;
+          
+          &:hover {
+            background: darken($impact-primary, 5%);
+          }
+        }
+        
+        &.secondary {
+          background: #f3f4f6;
+          color: #374151;
+          
+          &:hover {
+            background: #e5e7eb;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Animaciones y transiciones
+// =============================================================================
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Clases de animación
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.5s ease-out;
+}
+
+// Estados de carga
+.loading {
+  position: relative;
+  overflow: hidden;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    animation: shimmer 1.5s infinite;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+// Responsive design optimizations
+// =============================================================================
+@media (max-width: 640px) {
+  .impact-metrics {
+    grid-template-columns: 1fr;
+  }
+  
+  .impact-charts {
+    &__main-header {
+      flex-direction: column;
+      align-items: stretch;
+      
+      .chart-controls {
+        justify-content: center;
+      }
+    }
+  }
+  
+  .impact-data-table {
+    &__content {
+      font-size: 0.8125rem;
+      
+      table {
+        min-width: 600px;
+      }
+    }
+  }
+  
+  .impact-actions {
+    &__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+// Print styles
+// =============================================================================
+@media print {
+  .client-impact {
+    background: white !important;
+    
+    &__header-actions,
+    .impact-filters,
+    .impact-actions {
+      display: none !important;
+    }
+    
+    .impact-metrics__card {
+      break-inside: avoid;
+      box-shadow: none !important;
+      border: 1px solid #e5e7eb !important;
+    }
+    
+    .impact-charts__main,
+    .impact-data-table {
+      break-inside: avoid;
+      box-shadow: none !important;
+      border: 1px solid #e5e7eb !important;
+    }
+  }
+}
+
+// Accesibilidad mejorada
+// =============================================================================
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// Focus indicators mejorados
+.impact-filters__group select:focus,
+.impact-filters__group input:focus,
+.impact-actions__button:focus,
+.impact-data-table table th.sortable:focus {
+  outline: 2px solid $impact-primary;
+  outline-offset: 2px;
+}
+
+// Modo oscuro (opcional)
+@media (prefers-color-scheme: dark) {
+  .client-impact {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    
+    &__header-title {
+      color: white;
+    }
+    
+    &__header-subtitle {
+      color: #d1d5db;
+    }
+  }
+  
+  .impact-filters,
+  .impact-charts__main,
+  .impact-progress,
+  .impact-data-table,
+  .impact-actions,
+  .impact-insights__card,
+  .impact-footer {
+    background: #374151;
+    border-color: #4b5563;
+    
+    h3, h4 {
+      color: white;
+    }
+    
+    p, .table-info {
+      color: #d1d5db;
+    }
+  }
+  
+  .impact-data-table {
+    &__content table {
+      thead {
+        background: #4b5563;
+        
+        th {
+          color: #f3f4f6;
+          border-color: #6b7280;
+        }
+      }
+      
+      tbody {
+        tr:hover {
+          background: #4b5563;
+        }
+        
+        td {
+          color: #e5e7eb;
+          border-color: #4b5563;
+        }
+      }
+    }
+  }
+}

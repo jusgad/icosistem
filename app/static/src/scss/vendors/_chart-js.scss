@@ -1,0 +1,850 @@
+/**
+ * Chart.js Custom Styles for Ecosistema Emprendimiento
+ * =====================================================
+ * 
+ * Personalización completa de Chart.js para el ecosistema de emprendimiento
+ * Incluye temas, responsividad, accesibilidad y componentes reutilizables
+ * 
+ * @author: Ecosistema Emprendimiento Team
+ * @version: 1.0.0
+ * @updated: 2025
+ */
+
+// ============================================================================
+// VARIABLES CHART.JS
+// ============================================================================
+
+// Colores del ecosistema emprendimiento
+$chart-primary: #2563eb !default;          // Azul principal
+$chart-secondary: #10b981 !default;        // Verde secundario
+$chart-success: #059669 !default;          // Verde éxito
+$chart-warning: #f59e0b !default;          // Amarillo advertencia
+$chart-danger: #dc2626 !default;           // Rojo peligro
+$chart-info: #0ea5e9 !default;             // Azul información
+$chart-purple: #8b5cf6 !default;           // Púrpura
+$chart-pink: #ec4899 !default;             // Rosa
+$chart-orange: #ea580c !default;           // Naranja
+$chart-teal: #0d9488 !default;             // Verde azulado
+
+// Paleta de colores para gráficos
+$chart-colors: (
+  primary: $chart-primary,
+  secondary: $chart-secondary,
+  success: $chart-success,
+  warning: $chart-warning,
+  danger: $chart-danger,
+  info: $chart-info,
+  purple: $chart-purple,
+  pink: $chart-pink,
+  orange: $chart-orange,
+  teal: $chart-teal
+) !default;
+
+// Colores de fondo con transparencia
+$chart-bg-colors: (
+  primary: rgba($chart-primary, 0.1),
+  secondary: rgba($chart-secondary, 0.1),
+  success: rgba($chart-success, 0.1),
+  warning: rgba($chart-warning, 0.1),
+  danger: rgba($chart-danger, 0.1),
+  info: rgba($chart-info, 0.1),
+  purple: rgba($chart-purple, 0.1),
+  pink: rgba($chart-pink, 0.1),
+  orange: rgba($chart-orange, 0.1),
+  teal: rgba($chart-teal, 0.1)
+) !default;
+
+// Configuración de tipografía
+$chart-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !default;
+$chart-font-size-sm: 0.75rem !default;     // 12px
+$chart-font-size-md: 0.875rem !default;    // 14px
+$chart-font-size-lg: 1rem !default;        // 16px
+$chart-font-weight-normal: 400 !default;
+$chart-font-weight-medium: 500 !default;
+$chart-font-weight-semibold: 600 !default;
+
+// Configuración de espaciado
+$chart-padding-sm: 0.5rem !default;        // 8px
+$chart-padding-md: 1rem !default;          // 16px
+$chart-padding-lg: 1.5rem !default;        // 24px
+$chart-padding-xl: 2rem !default;          // 32px
+
+// Configuración de bordes
+$chart-border-width: 1px !default;
+$chart-border-radius-sm: 0.25rem !default; // 4px
+$chart-border-radius-md: 0.375rem !default; // 6px
+$chart-border-radius-lg: 0.5rem !default;  // 8px
+
+// Configuración de sombras
+$chart-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !default;
+$chart-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !default;
+$chart-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !default;
+
+// Configuración de modo oscuro
+$chart-dark-bg: #1f2937 !default;
+$chart-dark-text: #f9fafb !default;
+$chart-dark-text-muted: #9ca3af !default;
+$chart-dark-border: #374151 !default;
+
+// Breakpoints responsivos
+$chart-breakpoints: (
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px
+) !default;
+
+// ============================================================================
+// MIXINS CHART.JS
+// ============================================================================
+
+// Mixin para crear variantes de color
+@mixin chart-color-variant($color) {
+  border-color: $color;
+  background-color: rgba($color, 0.1);
+  
+  &:hover {
+    background-color: rgba($color, 0.2);
+  }
+}
+
+// Mixin para responsividad
+@mixin chart-responsive($breakpoint) {
+  @media (max-width: map-get($chart-breakpoints, $breakpoint)) {
+    @content;
+  }
+}
+
+// Mixin para modo oscuro
+@mixin chart-dark-mode {
+  @media (prefers-color-scheme: dark) {
+    @content;
+  }
+  
+  [data-theme="dark"] & {
+    @content;
+  }
+}
+
+// Mixin para animaciones suaves
+@mixin chart-transition($property: all, $duration: 0.3s, $timing: ease-in-out) {
+  transition: $property $duration $timing;
+}
+
+// ============================================================================
+// ESTILOS BASE CHART.JS
+// ============================================================================
+
+// Contenedor principal de gráficos
+.chart-container {
+  position: relative;
+  width: 100%;
+  background: #ffffff;
+  border-radius: $chart-border-radius-lg;
+  box-shadow: $chart-shadow-md;
+  overflow: hidden;
+  @include chart-transition();
+
+  // Modo oscuro
+  @include chart-dark-mode {
+    background: $chart-dark-bg;
+    border-color: $chart-dark-border;
+  }
+
+  // Estados hover
+  &:hover {
+    box-shadow: $chart-shadow-lg;
+  }
+
+  // Responsividad
+  @include chart-responsive(md) {
+    border-radius: $chart-border-radius-md;
+    box-shadow: $chart-shadow-sm;
+  }
+}
+
+// Canvas del gráfico
+.chart-canvas {
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100%;
+}
+
+// Wrapper para mantener aspecto ratio
+.chart-wrapper {
+  position: relative;
+  height: 0;
+  overflow: hidden;
+
+  // Ratios comunes
+  &.ratio-16x9 {
+    padding-bottom: 56.25%; // 16:9
+  }
+
+  &.ratio-4x3 {
+    padding-bottom: 75%; // 4:3
+  }
+
+  &.ratio-1x1 {
+    padding-bottom: 100%; // 1:1
+  }
+
+  &.ratio-21x9 {
+    padding-bottom: 42.857%; // 21:9
+  }
+
+  .chart-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+// ============================================================================
+// ESTILOS PARA ELEMENTOS CHART.JS
+// ============================================================================
+
+// Tooltips personalizados
+.chartjs-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: $chart-border-radius-md;
+  padding: $chart-padding-sm $chart-padding-md;
+  font-family: $chart-font-family;
+  font-size: $chart-font-size-sm;
+  font-weight: $chart-font-weight-medium;
+  line-height: 1.4;
+  pointer-events: none;
+  z-index: 1000;
+  @include chart-transition(opacity);
+
+  // Flecha del tooltip
+  &::before {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid rgba(0, 0, 0, 0.8);
+  }
+
+  // Variantes de color para tooltips
+  &.tooltip-primary {
+    background: $chart-primary;
+    &::before { border-top-color: $chart-primary; }
+  }
+
+  &.tooltip-success {
+    background: $chart-success;
+    &::before { border-top-color: $chart-success; }
+  }
+
+  &.tooltip-warning {
+    background: $chart-warning;
+    &::before { border-top-color: $chart-warning; }
+  }
+
+  &.tooltip-danger {
+    background: $chart-danger;
+    &::before { border-top-color: $chart-danger; }
+  }
+
+  // Modo oscuro
+  @include chart-dark-mode {
+    background: rgba(255, 255, 255, 0.9);
+    color: $chart-dark-bg;
+
+    &::before {
+      border-top-color: rgba(255, 255, 255, 0.9);
+    }
+  }
+}
+
+// Leyenda personalizada
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: $chart-padding-md;
+  margin-top: $chart-padding-lg;
+  padding: $chart-padding-md;
+  font-family: $chart-font-family;
+
+  // Items de la leyenda
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: $chart-padding-sm;
+    font-size: $chart-font-size-sm;
+    font-weight: $chart-font-weight-medium;
+    cursor: pointer;
+    @include chart-transition();
+
+    // Indicador de color
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: $chart-border-radius-sm;
+      flex-shrink: 0;
+    }
+
+    // Estados
+    &:hover {
+      opacity: 0.8;
+    }
+
+    &.legend-hidden {
+      opacity: 0.5;
+      text-decoration: line-through;
+    }
+  }
+
+  // Responsividad
+  @include chart-responsive(md) {
+    gap: $chart-padding-sm;
+    margin-top: $chart-padding-md;
+
+    .legend-item {
+      font-size: $chart-font-size-sm * 0.9;
+    }
+  }
+
+  // Modo oscuro
+  @include chart-dark-mode {
+    .legend-item {
+      color: $chart-dark-text;
+    }
+  }
+}
+
+// ============================================================================
+// TIPOS DE GRÁFICOS ESPECÍFICOS
+// ============================================================================
+
+// Gráficos de línea
+.chart-line {
+  .chart-container {
+    padding: $chart-padding-lg;
+  }
+
+  // Puntos de datos
+  .chart-point {
+    border-width: 2px;
+    border-radius: 50%;
+    @include chart-transition();
+
+    &:hover {
+      border-width: 3px;
+      transform: scale(1.1);
+    }
+  }
+
+  // Líneas
+  .chart-line-element {
+    border-width: 2px;
+    tension: 0.3;
+    @include chart-transition();
+  }
+}
+
+// Gráficos de barras
+.chart-bar {
+  .chart-container {
+    padding: $chart-padding-lg;
+  }
+
+  // Barras
+  .chart-bar-element {
+    border-radius: $chart-border-radius-sm $chart-border-radius-sm 0 0;
+    @include chart-transition();
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  // Barras horizontales
+  &.chart-bar-horizontal {
+    .chart-bar-element {
+      border-radius: 0 $chart-border-radius-sm $chart-border-radius-sm 0;
+    }
+  }
+}
+
+// Gráficos de dona y pastel
+.chart-doughnut,
+.chart-pie {
+  .chart-container {
+    padding: $chart-padding-xl;
+  }
+
+  // Segmentos
+  .chart-arc {
+    border-width: 0;
+    @include chart-transition();
+
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+
+  // Centro para gráficos de dona
+  .chart-center-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    font-family: $chart-font-family;
+    pointer-events: none;
+
+    .center-value {
+      font-size: $chart-font-size-lg * 1.5;
+      font-weight: $chart-font-weight-semibold;
+      line-height: 1;
+      color: $chart-primary;
+    }
+
+    .center-label {
+      font-size: $chart-font-size-sm;
+      font-weight: $chart-font-weight-medium;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    // Modo oscuro
+    @include chart-dark-mode {
+      .center-value {
+        color: $chart-dark-text;
+      }
+
+      .center-label {
+        color: $chart-dark-text-muted;
+      }
+    }
+  }
+}
+
+// Gráficos de área polar
+.chart-polar {
+  .chart-container {
+    padding: $chart-padding-xl;
+  }
+
+  .chart-arc {
+    @include chart-transition();
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+
+// Gráficos de radar
+.chart-radar {
+  .chart-container {
+    padding: $chart-padding-xl;
+  }
+
+  .chart-line-element {
+    border-width: 2px;
+    @include chart-transition();
+  }
+
+  .chart-point {
+    border-width: 2px;
+    border-radius: 50%;
+    @include chart-transition();
+
+    &:hover {
+      transform: scale(1.1);
+    }
+  }
+}
+
+// ============================================================================
+// COMPONENTES DASHBOARD
+// ============================================================================
+
+// Tarjeta de métricas con gráfico
+.metric-card {
+  background: #ffffff;
+  border-radius: $chart-border-radius-lg;
+  box-shadow: $chart-shadow-md;
+  padding: $chart-padding-lg;
+  @include chart-transition();
+
+  &:hover {
+    box-shadow: $chart-shadow-lg;
+  }
+
+  // Header de la métrica
+  .metric-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: $chart-padding-md;
+
+    .metric-title {
+      font-family: $chart-font-family;
+      font-size: $chart-font-size-sm;
+      font-weight: $chart-font-weight-medium;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+    }
+
+    .metric-icon {
+      width: 20px;
+      height: 20px;
+      opacity: 0.6;
+    }
+  }
+
+  // Valor principal
+  .metric-value {
+    font-family: $chart-font-family;
+    font-size: 2rem;
+    font-weight: $chart-font-weight-semibold;
+    line-height: 1;
+    color: $chart-primary;
+    margin-bottom: $chart-padding-sm;
+  }
+
+  // Cambio porcentual
+  .metric-change {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: $chart-font-family;
+    font-size: $chart-font-size-sm;
+    font-weight: $chart-font-weight-medium;
+
+    &.positive {
+      color: $chart-success;
+    }
+
+    &.negative {
+      color: $chart-danger;
+    }
+
+    &.neutral {
+      color: #6b7280;
+    }
+
+    .change-icon {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  // Gráfico mini
+  .metric-chart {
+    height: 60px;
+    margin-top: $chart-padding-md;
+
+    .chart-canvas {
+      height: 100% !important;
+    }
+  }
+
+  // Variantes de color
+  &.metric-primary {
+    border-left: 4px solid $chart-primary;
+  }
+
+  &.metric-success {
+    border-left: 4px solid $chart-success;
+  }
+
+  &.metric-warning {
+    border-left: 4px solid $chart-warning;
+  }
+
+  &.metric-danger {
+    border-left: 4px solid $chart-danger;
+  }
+
+  // Modo oscuro
+  @include chart-dark-mode {
+    background: $chart-dark-bg;
+    border-color: $chart-dark-border;
+
+    .metric-title {
+      color: $chart-dark-text-muted;
+    }
+
+    .metric-value {
+      color: $chart-dark-text;
+    }
+  }
+}
+
+// Grid de métricas
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: $chart-padding-lg;
+
+  @include chart-responsive(lg) {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: $chart-padding-md;
+  }
+
+  @include chart-responsive(md) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ============================================================================
+// ESTADO DE CARGA
+// ============================================================================
+
+.chart-loading {
+  position: relative;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f9fafb;
+  border-radius: $chart-border-radius-lg;
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e5e7eb;
+    border-top: 4px solid $chart-primary;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  .loading-text {
+    margin-top: $chart-padding-md;
+    font-family: $chart-font-family;
+    font-size: $chart-font-size-sm;
+    color: #6b7280;
+  }
+
+  // Modo oscuro
+  @include chart-dark-mode {
+    background: $chart-dark-bg;
+
+    .loading-spinner {
+      border-color: $chart-dark-border;
+      border-top-color: $chart-primary;
+    }
+
+    .loading-text {
+      color: $chart-dark-text-muted;
+    }
+  }
+}
+
+// ============================================================================
+// ESTADO DE ERROR
+// ============================================================================
+
+.chart-error {
+  position: relative;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: $chart-border-radius-lg;
+  padding: $chart-padding-xl;
+  text-align: center;
+
+  .error-icon {
+    width: 48px;
+    height: 48px;
+    color: $chart-danger;
+    margin-bottom: $chart-padding-md;
+  }
+
+  .error-title {
+    font-family: $chart-font-family;
+    font-size: $chart-font-size-lg;
+    font-weight: $chart-font-weight-semibold;
+    color: $chart-danger;
+    margin-bottom: $chart-padding-sm;
+  }
+
+  .error-message {
+    font-family: $chart-font-family;
+    font-size: $chart-font-size-sm;
+    color: #7f1d1d;
+    margin-bottom: $chart-padding-lg;
+  }
+
+  .error-retry {
+    background: $chart-danger;
+    color: white;
+    border: none;
+    border-radius: $chart-border-radius-md;
+    padding: $chart-padding-sm $chart-padding-md;
+    font-family: $chart-font-family;
+    font-size: $chart-font-size-sm;
+    font-weight: $chart-font-weight-medium;
+    cursor: pointer;
+    @include chart-transition();
+
+    &:hover {
+      background: darken($chart-danger, 10%);
+    }
+
+    &:focus {
+      outline: 2px solid transparentize($chart-danger, 0.5);
+      outline-offset: 2px;
+    }
+  }
+
+  // Modo oscuro
+  @include chart-dark-mode {
+    background: rgba($chart-danger, 0.1);
+    border-color: rgba($chart-danger, 0.3);
+
+    .error-message {
+      color: $chart-dark-text-muted;
+    }
+  }
+}
+
+// ============================================================================
+// ANIMACIONES
+// ============================================================================
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+// Aplicar animaciones a contenedores de gráficos
+.chart-container {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.metric-card {
+  animation: fadeIn 0.5s ease-out;
+}
+
+// ============================================================================
+// UTILIDADES
+// ============================================================================
+
+// Clases utilitarias para tamaños
+.chart-sm { height: 200px; }
+.chart-md { height: 300px; }
+.chart-lg { height: 400px; }
+.chart-xl { height: 500px; }
+
+// Clases utilitarias para márgenes
+.chart-mt-0 { margin-top: 0; }
+.chart-mt-1 { margin-top: $chart-padding-sm; }
+.chart-mt-2 { margin-top: $chart-padding-md; }
+.chart-mt-3 { margin-top: $chart-padding-lg; }
+.chart-mt-4 { margin-top: $chart-padding-xl; }
+
+// Clases utilitarias para padding
+.chart-p-0 { padding: 0; }
+.chart-p-1 { padding: $chart-padding-sm; }
+.chart-p-2 { padding: $chart-padding-md; }
+.chart-p-3 { padding: $chart-padding-lg; }
+.chart-p-4 { padding: $chart-padding-xl; }
+
+// Clase para ocultar elementos en pantallas pequeñas
+.chart-hide-mobile {
+  @include chart-responsive(md) {
+    display: none;
+  }
+}
+
+// Clase para mostrar solo en pantallas pequeñas
+.chart-mobile-only {
+  display: none;
+
+  @include chart-responsive(md) {
+    display: block;
+  }
+}
+
+// ============================================================================
+// ACCESIBILIDAD
+// ============================================================================
+
+// Mejoras de accesibilidad
+.chart-container {
+  // Focus visible para navegación por teclado
+  &:focus-visible {
+    outline: 2px solid $chart-primary;
+    outline-offset: 2px;
+  }
+
+  // Soporte para lectores de pantalla
+  [aria-label] {
+    position: relative;
+  }
+
+  // Alto contraste
+  @media (prefers-contrast: high) {
+    border: 2px solid currentColor;
+    
+    .chart-point,
+    .chart-bar-element,
+    .chart-arc {
+      border: 1px solid currentColor;
+    }
+  }
+
+  // Reducir movimiento para usuarios sensibles
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+// ============================================================================
+// PRINT STYLES
+// ============================================================================
+
+@media print {
+  .chart-container {
+    box-shadow: none;
+    border: 1px solid #000;
+    background: white;
+    page-break-inside: avoid;
+  }
+
+  .chart-loading,
+  .chart-error {
+    display: none;
+  }
+
+  .metric-card {
+    box-shadow: none;
+    border: 1px solid #000;
+    background: white;
+  }
+}
