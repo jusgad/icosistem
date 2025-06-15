@@ -1,599 +1,488 @@
-# app/utils/excel.py
+"""
+Utilidades Avanzadas de Excel para el Ecosistema de Emprendimiento
 
-import os
-import uuid
-from datetime import datetime
-import pandas as pd
-import numpy as np
-import xlsxwriter
-from io import BytesIO
-from openpyxl import Workbook
-from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
-from openpyxl.utils import get_column_letter
-from openpyxl.drawing.image import Image
-from flask import current_app, url_for
+Este módulo proporciona una clase para generar y leer archivos Excel (.xlsx)
+con funcionalidades avanzadas como múltiples hojas, estilos personalizados,
+formateo de celdas, y más. Utiliza la librería openpyxl.
+
+Author: Sistema de Emprendimiento
+Version: 1.0.0
+"""
+
 import logging
+from io import BytesIO
+from datetime import datetime
+from typing import List, Dict, Any, Optional, Union
+
+import pandas as pd
+from openpyxl import Workbook
+from openpyxl.worksheet.worksheet import Worksheet
+from openpyxl.utils.dataframe import dataframe_to_rows
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Font, Border, Side, Alignment, PatternFill, NamedStyle
+from openpyxl.chart import BarChart, LineChart, Reference, Series
+from flask import Response, current_app
 
 logger = logging.getLogger(__name__)
 
-def generate_excel(data, columns=None, sheet_name='Hoja1', filename=None):
-    """
-    Genera un archivo Excel básico a partir de datos.
-    
-    Args:
-        data (list): Lista de diccionarios o filas de datos
-        columns (list): Lista de columnas a incluir (opcional)
-        sheet_name (str): Nombre de la hoja de cálculo
-        filename (str): Nombre del archivo (opcional)
-        
-    Returns:
-        BytesIO/str: Objeto BytesIO con el Excel o ruta del archivo guardado
-    """
-    try:
-        # Crear DataFrame con los datos
-        df = pd.DataFrame(data)
-        
-        # Filtrar columnas si se especificaron
-        if columns:
-            df = df[columns]
-        
-        # Crear un objeto BytesIO para guardar el Excel
-        output = BytesIO()
-        
-        # Crear un escritor de Excel
-        writer = pd.ExcelWriter(output, engine='xlsxwriter')
-        
-        # Convertir el DataFrame a Excel
-        df.to_excel(writer, sheet_name=sheet_name, index=False)
-        
-        # Obtener el objeto xlsxwriter workbook y worksheet
-        workbook = writer.book
-        worksheet = writer.sheets[sheet_name]
-        
-        # Agregar formato a la cabecera
-        header_format = workbook.add_format({
-            'bold': True,
-            'text_wrap': True,
-            'valign': 'top',
-            'fg_color': '#D7E4BC',
-            'border': 1
-        })
-        
-        # Aplicar formato a la cabecera
-        for col_num, value in enumerate(df.columns.values):
-            worksheet.write(0, col_num, value, header_format)
-            # Ajustar ancho de columna basado en el contenido
-            column_width = max(
-                df[value].astype(str).map(len).max(),
-                len(str(value))
-            )
-            worksheet.set_column(col_num, col_num, column_width + 2)
-        
-        # Guardar el archivo
-        writer.close()
-        output.seek(0)
-        
-        # Si se especificó un nombre de archivo, guardar en disco
-        if filename:
-            # Asegurar que tiene extensión .xlsx
-            if not filename.endswith('.xlsx'):
-                filename += '.xlsx'
-            
-            # Crear directorio si no existe
-            os.makedirs(os.path.dirname(filename), exist_ok=True)
-            
-            # Guardar el archivo
-            with open(filename, 'wb') as f:
-                f.write(output.getvalue())
-            
-            return filename
-        else:
-            # Devolver el objeto BytesIO
-            return output
-    except Exception as e:
-        logger.error(f"Error al generar Excel: {str(e)}")
-        raise
+# Estilos predefinidos
+HEADER_STYLE = NamedStyle(name="header_style")
+HEADER_STYLE.font = Font(bold=True, color="FFFFFF", name="Calibri", size=12)
+HEADER_STYLE.fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
+HEADER_STYLE.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+thin_border = Side(border_style="thin", color="000000")
+HEADER_STYLE.border = Border(top=thin_border, left=thin_border, right=thin_border, bottom=thin_border)
 
-def generate_report_excel(report_type, data, user=None, filename=None):
+DATA_STYLE = NamedStyle(name="data_style")
+DATA_STYLE.font = Font(name="Calibri", size=11)
+DATA_STYLE.alignment = Alignment(vertical="top", wrap_text=False)
+
+CURRENCY_STYLE_COP = NamedStyle(name="currency_cop", number_format='"$"#,##0')
+CURRENCY_STYLE_USD = NamedStyle(name="currency_usd", number_format='"$"#,##0.00')
+DATE_STYLE = NamedStyle(name="date_style", number_format="YYYY-MM-DD")
+DATETIME_STYLE = NamedStyle(name="datetime_style", number_format="YYYY-MM-DD HH:MM:SS")
+PERCENTAGE_STYLE = NamedStyle(name="percentage_style", number_format="0.00%")
+
+
+class ExcelBuilder:
     """
-    Genera un archivo Excel con formato para reportes específicos.
-    
-    Args:
-        report_type (str): Tipo de reporte ('entrepreneur_progress', 'ally_hours', etc.)
-        data (dict): Datos para incluir en el reporte
-        user (User): Usuario que genera el reporte (opcional)
-        filename (str): Nombre del archivo (opcional)
-        
-    Returns:
-        BytesIO/str: Objeto BytesIO con el Excel o ruta del archivo guardado
+    Clase para construir archivos Excel (.xlsx) con funcionalidades avanzadas.
     """
-    try:
-        # Crear un nuevo libro de trabajo
-        wb = Workbook()
-        ws = wb.active
+
+    def __init__(self):
+        self.workbook = Workbook()
+        # Eliminar la hoja por defecto si se va a trabajar con hojas nombradas
+        if "Sheet" in self.workbook.sheetnames:
+            self.workbook.remove(self.workbook["Sheet"])
         
-        # Configurar nombre de la hoja según el tipo de reporte
-        report_names = {
-            'entrepreneur_progress': 'Progreso de Emprendedores',
-            'ally_hours': 'Horas de Aliados',
-            'impact_summary': 'Resumen de Impacto',
-            'client_report': 'Reporte de Cliente'
-        }
+        # Registrar estilos nombrados
+        if "header_style" not in self.workbook.named_styles:
+            self.workbook.add_named_style(HEADER_STYLE)
+        if "data_style" not in self.workbook.named_styles:
+            self.workbook.add_named_style(DATA_STYLE)
+        if "currency_cop" not in self.workbook.named_styles:
+            self.workbook.add_named_style(CURRENCY_STYLE_COP)
+        if "currency_usd" not in self.workbook.named_styles:
+            self.workbook.add_named_style(CURRENCY_STYLE_USD)
+        if "date_style" not in self.workbook.named_styles:
+            self.workbook.add_named_style(DATE_STYLE)
+        if "datetime_style" not in self.workbook.named_styles:
+            self.workbook.add_named_style(DATETIME_STYLE)
+        if "percentage_style" not in self.workbook.named_styles:
+            self.workbook.add_named_style(PERCENTAGE_STYLE)
+
+    def add_sheet_from_list_of_dicts(
+        self,
+        sheet_name: str,
+        data: List[Dict[str, Any]],
+        headers: Optional[List[str]] = None,
+        column_styles: Optional[Dict[str, str]] = None,
+        auto_adjust_column_widths: bool = True
+    ) -> Worksheet:
+        """
+        Agrega una nueva hoja al workbook a partir de una lista de diccionarios.
+
+        Args:
+            sheet_name: Nombre de la hoja.
+            data: Lista de diccionarios.
+            headers: Lista opcional de headers. Si es None, se infieren de las claves del primer dict.
+            column_styles: Diccionario opcional para mapear headers a estilos nombrados.
+            auto_adjust_column_widths: Si ajustar automáticamente el ancho de las columnas.
+
+        Returns:
+            Worksheet: La hoja de cálculo creada.
+        """
+        if not data:
+            ws = self.workbook.create_sheet(title=sheet_name)
+            if headers:
+                ws.append(headers)
+                for cell in ws[1]:
+                    cell.style = "header_style"
+            return ws
+
+        ws = self.workbook.create_sheet(title=sheet_name)
         
-        ws.title = report_names.get(report_type, 'Reporte')
+        if headers is None:
+            headers = list(data[0].keys())
         
-        # Definir estilos
-        header_font = Font(name='Arial', size=12, bold=True, color='FFFFFF')
-        header_fill = PatternFill(start_color='366092', end_color='366092', fill_type='solid')
-        header_alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        # Escribir headers
+        ws.append(headers)
+        for cell in ws[1]:
+            cell.style = "header_style"
+
+        # Escribir datos
+        for row_data in data:
+            row_values = [row_data.get(header, "") for header in headers]
+            ws.append(row_values)
+
+        # Aplicar estilos a columnas de datos
+        if column_styles:
+            for col_idx, header in enumerate(headers, 1):
+                if header in column_styles:
+                    style_name = column_styles[header]
+                    if style_name in self.workbook.named_styles:
+                        for row_idx in range(2, ws.max_row + 1):
+                            ws.cell(row=row_idx, column=col_idx).style = style_name
+                    else:
+                        logger.warning(f"Estilo '{style_name}' no encontrado para columna '{header}'.")
+        else: # Aplicar estilo de datos por defecto
+            for row in ws.iter_rows(min_row=2):
+                for cell in row:
+                    cell.style = "data_style"
+
+
+        if auto_adjust_column_widths:
+            self.auto_adjust_column_widths(ws, headers, data)
+            
+        return ws
+
+    def add_sheet_from_dataframe(
+        self,
+        sheet_name: str,
+        df: pd.DataFrame,
+        index: bool = False,
+        header: bool = True,
+        column_styles: Optional[Dict[str, str]] = None,
+        auto_adjust_column_widths: bool = True
+    ) -> Worksheet:
+        """
+        Agrega una nueva hoja al workbook a partir de un DataFrame de pandas.
+
+        Args:
+            sheet_name: Nombre de la hoja.
+            df: DataFrame de pandas.
+            index: Si incluir el índice del DataFrame.
+            header: Si incluir los headers del DataFrame.
+            column_styles: Diccionario opcional para mapear headers a estilos nombrados.
+            auto_adjust_column_widths: Si ajustar automáticamente el ancho de las columnas.
+
+        Returns:
+            Worksheet: La hoja de cálculo creada.
+        """
+        ws = self.workbook.create_sheet(title=sheet_name)
         
-        thin_border = Border(
-            left=Side(style='thin'),
-            right=Side(style='thin'),
-            top=Side(style='thin'),
-            bottom=Side(style='thin')
-        )
+        # Convertir DataFrame a filas, incluyendo headers si es necesario
+        for r_idx, row in enumerate(dataframe_to_rows(df, index=index, header=header), 1):
+            ws.append(row)
+            if r_idx == 1 and header: # Aplicar estilo a la fila de encabezado
+                for cell in ws[1]:
+                    cell.style = "header_style"
         
-        # Agregar información de encabezado del reporte
-        ws['A1'] = 'REPORTE: ' + report_names.get(report_type, 'Reporte')
-        ws.merge_cells('A1:D1')
-        ws['A1'].font = Font(name='Arial', size=14, bold=True)
-        ws['A1'].alignment = Alignment(horizontal='center')
+        # Aplicar estilos a columnas de datos
+        if column_styles and header:
+            headers_list = list(df.columns)
+            if index:
+                headers_list = [df.index.name or "index"] + headers_list
+
+            for col_idx, header_name in enumerate(headers_list, 1):
+                if header_name in column_styles:
+                    style_name = column_styles[header_name]
+                    if style_name in self.workbook.named_styles:
+                        for row_idx in range(2, ws.max_row + 1): # Empezar desde la fila 2 si hay header
+                            ws.cell(row=row_idx, column=col_idx).style = style_name
+                    else:
+                        logger.warning(f"Estilo '{style_name}' no encontrado para columna '{header_name}'.")
+        elif header: # Aplicar estilo de datos por defecto
+             for row_idx in range(2, ws.max_row + 1):
+                for col_idx in range(1, ws.max_column + 1):
+                    ws.cell(row=row_idx, column=col_idx).style = "data_style"
+
+
+        if auto_adjust_column_widths:
+            self.auto_adjust_column_widths_from_dataframe(ws, df, index=index, header=header)
+            
+        return ws
+
+    def auto_adjust_column_widths(self, ws: Worksheet, headers: List[str], data: List[Dict[str, Any]]):
+        """Ajusta automáticamente el ancho de las columnas basado en el contenido."""
+        column_widths = {}
+        for col_idx, header in enumerate(headers, 1):
+            column_widths[col_idx] = len(str(header))
+            for row_data in data:
+                cell_value = row_data.get(header, "")
+                column_widths[col_idx] = max(column_widths[col_idx], len(str(cell_value)))
         
-        ws['A2'] = 'Fecha de generación:'
-        ws['B2'] = datetime.now().strftime('%d/%m/%Y %H:%M')
-        if user:
-            ws['C2'] = 'Generado por:'
-            ws['D2'] = f"{user.first_name} {user.last_name}"
-        
-        # Agregar logo si está disponible
-        try:
-            logo_path = os.path.join(current_app.static_folder, 'images/logo.png')
-            if os.path.exists(logo_path):
-                img = Image(logo_path)
-                # Redimensionar imagen si es necesario
-                img.width = 100
-                img.height = 100
-                ws.add_image(img, 'E1')
-        except Exception as e:
-            logger.warning(f"No se pudo agregar el logo: {str(e)}")
-        
-        # Espacio antes de los datos
-        current_row = 4
-        
-        # Generar contenido según el tipo de reporte
-        if report_type == 'entrepreneur_progress':
-            _add_entrepreneur_progress_data(ws, data, current_row, header_font, header_fill, header_alignment, thin_border)
-        elif report_type == 'ally_hours':
-            _add_ally_hours_data(ws, data, current_row, header_font, header_fill, header_alignment, thin_border)
-        elif report_type == 'impact_summary':
-            _add_impact_summary_data(ws, data, current_row, header_font, header_fill, header_alignment, thin_border)
-        elif report_type == 'client_report':
-            _add_client_report_data(ws, data, current_row, header_font, header_fill, header_alignment, thin_border)
-        else:
-            # Reporte genérico
-            _add_generic_report_data(ws, data, current_row, header_font, header_fill, header_alignment, thin_border)
-        
-        # Ajustar anchos de columna
-        for column in ws.columns:
+        for col_idx, width in column_widths.items():
+            ws.column_dimensions[get_column_letter(col_idx)].width = width + 2 # Pequeño padding
+
+    def auto_adjust_column_widths_from_dataframe(self, ws: Worksheet, df: pd.DataFrame, index: bool, header: bool):
+        """Ajusta el ancho de las columnas basado en un DataFrame."""
+        column_names = list(df.columns)
+        if index:
+            column_names.insert(0, df.index.name or "index")
+
+        for i, column_name in enumerate(column_names, 1):
             max_length = 0
-            column_letter = get_column_letter(column[0].column)
-            for cell in column:
+            if header:
+                max_length = len(str(column_name))
+            
+            # Iterar sobre los datos de la columna
+            column_data = df.iloc[:, i-1] if not index or i > 1 else df.index
+            for cell_value in column_data:
                 try:
-                    if len(str(cell.value)) > max_length:
-                        max_length = len(str(cell.value))
+                    cell_len = len(str(cell_value))
+                    if cell_len > max_length:
+                        max_length = cell_len
                 except:
-                    pass
+                    pass # Ignorar errores de conversión
+            
             adjusted_width = (max_length + 2)
-            ws.column_dimensions[column_letter].width = adjusted_width
-        
-        # Guardar el archivo
-        if filename:
-            # Asegurar que tiene extensión .xlsx
-            if not filename.endswith('.xlsx'):
-                filename += '.xlsx'
-            
-            # Crear directorio si no existe
-            os.makedirs(os.path.dirname(filename), exist_ok=True)
-            
-            # Guardar el archivo
-            wb.save(filename)
-            return filename
+            ws.column_dimensions[get_column_letter(i)].width = adjusted_width
+
+
+    def add_chart(
+        self,
+        ws: Worksheet,
+        chart_type: str, # 'bar', 'line'
+        title: str,
+        data_start_cell: str, # ej. "B2"
+        data_end_cell: str,   # ej. "B10"
+        categories_start_cell: str, # ej. "A2"
+        categories_end_cell: str,   # ej. "A10"
+        chart_position: str = "E2", # ej. "E2"
+        x_axis_title: Optional[str] = None,
+        y_axis_title: Optional[str] = None
+    ):
+        """Agrega un gráfico a una hoja."""
+        if chart_type == 'bar':
+            chart = BarChart()
+        elif chart_type == 'line':
+            chart = LineChart()
         else:
-            # Devolver como BytesIO
-            output = BytesIO()
-            wb.save(output)
-            output.seek(0)
-            return output
-    except Exception as e:
-        logger.error(f"Error al generar reporte Excel: {str(e)}")
-        raise
+            logger.warning(f"Tipo de gráfico '{chart_type}' no soportado.")
+            return
 
-def _add_entrepreneur_progress_data(ws, data, current_row, header_font, header_fill, header_alignment, thin_border):
-    """
-    Agrega datos de progreso de emprendedores a una hoja de Excel.
-    
-    Args:
-        ws: Hoja de trabajo de Excel
-        data: Datos a agregar
-        current_row: Fila actual
-        header_font: Estilo de fuente para encabezados
-        header_fill: Estilo de relleno para encabezados
-        header_alignment: Estilo de alineación para encabezados
-        thin_border: Estilo de borde
-    """
-    # Encabezados
-    headers = ['Emprendedor', 'Sector', 'Aliado Asignado', 'Progreso (%)', 'Inicio', 'Última Actualización', 'Estado']
-    
-    # Agregar encabezados
-    for col, header in enumerate(headers, 1):
-        cell = ws.cell(row=current_row, column=col, value=header)
-        cell.font = header_font
-        cell.fill = header_fill
-        cell.alignment = header_alignment
-        cell.border = thin_border
-    
-    # Agregar datos
-    for entrepreneur in data.get('entrepreneurs', []):
-        current_row += 1
-        
-        # Información básica
-        ws.cell(row=current_row, column=1, value=entrepreneur.get('name')).border = thin_border
-        ws.cell(row=current_row, column=2, value=entrepreneur.get('sector')).border = thin_border
-        ws.cell(row=current_row, column=3, value=entrepreneur.get('ally_name')).border = thin_border
-        
-        # Progreso
-        progress_cell = ws.cell(row=current_row, column=4, value=entrepreneur.get('progress', 0))
-        progress_cell.border = thin_border
-        progress_cell.number_format = '0.00%'
-        
-        # Fechas
-        ws.cell(row=current_row, column=5, value=entrepreneur.get('start_date')).border = thin_border
-        ws.cell(row=current_row, column=6, value=entrepreneur.get('last_update')).border = thin_border
-        
-        # Estado
-        status_cell = ws.cell(row=current_row, column=7, value=entrepreneur.get('status'))
-        status_cell.border = thin_border
-        
-        # Colorear según estado
-        status_colors = {
-            'activo': 'C6EFCE',  # Verde
-            'completado': '92D050',  # Verde más oscuro
-            'en pausa': 'FFEB9C',  # Amarillo
-            'cancelado': 'FFC7CE'   # Rojo
-        }
-        if entrepreneur.get('status', '').lower() in status_colors:
-            status_cell.fill = PatternFill(
-                start_color=status_colors[entrepreneur.get('status', '').lower()],
-                end_color=status_colors[entrepreneur.get('status', '').lower()],
-                fill_type='solid'
-            )
+        chart.title = title
+        if x_axis_title:
+            chart.x_axis.title = x_axis_title
+        if y_axis_title:
+            chart.y_axis.title = y_axis_title
 
-def _add_ally_hours_data(ws, data, current_row, header_font, header_fill, header_alignment, thin_border):
-    """
-    Agrega datos de horas de aliados a una hoja de Excel.
-    
-    Args:
-        ws: Hoja de trabajo de Excel
-        data: Datos a agregar
-        current_row: Fila actual
-        header_font: Estilo de fuente para encabezados
-        header_fill: Estilo de relleno para encabezados
-        header_alignment: Estilo de alineación para encabezados
-        thin_border: Estilo de borde
-    """
-    # Encabezados
-    headers = ['Aliado', 'Tipo', 'Total Horas', 'Emprendedores Asignados', 'Promedio Horas/Emprendedor', 'Último Registro']
-    
-    # Agregar encabezados
-    for col, header in enumerate(headers, 1):
-        cell = ws.cell(row=current_row, column=col, value=header)
-        cell.font = header_font
-        cell.fill = header_fill
-        cell.alignment = header_alignment
-        cell.border = thin_border
-    
-    # Agregar datos
-    for ally in data.get('allies', []):
-        current_row += 1
+        data = Reference(ws, range_string=f"{ws.title}!{data_start_cell}:{data_end_cell}")
+        cats = Reference(ws, range_string=f"{ws.title}!{categories_start_cell}:{categories_end_cell}")
         
-        ws.cell(row=current_row, column=1, value=ally.get('name')).border = thin_border
-        ws.cell(row=current_row, column=2, value=ally.get('type')).border = thin_border
+        chart.add_data(data, titles_from_data=True) # Asume que la primera celda del rango de datos es el título de la serie
+        chart.set_categories(cats)
         
-        hours_cell = ws.cell(row=current_row, column=3, value=ally.get('total_hours', 0))
-        hours_cell.border = thin_border
-        hours_cell.number_format = '0.00'
-        
-        ws.cell(row=current_row, column=4, value=ally.get('assigned_entrepreneurs', 0)).border = thin_border
-        
-        avg_cell = ws.cell(row=current_row, column=5, value=ally.get('avg_hours_per_entrepreneur', 0))
-        avg_cell.border = thin_border
-        avg_cell.number_format = '0.00'
-        
-        ws.cell(row=current_row, column=6, value=ally.get('last_record_date')).border = thin_border
+        ws.add_chart(chart, chart_position)
 
-def _add_impact_summary_data(ws, data, current_row, header_font, header_fill, header_alignment, thin_border):
-    """
-    Agrega datos de resumen de impacto a una hoja de Excel.
-    
-    Args:
-        ws: Hoja de trabajo de Excel
-        data: Datos a agregar
-        current_row: Fila actual
-        header_font: Estilo de fuente para encabezados
-        header_fill: Estilo de relleno para encabezados
-        header_alignment: Estilo de alineación para encabezados
-        thin_border: Estilo de borde
-    """
-    # Agregar resumen general
-    ws.cell(row=current_row, column=1, value="RESUMEN DE IMPACTO")
-    ws.merge_cells(f'A{current_row}:F{current_row}')
-    ws.cell(row=current_row, column=1).font = Font(name='Arial', size=12, bold=True)
-    ws.cell(row=current_row, column=1).alignment = Alignment(horizontal='center')
-    
-    current_row += 2
-    
-    # Indicadores clave
-    key_indicators = [
-        ('Total de Emprendedores', data.get('total_entrepreneurs', 0)),
-        ('Emprendedores Activos', data.get('active_entrepreneurs', 0)),
-        ('Horas de Mentoría', data.get('total_mentoring_hours', 0)),
-        ('Empleos Generados', data.get('jobs_created', 0)),
-        ('Tasa de Éxito', data.get('success_rate', 0)),
-        ('Inversión Total Captada', data.get('total_investment', 0))
-    ]
-    
-    for i, (label, value) in enumerate(key_indicators):
-        col = (i % 3) * 2 + 1
-        row = current_row + (i // 3)
+    def get_bytes(self) -> BytesIO:
+        """
+        Guarda el workbook en un objeto BytesIO.
         
-        ws.cell(row=row, column=col, value=label).font = Font(bold=True)
-        value_cell = ws.cell(row=row, column=col + 1, value=value)
-        
-        if 'Tasa' in label:
-            value_cell.number_format = '0.00%'
-        elif 'Inversión' in label:
-            value_cell.number_format = '"$"#,##0.00'
-    
-    current_row += 4
-    
-    # Encabezados para tabla de sectores
-    headers = ['Sector', 'Emprendedores', '% del Total', 'Inversión Promedio', 'Empleos Promedio']
-    
-    # Agregar encabezados
-    for col, header in enumerate(headers, 1):
-        cell = ws.cell(row=current_row, column=col, value=header)
-        cell.font = header_font
-        cell.fill = header_fill
-        cell.alignment = header_alignment
-        cell.border = thin_border
-    
-    # Agregar datos por sector
-    for sector in data.get('sectors', []):
-        current_row += 1
-        
-        ws.cell(row=current_row, column=1, value=sector.get('name')).border = thin_border
-        ws.cell(row=current_row, column=2, value=sector.get('entrepreneur_count', 0)).border = thin_border
-        
-        percent_cell = ws.cell(row=current_row, column=3, value=sector.get('percentage', 0))
-        percent_cell.border = thin_border
-        percent_cell.number_format = '0.00%'
-        
-        inv_cell = ws.cell(row=current_row, column=4, value=sector.get('avg_investment', 0))
-        inv_cell.border = thin_border
-        inv_cell.number_format = '"$"#,##0.00'
-        
-        ws.cell(row=current_row, column=5, value=sector.get('avg_jobs', 0)).border = thin_border
+        Returns:
+            BytesIO: El workbook como bytes.
+        """
+        excel_bytes = BytesIO()
+        self.workbook.save(excel_bytes)
+        excel_bytes.seek(0)
+        return excel_bytes
 
-def _add_client_report_data(ws, data, current_row, header_font, header_fill, header_alignment, thin_border):
-    """
-    Agrega datos de reporte de cliente a una hoja de Excel.
-    
-    Args:
-        ws: Hoja de trabajo de Excel
-        data: Datos a agregar
-        current_row: Fila actual
-        header_font: Estilo de fuente para encabezados
-        header_fill: Estilo de relleno para encabezados
-        header_alignment: Estilo de alineación para encabezados
-        thin_border: Estilo de borde
-    """
-    # Información del cliente
-    ws.cell(row=current_row, column=1, value="Cliente:").font = Font(bold=True)
-    ws.cell(row=current_row, column=2, value=data.get('client_name', ''))
-    
-    current_row += 1
-    ws.cell(row=current_row, column=1, value="Período:").font = Font(bold=True)
-    ws.cell(row=current_row, column=2, value=f"{data.get('start_date', '')} - {data.get('end_date', '')}")
-    
-    current_row += 2
-    
-    # Encabezados para tabla de emprendedores
-    headers = ['Emprendedor', 'Sector', 'Fecha de Inicio', 'Estado', 'Progreso', 'Inversión', 'KPI 1', 'KPI 2']
-    
-    # Agregar encabezados
-    for col, header in enumerate(headers, 1):
-        cell = ws.cell(row=current_row, column=col, value=header)
-        cell.font = header_font
-        cell.fill = header_fill
-        cell.alignment = header_alignment
-        cell.border = thin_border
-    
-    # Agregar datos de emprendedores
-    for entrepreneur in data.get('entrepreneurs', []):
-        current_row += 1
+    def save_to_file(self, filename: str):
+        """
+        Guarda el workbook en un archivo.
         
-        ws.cell(row=current_row, column=1, value=entrepreneur.get('name')).border = thin_border
-        ws.cell(row=current_row, column=2, value=entrepreneur.get('sector')).border = thin_border
-        ws.cell(row=current_row, column=3, value=entrepreneur.get('start_date')).border = thin_border
-        ws.cell(row=current_row, column=4, value=entrepreneur.get('status')).border = thin_border
-        
-        progress_cell = ws.cell(row=current_row, column=5, value=entrepreneur.get('progress', 0))
-        progress_cell.border = thin_border
-        progress_cell.number_format = '0.00%'
-        
-        inv_cell = ws.cell(row=current_row, column=6, value=entrepreneur.get('investment', 0))
-        inv_cell.border = thin_border
-        inv_cell.number_format = '"$"#,##0.00'
-        
-        ws.cell(row=current_row, column=7, value=entrepreneur.get('kpi1', 0)).border = thin_border
-        ws.cell(row=current_row, column=8, value=entrepreneur.get('kpi2', 0)).border = thin_border
+        Args:
+            filename: Nombre del archivo (ej. "reporte.xlsx").
+        """
+        self.workbook.save(filename)
+        logger.info(f"Workbook guardado en {filename}")
 
-def _add_generic_report_data(ws, data, current_row, header_font, header_fill, header_alignment, thin_border):
-    """
-    Agrega datos genéricos a una hoja de Excel.
-    
-    Args:
-        ws: Hoja de trabajo de Excel
-        data: Datos a agregar
-        current_row: Fila actual
-        header_font: Estilo de fuente para encabezados
-        header_fill: Estilo de relleno para encabezados
-        header_alignment: Estilo de alineación para encabezados
-        thin_border: Estilo de borde
-    """
-    # Detectar encabezados a partir de los datos
-    if 'items' in data and data['items'] and isinstance(data['items'], list) and len(data['items']) > 0:
-        headers = list(data['items'][0].keys())
-        
-        # Agregar encabezados
-        for col, header in enumerate(headers, 1):
-            cell = ws.cell(row=current_row, column=col, value=header)
-            cell.font = header_font
-            cell.fill = header_fill
-            cell.alignment = header_alignment
-            cell.border = thin_border
-        
-        # Agregar datos
-        for item in data['items']:
-            current_row += 1
-            for col, header in enumerate(headers, 1):
-                cell = ws.cell(row=current_row, column=col, value=item.get(header))
-                cell.border = thin_border
-    else:
-        # Si no hay datos estructurados, agregar mensaje
-        ws.cell(row=current_row, column=1, value="No hay datos disponibles para este reporte.")
-        ws.merge_cells(f'A{current_row}:D{current_row}')
 
-def export_model_to_excel(model_class, query=None, filename=None, exclude_columns=None):
+class ExcelReader:
     """
-    Exporta registros de un modelo SQLAlchemy a Excel.
-    
-    Args:
-        model_class: Clase del modelo SQLAlchemy
-        query: Consulta SQLAlchemy (opcional)
-        filename (str): Nombre del archivo (opcional)
-        exclude_columns (list): Columnas a excluir
-        
-    Returns:
-        BytesIO/str: Objeto BytesIO con el Excel o ruta del archivo guardado
+    Clase para leer y parsear archivos Excel (.xlsx).
     """
-    try:
-        # Obtener nombre de la tabla
-        table_name = model_class.__tablename__
-        
-        # Usar consulta proporcionada o crear una básica
-        if query is None:
-            query = model_class.query
-        
-        # Ejecutar consulta
-        records = query.all()
-        
-        # Convertir a diccionarios
+
+    def __init__(self, file_path_or_bytes: Union[str, BytesIO]):
+        """
+        Inicializa el lector de Excel.
+
+        Args:
+            file_path_or_bytes: Ruta al archivo Excel o un objeto BytesIO.
+        """
+        try:
+            self.workbook = openpyxl.load_workbook(file_path_or_bytes, data_only=True) # data_only=True para obtener valores de fórmulas
+        except Exception as e:
+            logger.error(f"Error cargando workbook Excel: {e}")
+            raise ValueError(f"No se pudo cargar el archivo Excel: {e}")
+
+    def get_sheet_names(self) -> List[str]:
+        """Retorna los nombres de todas las hojas en el workbook."""
+        return self.workbook.sheetnames
+
+    def read_sheet_to_list_of_dicts(
+        self,
+        sheet_name: Optional[str] = None,
+        header_row: int = 1
+    ) -> List[Dict[str, Any]]:
+        """
+        Lee una hoja específica y la convierte en una lista de diccionarios.
+
+        Args:
+            sheet_name: Nombre de la hoja. Si es None, usa la primera hoja activa.
+            header_row: Número de la fila que contiene los encabezados (1-indexed).
+
+        Returns:
+            Lista de diccionarios, donde cada diccionario representa una fila.
+        """
+        if sheet_name:
+            if sheet_name not in self.workbook.sheetnames:
+                raise ValueError(f"Hoja '{sheet_name}' no encontrada en el archivo.")
+            ws = self.workbook[sheet_name]
+        else:
+            ws = self.workbook.active
+
         data = []
-        for record in records:
-            if hasattr(record, 'to_dict'):
-                # Si el modelo tiene método to_dict
-                item = record.to_dict()
-            else:
-                # Convertir manualmente
-                item = {}
-                for column in model_class.__table__.columns:
-                    col_name = column.name
-                    if exclude_columns and col_name in exclude_columns:
-                        continue
-                    item[col_name] = getattr(record, col_name)
-            data.append(item)
+        headers = [cell.value for cell in ws[header_row]]
         
-        # Generar Excel
-        if not filename:
-            filename = f"export_{table_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-        
-        return generate_excel(data, sheet_name=table_name, filename=filename)
-    except Exception as e:
-        logger.error(f"Error al exportar modelo a Excel: {str(e)}")
-        raise
+        for row_idx, row in enumerate(ws.iter_rows(min_row=header_row + 1), start=header_row + 1):
+            row_data = {}
+            empty_row = True
+            for col_idx, cell in enumerate(row):
+                value = cell.value
+                # Convertir datetime a ISO string si es necesario
+                if isinstance(value, datetime):
+                    value = value.isoformat()
+                row_data[headers[col_idx]] = value
+                if value is not None:
+                    empty_row = False
+            if not empty_row:
+                data.append(row_data)
+                
+        return data
 
-def import_excel_to_model(file_path, model_class, session, unique_columns=None, update_if_exists=True):
+    def read_sheet_to_dataframe(
+        self,
+        sheet_name: Optional[str] = None,
+        header_row: int = 0 # pandas usa 0-indexed para header
+    ) -> pd.DataFrame:
+        """
+        Lee una hoja específica y la convierte en un DataFrame de pandas.
+
+        Args:
+            sheet_name: Nombre de la hoja. Si es None, usa la primera hoja activa.
+            header_row: Número de la fila que contiene los encabezados (0-indexed para pandas).
+
+        Returns:
+            DataFrame de pandas con los datos de la hoja.
+        """
+        if sheet_name:
+            if sheet_name not in self.workbook.sheetnames:
+                raise ValueError(f"Hoja '{sheet_name}' no encontrada en el archivo.")
+            ws = self.workbook[sheet_name]
+        else:
+            ws = self.workbook.active
+            sheet_name = ws.title # Necesario para pandas.read_excel si pasamos BytesIO
+
+        # Convertir la hoja de openpyxl a un formato que pandas pueda leer directamente (BytesIO)
+        # Esto es más robusto que iterar filas manualmente para DataFrames.
+        excel_bytes = BytesIO()
+        temp_wb = Workbook()
+        if "Sheet" in temp_wb.sheetnames: # Eliminar hoja por defecto si existe
+            temp_wb.remove(temp_wb["Sheet"])
+        temp_ws = temp_wb.create_sheet(title=sheet_name)
+
+        for row in ws.iter_rows():
+            temp_ws.append([cell.value for cell in row])
+        
+        temp_wb.save(excel_bytes)
+        excel_bytes.seek(0)
+        
+        df = pd.read_excel(excel_bytes, sheet_name=sheet_name, header=header_row)
+        return df
+
+
+def generate_excel_response(
+    data_sheets: Dict[str, List[Dict[str, Any]]],
+    filename_base: str,
+    sheet_styles: Optional[Dict[str, Dict[str, str]]] = None
+) -> Response:
     """
-    Importa datos de Excel a un modelo SQLAlchemy.
-    
+    Genera una respuesta Flask con un archivo Excel.
+
     Args:
-        file_path (str): Ruta del archivo Excel
-        model_class: Clase del modelo SQLAlchemy
-        session: Sesión SQLAlchemy
-        unique_columns (list): Columnas que identifican registros únicos
-        update_if_exists (bool): Si es True, actualiza registros existentes
-        
+        data_sheets: Diccionario donde las claves son nombres de hojas y los valores son listas de diccionarios.
+        filename_base: Nombre base para el archivo (sin extensión).
+        sheet_styles: Opcional. Diccionario donde las claves son nombres de hojas y los valores son
+                      diccionarios mapeando headers de columna a estilos nombrados.
+
     Returns:
-        dict: Estadísticas de importación
+        Response: Objeto Response de Flask con el archivo Excel.
     """
+    builder = ExcelBuilder()
+    
+    for sheet_name, data in data_sheets.items():
+        column_styles_for_sheet = sheet_styles.get(sheet_name) if sheet_styles else None
+        builder.add_sheet_from_list_of_dicts(sheet_name, data, column_styles=column_styles_for_sheet)
+
+    excel_bytes = builder.get_bytes()
+    
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f"{filename_base}_{timestamp}.xlsx"
+    
+    return Response(
+        excel_bytes,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment;filename={filename}"}
+    )
+
+# Ejemplo de uso (se puede remover o comentar en producción)
+if __name__ == '__main__':
+    # Ejemplo de creación
+    builder = ExcelBuilder()
+    
+    data1 = [
+        {'Nombre': 'Juan Pérez', 'Edad': 30, 'Ciudad': 'Bogotá', 'Ingresos': 5000000, 'Registro': datetime(2023,1,15,10,30)},
+        {'Nombre': 'Ana García', 'Edad': 25, 'Ciudad': 'Medellín', 'Ingresos': 3500000.50, 'Registro': datetime(2023,2,20,14,45)},
+    ]
+    styles1 = {
+        'Ingresos': 'currency_cop',
+        'Registro': 'datetime_style'
+    }
+    builder.add_sheet_from_list_of_dicts("Usuarios", data1, column_styles=styles1)
+
+    df_data = {
+        'Producto': ['A', 'B', 'C'],
+        'Ventas_USD': [1200.75, 2500.00, 850.50],
+        'Fecha_Reporte': [date(2023,3,1), date(2023,3,5), date(2023,3,10)],
+        'Rentabilidad': [0.15, 0.22, 0.18]
+    }
+    df = pd.DataFrame(df_data)
+    styles2 = {
+        'Ventas_USD': 'currency_usd',
+        'Fecha_Reporte': 'date_style',
+        'Rentabilidad': 'percentage_style'
+    }
+    ws_productos = builder.add_sheet_from_dataframe("Productos", df, column_styles=styles2)
+    
+    # Agregar un gráfico
+    builder.add_chart(
+        ws_productos, 
+        chart_type='bar', 
+        title="Ventas por Producto",
+        data_start_cell="B2", data_end_cell="B4", # Datos de Ventas_USD
+        categories_start_cell="A2", categories_end_cell="A4", # Datos de Producto
+        chart_position="E2",
+        y_axis_title="Ventas (USD)"
+    )
+
+    builder.save_to_file("reporte_avanzado.xlsx")
+    print("Archivo 'reporte_avanzado.xlsx' generado.")
+
+    # Ejemplo de lectura
     try:
-        # Cargar datos del Excel
-        df = pd.read_excel(file_path)
+        reader = ExcelReader("reporte_avanzado.xlsx")
+        print("\nNombres de las hojas:", reader.get_sheet_names())
         
-        # Estadísticas de importación
-        stats = {
-            'total': len(df),
-            'created': 0,
-            'updated': 0,
-            'errors': 0,
-            'error_details': []
-        }
+        usuarios_data = reader.read_sheet_to_list_of_dicts("Usuarios")
+        print("\nDatos de Usuarios (lista de dicts):")
+        for row in usuarios_data:
+            print(row)
+            
+        productos_df = reader.read_sheet_to_dataframe("Productos")
+        print("\nDatos de Productos (DataFrame):")
+        print(productos_df)
         
-        # Obtener columnas del modelo
-        model_columns = [column.name for column in model_class.__table__.columns]
-        
-        # Filtrar columnas que no pertenecen al modelo
-        valid_columns = [col for col in df.columns if col in model_columns]
-        df = df[valid_columns]
-        
-        # Procesar cada fila
-        for index, row in df.iterrows():
-            try:
-                # Convertir a diccionario y limpiar valores NaN
-                data = row.to_dict()
-                for key, value in list(data.items()):
-                    if pd.isna(value):
-                        data[key] = None
-                
-                # Verificar si el registro ya existe
-                if unique_columns and update_if_exists:
-                    filters = {col: data[col] for col in unique_columns if col in data}
-                    existing_record = model_class.query.filter_by(**filters).first()
-                    
-                    if existing_record:
-                        # Actualizar registro existente
-                        for key, value in data.items():
-                            if key in model_columns:
-                                setattr(existing_record, key, value)
-                        stats['updated'] += 1
-                        continue
-                
-                # Crear nuevo registro
-                new_record = model_class(**{k: v for k, v in data.items() if k in model_columns})
-                session.add(new_record)
-                stats['created'] += 1
-                
-            except Exception as e:
-                stats['errors'] += 1
-                stats['error_details'].append(f"Error en fila {index+2}: {str(e)}")
-        
-        # Guardar cambios en la base de datos
-        session.commit()
-        
-        return stats
     except Exception as e:
-        logger.error(f"Error al importar Excel a modelo: {str(e)}")
-        session.rollback()
-        raise
+        print(f"Error leyendo archivo: {e}")

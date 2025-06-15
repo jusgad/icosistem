@@ -1,0 +1,437 @@
+# =============================================================================
+# Dockerfile para Producción - Ecosistema de Emprendimiento
+# =============================================================================
+# 
+# Multi-stage build optimizado para producción con:
+# - Seguridad mejorada (usuario no-root)
+# - Optimización de tamaño de imagen
+# - Compilación de assets frontend
+# - Configuración para alta disponibilidad
+# - Health checks integrados
+# - Manejo de secretos seguro
+#
+# Uso:
+#   docker build -f docker/Dockerfile.prod -t ecosistema-emprendimiento:latest .
+#   docker run -p 8000:8000 ecosistema-emprendimiento:latest
+#
+# Autor: Sistema de Emprendimiento
+# Version: 1.0.0
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Stage 1: Build Stage - Compilación de dependencias y assets
+# -----------------------------------------------------------------------------
+FROM node:18-slim as frontend-builder
+
+# Etiquetas para identificación
+LABEL stage=frontend-builder
+LABEL description="Stage para compilación de assets frontend"
+
+# Instalar dependencias necesarias para Node.js
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Crear directorio de trabajo
+WORKDIR /app
+
+# Copiar archivos de configuración de Node.js
+COPY package*.json ./
+COPY webpack.config.js ./
+COPY .babelrc ./
+
+# Instalar dependencias de Node.js
+RUN npm ci --only=production && npm cache clean --force
+
+# Copiar código fuente frontend
+COPY app/static/src/ ./app/static/src/
+
+# Compilar assets para producción
+RUN npm run build:prod
+
+# -----------------------------------------------------------------------------
+# Stage 2: Python Dependencies Builder
+# -----------------------------------------------------------------------------
+FROM python:3.11-slim as python-builder
+
+# Etiquetas para identificación
+LABEL stage=python-builder
+LABEL description="Stage para instalación de dependencias Python"
+
+# Variables de entorno para optimización
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=120
+
+# Instalar dependencias del sistema para compilación
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    libssl-dev \
+    libffi-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libwebp-dev \
+    libmagic1 \
+    curl \
+    git \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Crear directorio para las dependencias
+WORKDIR /app
+
+# Copiar archivos de dependencias
+COPY requirements.txt requirements-prod.txt ./
+
+# Actualizar pip y setuptools
+RUN pip install --upgrade pip setuptools wheel
+
+# Crear virtual environment y instalar dependencias
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Instalar dependencias Python
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-prod.txt
+
+# -----------------------------------------------------------------------------
+# Stage 3: Production Stage - Imagen final optimizada
+# -----------------------------------------------------------------------------
+FROM python:3.11-slim as production
+
+# Metadatos de la imagen
+LABEL maintainer="ecosistema-emprendimiento@company.com"
+LABEL version="1.0.0"
+LABEL description="Ecosistema de Emprendimiento - Producción"
+LABEL org.opencontainers.image.title="Ecosistema Emprendimiento"
+LABEL org.opencontainers.image.description="Plataforma integral para gestión de emprendedores"
+LABEL org.opencontainers.image.version="1.0.0"
+LABEL org.opencontainers.image.authors="Team Emprendimiento"
+
+# Variables de entorno para producción
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app \
+    FLASK_APP=wsgi.py \
+    FLASK_ENV=production \
+    WEB_CONCURRENCY=4 \
+    MAX_WORKERS=4 \
+    WORKER_TIMEOUT=120 \
+    WORKER_CLASS=gevent \
+    BIND_HOST=0.0.0.0 \
+    BIND_PORT=8000 \
+    LOG_LEVEL=info \
+    DEBIAN_FRONTEND=noninteractive
+
+# Instalar dependencias del sistema para runtime
+RUN apt-get update && apt-get install -y \
+    # Dependencias base
+    libpq5 \
+    libssl3 \
+    libffi8 \
+    libjpeg62-turbo \
+    libpng16-16 \
+    libwebp7 \
+    libmagic1 \
+    # Utilidades del sistema
+    curl \
+    wget \
+    dumb-init \
+    gettext \
+    # Herramientas de monitoreo
+    procps \
+    htop \
+    # Limpiar cache
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Crear usuario no-root para seguridad
+RUN groupadd -r appgroup && \
+    useradd -r -g appgroup -d /app -s /bin/bash appuser && \
+    mkdir -p /app /app/logs /app/uploads /app/static/dist && \
+    chown -R appuser:appgroup /app
+
+# Copiar virtual environment desde builder
+COPY --from=python-builder --chown=appuser:appgroup /opt/venv /opt/venv
+
+# Copiar assets compilados desde frontend-builder
+COPY --from=frontend-builder --chown=appuser:appgroup /app/app/static/dist/ /app/app/static/dist/
+
+# Establecer PATH para virtual environment
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Cambiar al directorio de trabajo
+WORKDIR /app
+
+# Copiar código de la aplicación
+COPY --chown=appuser:appgroup . .
+
+# Crear directorios necesarios con permisos apropiados
+RUN mkdir -p \
+    /app/instance \
+    /app/logs \
+    /app/uploads \
+    /app/temp \
+    /app/backups \
+    && chown -R appuser:appgroup /app \
+    && chmod -R 755 /app \
+    && chmod -R 777 /app/uploads \
+    && chmod -R 777 /app/logs \
+    && chmod -R 777 /app/temp
+
+# Compilar traducciones si existen
+RUN if [ -d "app/translations" ]; then \
+        find app/translations -name "*.po" -exec msgfmt {} -o {}.mo \; || true; \
+    fi
+
+# Crear script de entrada personalizado
+RUN cat > /app/docker-entrypoint.sh << 'EOF'
+#!/bin/bash
+set -e
+
+# Función para logging
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
+}
+
+# Verificar variables de entorno críticas
+if [ -z "$DATABASE_URL" ]; then
+    log "ERROR: DATABASE_URL no está configurada"
+    exit 1
+fi
+
+# Esperar a que la base de datos esté disponible
+log "Esperando conexión a la base de datos..."
+python -c "
+import time
+import sys
+from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError
+import os
+
+db_url = os.environ.get('DATABASE_URL')
+if not db_url:
+    sys.exit(1)
+
+engine = create_engine(db_url)
+max_retries = 30
+retry_count = 0
+
+while retry_count < max_retries:
+    try:
+        connection = engine.connect()
+        connection.close()
+        print('Base de datos conectada exitosamente!')
+        break
+    except OperationalError:
+        retry_count += 1
+        print(f'Intento {retry_count}/{max_retries} - Reintentando en 2 segundos...')
+        time.sleep(2)
+else:
+    print('Error: No se pudo conectar a la base de datos')
+    sys.exit(1)
+"
+
+# Ejecutar migraciones si es necesario
+if [ "$RUN_MIGRATIONS" = "true" ]; then
+    log "Ejecutando migraciones de base de datos..."
+    flask db upgrade || {
+        log "ERROR: Fallo en migraciones"
+        exit 1
+    }
+fi
+
+# Crear datos iniciales si es necesario
+if [ "$CREATE_INITIAL_DATA" = "true" ]; then
+    log "Creando datos iniciales..."
+    python scripts/seed_data.py || {
+        log "ADVERTENCIA: Error creando datos iniciales"
+    }
+fi
+
+# Compilar assets si es necesario
+if [ "$COMPILE_ASSETS" = "true" ]; then
+    log "Compilando assets..."
+    npm run build:prod || {
+        log "ADVERTENCIA: Error compilando assets"
+    }
+fi
+
+# Verificar salud del sistema antes de iniciar
+log "Verificando salud del sistema..."
+python scripts/health_check.py --quiet || {
+    log "ADVERTENCIA: Algunas verificaciones de salud fallaron"
+}
+
+log "Iniciando aplicación..."
+
+# Ejecutar comando pasado como argumentos
+exec "$@"
+EOF
+
+# Hacer el script ejecutable
+RUN chmod +x /app/docker-entrypoint.sh
+
+# Crear script de health check para Docker
+RUN cat > /app/docker-healthcheck.sh << 'EOF'
+#!/bin/bash
+# Health check para Docker
+
+set -e
+
+# Verificar que el puerto esté escuchando
+if ! curl -f http://localhost:${BIND_PORT:-8000}/health > /dev/null 2>&1; then
+    echo "Health check failed: aplicación no responde"
+    exit 1
+fi
+
+# Verificar health check interno
+if ! python scripts/health_check.py --quiet --component app; then
+    echo "Health check failed: verificaciones internas fallaron"
+    exit 1
+fi
+
+echo "Health check passed"
+exit 0
+EOF
+
+RUN chmod +x /app/docker-healthcheck.sh
+
+# Configurar Gunicorn
+RUN cat > /app/gunicorn.conf.py << 'EOF'
+# Configuración de Gunicorn para producción
+import os
+import multiprocessing
+
+# Server socket
+bind = f"{os.getenv('BIND_HOST', '0.0.0.0')}:{os.getenv('BIND_PORT', '8000')}"
+backlog = 2048
+
+# Worker processes
+workers = int(os.getenv('WEB_CONCURRENCY', multiprocessing.cpu_count() * 2 + 1))
+worker_class = os.getenv('WORKER_CLASS', 'gevent')
+worker_connections = 1000
+timeout = int(os.getenv('WORKER_TIMEOUT', 120))
+keepalive = 2
+max_requests = 1000
+max_requests_jitter = 50
+
+# Security
+limit_request_line = 4094
+limit_request_fields = 100
+limit_request_field_size = 8190
+
+# Logging
+accesslog = '-'
+errorlog = '-'
+loglevel = os.getenv('LOG_LEVEL', 'info')
+access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s" %(D)s'
+
+# Process naming
+proc_name = 'ecosistema-emprendimiento'
+
+# Server mechanics
+preload_app = True
+daemon = False
+pidfile = '/tmp/gunicorn.pid'
+tmp_upload_dir = None
+
+# SSL (si se configura)
+keyfile = os.getenv('SSL_KEYFILE')
+certfile = os.getenv('SSL_CERTFILE')
+
+def when_ready(server):
+    server.log.info("Ecosistema Emprendimiento iniciado correctamente")
+
+def worker_int(worker):
+    worker.log.info("worker received INT or QUIT signal")
+
+def pre_fork(server, worker):
+    server.log.info("Worker spawned (pid: %s)", worker.pid)
+
+def post_fork(server, worker):
+    server.log.info("Worker spawned (pid: %s)", worker.pid)
+EOF
+
+# Cambiar a usuario no-root
+USER appuser
+
+# Exponer puerto
+EXPOSE 8000
+
+# Health check de Docker
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD ["/app/docker-healthcheck.sh"]
+
+# Volumes para persistencia
+VOLUME ["/app/uploads", "/app/logs", "/app/backups"]
+
+# Punto de entrada
+ENTRYPOINT ["/usr/bin/dumb-init", "--", "/app/docker-entrypoint.sh"]
+
+# Comando por defecto
+CMD ["gunicorn", "--config", "gunicorn.conf.py", "wsgi:app"]
+
+# =============================================================================
+# Configuraciones alternativas (comentadas para referencia)
+# =============================================================================
+
+# Para usar con Celery Worker:
+# CMD ["celery", "-A", "celery_worker.celery", "worker", "--loglevel=info"]
+
+# Para usar con Celery Beat (scheduler):
+# CMD ["celery", "-A", "celery_worker.celery", "beat", "--loglevel=info"]
+
+# Para usar con Flower (monitoreo Celery):
+# CMD ["celery", "-A", "celery_worker.celery", "flower", "--port=5555"]
+
+# Para modo debug (SOLO DESARROLLO):
+# CMD ["flask", "run", "--host=0.0.0.0", "--port=8000"]
+
+# =============================================================================
+# Variables de entorno recomendadas para producción:
+# =============================================================================
+#
+# # Base de datos
+# DATABASE_URL=postgresql://user:pass@host:5432/dbname
+# 
+# # Redis
+# REDIS_URL=redis://redis:6379/0
+# 
+# # Email
+# MAIL_SERVER=smtp.gmail.com
+# MAIL_PORT=587
+# MAIL_USE_TLS=true
+# MAIL_USERNAME=your-email@gmail.com
+# MAIL_PASSWORD=your-app-password
+# 
+# # Google Services
+# GOOGLE_CLIENT_ID=your-client-id
+# GOOGLE_CLIENT_SECRET=your-client-secret
+# 
+# # Seguridad
+# SECRET_KEY=your-super-secret-key-change-this
+# JWT_SECRET_KEY=your-jwt-secret-key
+# 
+# # Aplicación
+# FLASK_ENV=production
+# WEB_CONCURRENCY=4
+# WORKER_TIMEOUT=120
+# LOG_LEVEL=info
+# 
+# # Características opcionales
+# RUN_MIGRATIONS=true
+# CREATE_INITIAL_DATA=false
+# COMPILE_ASSETS=false
+# 
+# # SSL (opcional)
+# SSL_REDIRECT=true
+# SSL_KEYFILE=/path/to/keyfile
+# SSL_CERTFILE=/path/to/certfile
+#
+# =============================================================================

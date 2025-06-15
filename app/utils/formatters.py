@@ -1,299 +1,422 @@
-# app/utils/formatters.py
+"""
+Formateadores Utilitarios para el Ecosistema de Emprendimiento
 
-import locale
-from datetime import datetime
-import pytz
-from babel.numbers import format_currency as babel_format_currency
-from flask import current_app, request
+Este módulo proporciona funciones para formatear datos comunes como fechas,
+monedas, números, texto y más, para ser utilizados en plantillas Jinja2
+y otras partes de la aplicación.
 
-def format_currency(amount, currency='USD', locale_str='es_ES'):
+Author: Sistema de Emprendimiento
+Version: 1.0.0
+"""
+
+import re
+from datetime import datetime, date, timedelta
+from decimal import Decimal, ROUND_HALF_UP
+from flask import current_app, Markup
+import bleach
+import phonenumbers
+from babel.dates import format_datetime as babel_format_datetime, \
+                        format_date as babel_format_date, \
+                        format_time as babel_format_time, \
+                        format_timedelta
+from babel.numbers import format_currency as babel_format_currency, \
+                          format_decimal, format_percent
+
+# Configuración de Bleach para sanitizar HTML
+ALLOWED_TAGS = [
+    'a', 'abbr', 'acronym', 'b', 'blockquote', 'code', 'em', 'i',
+    'li', 'ol', 'strong', 'ul', 'p', 'br', 'span', 'div',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'pre', 'img'
+]
+ALLOWED_ATTRIBUTES = {
+    '*': ['class', 'style', 'id', 'title'],
+    'a': ['href', 'rel', 'target'],
+    'img': ['src', 'alt', 'width', 'height']
+}
+ALLOWED_STYLES = [
+    'color', 'background-color', 'font-weight', 'font-style',
+    'text-decoration', 'text-align', 'margin', 'padding',
+    'border', 'border-radius', 'width', 'height', 'max-width', 'max-height'
+]
+
+def format_datetime(value: Optional[datetime], 
+                    format_type: str = 'medium', 
+                    locale: Optional[str] = None) -> str:
     """
-    Formatea un valor monetario según la moneda y localización especificada.
-    
+    Formatea un objeto datetime a una cadena legible.
+
     Args:
-        amount (float): El valor monetario a formatear
-        currency (str): El código ISO de la moneda (por defecto 'USD')
-        locale_str (str): El código de localización (por defecto 'es_ES')
-        
+        value: Objeto datetime a formatear.
+        format_type: 'short', 'medium', 'long', 'full', o un patrón personalizado.
+        locale: Locale a usar (ej. 'es_CO'). Usa el de la app por defecto.
+
     Returns:
-        str: El valor formateado según la moneda y localización
-        
-    Example:
-        >>> format_currency(1234.56, 'EUR')
-        '1.234,56 €'
-        >>> format_currency(1234.56, 'USD', 'en_US')
-        '$1,234.56'
+        Cadena de fecha y hora formateada.
     """
+    if not isinstance(value, datetime):
+        return str(value) if value is not None else ''
+    
+    locale_to_use = locale or current_app.config.get('BABEL_DEFAULT_LOCALE', 'es')
     try:
-        return babel_format_currency(amount, currency, locale=locale_str)
-    except:
-        # Fallback simple si babel falla
-        locale.setlocale(locale.LC_ALL, '')
-        symbol = {'USD': '$', 'EUR': '€', 'GBP': '£', 'CLP': '$', 'COP': '$', 'MXN': '$'}.get(currency, '')
-        return f"{symbol}{locale.format_string('%0.2f', amount, grouping=True)}"
+        return babel_format_datetime(value, format_type, locale=locale_to_use)
+    except Exception:
+        return value.strftime('%Y-%m-%d %H:%M:%S') # Fallback
 
-def format_date(date_obj=None, format_str='%d/%m/%Y', from_string=False, string_format='%Y-%m-%d'):
+def format_date(value: Optional[Union[datetime, date]], 
+                format_type: str = 'medium', 
+                locale: Optional[str] = None) -> str:
     """
-    Formatea una fecha según el formato especificado.
-    
-    Args:
-        date_obj (datetime/str): Objeto datetime o string a formatear
-        format_str (str): Formato de salida
-        from_string (bool): Indica si date_obj es un string
-        string_format (str): Formato del string de entrada si from_string es True
-        
-    Returns:
-        str: La fecha formateada
-        
-    Example:
-        >>> from datetime import datetime
-        >>> format_date(datetime(2023, 4, 15))
-        '15/04/2023'
-        >>> format_date('2023-04-15', from_string=True)
-        '15/04/2023'
-    """
-    if date_obj is None:
-        date_obj = datetime.now()
-        
-    if from_string and isinstance(date_obj, str):
-        date_obj = datetime.strptime(date_obj, string_format)
-        
-    return date_obj.strftime(format_str)
+    Formatea un objeto date o datetime (solo la parte de la fecha) a una cadena legible.
 
-def format_time(time_obj=None, format_str='%H:%M', from_string=False, string_format='%H:%M:%S'):
-    """
-    Formatea una hora según el formato especificado.
-    
     Args:
-        time_obj (datetime/str): Objeto datetime o string a formatear
-        format_str (str): Formato de salida
-        from_string (bool): Indica si time_obj es un string
-        string_format (str): Formato del string de entrada si from_string es True
-        
-    Returns:
-        str: La hora formateada
-    """
-    if time_obj is None:
-        time_obj = datetime.now()
-        
-    if from_string and isinstance(time_obj, str):
-        time_obj = datetime.strptime(time_obj, string_format)
-        
-    return time_obj.strftime(format_str)
+        value: Objeto date o datetime a formatear.
+        format_type: 'short', 'medium', 'long', 'full', o un patrón personalizado.
+        locale: Locale a usar.
 
-def format_datetime(dt_obj=None, format_str='%d/%m/%Y %H:%M', timezone=None):
-    """
-    Formatea una fecha y hora según el formato y zona horaria especificados.
-    
-    Args:
-        dt_obj (datetime): Objeto datetime a formatear
-        format_str (str): Formato de salida
-        timezone (str): Zona horaria (ej. 'America/Santiago')
-        
     Returns:
-        str: La fecha y hora formateada
+        Cadena de fecha formateada.
     """
-    if dt_obj is None:
-        dt_obj = datetime.now()
-        
-    if timezone:
-        if dt_obj.tzinfo is None:
-            dt_obj = pytz.UTC.localize(dt_obj)
-        dt_obj = dt_obj.astimezone(pytz.timezone(timezone))
-        
-    return dt_obj.strftime(format_str)
-
-def format_decimal(value, decimal_places=2, thousands_sep=True, locale_str='es_ES'):
-    """
-    Formatea un valor decimal con el número de decimales especificado.
+    if not isinstance(value, (datetime, date)):
+        return str(value) if value is not None else ''
     
-    Args:
-        value (float): El valor a formatear
-        decimal_places (int): Número de decimales
-        thousands_sep (bool): Indica si se debe usar separador de miles
-        locale_str (str): El código de localización
-        
-    Returns:
-        str: El valor formateado
-    """
+    locale_to_use = locale or current_app.config.get('BABEL_DEFAULT_LOCALE', 'es')
     try:
-        locale.setlocale(locale.LC_ALL, locale_str)
-    except:
-        locale.setlocale(locale.LC_ALL, '')
-        
-    format_string = '%0.' + str(decimal_places) + 'f'
-    return locale.format_string(format_string, value, grouping=thousands_sep)
+        return babel_format_date(value, format_type, locale=locale_to_use)
+    except Exception:
+        return value.strftime('%Y-%m-%d') # Fallback
 
-def format_percentage(value, decimal_places=2):
+def format_time(value: Optional[Union[datetime, time]], 
+                format_type: str = 'short', 
+                locale: Optional[str] = None) -> str:
     """
-    Formatea un valor como porcentaje.
-    
-    Args:
-        value (float): El valor a formatear (0.15 para 15%)
-        decimal_places (int): Número de decimales
-        
-    Returns:
-        str: El valor formateado como porcentaje
-    """
-    format_string = '%0.' + str(decimal_places) + 'f%%'
-    return locale.format_string(format_string, value * 100, grouping=True)
+    Formatea un objeto time o datetime (solo la parte de la hora) a una cadena legible.
 
-def format_filesize(size_bytes):
-    """
-    Formatea un tamaño en bytes a una representación legible.
-    
     Args:
-        size_bytes (int): Tamaño en bytes
-        
+        value: Objeto time o datetime a formatear.
+        format_type: 'short', 'medium', 'long', 'full', o un patrón personalizado.
+        locale: Locale a usar.
+
     Returns:
-        str: Tamaño formateado (ej. '2.5 MB')
+        Cadena de hora formateada.
     """
-    # Definir unidades
-    units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+    if not isinstance(value, (datetime, time)):
+        return str(value) if value is not None else ''
     
-    # Inicializar variables
+    locale_to_use = locale or current_app.config.get('BABEL_DEFAULT_LOCALE', 'es')
+    try:
+        return babel_format_time(value, format_type, locale=locale_to_use)
+    except Exception:
+        return value.strftime('%H:%M:%S') # Fallback
+
+def format_currency(value: Optional[Union[Decimal, float, int]], 
+                    currency: str = 'COP', 
+                    locale: Optional[str] = None) -> str:
+    """
+    Formatea un número como moneda.
+
+    Args:
+        value: Valor numérico.
+        currency: Código de moneda (ej. 'COP', 'USD').
+        locale: Locale a usar.
+
+    Returns:
+        Cadena de moneda formateada.
+    """
+    if value is None:
+        return ''
+    if not isinstance(value, (Decimal, float, int)):
+        try:
+            value = Decimal(str(value))
+        except:
+            return str(value) # Fallback
+
+    locale_to_use = locale or current_app.config.get('BABEL_DEFAULT_LOCALE', 'es')
+    try:
+        return babel_format_currency(value, currency, locale=locale_to_use)
+    except Exception:
+        return f"{currency} {value:,.2f}" # Fallback
+
+def format_decimal_number(value: Optional[Union[Decimal, float, int]], 
+                          num_decimals: int = 2, 
+                          locale: Optional[str] = None) -> str:
+    """
+    Formatea un número decimal.
+
+    Args:
+        value: Valor numérico.
+        num_decimals: Número de decimales a mostrar.
+        locale: Locale a usar.
+
+    Returns:
+        Cadena de número decimal formateado.
+    """
+    if value is None:
+        return ''
+    if not isinstance(value, (Decimal, float, int)):
+        try:
+            value = Decimal(str(value))
+        except:
+            return str(value)
+
+    locale_to_use = locale or current_app.config.get('BABEL_DEFAULT_LOCALE', 'es')
+    format_string = f"#,##0.{'0' * num_decimals}"
+    try:
+        return format_decimal(value, format=format_string, locale=locale_to_use)
+    except Exception:
+        return f"{value:,.{num_decimals}f}" # Fallback
+
+def format_percentage(value: Optional[Union[float, int]], 
+                      num_decimals: int = 1, 
+                      locale: Optional[str] = None) -> str:
+    """
+    Formatea un número como porcentaje.
+    Asume que el valor es una fracción (ej. 0.75 para 75%).
+
+    Args:
+        value: Valor numérico (0 a 1).
+        num_decimals: Número de decimales.
+        locale: Locale a usar.
+
+    Returns:
+        Cadena de porcentaje formateado.
+    """
+    if value is None:
+        return ''
+    if not isinstance(value, (float, int)):
+        try:
+            value = float(value)
+        except:
+            return str(value)
+
+    locale_to_use = locale or current_app.config.get('BABEL_DEFAULT_LOCALE', 'es')
+    format_string = f"#,##0.{'0' * num_decimals}%"
+    try:
+        return format_percent(value, format=format_string, locale=locale_to_use)
+    except Exception:
+        return f"{value * 100:.{num_decimals}f}%" # Fallback
+
+def format_file_size(size_bytes: Optional[int]) -> str:
+    """
+    Formatea el tamaño de un archivo en una unidad legible.
+
+    Args:
+        size_bytes: Tamaño en bytes.
+
+    Returns:
+        Cadena de tamaño formateado (ej. "1.5 MB").
+    """
+    if size_bytes is None or size_bytes < 0:
+        return "0 B"
+    if size_bytes == 0:
+        return "0 B"
+    
+    size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
     i = 0
-    size = float(size_bytes)
-    
-    # Convertir a la unidad apropiada
-    while size >= 1024 and i < len(units) - 1:
-        size /= 1024
+    size_bytes_float = float(size_bytes)
+    while size_bytes_float >= 1024 and i < len(size_name) - 1:
+        size_bytes_float /= 1024.0
         i += 1
-        
-    # Formatear resultado
-    if i == 0:  # En bytes, sin decimales
-        return f"{int(size)} {units[i]}"
-    else:
-        return f"{size:.2f} {units[i]}"
+    
+    # Usar format_decimal_number para consistencia de locale
+    return f"{format_decimal_number(size_bytes_float, 1 if i > 0 else 0)} {size_name[i]}"
 
-def format_phone(phone_number, country_code=None):
+def truncate_text(text: Optional[str], length: int = 100, suffix: str = '...') -> str:
     """
-    Formatea un número de teléfono según el país.
-    
-    Args:
-        phone_number (str): Número de teléfono a formatear
-        country_code (str): Código de país (ej. 'CL' para Chile)
-        
-    Returns:
-        str: Número de teléfono formateado
-    """
-    # Limpiar el número
-    clean_number = ''.join(filter(str.isdigit, phone_number))
-    
-    # Si no hay código de país especificado, usar el de la configuración
-    if not country_code:
-        country_code = current_app.config.get('DEFAULT_COUNTRY_CODE', 'CL')
-    
-    # Formateo según país
-    if country_code == 'CL':  # Chile
-        if len(clean_number) == 9:
-            return f"+56 {clean_number[0]} {clean_number[1:5]} {clean_number[5:]}"
-        elif len(clean_number) == 8:
-            return f"+56 9 {clean_number[:4]} {clean_number[4:]}"
-    elif country_code == 'CO':  # Colombia
-        if len(clean_number) == 10:
-            return f"+57 {clean_number[:3]} {clean_number[3:6]} {clean_number[6:]}"
-    
-    # Formato genérico si no hay un formato específico para el país
-    if clean_number.startswith('00'):
-        clean_number = '+' + clean_number[2:]
-    elif not clean_number.startswith('+'):
-        # Agregar código de país por defecto
-        country_to_code = {'CL': '+56', 'CO': '+57', 'MX': '+52', 'ES': '+34'}
-        clean_number = country_to_code.get(country_code, '+') + clean_number
-    
-    return clean_number
+    Trunca un texto a una longitud máxima, añadiendo un sufijo.
 
-def format_rut_chile(rut):
-    """
-    Formatea un RUT chileno en el formato estándar.
-    
     Args:
-        rut (str): RUT a formatear (con o sin formato)
-        
-    Returns:
-        str: RUT formateado (ej. '12.345.678-9')
-    """
-    # Eliminar formato actual
-    rut = rut.replace(".", "").replace("-", "")
-    
-    # Separar cuerpo y dígito verificador
-    if len(rut) > 1:
-        cuerpo, dv = rut[:-1], rut[-1]
-        
-        # Formatear cuerpo con puntos
-        reversed_cuerpo = cuerpo[::-1]
-        formatted_cuerpo = ""
-        for i, char in enumerate(reversed_cuerpo):
-            if i > 0 and i % 3 == 0:
-                formatted_cuerpo = "." + formatted_cuerpo
-            formatted_cuerpo = char + formatted_cuerpo
-            
-        return f"{formatted_cuerpo}-{dv}"
-    
-    return rut
+        text: Texto a truncar.
+        length: Longitud máxima.
+        suffix: Sufijo a añadir si se trunca.
 
-def format_list_to_string(items, separator=', ', last_separator=' y '):
-    """
-    Convierte una lista de elementos a un string con formato.
-    
-    Args:
-        items (list): Lista de elementos
-        separator (str): Separador para los elementos (excepto el último)
-        last_separator (str): Separador para el último elemento
-        
     Returns:
-        str: String formateado
-        
-    Example:
-        >>> format_list_to_string(['manzanas', 'peras', 'uvas'])
-        'manzanas, peras y uvas'
+        Texto truncado.
+    """
+    if not text:
+        return ''
+    if len(text) <= length:
+        return text
+    return text[:length - len(suffix)].rstrip() + suffix
+
+def nl2br(value: Optional[str]) -> Markup:
+    """
+    Reemplaza saltos de línea con <br>.
+    Usa Markup para que Jinja2 no escape el HTML.
+    """
+    if not value:
+        return Markup('')
+    
+    # Escapar HTML primero para seguridad, luego reemplazar saltos de línea
+    escaped_value = bleach.clean(value, tags=[], strip=True)
+    return Markup(escaped_value.replace('\n', '<br>\n'))
+
+def markdown_to_html(text: Optional[str]) -> Markup:
+    """
+    Convierte texto Markdown a HTML de forma segura.
+    """
+    if not text:
+        return Markup('')
+    
+    try:
+        import markdown2
+        # Configurar markdown2 para seguridad y extensiones útiles
+        html = markdown2.markdown(text, extras=[
+            "fenced-code-blocks", 
+            "tables", 
+            "nofollow", 
+            "target-blank-links",
+            "code-friendly"
+        ])
+        # Sanitizar el HTML resultante
+        safe_html = bleach.clean(html, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, styles=ALLOWED_STYLES)
+        return Markup(safe_html)
+    except ImportError:
+        current_app.logger.warning("Markdown2 no está instalado. El formateo Markdown no funcionará.")
+        return nl2br(text) # Fallback a nl2br si markdown2 no está
+    except Exception as e:
+        current_app.logger.error(f"Error convirtiendo Markdown: {e}")
+        return nl2br(text)
+
+def format_phone_number(phone_number_str: Optional[str], 
+                        region: str = 'CO', 
+                        format_type: phonenumbers.PhoneNumberFormat = phonenumbers.PhoneNumberFormat.INTERNATIONAL) -> str:
+    """
+    Formatea un número de teléfono usando la librería phonenumbers.
+
+    Args:
+        phone_number_str: Número de teléfono como cadena.
+        region: Código de región (ej. 'CO' para Colombia).
+        format_type: Formato deseado (E164, INTERNATIONAL, NATIONAL, RFC3966).
+
+    Returns:
+        Número de teléfono formateado o la cadena original si no es válido.
+    """
+    if not phone_number_str:
+        return ''
+    try:
+        parsed_number = phonenumbers.parse(phone_number_str, region)
+        if phonenumbers.is_valid_number(parsed_number):
+            return phonenumbers.format_number(parsed_number, format_type)
+        return phone_number_str # Devolver original si no es válido
+    except phonenumbers.NumberParseException:
+        return phone_number_str # Devolver original si hay error de parseo
+    except Exception as e:
+        current_app.logger.error(f"Error formateando número de teléfono: {e}")
+        return phone_number_str
+
+def time_ago(timestamp: Optional[datetime], 
+             locale: Optional[str] = None,
+             add_direction: bool = True) -> str:
+    """
+    Muestra el tiempo transcurrido desde un timestamp (ej. "hace 5 minutos").
+
+    Args:
+        timestamp: Objeto datetime.
+        locale: Locale a usar.
+        add_direction: Si añadir "hace" o "en".
+
+    Returns:
+        Cadena de tiempo relativo.
+    """
+    if not isinstance(timestamp, datetime):
+        return str(timestamp) if timestamp is not None else ''
+
+    locale_to_use = locale or current_app.config.get('BABEL_DEFAULT_LOCALE', 'es')
+    now = datetime.utcnow() # Asumir que el timestamp es UTC
+    
+    # Si el timestamp tiene timezone, convertir now a ese timezone
+    if timestamp.tzinfo:
+        now = now.replace(tzinfo=timezone.utc).astimezone(timestamp.tzinfo)
+    else: # Si el timestamp es naive, asumir que es UTC
+        timestamp = timestamp.replace(tzinfo=timezone.utc)
+        now = now.replace(tzinfo=timezone.utc)
+
+    try:
+        return format_timedelta(timestamp - now, 
+                                granularity='second', 
+                                add_direction=add_direction, 
+                                locale=locale_to_use)
+    except Exception:
+        # Fallback si format_timedelta falla (ej. para deltas muy grandes)
+        delta = now - timestamp
+        if delta.days > 0:
+            return f"hace {delta.days} día(s)"
+        elif delta.seconds // 3600 > 0:
+            return f"hace {delta.seconds // 3600} hora(s)"
+        elif delta.seconds // 60 > 0:
+            return f"hace {delta.seconds // 60} minuto(s)"
+        else:
+            return "justo ahora"
+
+def sanitize_html(html_string: Optional[str]) -> str:
+    """
+    Sanitiza una cadena HTML para prevenir XSS.
+    """
+    if not html_string:
+        return ''
+    
+    return bleach.clean(html_string, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, styles=ALLOWED_STYLES, strip=True)
+
+def get_gravatar_url(email: str, size: int = 80, default: str = 'identicon') -> str:
+    """
+    Genera la URL de Gravatar para un email.
+    """
+    import hashlib
+    email_hash = hashlib.md5(email.lower().encode('utf-8')).hexdigest()
+    return f"https://www.gravatar.com/avatar/{email_hash}?s={size}&d={default}"
+
+def format_list_as_string(items: Optional[List[str]], limit: int = 3, separator: str = ', ') -> str:
+    """
+    Formatea una lista de strings en una cadena, limitando el número de ítems mostrados.
+    Ej: ["A", "B", "C", "D"] con limit=2 -> "A, B y 2 más"
     """
     if not items:
         return ""
     
-    if len(items) == 1:
-        return str(items[0])
+    count = len(items)
+    if count == 0:
+        return ""
+    if count == 1:
+        return items[0]
     
-    return separator.join(str(item) for item in items[:-1]) + last_separator + str(items[-1])
+    if count <= limit:
+        if count == 2:
+            return f"{items[0]} y {items[1]}"
+        else:
+            return separator.join(items[:-1]) + f" y {items[-1]}"
+    else:
+        displayed_items = separator.join(items[:limit])
+        remaining_count = count - limit
+        return f"{displayed_items} y {remaining_count} más"
 
-def format_address(street, number, city, state=None, country=None, postal_code=None):
+def register_template_filters(app):
     """
-    Formatea una dirección postal.
-    
-    Args:
-        street (str): Nombre de la calle
-        number (str): Número
-        city (str): Ciudad
-        state (str): Estado/Provincia/Región
-        country (str): País
-        postal_code (str): Código postal
-        
-    Returns:
-        str: Dirección formateada
+    Registra los formateadores como filtros de Jinja2.
+    Esta función se llama desde app/__init__.py
     """
-    address_parts = []
+    app.jinja_env.filters['datetime'] = format_datetime
+    app.jinja_env.filters['date'] = format_date
+    app.jinja_env.filters['time'] = format_time
+    app.jinja_env.filters['currency'] = format_currency
+    app.jinja_env.filters['decimal'] = format_decimal_number
+    app.jinja_env.filters['percentage'] = format_percentage
+    app.jinja_env.filters['filesize'] = format_file_size
+    app.jinja_env.filters['truncate'] = truncate_text
+    app.jinja_env.filters['nl2br'] = nl2br
+    app.jinja_env.filters['markdown'] = markdown_to_html
+    app.jinja_env.filters['phone'] = format_phone_number
+    app.jinja_env.filters['timeago'] = time_ago
+    app.jinja_env.filters['sanitize_html'] = sanitize_html
+    app.jinja_env.filters['gravatar'] = get_gravatar_url
+    app.jinja_env.filters['list_to_string'] = format_list_as_string
     
-    # Calle y número
-    if street and number:
-        address_parts.append(f"{street} {number}")
-    elif street:
-        address_parts.append(street)
-    
-    # Ciudad y estado/provincia/región
-    if city and state:
-        address_parts.append(f"{city}, {state}")
-    elif city:
-        address_parts.append(city)
-    elif state:
-        address_parts.append(state)
-    
-    # Código postal
-    if postal_code:
-        address_parts.append(postal_code)
-    
-    # País
-    if country:
-        address_parts.append(country)
-    
-    return ", ".join(address_parts)
+    current_app.logger.info("Template filters registered.")
+
+# Para uso directo si es necesario
+__all__ = [
+    'format_datetime', 'format_date', 'format_time', 'format_currency',
+    'format_decimal_number', 'format_percentage', 'format_file_size',
+    'truncate_text', 'nl2br', 'markdown_to_html', 'format_phone_number',
+    'time_ago', 'sanitize_html', 'get_gravatar_url', 'format_list_as_string',
+    'register_template_filters'
+]

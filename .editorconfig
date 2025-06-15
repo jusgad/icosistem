@@ -1,0 +1,390 @@
+# ============================================================================
+# ECOSISTEMA DE EMPRENDIMIENTO - EDITORCONFIG
+# ============================================================================
+# EditorConfig helps maintain consistent coding styles across different
+# editors and IDEs for the entrepreneurship ecosystem platform.
+#
+# Documentation: https://editorconfig.org/
+# Supported: VS Code, PyCharm, Sublime Text, Vim, Emacs, Atom, etc.
+# ============================================================================
+
+# This is the top-most EditorConfig file
+root = true
+
+# ============================================================================
+# UNIVERSAL DEFAULTS
+# ============================================================================
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# ============================================================================
+# PYTHON FILES
+# ============================================================================
+[*.py]
+indent_style = space
+indent_size = 4
+max_line_length = 88
+trim_trailing_whitespace = true
+
+# Python configuration files
+[{setup.py,setup.cfg,pyproject.toml,Pipfile}]
+indent_size = 4
+max_line_length = 88
+
+# Requirements files
+[{requirements*.txt,constraints*.txt}]
+indent_size = 4
+max_line_length = 120
+
+# ============================================================================
+# WEB TECHNOLOGIES
+# ============================================================================
+# HTML Templates (Jinja2, Django, etc.)
+[*.{html,htm,jinja,jinja2,j2}]
+indent_size = 2
+max_line_length = 120
+
+# CSS and preprocessors
+[*.{css,scss,sass,less}]
+indent_size = 2
+max_line_length = 120
+
+# JavaScript and TypeScript
+[*.{js,jsx,ts,tsx,mjs,cjs}]
+indent_size = 2
+max_line_length = 120
+
+# ============================================================================
+# DATA FORMATS
+# ============================================================================
+# JSON files
+[*.{json,jsonc}]
+indent_size = 2
+max_line_length = 120
+
+# YAML files
+[*.{yml,yaml}]
+indent_size = 2
+max_line_length = 120
+
+# XML files
+[*.xml]
+indent_size = 2
+max_line_length = 120
+
+# SQL files
+[*.sql]
+indent_size = 2
+max_line_length = 120
+
+# ============================================================================
+# DOCUMENTATION
+# ============================================================================
+# Markdown files
+[*.{md,markdown}]
+indent_size = 2
+max_line_length = 120
+trim_trailing_whitespace = false  # Preserves line breaks
+
+# reStructuredText
+[*.rst]
+indent_size = 3
+max_line_length = 120
+
+# ============================================================================
+# CONFIGURATION FILES
+# ============================================================================
+# Environment files
+[{.env*,*.env}]
+indent_size = 4
+max_line_length = 120
+
+# INI configuration files
+[*.{ini,cfg,conf,config}]
+indent_size = 4
+max_line_length = 120
+
+# TOML files
+[*.toml]
+indent_size = 4
+max_line_length = 120
+
+# ============================================================================
+# DEVOPS AND CONTAINERIZATION
+# ============================================================================
+# Docker files
+[{Dockerfile*,*.dockerfile}]
+indent_size = 4
+max_line_length = 120
+
+# Docker Compose
+[docker-compose*.{yml,yaml}]
+indent_size = 2
+max_line_length = 120
+
+# Kubernetes manifests
+[*.k8s.{yml,yaml}]
+indent_size = 2
+max_line_length = 120
+
+# ============================================================================
+# CI/CD
+# ============================================================================
+# GitHub Actions
+[.github/workflows/*.{yml,yaml}]
+indent_size = 2
+max_line_length = 120
+
+# GitLab CI
+[.gitlab-ci.yml]
+indent_size = 2
+max_line_length = 120
+
+# ============================================================================
+# SHELL SCRIPTS
+# ============================================================================
+[*.{sh,bash,zsh,fish}]
+indent_size = 2
+max_line_length = 120
+
+# ============================================================================
+# MAKEFILES
+# ============================================================================
+[{Makefile,makefile,*.mk}]
+indent_style = tab
+indent_size = 4
+max_line_length = 120
+
+# ============================================================================
+# VERSION CONTROL
+# ============================================================================
+[{.gitignore,.gitattributes,.gitmodules}]
+indent_size = 2
+max_line_length = 120
+
+[{.gitkeep,.keep}]
+indent_size = unset
+trim_trailing_whitespace = false
+insert_final_newline = false
+
+# ============================================================================
+# FLASK SPECIFIC
+# ============================================================================
+# Flask application files
+[{app.py,wsgi.py,run.py,application.py}]
+indent_size = 4
+max_line_length = 88
+
+# Alembic migrations
+[{alembic.ini,migrations/versions/*.py}]
+indent_size = 4
+max_line_length = 88
+
+# Celery configuration
+[{celeryconfig.py,celery_worker.py}]
+indent_size = 4
+max_line_length = 88
+
+# ============================================================================
+# TESTING
+# ============================================================================
+# Test files
+[{test_*.py,*_test.py,conftest.py}]
+indent_size = 4
+max_line_length = 88
+
+# Pytest configuration
+[{pytest.ini,tox.ini}]
+indent_size = 4
+max_line_length = 120
+
+# ============================================================================
+# CODE QUALITY TOOLS
+# ============================================================================
+# Linting configuration
+[{.flake8,.pylintrc,.bandit}]
+indent_size = 4
+max_line_length = 120
+
+# Pre-commit hooks
+[.pre-commit-config.yaml]
+indent_size = 2
+max_line_length = 120
+
+# EditorConfig checker
+[.ecrc]
+indent_size = 2
+max_line_length = 120
+
+# ============================================================================
+# IDE AND EDITOR CONFIGS
+# ============================================================================
+# VS Code settings
+[.vscode/*.json]
+indent_size = 2
+max_line_length = 120
+
+# PyCharm/IntelliJ
+[.idea/**]
+indent_size = 2
+max_line_length = 120
+
+# Sublime Text
+[*.sublime-*]
+indent_size = 2
+max_line_length = 120
+
+# ============================================================================
+# PACKAGE MANAGERS
+# ============================================================================
+# Node.js
+[{package.json,package-lock.json}]
+indent_size = 2
+max_line_length = 120
+
+# Yarn
+[{yarn.lock,.yarnrc}]
+indent_size = 2
+max_line_length = off
+trim_trailing_whitespace = false
+
+# Python package management
+[{Pipfile.lock,poetry.lock}]
+indent_size = 2
+max_line_length = off
+trim_trailing_whitespace = false
+
+# ============================================================================
+# CLOUD AND INFRASTRUCTURE
+# ============================================================================
+# Terraform
+[*.{tf,tfvars}]
+indent_size = 2
+max_line_length = 120
+
+# AWS CloudFormation
+[*.{cf.yml,cf.yaml}]
+indent_size = 2
+max_line_length = 120
+
+# Ansible
+[*.{ansible.yml,ansible.yaml}]
+indent_size = 2
+max_line_length = 120
+
+# ============================================================================
+# MONITORING AND LOGGING
+# ============================================================================
+# Prometheus configuration
+[{prometheus.yml,alert*.yml}]
+indent_size = 2
+max_line_length = 120
+
+# Grafana dashboards
+[*-dashboard.json]
+indent_size = 2
+max_line_length = off
+
+# ============================================================================
+# SPECIAL FILES
+# ============================================================================
+# License and legal files
+[{LICENSE*,LICENCE*,COPYRIGHT,NOTICE}]
+indent_size = 4
+max_line_length = 80
+
+# Changelog and readme
+[{CHANGELOG*,README*,CONTRIBUTING*}]
+indent_size = 2
+max_line_length = 120
+trim_trailing_whitespace = false
+
+# ============================================================================
+# BINARY AND GENERATED FILES
+# ============================================================================
+# Lock files (don't modify)
+[*.lock]
+indent_style = unset
+trim_trailing_whitespace = false
+insert_final_newline = false
+
+# Minified files
+[*.min.{js,css}]
+indent_style = unset
+trim_trailing_whitespace = false
+insert_final_newline = false
+
+# Log files
+[*.log]
+indent_style = unset
+trim_trailing_whitespace = false
+insert_final_newline = false
+
+# Binary files
+[*.{png,jpg,jpeg,gif,ico,svg,pdf,zip,tar,gz,woff,woff2,ttf,eot}]
+indent_style = unset
+trim_trailing_whitespace = false
+insert_final_newline = false
+
+# ============================================================================
+# JUPYTER NOTEBOOKS
+# ============================================================================
+[*.ipynb]
+indent_size = 1
+max_line_length = off
+trim_trailing_whitespace = false
+
+# ============================================================================
+# VENDOR DIRECTORIES (NO FORMATTING)
+# ============================================================================
+[{vendor/**,node_modules/**,venv/**,env/**,.venv/**}]
+indent_style = unset
+indent_size = unset
+max_line_length = unset
+trim_trailing_whitespace = false
+insert_final_newline = false
+
+# ============================================================================
+# TEMPORARY AND CACHE FILES
+# ============================================================================
+[{*.tmp,*.temp,*.cache,*~,*.swp,*.swo}]
+indent_style = unset
+trim_trailing_whitespace = false
+insert_final_newline = false
+
+# ============================================================================
+# PROJECT SPECIFIC OVERRIDES
+# ============================================================================
+# Custom application modules (if needed)
+# [app/specific_module/*.py]
+# max_line_length = 120
+
+# Legacy code (if maintaining older standards)
+# [legacy/**/*.py]
+# max_line_length = 79
+
+# API documentation (if longer lines needed)
+# [docs/api/*.md]
+# max_line_length = 140
+
+# ============================================================================
+# SUMMARY OF CONVENTIONS
+# ============================================================================
+# Python:           4 spaces, 88 chars (Black compatible)
+# Web (HTML/CSS/JS): 2 spaces, 120 chars
+# Config files:     2-4 spaces, 120 chars
+# Documentation:    2-3 spaces, 120 chars
+# Makefiles:        tabs (required)
+# Binary files:     no formatting
+#
+# Universal rules:
+# - UTF-8 encoding
+# - LF line endings
+# - Final newline
+# - No trailing whitespace (except Markdown)
+# ============================================================================

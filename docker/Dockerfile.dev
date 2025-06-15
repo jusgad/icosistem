@@ -1,0 +1,693 @@
+# =============================================================================
+# Dockerfile para Desarrollo - Ecosistema de Emprendimiento
+# =============================================================================
+# 
+# Dockerfile optimizado para desarrollo con:
+# - Hot reload y desarrollo iterativo
+# - Herramientas de debugging integradas
+# - Todas las dependencias de desarrollo
+# - Configuración flexible para testing
+# - Herramientas de análisis de código
+# - Debugging remoto habilitado
+# - Montaje de volúmenes para código en vivo
+#
+# Uso:
+#   docker build -f docker/Dockerfile.dev -t ecosistema-emprendimiento:dev .
+#   docker run -p 5000:5000 -p 5678:5678 -v $(pwd):/app ecosistema-emprendimiento:dev
+#
+# Autor: Sistema de Emprendimiento
+# Version: 1.0.0
+# =============================================================================
+
+# Usar imagen base de Python con herramientas de desarrollo
+FROM python:3.11-slim
+
+# Metadatos de la imagen
+LABEL maintainer="ecosistema-emprendimiento@company.com"
+LABEL version="1.0.0-dev"
+LABEL description="Ecosistema de Emprendimiento - Desarrollo"
+LABEL environment="development"
+LABEL org.opencontainers.image.title="Ecosistema Emprendimiento Dev"
+LABEL org.opencontainers.image.description="Entorno de desarrollo para plataforma de emprendedores"
+LABEL org.opencontainers.image.version="1.0.0-dev"
+LABEL org.opencontainers.image.authors="Team Emprendimiento"
+
+# Variables de entorno para desarrollo
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app \
+    FLASK_APP=run.py \
+    FLASK_ENV=development \
+    FLASK_DEBUG=1 \
+    FLASK_RUN_HOST=0.0.0.0 \
+    FLASK_RUN_PORT=5000 \
+    WEB_CONCURRENCY=1 \
+    WORKERS=1 \
+    LOG_LEVEL=debug \
+    PYTHONFAULTHANDLER=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=120 \
+    DEBIAN_FRONTEND=noninteractive
+
+# Instalar dependencias del sistema y herramientas de desarrollo
+RUN apt-get update && apt-get install -y \
+    # Dependencias base
+    build-essential \
+    libpq-dev \
+    libssl-dev \
+    libffi-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libwebp-dev \
+    libmagic1 \
+    pkg-config \
+    # Herramientas de desarrollo
+    git \
+    curl \
+    wget \
+    vim \
+    nano \
+    htop \
+    tree \
+    jq \
+    # Herramientas de red y debugging
+    netcat-openbsd \
+    telnet \
+    iputils-ping \
+    net-tools \
+    procps \
+    lsof \
+    strace \
+    # Node.js para assets frontend
+    nodejs \
+    npm \
+    # Herramientas de base de datos
+    postgresql-client \
+    redis-tools \
+    # Herramientas de testing
+    sqlite3 \
+    # Limpiar cache
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Actualizar pip y herramientas base
+RUN pip install --upgrade pip setuptools wheel
+
+# Crear directorio de trabajo
+WORKDIR /app
+
+# Copiar archivos de dependencias primero (para cache de Docker)
+COPY requirements.txt requirements-dev.txt requirements-test.txt ./
+
+# Instalar dependencias Python (todas: prod, dev, test)
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-dev.txt && \
+    pip install --no-cache-dir -r requirements-test.txt
+
+# Instalar herramientas adicionales de desarrollo
+RUN pip install --no-cache-dir \
+    # Debugging
+    debugpy==1.8.0 \
+    ipdb==0.13.13 \
+    pdbpp==0.10.3 \
+    # Profiling
+    py-spy==0.3.14 \
+    memory-profiler==0.61.0 \
+    line-profiler==4.1.1 \
+    # Code quality
+    black==23.7.0 \
+    flake8==6.0.0 \
+    pylint==2.17.5 \
+    mypy==1.5.1 \
+    isort==5.12.0 \
+    # Testing adicional
+    pytest-xdist==3.3.1 \
+    pytest-benchmark==4.0.0 \
+    pytest-mock==3.11.1 \
+    pytest-asyncio==0.21.1 \
+    # Documentation
+    sphinx==7.1.2 \
+    sphinx-rtd-theme==1.3.0 \
+    # Development server
+    flask-debugtoolbar==0.13.1 \
+    # Live reload
+    watchdog==3.0.0
+
+# Configurar Node.js y herramientas frontend
+COPY package*.json ./
+RUN npm install && npm cache clean --force
+
+# Instalar herramientas globales de Node.js para desarrollo
+RUN npm install -g \
+    nodemon \
+    webpack \
+    webpack-cli \
+    webpack-dev-server \
+    sass \
+    live-server \
+    browser-sync
+
+# Crear directorios necesarios con permisos amplios para desarrollo
+RUN mkdir -p \
+    /app/instance \
+    /app/logs \
+    /app/uploads \
+    /app/temp \
+    /app/backups \
+    /app/coverage \
+    /app/.pytest_cache \
+    /app/node_modules \
+    && chmod -R 777 /app
+
+# Copiar configuración de desarrollo
+COPY docker/dev-configs/ ./config/
+
+# Crear configuración de Flask para desarrollo
+RUN cat > /app/config/development.py << 'EOF'
+"""Configuración específica para desarrollo"""
+import os
+
+class DevelopmentConfig:
+    # Flask
+    DEBUG = True
+    TESTING = False
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-this')
+    
+    # Base de datos
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///dev.db')
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ECHO = True  # Log SQL queries
+    
+    # Redis
+    REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+    
+    # Email (desarrollo)
+    MAIL_SERVER = os.environ.get('MAIL_SERVER', 'localhost')
+    MAIL_PORT = int(os.environ.get('MAIL_PORT', 1025))  # MailHog
+    MAIL_USE_TLS = False
+    MAIL_USE_SSL = False
+    MAIL_USERNAME = None
+    MAIL_PASSWORD = None
+    MAIL_DEFAULT_SENDER = 'dev@ecosistema.com'
+    
+    # Celery
+    CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+    CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+    
+    # Uploads
+    UPLOAD_FOLDER = '/app/uploads'
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
+    
+    # Assets
+    ASSETS_DEBUG = True
+    SCSS_LOAD_PATHS = ['/app/app/static/src/scss']
+    
+    # Logging
+    LOG_LEVEL = 'DEBUG'
+    LOG_FILE = '/app/logs/app.log'
+    
+    # Security (relajada para desarrollo)
+    WTF_CSRF_ENABLED = False  # Facilitar testing con APIs
+    SESSION_COOKIE_SECURE = False
+    SESSION_COOKIE_HTTPONLY = True
+    
+    # CORS (permitir todo en desarrollo)
+    CORS_ORIGINS = ['*']
+    
+    # Debug Toolbar
+    DEBUG_TB_ENABLED = True
+    DEBUG_TB_INTERCEPT_REDIRECTS = False
+    
+    # Testing
+    TESTING_MAIL_SUPPRESS_SEND = True
+    PRESERVE_CONTEXT_ON_EXCEPTION = False
+EOF
+
+# Crear script de entrada para desarrollo
+RUN cat > /app/dev-entrypoint.sh << 'EOF'
+#!/bin/bash
+set -e
+
+# Colores para logging
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+log() {
+    echo -e "${BLUE}[DEV-$(date +'%H:%M:%S')]${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[DEV-$(date +'%H:%M:%S')]${NC} $1"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[DEV-$(date +'%H:%M:%S')]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[DEV-$(date +'%H:%M:%S')]${NC} $1"
+}
+
+# Banner de desarrollo
+echo -e "${BLUE}"
+echo "╔══════════════════════════════════════════════════════════════╗"
+echo "║               ECOSISTEMA EMPRENDIMIENTO - DEV                ║"
+echo "║                                                              ║"
+echo "║  🚀 Entorno de Desarrollo Iniciado                          ║"
+echo "║  🔧 Debug Mode: Habilitado                                   ║"
+echo "║  📝 Hot Reload: Activado                                     ║"
+echo "║  🌐 Puerto: 5000                                             ║"
+echo "║  🐛 Debug Port: 5678                                         ║"
+echo "╚══════════════════════════════════════════════════════════════╝"
+echo -e "${NC}"
+
+# Verificar estructura de proyecto
+log "Verificando estructura del proyecto..."
+if [ ! -f "app/__init__.py" ]; then
+    log_error "No se encontró app/__init__.py"
+    log "Creando estructura básica..."
+    mkdir -p app
+    touch app/__init__.py
+fi
+
+# Instalar dependencias actualizadas si cambiaron
+if [ -f "requirements-dev.txt" ] && [ requirements-dev.txt -nt /tmp/deps-installed ]; then
+    log "Actualizando dependencias de desarrollo..."
+    pip install -r requirements-dev.txt
+    touch /tmp/deps-installed
+fi
+
+# Instalar dependencias npm si cambiaron
+if [ -f "package.json" ] && [ package.json -nt /tmp/npm-installed ]; then
+    log "Actualizando dependencias npm..."
+    npm install
+    touch /tmp/npm-installed
+fi
+
+# Verificar base de datos
+log "Verificando base de datos..."
+if [ "$DATABASE_URL" ]; then
+    # Esperar a que la base de datos esté disponible
+    python -c "
+import time
+import sys
+from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError
+import os
+
+db_url = os.environ.get('DATABASE_URL')
+if db_url and 'postgresql' in db_url:
+    engine = create_engine(db_url)
+    max_retries = 10
+    retry_count = 0
+    
+    while retry_count < max_retries:
+        try:
+            connection = engine.connect()
+            connection.close()
+            print('✅ Base de datos conectada')
+            break
+        except OperationalError:
+            retry_count += 1
+            print(f'🔄 Esperando DB... {retry_count}/{max_retries}')
+            time.sleep(2)
+    else:
+        print('⚠️ No se pudo conectar a la base de datos')
+else:
+    print('📝 Usando SQLite para desarrollo')
+" || log_warning "Problema con base de datos"
+else
+    log "Usando SQLite por defecto"
+fi
+
+# Ejecutar migraciones en desarrollo
+if [ "$AUTO_MIGRATE" = "true" ] || [ "$1" = "--migrate" ]; then
+    log "Ejecutando migraciones..."
+    if command -v flask &> /dev/null; then
+        flask db upgrade 2>/dev/null || {
+            log_warning "No se pudieron ejecutar migraciones automáticamente"
+            log "Ejecuta manualmente: flask db init && flask db migrate && flask db upgrade"
+        }
+    fi
+fi
+
+# Crear datos de prueba
+if [ "$CREATE_TEST_DATA" = "true" ] || [ "$1" = "--seed" ]; then
+    log "Creando datos de prueba..."
+    python scripts/seed_data.py --development 2>/dev/null || {
+        log_warning "No se pudieron crear datos de prueba"
+    }
+fi
+
+# Ejecutar tests si se solicita
+if [ "$1" = "--test" ]; then
+    log "Ejecutando tests..."
+    pytest -v tests/ --cov=app --cov-report=html --cov-report=term
+    exit $?
+fi
+
+# Ejecutar linting si se solicita
+if [ "$1" = "--lint" ]; then
+    log "Ejecutando análisis de código..."
+    echo "🔍 Black (formateo):"
+    black --check app/ tests/ || true
+    echo "🔍 Flake8 (estilo):"
+    flake8 app/ tests/ || true
+    echo "🔍 PyLint (calidad):"
+    pylint app/ || true
+    exit 0
+fi
+
+# Compilar assets en modo desarrollo
+if [ "$COMPILE_ASSETS" = "true" ]; then
+    log "Compilando assets para desarrollo..."
+    npm run build:dev &
+fi
+
+# Iniciar servidor de desarrollo con hot reload
+log_success "🚀 Iniciando servidor de desarrollo..."
+log "📍 Aplicación disponible en: http://localhost:5000"
+log "🐛 Debug disponible en puerto: 5678"
+log "📊 Flask Debug Toolbar: Habilitado"
+log "🔄 Hot Reload: Activado"
+log ""
+log "💡 Comandos útiles:"
+log "   docker exec -it <container> bash         # Acceder al contenedor"
+log "   docker exec -it <container> flask shell  # Shell de Flask"
+log "   docker exec -it <container> pytest       # Ejecutar tests"
+log ""
+
+# Exportar puerto de debug
+export DEBUGPY_LISTEN_PORT=5678
+
+# Manejar diferentes comandos
+case "$1" in
+    "shell")
+        log "🐚 Iniciando Flask shell..."
+        flask shell
+        ;;
+    "test")
+        log "🧪 Ejecutando tests..."
+        pytest tests/ -v
+        ;;
+    "debug")
+        log "🐛 Iniciando con debugger remoto..."
+        python -m debugpy --listen 0.0.0.0:5678 --wait-for-client run.py
+        ;;
+    "worker")
+        log "👷 Iniciando Celery worker..."
+        celery -A celery_worker.celery worker --loglevel=debug
+        ;;
+    "beat")
+        log "⏰ Iniciando Celery beat..."
+        celery -A celery_worker.celery beat --loglevel=debug
+        ;;
+    "flower")
+        log "🌸 Iniciando Flower..."
+        celery -A celery_worker.celery flower --port=5555
+        ;;
+    *)
+        # Comando por defecto: servidor Flask con hot reload
+        if [ "$ENABLE_DEBUGGER" = "true" ]; then
+            log "🐛 Iniciando con debugger remoto habilitado..."
+            python -m debugpy --listen 0.0.0.0:5678 run.py
+        else
+            log "🚀 Iniciando servidor Flask..."
+            python run.py
+        fi
+        ;;
+esac
+EOF
+
+# Hacer el script ejecutable
+RUN chmod +x /app/dev-entrypoint.sh
+
+# Crear script de utilidades de desarrollo
+RUN cat > /app/dev-utils.sh << 'EOF'
+#!/bin/bash
+
+# Utilidades para desarrollo
+
+dev_help() {
+    echo "🛠️  Utilidades de Desarrollo - Ecosistema Emprendimiento"
+    echo ""
+    echo "Comandos disponibles:"
+    echo "  format     - Formatear código con Black"
+    echo "  lint       - Análisis de código (flake8, pylint)"
+    echo "  test       - Ejecutar tests con coverage"
+    echo "  testwatch  - Ejecutar tests en modo watch"
+    echo "  shell      - Abrir Flask shell"
+    echo "  db-reset   - Resetear base de datos"
+    echo "  db-seed    - Crear datos de prueba"
+    echo "  logs       - Mostrar logs de la aplicación"
+    echo "  deps       - Actualizar dependencias"
+    echo "  clean      - Limpiar archivos temporales"
+    echo ""
+}
+
+dev_format() {
+    echo "🎨 Formateando código..."
+    black app/ tests/ scripts/
+    isort app/ tests/ scripts/
+    echo "✅ Código formateado"
+}
+
+dev_lint() {
+    echo "🔍 Analizando código..."
+    flake8 app/ tests/
+    pylint app/
+    mypy app/
+}
+
+dev_test() {
+    echo "🧪 Ejecutando tests..."
+    pytest tests/ -v --cov=app --cov-report=html --cov-report=term-missing
+}
+
+dev_testwatch() {
+    echo "👀 Ejecutando tests en modo watch..."
+    pytest-watch tests/ -- -v
+}
+
+dev_db_reset() {
+    echo "🗄️ Reseteando base de datos..."
+    flask db downgrade base
+    flask db upgrade
+    echo "✅ Base de datos reseteada"
+}
+
+dev_db_seed() {
+    echo "🌱 Creando datos de prueba..."
+    python scripts/seed_data.py --development
+    echo "✅ Datos de prueba creados"
+}
+
+dev_logs() {
+    echo "📋 Logs de la aplicación:"
+    tail -f logs/app.log
+}
+
+dev_deps() {
+    echo "📦 Actualizando dependencias..."
+    pip install -r requirements-dev.txt --upgrade
+    npm update
+    echo "✅ Dependencias actualizadas"
+}
+
+dev_clean() {
+    echo "🧹 Limpiando archivos temporales..."
+    find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+    find . -type f -name "*.pyc" -delete 2>/dev/null || true
+    find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+    find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
+    find . -type f -name ".coverage" -delete 2>/dev/null || true
+    rm -rf node_modules/.cache/ 2>/dev/null || true
+    echo "✅ Archivos temporales eliminados"
+}
+
+# Ejecutar comando
+case "$1" in
+    "format") dev_format ;;
+    "lint") dev_lint ;;
+    "test") dev_test ;;
+    "testwatch") dev_testwatch ;;
+    "shell") flask shell ;;
+    "db-reset") dev_db_reset ;;
+    "db-seed") dev_db_seed ;;
+    "logs") dev_logs ;;
+    "deps") dev_deps ;;
+    "clean") dev_clean ;;
+    *) dev_help ;;
+esac
+EOF
+
+RUN chmod +x /app/dev-utils.sh
+
+# Crear configuración de VSCode para debugging
+RUN mkdir -p /app/.vscode && cat > /app/.vscode/launch.json << 'EOF'
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Remote Attach",
+            "type": "python",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/app"
+                }
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "Python: Flask",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/run.py",
+            "env": {
+                "FLASK_ENV": "development",
+                "FLASK_DEBUG": "1"
+            },
+            "args": [],
+            "jinja": true,
+            "justMyCode": false
+        }
+    ]
+}
+EOF
+
+# Crear archivo .env.example para desarrollo
+RUN cat > /app/.env.example << 'EOF'
+# =============================================================================
+# Variables de Entorno para Desarrollo
+# =============================================================================
+
+# Flask
+FLASK_ENV=development
+FLASK_DEBUG=1
+SECRET_KEY=dev-secret-key-change-this
+
+# Base de datos
+DATABASE_URL=postgresql://postgres:password@db:5432/ecosistema_dev
+# O para SQLite: DATABASE_URL=sqlite:///instance/dev.db
+
+# Redis
+REDIS_URL=redis://redis:6379/0
+
+# Email (MailHog para desarrollo)
+MAIL_SERVER=mailhog
+MAIL_PORT=1025
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_DEFAULT_SENDER=dev@ecosistema.com
+
+# Google Services (opcional en desarrollo)
+GOOGLE_CLIENT_ID=your-dev-client-id
+GOOGLE_CLIENT_SECRET=your-dev-client-secret
+
+# Celery
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+# Desarrollo
+AUTO_MIGRATE=true
+CREATE_TEST_DATA=true
+COMPILE_ASSETS=true
+ENABLE_DEBUGGER=false
+
+# Logging
+LOG_LEVEL=DEBUG
+
+# Features de desarrollo
+DEBUG_TB_ENABLED=true
+WTF_CSRF_ENABLED=false
+TESTING_MAIL_SUPPRESS_SEND=true
+EOF
+
+# Exponer puertos para desarrollo
+EXPOSE 5000 5678 5555 8080
+
+# Health check simple para desarrollo
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5000/health || exit 1
+
+# Volúmenes sugeridos para desarrollo
+VOLUME ["/app", "/app/node_modules", "/app/logs", "/app/uploads"]
+
+# Punto de entrada para desarrollo
+ENTRYPOINT ["/app/dev-entrypoint.sh"]
+
+# Comando por defecto
+CMD [""]
+
+# =============================================================================
+# Configuraciones de desarrollo
+# =============================================================================
+#
+# Para usar este Dockerfile:
+#
+# 1. Construcción:
+#    docker build -f docker/Dockerfile.dev -t ecosistema-dev .
+#
+# 2. Desarrollo normal:
+#    docker run -p 5000:5000 -v $(pwd):/app ecosistema-dev
+#
+# 3. Con debugging remoto:
+#    docker run -p 5000:5000 -p 5678:5678 -v $(pwd):/app \
+#      -e ENABLE_DEBUGGER=true ecosistema-dev debug
+#
+# 4. Ejecutar tests:
+#    docker run -v $(pwd):/app ecosistema-dev test
+#
+# 5. Shell interactivo:
+#    docker run -it -v $(pwd):/app ecosistema-dev shell
+#
+# 6. Celery worker:
+#    docker run -v $(pwd):/app ecosistema-dev worker
+#
+# 7. Flower (monitoreo Celery):
+#    docker run -p 5555:5555 -v $(pwd):/app ecosistema-dev flower
+#
+# =============================================================================
+
+# =============================================================================
+# Herramientas incluidas:
+# =============================================================================
+#
+# Debugging:
+#   - debugpy (debugging remoto)
+#   - ipdb, pdbpp (debuggers mejorados)
+#   - Flask Debug Toolbar
+#
+# Testing:
+#   - pytest con extensiones
+#   - coverage reporting
+#   - pytest-watch para auto-testing
+#
+# Code Quality:
+#   - black (formateo)
+#   - flake8 (linting)
+#   - pylint (análisis estático)
+#   - mypy (type checking)
+#   - isort (imports)
+#
+# Profiling:
+#   - py-spy
+#   - memory-profiler
+#   - line-profiler
+#
+# Frontend:
+#   - Node.js y npm
+#   - webpack para assets
+#   - sass para estilos
+#   - live-server para desarrollo frontend
+#
+# =============================================================================

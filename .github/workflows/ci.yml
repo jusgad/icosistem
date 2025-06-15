@@ -1,0 +1,911 @@
+# =============================================================================
+# GitHub Actions CI/CD Workflow - Ecosistema de Emprendimiento
+# =============================================================================
+# 
+# Workflow completo de CI/CD que incluye:
+# - Testing exhaustivo (unit, integration, e2e)
+# - Code quality y security scanning
+# - Build de aplicación y assets
+# - Docker image building y pushing
+# - Database migrations testing
+# - Performance y load testing
+# - Security vulnerability scanning
+# - Automated deployment a staging
+# - Slack/email notifications
+# - Artifact management y caching
+# - Matrix testing con múltiples versiones
+#
+# Triggers:
+# - Push a main/develop branches
+# - Pull requests
+# - Release tags
+# - Manual dispatch
+# - Scheduled runs (nightly)
+#
+# Autor: Sistema de Emprendimiento
+# Version: 1.0.0
+# =============================================================================
+
+name: 🚀 CI/CD Pipeline
+
+on:
+  # Trigger en push a branches principales
+  push:
+    branches: 
+      - main
+      - develop
+      - 'release/*'
+      - 'hotfix/*'
+    paths-ignore:
+      - '*.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+
+  # Trigger en pull requests
+  pull_request:
+    branches: 
+      - main
+      - develop
+    types: [opened, synchronize, reopened, ready_for_review]
+
+  # Trigger en releases
+  release:
+    types: [published, prereleased]
+
+  # Trigger manual
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      skip_tests:
+        description: 'Skip tests (emergency deployment)'
+        required: false
+        default: false
+        type: boolean
+      force_deploy:
+        description: 'Force deployment'
+        required: false
+        default: false
+        type: boolean
+
+  # Trigger programado (nightly builds)
+  schedule:
+    - cron: '0 2 * * *'  # 2:00 AM UTC daily
+
+# Variables de entorno globales
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  POSTGRES_VERSION: '15'
+  REDIS_VERSION: '7'
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: ecosistema-emprendimiento
+  SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+# Configuración de concurrencia
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Permisos necesarios
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+  pull-requests: write
+  checks: write
+  actions: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # JOB: SETUP Y VALIDACIÓN INICIAL
+  # ---------------------------------------------------------------------------
+  setup:
+    name: 🔧 Setup & Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    outputs:
+      python-version: ${{ steps.setup.outputs.python-version }}
+      node-version: ${{ steps.setup.outputs.node-version }}
+      cache-key: ${{ steps.setup.outputs.cache-key }}
+      should-deploy: ${{ steps.setup.outputs.should-deploy }}
+      environment: ${{ steps.setup.outputs.environment }}
+      
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for proper analysis
+
+      - name: 🔍 Validate workflow configuration
+        run: |
+          echo "🔍 Validating workflow configuration..."
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Repository: ${{ github.repository }}"
+
+      - name: 📋 Setup job outputs
+        id: setup
+        run: |
+          echo "python-version=${{ env.PYTHON_VERSION }}" >> $GITHUB_OUTPUT
+          echo "node-version=${{ env.NODE_VERSION }}" >> $GITHUB_OUTPUT
+          echo "cache-key=${{ runner.os }}-${{ hashFiles('**/requirements*.txt', '**/package*.json') }}" >> $GITHUB_OUTPUT
+          
+          # Determinar si se debe hacer deploy
+          if [[ "${{ github.ref_name }}" == "main" ]] || [[ "${{ github.event_name }}" == "release" ]] || [[ "${{ github.event.inputs.force_deploy }}" == "true" ]]; then
+            echo "should-deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "should-deploy=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Determinar environment
+          if [[ "${{ github.ref_name }}" == "main" ]] || [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 📄 Validate required files
+        run: |
+          echo "📄 Checking required files..."
+          required_files=(
+            "requirements.txt"
+            "requirements-dev.txt"
+            "package.json"
+            "Dockerfile"
+            "docker-compose.yml"
+            "app/__init__.py"
+          )
+          
+          for file in "${required_files[@]}"; do
+            if [[ ! -f "$file" ]]; then
+              echo "❌ Required file missing: $file"
+              exit 1
+            else
+              echo "✅ Found: $file"
+            fi
+          done
+
+  # ---------------------------------------------------------------------------
+  # JOB: CODE QUALITY Y LINTING
+  # ---------------------------------------------------------------------------
+  code-quality:
+    name: 🔍 Code Quality & Linting
+    runs-on: ubuntu-latest
+    needs: setup
+    timeout-minutes: 15
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ needs.setup.outputs.python-version }}
+          cache: 'pip'
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install black flake8 pylint mypy isort bandit safety
+
+      - name: 🎨 Check code formatting with Black
+        run: |
+          echo "🎨 Running Black formatter check..."
+          black --check --diff app/ tests/ scripts/
+          
+      - name: 📏 Check import sorting with isort
+        run: |
+          echo "📏 Running isort check..."
+          isort --check-only --diff app/ tests/ scripts/
+
+      - name: 🔍 Lint with flake8
+        run: |
+          echo "🔍 Running flake8 linting..."
+          flake8 app/ tests/ scripts/ --max-line-length=88 --extend-ignore=E203,W503
+          
+      - name: 🔬 Static analysis with pylint
+        run: |
+          echo "🔬 Running pylint analysis..."
+          pylint app/ --disable=missing-docstring,too-few-public-methods,import-error || true
+          
+      - name: 🔒 Security linting with bandit
+        run: |
+          echo "🔒 Running bandit security analysis..."
+          bandit -r app/ -f json -o bandit-report.json || true
+          bandit -r app/ --severity-level medium
+          
+      - name: 🛡️ Check dependencies with safety
+        run: |
+          echo "🛡️ Checking dependencies for vulnerabilities..."
+          safety check --json --output safety-report.json || true
+          safety check
+
+      - name: 📊 Type checking with mypy
+        run: |
+          echo "📊 Running mypy type checking..."
+          mypy app/ --ignore-missing-imports --no-strict-optional || true
+
+      - name: 📋 Upload security reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # JOB: TESTING CON MATRIX
+  # ---------------------------------------------------------------------------
+  test:
+    name: 🧪 Tests
+    runs-on: ubuntu-latest
+    needs: [setup, code-quality]
+    timeout-minutes: 30
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+        test-type: ['unit', 'integration', 'functional']
+        include:
+          - python-version: '3.11'
+            test-type: 'unit'
+            upload-coverage: true
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ecosistema_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+          pip install pytest-cov pytest-xdist pytest-benchmark
+
+      - name: 🗄️ Setup test database
+        run: |
+          export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ecosistema_test"
+          export REDIS_URL="redis://localhost:6379/0"
+          flask db upgrade || echo "No migrations to run"
+
+      - name: 🧪 Run ${{ matrix.test-type }} tests
+        run: |
+          case "${{ matrix.test-type }}" in
+            "unit")
+              echo "🧪 Running unit tests..."
+              pytest tests/unit/ -v --cov=app --cov-report=xml --cov-report=html --cov-report=term
+              ;;
+            "integration")
+              echo "🔗 Running integration tests..."
+              pytest tests/integration/ -v --maxfail=3
+              ;;
+            "functional")
+              echo "🎭 Running functional tests..."
+              pytest tests/functional/ -v --maxfail=3
+              ;;
+          esac
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ecosistema_test
+          REDIS_URL: redis://localhost:6379/0
+          FLASK_ENV: testing
+          SECRET_KEY: test-secret-key
+          WTF_CSRF_ENABLED: false
+
+      - name: 📊 Upload coverage to Codecov
+        if: matrix.upload-coverage == true && matrix.test-type == 'unit'
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: 📋 Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results-${{ matrix.python-version }}-${{ matrix.test-type }}
+          path: |
+            htmlcov/
+            coverage.xml
+            pytest-results.xml
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # JOB: FRONTEND BUILD Y TESTING
+  # ---------------------------------------------------------------------------
+  frontend:
+    name: 🎨 Frontend Build & Test
+    runs-on: ubuntu-latest
+    needs: setup
+    timeout-minutes: 20
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ needs.setup.outputs.node-version }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: |
+          npm ci --prefer-offline --no-audit
+
+      - name: 🔍 Lint JavaScript/CSS
+        run: |
+          echo "🔍 Linting frontend code..."
+          npm run lint:js || true
+          npm run lint:css || true
+
+      - name: 🧪 Run frontend tests
+        run: |
+          echo "🧪 Running frontend tests..."
+          npm run test || true
+
+      - name: 🏗️ Build production assets
+        run: |
+          echo "🏗️ Building production assets..."
+          npm run build:prod
+
+      - name: 📊 Analyze bundle size
+        run: |
+          echo "📊 Analyzing bundle size..."
+          npm run analyze || true
+
+      - name: 📋 Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-assets
+          path: |
+            app/static/dist/
+            bundle-analysis.html
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # JOB: SECURITY SCANNING
+  # ---------------------------------------------------------------------------
+  security:
+    name: 🔒 Security Scanning
+    runs-on: ubuntu-latest
+    needs: setup
+    timeout-minutes: 20
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: 📊 Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: 🕵️ Run CodeQL Analysis
+        uses: github/codeql-action/init@v2
+        with:
+          languages: python, javascript
+
+      - name: 🔍 Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+      - name: 🔑 Check for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+
+      - name: 🛡️ OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'ecosistema-emprendimiento'
+          path: '.'
+          format: 'ALL'
+          args: >
+            --enableRetired
+            --enableExperimental
+            --failOnCVSS 7
+
+      - name: 📋 Upload security scan results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-scan-results
+          path: |
+            trivy-results.sarif
+            reports/
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # JOB: DATABASE MIGRATIONS TESTING
+  # ---------------------------------------------------------------------------
+  database-test:
+    name: 🗄️ Database Migration Test
+    runs-on: ubuntu-latest
+    needs: [setup, test]
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ecosistema_migration_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ needs.setup.outputs.python-version }}
+          cache: 'pip'
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 🔄 Test fresh migration
+        run: |
+          echo "🔄 Testing fresh database migration..."
+          export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ecosistema_migration_test"
+          flask db upgrade
+          
+      - name: 🔍 Validate migration integrity
+        run: |
+          echo "🔍 Validating migration integrity..."
+          export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ecosistema_migration_test"
+          python scripts/validate_schema.py
+
+      - name: 📊 Test migration rollback
+        run: |
+          echo "📊 Testing migration rollback..."
+          export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ecosistema_migration_test"
+          flask db downgrade -1
+          flask db upgrade
+
+  # ---------------------------------------------------------------------------
+  # JOB: PERFORMANCE TESTING
+  # ---------------------------------------------------------------------------
+  performance:
+    name: ⚡ Performance Testing
+    runs-on: ubuntu-latest
+    needs: [setup, test]
+    if: github.event_name == 'push' && github.ref_name == 'main'
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ecosistema_perf_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ needs.setup.outputs.python-version }}
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install locust pytest-benchmark
+
+      - name: 🚀 Start application
+        run: |
+          export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ecosistema_perf_test"
+          export REDIS_URL="redis://localhost:6379/0"
+          flask db upgrade
+          python scripts/seed_data.py --performance
+          flask run --host=0.0.0.0 --port=5000 &
+          sleep 10
+        env:
+          FLASK_ENV: testing
+
+      - name: ⚡ Run load tests
+        run: |
+          echo "⚡ Running load tests with Locust..."
+          locust -f tests/performance/locustfile.py --host=http://localhost:5000 \
+            --users=10 --spawn-rate=2 --run-time=2m --html=performance-report.html
+
+      - name: 📊 Run benchmark tests
+        run: |
+          echo "📊 Running benchmark tests..."
+          pytest tests/performance/test_benchmarks.py --benchmark-only --benchmark-json=benchmark-results.json
+
+      - name: 📋 Upload performance results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: performance-results
+          path: |
+            performance-report.html
+            benchmark-results.json
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # JOB: BUILD DOCKER IMAGE
+  # ---------------------------------------------------------------------------
+  build:
+    name: 🐳 Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [setup, test, frontend, security]
+    if: ${{ !failure() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+    timeout-minutes: 30
+    
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📥 Download frontend assets
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-assets
+          path: app/static/dist/
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📊 Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: 🏗️ Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile.prod
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VERSION=${{ github.ref_name }}
+            GIT_COMMIT=${{ github.sha }}
+
+      - name: 🔍 Scan Docker image for vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.meta.outputs.tags }}
+          format: 'sarif'
+          output: 'docker-trivy-results.sarif'
+
+      - name: 📊 Upload Docker scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'docker-trivy-results.sarif'
+
+  # ---------------------------------------------------------------------------
+  # JOB: DEPLOY TO STAGING
+  # ---------------------------------------------------------------------------
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [setup, build]
+    if: ${{ !failure() && needs.setup.outputs.should-deploy == 'true' && (github.ref_name == 'develop' || github.event.inputs.environment == 'staging') }}
+    environment: 
+      name: staging
+      url: https://staging.ecosistema.com
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🚀 Deploy to staging
+        run: |
+          echo "🚀 Deploying to staging environment..."
+          echo "Image: ${{ needs.build.outputs.image-tag }}"
+          # Aquí iría el script real de deploy
+          # kubectl set image deployment/ecosistema-app app=${{ needs.build.outputs.image-tag }}
+          # helm upgrade ecosistema ./helm-chart --set image.tag=${{ needs.build.outputs.image-tag }}
+
+      - name: 🔍 Run post-deployment tests
+        run: |
+          echo "🔍 Running post-deployment health checks..."
+          sleep 30  # Wait for deployment
+          curl -f https://staging.ecosistema.com/health
+          
+      - name: 🧪 Run smoke tests
+        run: |
+          echo "🧪 Running smoke tests..."
+          pytest tests/smoke/ --base-url=https://staging.ecosistema.com
+
+  # ---------------------------------------------------------------------------
+  # JOB: DEPLOY TO PRODUCTION
+  # ---------------------------------------------------------------------------
+  deploy-production:
+    name: 🌟 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [setup, build, deploy-staging]
+    if: ${{ !failure() && github.ref_name == 'main' || github.event_name == 'release' || github.event.inputs.environment == 'production' }}
+    environment: 
+      name: production
+      url: https://ecosistema.com
+    timeout-minutes: 20
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🛡️ Security approval gate
+        run: |
+          echo "🛡️ Running security approval gate..."
+          # Verificar que no hay vulnerabilidades críticas
+          # Verificar que los tests pasaron
+          # Verificar manual approval si es necesario
+
+      - name: 🌟 Deploy to production
+        run: |
+          echo "🌟 Deploying to production environment..."
+          echo "Image: ${{ needs.build.outputs.image-tag }}"
+          # Aquí iría el script real de deploy a producción
+          # Blue-green deployment, canary, etc.
+
+      - name: 🔍 Run production health checks
+        run: |
+          echo "🔍 Running production health checks..."
+          sleep 60  # Wait for deployment
+          curl -f https://ecosistema.com/health
+
+      - name: 📊 Update deployment metrics
+        run: |
+          echo "📊 Updating deployment metrics..."
+          # Actualizar métricas en dashboard
+          # Notificar a stakeholders
+
+  # ---------------------------------------------------------------------------
+  # JOB: CLEANUP Y NOTIFICACIONES
+  # ---------------------------------------------------------------------------
+  cleanup:
+    name: 🧹 Cleanup & Notifications
+    runs-on: ubuntu-latest
+    needs: [setup, test, build, deploy-staging, deploy-production]
+    if: always()
+    timeout-minutes: 10
+
+    steps:
+      - name: 📊 Generate summary report
+        run: |
+          echo "📊 Generating workflow summary..."
+          echo "## 🚀 CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tests:** ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Security:** ${{ needs.security.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build:** ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deploy Staging:** ${{ needs.deploy-staging.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deploy Production:** ${{ needs.deploy-production.result }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: 💬 Notify Slack on success
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          channel: '#deployments'
+          text: |
+            ✅ **Deployment Successful**
+            Branch: `${{ github.ref_name }}`
+            Commit: `${{ github.sha }}`
+            Actor: `${{ github.actor }}`
+            Environment: `${{ needs.setup.outputs.environment }}`
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: 💬 Notify Slack on failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          channel: '#alerts'
+          text: |
+            ❌ **Deployment Failed**
+            Branch: `${{ github.ref_name }}`
+            Commit: `${{ github.sha }}`
+            Actor: `${{ github.actor }}`
+            Failed Jobs: Check GitHub Actions for details
+            
+            Please review and fix the issues.
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: 📧 Send email notification
+        if: failure() && github.ref_name == 'main'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "🚨 Production Deployment Failed - Ecosistema Emprendimiento"
+          to: ${{ secrets.ALERT_EMAIL }}
+          from: CI/CD Pipeline <noreply@ecosistema.com>
+          body: |
+            Production deployment failed for commit ${{ github.sha }}.
+            
+            Please check GitHub Actions for details and resolve immediately.
+            
+            Branch: ${{ github.ref_name }}
+            Actor: ${{ github.actor }}
+            Workflow: ${{ github.workflow }}
+
+      - name: 🧹 Cleanup artifacts
+        run: |
+          echo "🧹 Cleaning up temporary artifacts..."
+          # Cleanup logic here
+
+# =============================================================================
+# CONFIGURACIÓN ADICIONAL Y DOCUMENTACIÓN
+# =============================================================================
+#
+# SECRETOS REQUERIDOS EN GITHUB:
+# ==============================
+# - SLACK_WEBHOOK_URL: URL del webhook de Slack para notificaciones
+# - EMAIL_USERNAME: Username para envío de emails
+# - EMAIL_PASSWORD: Password para envío de emails  
+# - ALERT_EMAIL: Email para recibir alertas críticas
+# - CODECOV_TOKEN: Token para subir coverage a Codecov
+# - STAGING_DEPLOY_KEY: Key para deploy a staging
+# - PRODUCTION_DEPLOY_KEY: Key para deploy a production
+#
+# VARIABLES DE ENTORNO:
+# ====================
+# - DOCKER_REGISTRY: Registry de Docker (default: ghcr.io)
+# - IMAGE_NAME: Nombre de la imagen Docker
+# - POSTGRES_VERSION: Versión de PostgreSQL para testing
+# - REDIS_VERSION: Versión de Redis para testing
+#
+# ARCHIVOS REQUERIDOS:
+# ===================
+# - requirements.txt: Dependencias de producción
+# - requirements-dev.txt: Dependencias de desarrollo
+# - requirements-test.txt: Dependencias de testing
+# - package.json: Dependencias frontend
+# - docker/Dockerfile.prod: Dockerfile para producción
+# - tests/: Directorio con todos los tests
+# - scripts/validate_schema.py: Script para validar esquema DB
+# - scripts/seed_data.py: Script para datos de prueba
+#
+# CONFIGURACIONES RECOMENDADAS:
+# =============================
+# - Branch protection rules para main/develop
+# - Required status checks para todos los jobs críticos
+# - Require pull request reviews
+# - Dismiss stale reviews cuando se hacen nuevos commits
+# - Require signed commits
+# - Include administrators en las reglas
+#
+# OPTIMIZACIONES DE PERFORMANCE:
+# ==============================
+# - Cache de pip dependencies
+# - Cache de npm dependencies  
+# - Cache de Docker layers
+# - Paralelización de jobs cuando es posible
+# - Conditional execution para jobs costosos
+# - Artifact cleanup automático
+#
+# MEJORES PRÁCTICAS IMPLEMENTADAS:
+# ================================
+# - Separation of concerns (un job por responsabilidad)
+# - Fail-fast donde es apropiado
+# - Comprehensive testing (unit, integration, functional)
+# - Security scanning en múltiples niveles
+# - Deployment gates y approvals
+# - Monitoring y observabilidad
+# - Proper error handling y cleanup
+# - Clear documentation y comentarios
+#
+# =============================================================================

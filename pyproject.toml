@@ -1,0 +1,868 @@
+# ============================================================================
+# ECOSISTEMA DE EMPRENDIMIENTO - PYTHON PROJECT CONFIGURATION
+# ============================================================================
+# Modern Python project configuration using pyproject.toml
+# This file centralizes configuration for build tools, linters, formatters,
+# and other development tools for the entrepreneurship ecosystem platform.
+#
+# PEP 517/518 compliant build configuration
+# Documentation: https://pep517.readthedocs.io/
+# ============================================================================
+
+# ============================================================================
+# BUILD SYSTEM CONFIGURATION
+# ============================================================================
+[build-system]
+requires = [
+    "setuptools>=65.0",
+    "setuptools-scm[toml]>=7.0",
+    "wheel>=0.37.0",
+]
+build-backend = "setuptools.build_meta"
+
+# ============================================================================
+# PROJECT METADATA
+# ============================================================================
+[project]
+name = "ecosistema-emprendimiento"
+description = "Plataforma integral para el ecosistema de emprendimiento"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Development Team", email = "dev@ecosistema-emprendimiento.com"},
+]
+maintainers = [
+    {name = "Tech Lead", email = "tech-lead@ecosistema-emprendimiento.com"},
+]
+keywords = [
+    "entrepreneurship",
+    "mentorship",
+    "business-development",
+    "flask",
+    "platform",
+    "startup-ecosystem",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Framework :: Flask",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Office/Business",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+requires-python = ">=3.11"
+dynamic = ["version"]
+
+# ============================================================================
+# PRODUCTION DEPENDENCIES
+# ============================================================================
+dependencies = [
+    # Core Flask Framework
+    "flask>=3.0.0,<4.0.0",
+    "flask-sqlalchemy>=3.1.0,<4.0.0",
+    "flask-migrate>=4.0.0,<5.0.0",
+    "flask-login>=0.6.0,<1.0.0",
+    "flask-wtf>=1.2.0,<2.0.0",
+    "flask-mail>=0.9.0,<1.0.0",
+    "flask-caching>=2.1.0,<3.0.0",
+    "flask-cors>=4.0.0,<5.0.0",
+    "flask-restful>=0.3.10,<1.0.0",
+    "flask-jwt-extended>=4.6.0,<5.0.0",
+    "flask-socketio>=5.3.0,<6.0.0",
+    "flask-admin>=1.6.0,<2.0.0",
+    "flask-security-too>=5.4.0,<6.0.0",
+    "flask-limiter>=3.5.0,<4.0.0",
+    "flask-compress>=1.14,<2.0.0",
+
+    # Database and ORM
+    "sqlalchemy>=2.0.0,<3.0.0",
+    "psycopg2-binary>=2.9.0,<3.0.0",
+    "alembic>=1.13.0,<2.0.0",
+    "sqlalchemy-utils>=0.41.0,<1.0.0",
+
+    # Authentication and Security
+    "passlib[bcrypt]>=1.7.0,<2.0.0",
+    "pyjwt>=2.8.0,<3.0.0",
+    "cryptography>=41.0.0,<42.0.0",
+    "python-jose[cryptography]>=3.3.0,<4.0.0",
+    "authlib>=1.3.0,<2.0.0",
+    "itsdangerous>=2.1.0,<3.0.0",
+    "bleach>=6.1.0,<7.0.0",
+
+    # Forms and Validation
+    "wtforms>=3.1.0,<4.0.0",
+    "email-validator>=2.1.0,<3.0.0",
+    "wtforms-sqlalchemy>=0.3,<1.0.0",
+    "wtforms-json>=0.3.0,<1.0.0",
+    "validators>=0.22.0,<1.0.0",
+    "phonenumbers>=8.13.0,<9.0.0",
+
+    # Caching and Sessions
+    "redis>=5.0.0,<6.0.0",
+    "hiredis>=2.2.0,<3.0.0",
+
+    # Background Tasks
+    "celery[redis]>=5.3.0,<6.0.0",
+    "flower>=2.0.0,<3.0.0",
+    "celery-redbeat>=2.0.0,<3.0.0",
+
+    # API and Serialization
+    "marshmallow>=3.20.0,<4.0.0",
+    "marshmallow-sqlalchemy>=0.29.0,<1.0.0",
+    "apispec>=6.3.0,<7.0.0",
+    "flasgger>=0.9.7,<1.0.0",
+    "ujson>=5.8.0,<6.0.0",
+
+    # HTTP Clients
+    "requests>=2.31.0,<3.0.0",
+    "httpx>=0.25.0,<1.0.0",
+
+    # Google Services
+    "google-auth>=2.25.0,<3.0.0",
+    "google-auth-oauthlib>=1.1.0,<2.0.0",
+    "google-api-python-client>=2.108.0,<3.0.0",
+    "google-cloud-storage>=2.10.0,<3.0.0",
+
+    # Email Services
+    "sendgrid>=6.11.0,<7.0.0",
+    "premailer>=3.10.0,<4.0.0",
+    "html2text>=2020.1.16,<2021.0.0",
+
+    # File Processing
+    "boto3>=1.34.0,<2.0.0",
+    "pillow>=10.1.0,<11.0.0",
+    "python-magic>=0.4.27,<1.0.0",
+    "pypdf2>=3.0.0,<4.0.0",
+    "python-docx>=1.1.0,<2.0.0",
+    "openpyxl>=3.1.0,<4.0.0",
+
+    # Messaging
+    "twilio>=8.10.0,<9.0.0",
+    "slack-sdk>=3.25.0,<4.0.0",
+
+    # Payments
+    "stripe>=7.7.0,<8.0.0",
+    "paypalrestsdk>=1.13.3,<2.0.0",
+
+    # AI and ML
+    "openai>=1.3.0,<2.0.0",
+    "langchain>=0.0.340,<1.0.0",
+    "tiktoken>=0.5.0,<1.0.0",
+
+    # Data Processing
+    "pandas>=2.1.0,<3.0.0",
+    "numpy>=1.25.0,<2.0.0",
+    "plotly>=5.17.0,<6.0.0",
+
+    # Monitoring and Logging
+    "sentry-sdk[flask]>=1.39.0,<2.0.0",
+    "structlog>=23.2.0,<24.0.0",
+    "colorlog>=6.8.0,<7.0.0",
+    "prometheus-client>=0.19.0,<1.0.0",
+
+    # Configuration
+    "python-dotenv>=1.0.0,<2.0.0",
+    "dynaconf>=3.2.0,<4.0.0",
+    "click>=8.1.0,<9.0.0",
+
+    # Date and Time
+    "python-dateutil>=2.8.0,<3.0.0",
+    "pytz>=2023.3",
+    "arrow>=1.3.0,<2.0.0",
+
+    # Text Processing
+    "babel>=2.13.0,<3.0.0",
+    "python-slugify>=8.0.0,<9.0.0",
+    "unidecode>=1.3.0,<2.0.0",
+    "markdown>=3.5.0,<4.0.0",
+
+    # WebSockets
+    "python-socketio>=5.10.0,<6.0.0",
+    "eventlet>=0.33.0,<1.0.0",
+
+    # Currency and Financial
+    "forex-python>=1.8,<2.0.0",
+    "moneyed>=3.0,<4.0.0",
+
+    # Search
+    "elasticsearch>=8.11.0,<9.0.0",
+    "elasticsearch-dsl>=8.11.0,<9.0.0",
+
+    # Geolocation
+    "geopy>=2.4.0,<3.0.0",
+    "geoip2>=4.7.0,<5.0.0",
+
+    # Task Scheduling
+    "apscheduler>=3.10.0,<4.0.0",
+    "croniter>=2.0.0,<3.0.0",
+
+    # Health Checks
+    "psutil>=5.9.0,<6.0.0",
+
+    # Production Server
+    "gunicorn>=21.2.0,<22.0.0",
+]
+
+# ============================================================================
+# OPTIONAL DEPENDENCIES (EXTRAS)
+# ============================================================================
+[project.optional-dependencies]
+# Development dependencies
+dev = [
+    # Testing
+    "pytest>=7.4.0,<8.0.0",
+    "pytest-flask>=1.3.0,<2.0.0",
+    "pytest-sqlalchemy>=0.2.0,<1.0.0",
+    "pytest-cov>=4.1.0,<5.0.0",
+    "pytest-mock>=3.12.0,<4.0.0",
+    "pytest-xdist>=3.5.0,<4.0.0",
+    "pytest-html>=4.1.0,<5.0.0",
+    "pytest-randomly>=3.15.0,<4.0.0",
+    "pytest-timeout>=2.2.0,<3.0.0",
+    "pytest-asyncio>=0.23.0,<1.0.0",
+    "factory-boy>=3.3.0,<4.0.0",
+    "faker>=20.1.0,<21.0.0",
+    "responses>=0.24.0,<1.0.0",
+    "freezegun>=1.2.0,<2.0.0",
+    "hypothesis>=6.92.0,<7.0.0",
+
+    # Code Quality
+    "black>=23.11.0,<24.0.0",
+    "isort>=5.12.0,<6.0.0",
+    "flake8>=6.1.0,<7.0.0",
+    "pylint>=3.0.0,<4.0.0",
+    "mypy>=1.7.0,<2.0.0",
+    "bandit>=1.7.0,<2.0.0",
+    "safety>=2.3.0,<3.0.0",
+    "semgrep>=1.51.0,<2.0.0",
+
+    # Pre-commit
+    "pre-commit>=3.6.0,<4.0.0",
+
+    # Documentation
+    "sphinx>=7.2.0,<8.0.0",
+    "sphinx-rtd-theme>=1.3.0,<2.0.0",
+    "sphinx-autodoc-typehints>=1.25.0,<2.0.0",
+    "myst-parser>=2.0.0,<3.0.0",
+
+    # Debugging and Profiling
+    "flask-debugtoolbar>=0.13.1,<1.0.0",
+    "ipdb>=0.13.0,<1.0.0",
+    "memory-profiler>=0.61.0,<1.0.0",
+    "line-profiler>=4.1.0,<5.0.0",
+
+    # Type Stubs
+    "types-requests>=2.31.0",
+    "types-redis>=4.6.0",
+    "types-pyyaml>=6.0.0",
+    "types-python-dateutil>=2.8.0",
+    "types-pillow>=10.1.0",
+]
+
+# Production deployment
+deploy = [
+    "gunicorn>=21.2.0,<22.0.0",
+    "gevent>=23.9.0,<24.0.0",
+    "supervisor>=4.2.0,<5.0.0",
+]
+
+# Docker deployment
+docker = [
+    "gunicorn>=21.2.0,<22.0.0",
+    "gevent>=23.9.0,<24.0.0",
+]
+
+# Full cloud deployment
+cloud = [
+    "boto3>=1.34.0,<2.0.0",
+    "google-cloud-storage>=2.10.0,<3.0.0",
+    "azure-storage-blob>=12.19.0,<13.0.0",
+]
+
+# AI and ML features
+ai = [
+    "openai>=1.3.0,<2.0.0",
+    "langchain>=0.0.340,<1.0.0",
+    "transformers>=4.36.0,<5.0.0",
+    "torch>=2.1.0,<3.0.0",
+    "scikit-learn>=1.3.0,<2.0.0",
+]
+
+# All optional dependencies
+all = [
+    "ecosistema-emprendimiento[dev,deploy,cloud,ai]",
+]
+
+# ============================================================================
+# PROJECT URLs
+# ============================================================================
+[project.urls]
+Homepage = "https://ecosistema-emprendimiento.com"
+Documentation = "https://docs.ecosistema-emprendimiento.com"
+Repository = "https://github.com/your-org/ecosistema-emprendimiento"
+Issues = "https://github.com/your-org/ecosistema-emprendimiento/issues"
+Changelog = "https://github.com/your-org/ecosistema-emprendimiento/blob/main/CHANGELOG.md"
+"Bug Reports" = "https://github.com/your-org/ecosistema-emprendimiento/issues"
+"Feature Requests" = "https://github.com/your-org/ecosistema-emprendimiento/discussions"
+Funding = "https://github.com/sponsors/your-org"
+
+# ============================================================================
+# ENTRY POINTS
+# ============================================================================
+[project.scripts]
+ecosistema = "app.cli:main"
+ecosistema-admin = "app.cli:admin"
+ecosistema-migrate = "app.cli:migrate"
+ecosistema-seed = "app.cli:seed_data"
+
+[project.gui-scripts]
+ecosistema-gui = "app.gui:main"
+
+# ============================================================================
+# SETUPTOOLS CONFIGURATION
+# ============================================================================
+[tool.setuptools]
+zip-safe = false
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+exclude = ["tests*", "docs*", "venv*", "build*", "dist*"]
+
+[tool.setuptools.package-data]
+app = [
+    "templates/**/*",
+    "static/**/*",
+    "translations/**/*",
+    "data/**/*",
+]
+
+# ============================================================================
+# SETUPTOOLS-SCM (VERSION MANAGEMENT)
+# ============================================================================
+[tool.setuptools_scm]
+write_to = "app/_version.py"
+version_scheme = "guess-next-dev"
+local_scheme = "node-and-date"
+fallback_version = "0.1.0"
+
+# ============================================================================
+# BLACK (CODE FORMATTER)
+# ============================================================================
+[tool.black]
+line-length = 88
+target-version = ['py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    # directories
+    \.eggs
+    | \.git
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | venv
+    | _build
+    | buck-out
+    | build
+    | dist
+    | migrations
+)/
+'''
+skip-string-normalization = false
+skip-magic-trailing-comma = false
+
+# ============================================================================
+# ISORT (IMPORT SORTING)
+# ============================================================================
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+known_first_party = ["app"]
+known_third_party = [
+    "flask",
+    "sqlalchemy",
+    "celery",
+    "redis",
+    "pytest",
+    "requests",
+    "marshmallow",
+]
+sections = [
+    "FUTURE",
+    "STDLIB",
+    "THIRDPARTY",
+    "FIRSTPARTY",
+    "LOCALFOLDER",
+]
+skip_glob = [
+    "venv/*",
+    "build/*",
+    "dist/*",
+    "migrations/*",
+]
+
+# ============================================================================
+# MYPY (TYPE CHECKING)
+# ============================================================================
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_optional = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+show_error_codes = true
+show_column_numbers = true
+pretty = true
+
+# Exclude patterns
+exclude = [
+    "venv/",
+    "build/",
+    "dist/",
+    "migrations/",
+    "tests/",
+]
+
+# Per-module options
+[[tool.mypy.overrides]]
+module = [
+    "celery.*",
+    "redis.*",
+    "flask_sqlalchemy.*",
+    "flask_migrate.*",
+    "flask_login.*",
+    "flask_wtf.*",
+    "flask_mail.*",
+    "flask_admin.*",
+    "wtforms.*",
+    "marshmallow.*",
+    "stripe.*",
+    "twilio.*",
+    "google.*",
+    "boto3.*",
+    "PIL.*",
+]
+ignore_missing_imports = true
+
+# ============================================================================
+# PYTEST (TESTING)
+# ============================================================================
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+    "--tb=short",
+    "--cov=app",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-report=xml:coverage.xml",
+    "--cov-fail-under=80",
+    "--maxfail=5",
+    "--disable-warnings",
+]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "functional: Functional tests",
+    "api: API tests",
+    "slow: Slow running tests",
+    "database: Tests that require database",
+    "redis: Tests that require Redis",
+    "external: Tests that require external services",
+    "security: Security-related tests",
+    "performance: Performance tests",
+]
+filterwarnings = [
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+env = [
+    "FLASK_ENV=testing",
+    "DATABASE_URL=sqlite:///:memory:",
+    "TESTING=true",
+]
+
+# ============================================================================
+# COVERAGE (TEST COVERAGE)
+# ============================================================================
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "app/__init__.py",
+    "app/cli.py",
+    "app/wsgi.py",
+    "app/config.py",
+    "migrations/*",
+    "tests/*",
+    "venv/*",
+    "build/*",
+    "dist/*",
+    "*/__pycache__/*",
+    "*/site-packages/*",
+]
+branch = true
+parallel = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+ignore_errors = true
+show_missing = true
+skip_covered = false
+precision = 2
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+# ============================================================================
+# PYLINT (LINTING)
+# ============================================================================
+[tool.pylint.main]
+jobs = 0  # Use all available processors
+persistent = true
+suggestion-mode = true
+unsafe-load-any-extension = false
+
+[tool.pylint.messages_control]
+confidence = ["HIGH", "INFERENCE", "INFERENCE_FAILURE", "UNDEFINED"]
+disable = [
+    "missing-module-docstring",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-instance-attributes",
+    "too-many-locals",
+    "too-many-branches",
+    "too-many-statements",
+    "import-error",
+    "no-member",
+    "unused-argument",
+    "redefined-outer-name",
+]
+
+[tool.pylint.reports]
+output-format = "text"
+reports = false
+score = true
+
+[tool.pylint.refactoring]
+max-nested-blocks = 5
+never-returning-functions = ["sys.exit", "argparse.parse_error"]
+
+[tool.pylint.format]
+expected-line-ending-format = "LF"
+ignore-long-lines = "^\\s*(# )?<?https?://\\S+>?$"
+max-line-length = 88
+max-module-lines = 1000
+
+[tool.pylint.variables]
+allowed-redefined-builtins = ["id", "type", "filter", "map"]
+dummy-variables-rgx = "_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_"
+ignored-argument-names = "_.*|^ignored_|^unused_"
+
+[tool.pylint.basic]
+argument-naming-style = "snake_case"
+attr-naming-style = "snake_case"
+class-attribute-naming-style = "any"
+class-const-naming-style = "UPPER_CASE"
+class-naming-style = "PascalCase"
+const-naming-style = "UPPER_CASE"
+function-naming-style = "snake_case"
+method-naming-style = "snake_case"
+module-naming-style = "snake_case"
+variable-naming-style = "snake_case"
+
+good-names = ["i", "j", "k", "ex", "Run", "_", "id", "db", "app"]
+
+# ============================================================================
+# BANDIT (SECURITY)
+# ============================================================================
+[tool.bandit]
+exclude_dirs = ["tests", "venv", "build", "dist"]
+skips = ["B101", "B601"]  # Skip assert_used and shell_injection_process_wildcard
+severity = "medium"
+confidence = "medium"
+
+[tool.bandit.assert_used]
+skips = ["*_test.py", "test_*.py"]
+
+# ============================================================================
+# FLAKE8 (STYLE CHECKING)
+# ============================================================================
+[tool.flake8]
+max-line-length = 88
+extend-ignore = [
+    "E203",  # whitespace before ':'
+    "E501",  # line too long
+    "W503",  # line break before binary operator
+    "F401",  # imported but unused
+]
+max-complexity = 10
+select = ["E", "W", "F", "C"]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    "venv",
+    "migrations",
+    "*.pyc",
+    "*.egg-info",
+]
+per-file-ignores = [
+    "__init__.py:F401",
+    "tests/*:D",
+]
+
+# ============================================================================
+# RUFF (MODERN LINTER)
+# ============================================================================
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+    "N",  # pep8-naming
+    "UP", # pyupgrade
+    "YTT", # flake8-2020
+    "ANN", # flake8-annotations
+    "S",  # bandit
+    "BLE", # flake8-blind-except
+    "FBT", # flake8-boolean-trap
+    "A",  # flake8-builtins
+    "COM", # flake8-commas
+    "C4", # flake8-comprehensions
+    "DTZ", # flake8-datetimez
+    "T10", # flake8-debugger
+    "EM", # flake8-errmsg
+    "FA", # flake8-future-annotations
+    "ISC", # flake8-implicit-str-concat
+    "ICN", # flake8-import-conventions
+    "G",  # flake8-logging-format
+    "INP", # flake8-no-pep420
+    "PIE", # flake8-pie
+    "T20", # flake8-print
+    "PT", # flake8-pytest-style
+    "Q",  # flake8-quotes
+    "RSE", # flake8-raise
+    "RET", # flake8-return
+    "SLF", # flake8-self
+    "SIM", # flake8-simplify
+    "TID", # flake8-tidy-imports
+    "TCH", # flake8-type-checking
+    "ARG", # flake8-unused-arguments
+    "PTH", # flake8-use-pathlib
+    "ERA", # eradicate
+    "PD", # pandas-vet
+    "PGH", # pygrep-hooks
+    "PL", # pylint
+    "TRY", # tryceratops
+    "NPY", # numpy
+    "RUF", # ruff-specific rules
+]
+ignore = [
+    "ANN101", # missing-type-self
+    "ANN102", # missing-type-cls
+    "D",      # pydocstyle
+    "FBT003", # boolean-positional-value-in-function-call
+    "S101",   # assert
+    "S104",   # hardcoded-bind-all-interfaces
+    "S301",   # suspicious-pickle-usage
+    "PLR0913", # too-many-arguments
+    "PLR0915", # too-many-statements
+]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "migrations",
+]
+
+[tool.ruff.mccabe]
+max-complexity = 10
+
+[tool.ruff.isort]
+known-first-party = ["app"]
+
+[tool.ruff.flake8-pytest-style]
+fixture-parentheses = false
+mark-parentheses = false
+
+[tool.ruff.per-file-ignores]
+"tests/*" = ["S101", "PLR2004", "S105", "S106"]
+"__init__.py" = ["F401"]
+"migrations/*" = ["ALL"]
+
+# ============================================================================
+# SEMANTIC RELEASE (VERSION MANAGEMENT)
+# ============================================================================
+[tool.semantic_release]
+version_toml = "pyproject.toml:project.version"
+version_variable = "app/_version.py:__version__"
+build_command = "pip install build && python -m build"
+dist_path = "dist/"
+upload_to_pypi = false
+upload_to_release = true
+remove_dist = false
+major_on_zero = true
+changelog_file = "CHANGELOG.md"
+changelog_sections = "feature,fix,breaking,documentation,performance"
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = ["build", "chore", "ci", "docs", "feat", "fix", "perf", "style", "refactor", "test"]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
+
+# ============================================================================
+# COMMITIZEN (CONVENTIONAL COMMITS)
+# ============================================================================
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.1.0"
+tag_format = "v$version"
+version_files = [
+    "pyproject.toml:version",
+    "app/_version.py:__version__",
+]
+bump_message = "bump: version $current_version → $new_version"
+changelog_file = "CHANGELOG.md"
+changelog_incremental = true
+changelog_start_rev = "v0.1.0"
+
+# ============================================================================
+# TOWNCRIER (CHANGELOG MANAGEMENT)
+# ============================================================================
+[tool.towncrier]
+directory = "changes"
+filename = "CHANGELOG.md"
+start_string = "<!-- towncrier release notes start -->\n"
+underlines = ["", "", ""]
+template = "changes/template.md"
+title_format = "## [{version}] - {date}"
+issue_format = "[#{issue}](https://github.com/your-org/ecosistema-emprendimiento/issues/{issue})"
+
+[[tool.towncrier.type]]
+directory = "feature"
+name = "Features"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "bugfix"
+name = "Bug Fixes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "doc"
+name = "Documentation"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "removal"
+name = "Deprecations and Removals"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "misc"
+name = "Miscellaneous"
+showcontent = false
+
+# ============================================================================
+# CONFIGURATION SUMMARY
+# ============================================================================
+# This pyproject.toml file provides:
+# 
+# ✅ Modern Python packaging with PEP 517/518 compliance
+# ✅ Comprehensive project metadata and dependencies
+# ✅ Development tools configuration (black, isort, mypy, pytest, etc.)
+# ✅ Quality assurance tools (pylint, bandit, flake8, ruff)
+# ✅ Version management with setuptools-scm
+# ✅ Automated changelog generation
+# ✅ Entry points for CLI tools
+# ✅ Optional dependencies for different deployment scenarios
+# ✅ Comprehensive test configuration with coverage
+# ✅ Security scanning configuration
+# ✅ Modern linting with Ruff
+# ✅ Semantic versioning support
+# 
+# Installation commands:
+# - pip install -e .                    # Install package in development mode
+# - pip install -e .[dev]              # Install with development dependencies
+# - pip install -e .[all]              # Install with all optional dependencies
+# 
+# Tool commands:
+# - black .                            # Format code
+# - isort .                            # Sort imports
+# - mypy .                             # Type checking
+# - pytest                             # Run tests
+# - pylint app/                        # Lint code
+# - bandit -r app/                     # Security scan
+# - ruff check .                       # Modern linting
+# - ruff check . --fix                 # Auto-fix issues
+# 
+# Last updated: 2025-06-14
+# Compatible with: Python 3.11+, Flask 3.0+, Modern Python tooling
+# ============================================================================

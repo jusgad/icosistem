@@ -1,0 +1,706 @@
+# =============================================================================
+# Prometheus Configuration - Ecosistema de Emprendimiento
+# =============================================================================
+# 
+# Configuración completa de Prometheus para monitoreo integral que incluye:
+# - Métricas de aplicación Flask con métricas custom
+# - Monitoreo de infraestructura (PostgreSQL, Redis, Nginx)
+# - Métricas de sistema (CPU, memoria, disco, red)
+# - Monitoreo de contenedores Docker
+# - Health checks y disponibilidad de servicios
+# - Métricas de performance y business logic
+# - Alerting rules integradas
+# - Service discovery automático
+# - Configuraciones de retention y performance
+# - Seguridad y autenticación
+#
+# Versión: 1.0.0
+# Autor: Sistema de Emprendimiento
+# Compatible con: Prometheus 2.40+
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Global Configuration
+# -----------------------------------------------------------------------------
+global:
+  # Intervalo por defecto para scraping de métricas
+  scrape_interval: 15s
+  
+  # Timeout para operaciones de scraping
+  scrape_timeout: 10s
+  
+  # Intervalo para evaluación de reglas de alerting
+  evaluation_interval: 15s
+  
+  # Labels externos que se agregan a todas las métricas
+  external_labels:
+    cluster: 'ecosistema-emprendimiento'
+    environment: '${ENVIRONMENT:-production}'
+    region: '${REGION:-us-east-1}'
+    datacenter: '${DATACENTER:-primary}'
+    
+  # Query log file (opcional)
+  query_log_file: '/prometheus/logs/query.log'
+
+# -----------------------------------------------------------------------------
+# Alerting Configuration
+# -----------------------------------------------------------------------------
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - 'alertmanager:9093'
+      scheme: 'http'
+      timeout: 10s
+      api_version: 'v2'
+      
+      # Path prefix para Alertmanager
+      path_prefix: '/alertmanager'
+      
+      # Configuración HTTP básica
+      follow_redirects: true
+      enable_http2: true
+
+# -----------------------------------------------------------------------------
+# Rule Files - Archivos de Reglas de Alerting
+# -----------------------------------------------------------------------------
+rule_files:
+  # Reglas generales del sistema
+  - '/etc/prometheus/rules/general.yml'
+  
+  # Reglas específicas de la aplicación
+  - '/etc/prometheus/rules/application.yml'
+  
+  # Reglas de infraestructura
+  - '/etc/prometheus/rules/infrastructure.yml'
+  
+  # Reglas de base de datos
+  - '/etc/prometheus/rules/database.yml'
+  
+  # Reglas de Redis
+  - '/etc/prometheus/rules/redis.yml'
+  
+  # Reglas de Nginx
+  - '/etc/prometheus/rules/nginx.yml'
+  
+  # Reglas de Docker
+  - '/etc/prometheus/rules/docker.yml'
+  
+  # Reglas de negocio específicas
+  - '/etc/prometheus/rules/business.yml'
+
+# -----------------------------------------------------------------------------
+# Remote Write Configuration (para Grafana Cloud, etc.)
+# -----------------------------------------------------------------------------
+remote_write:
+  # Configuración para Grafana Cloud (opcional)
+  - url: '${GRAFANA_CLOUD_URL:-}'
+    basic_auth:
+      username: '${GRAFANA_CLOUD_USER:-}'
+      password: '${GRAFANA_CLOUD_API_KEY:-}'
+    queue_config:
+      max_samples_per_send: 1000
+      max_shards: 200
+      capacity: 2500
+    metadata_config:
+      send: true
+      send_interval: 30s
+    
+  # Configuración para almacenamiento de largo plazo (opcional)
+  - url: '${LONG_TERM_STORAGE_URL:-}'
+    remote_timeout: 30s
+    queue_config:
+      max_samples_per_send: 500
+      max_shards: 100
+
+# -----------------------------------------------------------------------------
+# Remote Read Configuration
+# -----------------------------------------------------------------------------
+remote_read:
+  # Configuración para queries de largo plazo
+  - url: '${LONG_TERM_STORAGE_READ_URL:-}'
+    remote_timeout: 1m
+    read_recent: true
+
+# -----------------------------------------------------------------------------
+# Storage Configuration
+# -----------------------------------------------------------------------------
+storage:
+  tsdb:
+    # Retención de datos (15 días por defecto)
+    retention.time: '${PROMETHEUS_RETENTION_TIME:-15d}'
+    
+    # Tamaño máximo de almacenamiento
+    retention.size: '${PROMETHEUS_RETENTION_SIZE:-10GB}'
+    
+    # Configuración de compactación
+    min_block_duration: 2h
+    max_block_duration: 25h
+    
+    # Configuración de WAL
+    wal_compression: true
+
+# -----------------------------------------------------------------------------
+# Scrape Configurations
+# -----------------------------------------------------------------------------
+scrape_configs:
+
+  # ---------------------------------------------------------------------------
+  # Prometheus Self-Monitoring
+  # ---------------------------------------------------------------------------
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    
+    # Métricas específicas a recopilar
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'prometheus_.*'
+        action: keep
+
+  # ---------------------------------------------------------------------------
+  # Aplicación Principal Flask
+  # ---------------------------------------------------------------------------
+  - job_name: 'ecosistema-app'
+    static_configs:
+      - targets: 
+        - 'app:8000'
+        - 'app2:8000'  # Si tienes múltiples instancias
+        - 'app3:8000'
+    
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    
+    # Labels adicionales para la aplicación
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - source_labels: [__address__]
+        regex: '([^:]+):.*'
+        target_label: hostname
+        replacement: '${1}'
+    
+    # Configuración específica para métricas de aplicación
+    metric_relabel_configs:
+      # Mantener solo métricas relevantes de la aplicación
+      - source_labels: [__name__]
+        regex: '(flask_.*|http_.*|python_.*|process_.*|ecosistema_.*)'
+        action: keep
+      
+      # Agregar labels de servicio
+      - target_label: service
+        replacement: 'ecosistema-app'
+      
+      # Normalizar nombres de endpoints
+      - source_labels: [endpoint]
+        regex: '/api/v1/(.*)'
+        target_label: api_version
+        replacement: 'v1'
+    
+    # Health check HTTP
+    static_configs:
+      - targets: ['app:8000']
+        labels:
+          service: 'ecosistema-app'
+          tier: 'application'
+          component: 'backend'
+
+  # ---------------------------------------------------------------------------
+  # Celery Workers
+  # ---------------------------------------------------------------------------
+  - job_name: 'celery-workers'
+    static_configs:
+      - targets:
+        - 'worker1:9540'
+        - 'worker2:9540'
+        - 'worker3:9540'
+        - 'worker4:9540'
+    
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 15s
+    
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - target_label: service
+        replacement: 'celery-worker'
+      - target_label: component
+        replacement: 'task-processor'
+    
+    # Métricas específicas de Celery
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: '(celery_.*|worker_.*|task_.*)'
+        action: keep
+
+  # ---------------------------------------------------------------------------
+  # Celery Beat Scheduler
+  # ---------------------------------------------------------------------------
+  - job_name: 'celery-beat'
+    static_configs:
+      - targets: ['beat:9541']
+    
+    metrics_path: '/metrics'
+    scrape_interval: 60s
+    scrape_timeout: 10s
+    
+    relabel_configs:
+      - target_label: service
+        replacement: 'celery-beat'
+      - target_label: component
+        replacement: 'scheduler'
+
+  # ---------------------------------------------------------------------------
+  # Flower Monitoring
+  # ---------------------------------------------------------------------------
+  - job_name: 'flower'
+    static_configs:
+      - targets: ['flower:5555']
+    
+    metrics_path: '/api/workers'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    
+    relabel_configs:
+      - target_label: service
+        replacement: 'flower'
+      - target_label: component
+        replacement: 'celery-monitoring'
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database
+  # ---------------------------------------------------------------------------
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 15s
+    
+    relabel_configs:
+      - target_label: service
+        replacement: 'postgresql'
+      - target_label: component
+        replacement: 'database'
+      - target_label: tier
+        replacement: 'data'
+    
+    # Métricas específicas de PostgreSQL
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: '(pg_.*|postgres_.*)'
+        action: keep
+      
+      # Agregar información de base de datos
+      - source_labels: [datname]
+        target_label: database
+      
+      # Filtrar bases de datos del sistema (opcional)
+      - source_labels: [datname]
+        regex: '(template.*|postgres)'
+        action: drop
+
+  # ---------------------------------------------------------------------------
+  # Redis Cache
+  # ---------------------------------------------------------------------------
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    
+    relabel_configs:
+      - target_label: service
+        replacement: 'redis'
+      - target_label: component
+        replacement: 'cache'
+      - target_label: tier
+        replacement: 'cache'
+    
+    # Métricas específicas de Redis
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: '(redis_.*)'
+        action: keep
+      
+      # Agregar información de instancia Redis
+      - source_labels: [addr]
+        target_label: redis_instance
+
+  # ---------------------------------------------------------------------------
+  # Nginx Web Server
+  # ---------------------------------------------------------------------------
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+    
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    
+    relabel_configs:
+      - target_label: service
+        replacement: 'nginx'
+      - target_label: component
+        replacement: 'reverse-proxy'
+      - target_label: tier
+        replacement: 'frontend'
+    
+    # Métricas específicas de Nginx
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: '(nginx_.*|http_.*)'
+        action: keep
+
+  # ---------------------------------------------------------------------------
+  # Node Exporter - Métricas del Sistema
+  # ---------------------------------------------------------------------------
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets:
+        - 'node-exporter:9100'
+        - 'app-node-exporter:9100'
+        - 'db-node-exporter:9100'
+    
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 15s
+    
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '([^-]+)-.*'
+        target_label: node_type
+        replacement: '${1}'
+      - target_label: service
+        replacement: 'node-exporter'
+      - target_label: component
+        replacement: 'system-metrics'
+    
+    # Filtrar métricas del sistema relevantes
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'node_(cpu|memory|disk|filesystem|network|load|up|boot_time).*'
+        action: keep
+
+  # ---------------------------------------------------------------------------
+  # Docker Metrics
+  # ---------------------------------------------------------------------------
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 15s
+    
+    relabel_configs:
+      - target_label: service
+        replacement: 'docker'
+      - target_label: component
+        replacement: 'container-metrics'
+    
+    # Métricas específicas de contenedores
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: '(container_.*)'
+        action: keep
+      
+      # Filtrar contenedores del sistema
+      - source_labels: [name]
+        regex: 'k8s_.*'
+        action: drop
+      
+      # Agregar información de servicio desde nombre del contenedor
+      - source_labels: [name]
+        regex: 'ecosistema-(.+)'
+        target_label: ecosistema_service
+        replacement: '${1}'
+
+  # ---------------------------------------------------------------------------
+  # Blackbox Exporter - Health Checks HTTP
+  # ---------------------------------------------------------------------------
+  - job_name: 'blackbox-http'
+    metrics_path: '/probe'
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - 'https://ecosistema.com'
+        - 'https://ecosistema.com/health'
+        - 'https://ecosistema.com/api/v1/health'
+        - 'http://app:8000/health'
+        - 'http://flower:5555'
+    
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 'blackbox-exporter:9115'
+      - target_label: service
+        replacement: 'blackbox'
+      - target_label: component
+        replacement: 'health-check'
+    
+    scrape_interval: 30s
+    scrape_timeout: 15s
+
+  # ---------------------------------------------------------------------------
+  # Blackbox Exporter - Health Checks TCP
+  # ---------------------------------------------------------------------------
+  - job_name: 'blackbox-tcp'
+    metrics_path: '/probe'
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+        - 'db:5432'
+        - 'redis:6379'
+        - 'app:8000'
+    
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 'blackbox-exporter:9115'
+      - target_label: service
+        replacement: 'blackbox'
+      - target_label: component
+        replacement: 'tcp-check'
+    
+    scrape_interval: 60s
+    scrape_timeout: 10s
+
+  # ---------------------------------------------------------------------------
+  # Custom Business Metrics
+  # ---------------------------------------------------------------------------
+  - job_name: 'business-metrics'
+    static_configs:
+      - targets: ['app:8000']
+    
+    metrics_path: '/metrics/business'
+    scrape_interval: 60s
+    scrape_timeout: 30s
+    
+    relabel_configs:
+      - target_label: service
+        replacement: 'business-metrics'
+      - target_label: component
+        replacement: 'kpi-tracking'
+    
+    # Filtrar solo métricas de negocio
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: '(ecosistema_.*|business_.*|user_.*|entrepreneur_.*|project_.*)'
+        action: keep
+
+  # ---------------------------------------------------------------------------
+  # Service Discovery - Docker Swarm (opcional)
+  # ---------------------------------------------------------------------------
+  - job_name: 'docker-swarm-services'
+    dockerswarm_sd_configs:
+      - host: 'unix:///var/run/docker.sock'
+        role: 'services'
+        port: 8080
+    
+    relabel_configs:
+      # Solo servicios con label prometheus.io/scrape=true
+      - source_labels: [__meta_dockerswarm_service_label_prometheus_io_scrape]
+        action: keep
+        regex: true
+      
+      # Configurar puerto desde label
+      - source_labels: [__meta_dockerswarm_service_label_prometheus_io_port]
+        action: replace
+        target_label: __address__
+        regex: (.+)
+        replacement: '__meta_dockerswarm_service_name:${1}'
+      
+      # Configurar path desde label
+      - source_labels: [__meta_dockerswarm_service_label_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      
+      # Agregar nombre del servicio
+      - source_labels: [__meta_dockerswarm_service_name]
+        action: replace
+        target_label: service
+
+  # ---------------------------------------------------------------------------
+  # Service Discovery - Kubernetes (si aplica)
+  # ---------------------------------------------------------------------------
+  - job_name: 'kubernetes-pods'
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names: ['ecosistema-emprendimiento']
+    
+    relabel_configs:
+      # Solo pods con annotation prometheus.io/scrape=true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      
+      # Configurar puerto desde annotation
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: ${1}:${2}
+        target_label: __address__
+      
+      # Configurar path desde annotation
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      
+      # Agregar labels de Kubernetes
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: kubernetes_namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: kubernetes_pod_name
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        action: replace
+        target_label: app
+
+# -----------------------------------------------------------------------------
+# Tracing Configuration (si usas Jaeger)
+# -----------------------------------------------------------------------------
+tracing:
+  endpoint: '${JAEGER_ENDPOINT:-jaeger:14268/api/traces}'
+  insecure: true
+  timeout: 5s
+  headers:
+    'X-Service-Name': 'prometheus'
+
+# =============================================================================
+# Configuraciones adicionales por ambiente
+# =============================================================================
+
+# Development specific targets (solo en desarrollo)
+scrape_configs_dev:
+  - job_name: 'mailhog'
+    static_configs:
+      - targets: ['mailhog:8025']
+    metrics_path: '/api/v1/messages'
+    scrape_interval: 60s
+    
+  - job_name: 'development-tools'
+    static_configs:
+      - targets: 
+        - 'pgadmin:5050'
+        - 'redis-commander:8081'
+    scrape_interval: 120s
+
+# =============================================================================
+# Ejemplos de configuración para diferentes escenarios
+# =============================================================================
+
+# Configuración para alta disponibilidad con múltiples instancias
+# scrape_configs:
+#   - job_name: 'ecosistema-app-ha'
+#     static_configs:
+#       - targets: 
+#         - 'app-1:8000'
+#         - 'app-2:8000' 
+#         - 'app-3:8000'
+#     scrape_interval: 15s
+#     params:
+#       'collect[]':
+#         - 'up'
+#         - 'http_requests_total'
+#         - 'flask_request_duration_seconds'
+
+# Configuración para métricas custom de negocio
+# - job_name: 'business-kpis'
+#   static_configs:
+#     - targets: ['app:8000']
+#   metrics_path: '/metrics/kpis'
+#   scrape_interval: 300s  # 5 minutos para KPIs
+#   scrape_timeout: 60s
+#   metric_relabel_configs:
+#     - source_labels: [__name__]
+#       regex: '(monthly_revenue|user_acquisition|project_completion_rate)'
+#       action: keep
+
+# Configuración para federación con otros Prometheus
+# - job_name: 'federated-prometheus'
+#   scrape_interval: 15s
+#   honor_labels: true
+#   metrics_path: '/federate'
+#   params:
+#     'match[]':
+#       - '{job="ecosistema-app"}'
+#       - '{job="postgresql"}'
+#   static_configs:
+#     - targets:
+#       - 'prometheus-region-1:9090'
+#       - 'prometheus-region-2:9090'
+
+# =============================================================================
+# Configuraciones de optimización para producción
+# =============================================================================
+
+# Para entornos de alto volumen, considera:
+# global:
+#   scrape_interval: 30s        # Intervalo más largo para reducir carga
+#   evaluation_interval: 30s    # Evaluación menos frecuente
+#   external_labels:
+#     replica: '${PROMETHEUS_REPLICA_ID:-1}'  # Para alta disponibilidad
+
+# storage:
+#   tsdb:
+#     retention.time: '30d'      # Retención más larga para análisis
+#     retention.size: '50GB'     # Más espacio para datos históricos
+#     min_block_duration: 2h
+#     max_block_duration: 25h
+
+# =============================================================================
+# Notas de configuración y mejores prácticas
+# =============================================================================
+
+# Variables de entorno utilizadas:
+# - ENVIRONMENT: Entorno (development, staging, production)
+# - REGION: Región geográfica
+# - DATACENTER: Centro de datos
+# - PROMETHEUS_RETENTION_TIME: Tiempo de retención de datos
+# - PROMETHEUS_RETENTION_SIZE: Tamaño máximo de almacenamiento
+# - GRAFANA_CLOUD_URL: URL de Grafana Cloud para remote write
+# - GRAFANA_CLOUD_USER: Usuario de Grafana Cloud
+# - GRAFANA_CLOUD_API_KEY: API key de Grafana Cloud
+# - JAEGER_ENDPOINT: Endpoint de Jaeger para tracing
+
+# Directorios requeridos:
+# - /prometheus/data: Datos de Prometheus
+# - /prometheus/logs: Logs de Prometheus
+# - /etc/prometheus/rules: Archivos de reglas de alerting
+
+# Para optimizar performance:
+# 1. Ajustar scrape_interval según la criticidad del servicio
+# 2. Usar metric_relabel_configs para filtrar métricas innecesarias
+# 3. Configurar retention apropiada según el uso de almacenamiento
+# 4. Usar external_labels para identificar origen de métricas
+# 5. Implementar service discovery para entornos dinámicos
+
+# Para seguridad:
+# 1. Configurar TLS para conexiones remotas
+# 2. Usar basic_auth o bearer_token para autenticación
+# 3. Restringir acceso a métricas sensibles
+# 4. Configurar firewalls para puertos de métricas
+# 5. Auditar acceso a datos de monitoreo
+
+# =============================================================================

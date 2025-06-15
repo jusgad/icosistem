@@ -1,0 +1,835 @@
+# =============================================================================
+# Docker Compose Override para Producción - Ecosistema de Emprendimiento
+# =============================================================================
+# 
+# Override file para configuraciones específicas de producción:
+# - SSL/TLS y seguridad mejorada
+# - Monitoreo y observabilidad completa
+# - Backup automático y alta disponibilidad
+# - Escalabilidad y balanceadores de carga
+# - Logging y auditoria para producción
+# - Secrets management
+# - Performance optimizations
+# - Health checks robustos
+#
+# Uso:
+#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml --profile all up -d
+#
+# Autor: Sistema de Emprendimiento
+# Version: 1.0.0
+# =============================================================================
+
+version: '3.8'
+
+# =============================================================================
+# SERVICIOS - OVERRIDES PARA PRODUCCIÓN
+# =============================================================================
+services:
+
+  # ---------------------------------------------------------------------------
+  # Nginx - Configuración de Producción con SSL
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:1.25-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/prod/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/prod/conf.d:/etc/nginx/conf.d:ro
+      - ./docker/nginx/prod/ssl:/etc/nginx/ssl:ro
+      - ./docker/nginx/prod/dhparam.pem:/etc/nginx/dhparam.pem:ro
+      - static_files:/var/www/static:ro
+      - media_files:/var/www/media:ro
+      - nginx_cache:/var/cache/nginx
+      - nginx_logs:/var/log/nginx
+      - certbot_challenges:/var/www/certbot:ro
+      - ssl_certificates:/etc/letsencrypt:ro
+    environment:
+      - NGINX_WORKER_PROCESSES=auto
+      - NGINX_WORKER_CONNECTIONS=4096
+      - NGINX_KEEPALIVE_TIMEOUT=65
+      - NGINX_CLIENT_MAX_BODY_SIZE=50m
+      - NGINX_GZIP_COMP_LEVEL=6
+      - NGINX_SSL_PROTOCOLS=TLSv1.2 TLSv1.3
+      - NGINX_SSL_CIPHERS=ECDHE+AESGCM:ECDHE+CHACHA20:DHE+AESGCM:DHE+CHACHA20:!aNULL:!MD5:!DSS
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=9113"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+        labels: "service=nginx,environment=production,tier=frontend"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "https://localhost/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # Aplicación Principal - Configuración de Producción
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.prod
+      args:
+        - BUILD_DATE=${BUILD_DATE}
+        - VERSION=${VERSION}
+        - GIT_COMMIT=${GIT_COMMIT}
+    restart: always
+    # Remover montaje de código fuente para producción
+    volumes:
+      - media_files:/app/uploads
+      - app_logs:/app/logs
+      - app_backups:/app/backups
+      - app_temp:/app/temp
+    environment:
+      # Flask Production
+      - FLASK_ENV=production
+      - FLASK_DEBUG=0
+      - TESTING=false
+      
+      # Security
+      - SECRET_KEY_FILE=/run/secrets/flask_secret_key
+      - WTF_CSRF_ENABLED=true
+      - SESSION_COOKIE_SECURE=true
+      - SESSION_COOKIE_HTTPONLY=true
+      - SESSION_COOKIE_SAMESITE=Strict
+      - PERMANENT_SESSION_LIFETIME=3600
+      
+      # Performance
+      - WEB_CONCURRENCY=${PROD_WEB_CONCURRENCY:-8}
+      - WORKER_TIMEOUT=${PROD_WORKER_TIMEOUT:-180}
+      - WORKER_CLASS=gevent
+      - MAX_WORKERS=${PROD_MAX_WORKERS:-16}
+      - WORKER_CONNECTIONS=${PROD_WORKER_CONNECTIONS:-1000}
+      - KEEP_ALIVE=${PROD_KEEP_ALIVE:-2}
+      - MAX_REQUESTS=${PROD_MAX_REQUESTS:-1000}
+      - MAX_REQUESTS_JITTER=${PROD_MAX_REQUESTS_JITTER:-100}
+      
+      # Database Production
+      - SQLALCHEMY_POOL_SIZE=${DB_POOL_SIZE:-20}
+      - SQLALCHEMY_POOL_TIMEOUT=${DB_POOL_TIMEOUT:-30}
+      - SQLALCHEMY_POOL_RECYCLE=${DB_POOL_RECYCLE:-3600}
+      - SQLALCHEMY_MAX_OVERFLOW=${DB_MAX_OVERFLOW:-30}
+      - SQLALCHEMY_POOL_PRE_PING=true
+      - SQLALCHEMY_ENGINE_OPTIONS={"pool_pre_ping":true,"pool_recycle":3600,"echo":false}
+      
+      # Cache Configuration
+      - CACHE_TYPE=RedisCache
+      - CACHE_DEFAULT_TIMEOUT=${CACHE_DEFAULT_TIMEOUT:-3600}
+      - CACHE_KEY_PREFIX=ecosistema_prod
+      
+      # Rate Limiting
+      - RATELIMIT_ENABLED=true
+      - RATELIMIT_STORAGE_URL=redis://redis:6379/3
+      - RATELIMIT_DEFAULT=1000 per hour
+      
+      # Logging Production
+      - LOG_LEVEL=info
+      - LOG_FORMAT=json
+      - LOG_TO_STDOUT=true
+      - ENABLE_ACCESS_LOG=true
+      - ACCESS_LOG_FORMAT=combined
+      
+      # Monitoring
+      - METRICS_ENABLED=true
+      - HEALTH_CHECK_ENABLED=true
+      - PROMETHEUS_METRICS_ENABLED=true
+      
+      # Email Production
+      - MAIL_SUPPRESS_SEND=false
+      - MAIL_MAX_EMAILS=${MAIL_MAX_EMAILS:-100}
+      
+      # File Upload Security
+      - UPLOAD_EXTENSIONS=txt,pdf,png,jpg,jpeg,gif,doc,docx,xls,xlsx
+      - MAX_CONTENT_LENGTH=${PROD_MAX_CONTENT_LENGTH:-52428800}  # 50MB
+      - UPLOAD_VIRUS_SCAN_ENABLED=true
+      
+      # SSL/TLS
+      - SSL_REDIRECT=true
+      - PREFERRED_URL_SCHEME=https
+      
+      # CORS Production
+      - CORS_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      
+    secrets:
+      - flask_secret_key
+      - db_password
+      - redis_password
+      - google_client_secret
+      - mail_password
+    deploy:
+      replicas: ${APP_REPLICAS:-3}
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: start-first
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=8000"
+      - "prometheus.io/path=/metrics"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service=app,environment=production,tier=backend"
+    healthcheck:
+      test: ["CMD", "python", "/app/scripts/health_check.py", "--quiet"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 120s
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL - Configuración de Producción
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:15.4-alpine
+    restart: always
+    # Remover puerto expuesto para seguridad
+    ports: []
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - postgres_config:/etc/postgresql
+      - postgres_logs:/var/log/postgresql
+      - postgres_backups:/backups
+      - ./docker/postgres/prod/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./docker/postgres/prod/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./docker/postgres/prod/init-prod.sql:/docker-entrypoint-initdb.d/init-prod.sql:ro
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=es_ES.UTF-8 --lc-ctype=es_ES.UTF-8 --data-checksums
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_HOST_AUTH_METHOD=md5
+      - POSTGRES_MAX_CONNECTIONS=${DB_MAX_CONNECTIONS:-200}
+      - POSTGRES_SHARED_BUFFERS=${DB_SHARED_BUFFERS:-256MB}
+      - POSTGRES_EFFECTIVE_CACHE_SIZE=${DB_EFFECTIVE_CACHE_SIZE:-1GB}
+    command: |
+      postgres 
+      -c config_file=/etc/postgresql/postgresql.conf
+      -c hba_file=/etc/postgresql/pg_hba.conf
+      -c log_statement=mod
+      -c log_min_duration_statement=1000
+      -c log_checkpoints=on
+      -c log_connections=on
+      -c log_disconnections=on
+      -c log_lock_waits=on
+    secrets:
+      - db_password
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+      restart_policy:
+        condition: on-failure
+        delay: 30s
+        max_attempts: 3
+        window: 300s
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=9187"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+        labels: "service=database,environment=production,tier=data"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} && psql -U ${DB_USER} -d ${DB_NAME} -c 'SELECT 1'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ---------------------------------------------------------------------------
+  # Redis - Configuración de Producción
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7.2-alpine
+    restart: always
+    # Remover puerto expuesto para seguridad
+    ports: []
+    volumes:
+      - redis_data:/data
+      - redis_logs:/var/log/redis
+      - ./docker/redis/prod/redis.conf:/etc/redis/redis.conf:ro
+    command: redis-server /etc/redis/redis.conf --requirepass ${REDIS_PASSWORD}
+    environment:
+      - REDIS_PASSWORD_FILE=/run/secrets/redis_password
+      - REDIS_MAXMEMORY=${REDIS_MAXMEMORY:-2gb}
+      - REDIS_MAXMEMORY_POLICY=${REDIS_MAXMEMORY_POLICY:-allkeys-lru}
+      - REDIS_SAVE_INTERVAL=${REDIS_SAVE_INTERVAL:-300 10}
+    secrets:
+      - redis_password
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=9121"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+        labels: "service=redis,environment=production,tier=cache"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # Celery Worker - Configuración de Producción
+  # ---------------------------------------------------------------------------
+  worker:
+    restart: always
+    # Remover montaje de código fuente
+    volumes:
+      - media_files:/app/uploads
+      - worker_logs:/app/logs
+      - worker_temp:/app/temp
+    environment:
+      - C_FORCE_ROOT=1
+      - CELERY_LOG_LEVEL=info
+      - CELERY_CONCURRENCY=${PROD_CELERY_CONCURRENCY:-8}
+      - WORKER_PREFETCH_MULTIPLIER=${PROD_WORKER_PREFETCH_MULTIPLIER:-1}
+      - WORKER_MAX_TASKS_PER_CHILD=${PROD_MAX_TASKS_PER_CHILD:-1000}
+      - WORKER_MAX_MEMORY_PER_CHILD=${PROD_MAX_MEMORY_PER_CHILD:-200000}
+      - CELERY_TASK_SOFT_TIME_LIMIT=${CELERY_TASK_SOFT_TIME_LIMIT:-300}
+      - CELERY_TASK_TIME_LIMIT=${CELERY_TASK_TIME_LIMIT:-600}
+      - CELERY_WORKER_HIJACK_ROOT_LOGGER=false
+      - CELERY_WORKER_LOG_FORMAT=[%(asctime)s: %(levelname)s/%(processName)s] %(message)s
+      - CELERY_TASK_LOG_FORMAT=[%(asctime)s: %(levelname)s/%(processName)s][%(task_name)s(%(task_id)s)] %(message)s
+    command: |
+      celery -A celery_worker.celery worker 
+      --loglevel=info 
+      --concurrency=${PROD_CELERY_CONCURRENCY:-8}
+      --prefetch-multiplier=${PROD_WORKER_PREFETCH_MULTIPLIER:-1}
+      --max-tasks-per-child=${PROD_MAX_TASKS_PER_CHILD:-1000}
+      --max-memory-per-child=${PROD_MAX_MEMORY_PER_CHILD:-200000}
+      --time-limit=${CELERY_TASK_TIME_LIMIT:-600}
+      --soft-time-limit=${CELERY_TASK_SOFT_TIME_LIMIT:-300}
+      --without-gossip
+      --without-mingle
+      --without-heartbeat
+    secrets:
+      - db_password
+      - redis_password
+    deploy:
+      replicas: ${WORKER_REPLICAS:-4}
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+        delay: 30s
+        max_attempts: 5
+        window: 300s
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=9540"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service=worker,environment=production,tier=processing"
+    healthcheck:
+      test: ["CMD", "celery", "-A", "celery_worker.celery", "inspect", "ping"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 120s
+
+  # ---------------------------------------------------------------------------
+  # Celery Beat - Configuración de Producción
+  # ---------------------------------------------------------------------------
+  beat:
+    restart: always
+    volumes:
+      - beat_schedule:/app/celerybeat-schedule
+      - beat_logs:/app/logs
+    environment:
+      - C_FORCE_ROOT=1
+      - CELERY_LOG_LEVEL=info
+      - CELERY_BEAT_LOG_LEVEL=info
+      - CELERY_BEAT_MAX_LOOP_INTERVAL=300
+    command: |
+      celery -A celery_worker.celery beat 
+      --loglevel=info 
+      --schedule=/app/celerybeat-schedule/celerybeat-schedule 
+      --pidfile=/app/celerybeat-schedule/celerybeat.pid
+      --max-interval=300
+    secrets:
+      - db_password
+      - redis_password
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+        delay: 30s
+        max_attempts: 3
+        window: 300s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+        labels: "service=beat,environment=production,tier=scheduler"
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /app/celerybeat-schedule/celerybeat.pid && kill -0 $(cat /app/celerybeat-schedule/celerybeat.pid)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # ---------------------------------------------------------------------------
+  # Flower - Configuración de Producción
+  # ---------------------------------------------------------------------------
+  flower:
+    restart: always
+    # Remover puerto expuesto (acceso via nginx)
+    ports: []
+    volumes:
+      - flower_data:/app/flower
+    environment:
+      - FLOWER_BASIC_AUTH_FILE=/run/secrets/flower_auth
+      - FLOWER_URL_PREFIX=/flower
+      - FLOWER_PORT=5555
+      - FLOWER_ADDRESS=0.0.0.0
+      - FLOWER_MAX_WORKERS=5000
+      - FLOWER_MAX_TASKS=10000
+      - FLOWER_ENABLE_EVENTS=true
+      - FLOWER_AUTO_REFRESH=true
+      - FLOWER_PERSISTENT=true
+      - FLOWER_DB=/app/flower/flower.db
+    command: |
+      celery -A celery_worker.celery flower 
+      --port=5555 
+      --address=0.0.0.0 
+      --url_prefix=/flower
+      --max_workers=5000
+      --max_tasks=10000
+      --persistent=true
+      --db=/app/flower/flower.db
+    secrets:
+      - flower_auth
+      - redis_password
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+        delay: 30s
+        max_attempts: 3
+        window: 120s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=flower,environment=production,tier=monitoring"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5555/"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ---------------------------------------------------------------------------
+  # Servicios de Producción Adicionales
+  # ---------------------------------------------------------------------------
+
+  # Certbot para SSL automático
+  certbot:
+    image: certbot/certbot:v2.7.4
+    container_name: ecosistema-certbot
+    restart: unless-stopped
+    volumes:
+      - ssl_certificates:/etc/letsencrypt
+      - certbot_challenges:/var/www/certbot
+      - certbot_logs:/var/log/letsencrypt
+    environment:
+      - CERTBOT_EMAIL=${SSL_EMAIL}
+      - CERTBOT_DOMAIN=${DOMAIN}
+    command: certonly --webroot --webroot-path=/var/www/certbot --email ${SSL_EMAIL} --agree-tos --no-eff-email --force-renewal -d ${DOMAIN}
+    profiles:
+      - ssl
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Nginx Prometheus Exporter
+  nginx_exporter:
+    image: nginx/nginx-prometheus-exporter:0.11.0
+    container_name: ecosistema-nginx-exporter
+    restart: unless-stopped
+    ports:
+      - "9113:9113"
+    environment:
+      - SCRAPE_URI=http://nginx:8080/nginx_status
+      - TELEMETRY_PATH=/metrics
+      - TELEMETRY_ADDRESS=0.0.0.0:9113
+    depends_on:
+      - nginx
+    networks:
+      - backend
+    profiles:
+      - monitoring
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=9113"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  # PostgreSQL Backup Service
+  postgres_backup:
+    image: prodrigestivill/postgres-backup-local:15
+    container_name: ecosistema-postgres-backup
+    restart: unless-stopped
+    volumes:
+      - postgres_backups:/backups
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_EXTRA_OPTS=-Z6 --schema=public --blobs
+      - SCHEDULE=@daily
+      - BACKUP_KEEP_DAYS=30
+      - BACKUP_KEEP_WEEKS=12
+      - BACKUP_KEEP_MONTHS=6
+      - HEALTHCHECK_PORT=8080
+    secrets:
+      - db_password
+    depends_on:
+      - db
+    networks:
+      - backend
+    profiles:
+      - backup
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=8080"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
+  # Log Aggregator (Promtail para Loki)
+  promtail:
+    image: grafana/promtail:2.9.2
+    container_name: ecosistema-promtail
+    restart: unless-stopped
+    volumes:
+      - app_logs:/app/logs:ro
+      - nginx_logs:/nginx/logs:ro
+      - postgres_logs:/postgres/logs:ro
+      - worker_logs:/worker/logs:ro
+      - ./docker/promtail/config.yml:/etc/promtail/config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - LOKI_URL=${LOKI_URL:-http://loki:3100}
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - backend
+    profiles:
+      - logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Redis Sentinel para Alta Disponibilidad
+  redis_sentinel:
+    image: redis:7.2-alpine
+    container_name: ecosistema-redis-sentinel
+    restart: unless-stopped
+    volumes:
+      - ./docker/redis/sentinel.conf:/etc/redis/sentinel.conf:ro
+      - sentinel_data:/data
+    command: redis-sentinel /etc/redis/sentinel.conf
+    environment:
+      - REDIS_MASTER_NAME=ecosistema-master
+      - REDIS_MASTER_HOST=redis
+      - REDIS_MASTER_PORT=6379
+    depends_on:
+      - redis
+    networks:
+      - backend
+    profiles:
+      - ha
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  # Application Performance Monitoring
+  apm_server:
+    image: docker.elastic.co/apm/apm-server:8.10.4
+    container_name: ecosistema-apm-server
+    restart: unless-stopped
+    volumes:
+      - ./docker/apm/apm-server.yml:/usr/share/apm-server/apm-server.yml:ro
+    environment:
+      - ELASTICSEARCH_HOSTS=${ELASTICSEARCH_HOSTS:-http://elasticsearch:9200}
+    networks:
+      - backend
+    profiles:
+      - apm
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# =============================================================================
+# SECRETS PARA PRODUCCIÓN
+# =============================================================================
+secrets:
+  flask_secret_key:
+    external: true
+    name: ecosistema_flask_secret_key_v1
+  
+  db_password:
+    external: true
+    name: ecosistema_db_password_v1
+  
+  redis_password:
+    external: true
+    name: ecosistema_redis_password_v1
+  
+  google_client_secret:
+    external: true
+    name: ecosistema_google_client_secret_v1
+  
+  mail_password:
+    external: true
+    name: ecosistema_mail_password_v1
+  
+  flower_auth:
+    external: true
+    name: ecosistema_flower_auth_v1
+
+# =============================================================================
+# VOLUMES ADICIONALES PARA PRODUCCIÓN
+# =============================================================================
+volumes:
+  # SSL/TLS
+  ssl_certificates:
+    driver: local
+    name: ecosistema-ssl-certificates
+    
+  certbot_challenges:
+    driver: local
+    name: ecosistema-certbot-challenges
+    
+  certbot_logs:
+    driver: local
+    name: ecosistema-certbot-logs
+  
+  # Cache
+  nginx_cache:
+    driver: local
+    name: ecosistema-nginx-cache
+  
+  # Configuración
+  postgres_config:
+    driver: local
+    name: ecosistema-postgres-config
+  
+  # Backups
+  postgres_backups:
+    driver: local
+    name: ecosistema-postgres-backups
+    driver_opts:
+      type: nfs
+      o: addr=${NFS_SERVER},rw,noatime,rsize=8192,wsize=8192,tcp,timeo=14
+      device: ":${NFS_BACKUP_PATH}"
+  
+  # Temporal
+  app_temp:
+    driver: local
+    name: ecosistema-app-temp
+    
+  worker_temp:
+    driver: local
+    name: ecosistema-worker-temp
+  
+  # Sentinel
+  sentinel_data:
+    driver: local
+    name: ecosistema-sentinel-data
+
+# =============================================================================
+# CONFIGURACIÓN DE RED PARA PRODUCCIÓN
+# =============================================================================
+networks:
+  frontend:
+    driver: overlay
+    name: ecosistema-frontend-prod
+    attachable: true
+    driver_opts:
+      encrypted: "true"
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+  
+  backend:
+    driver: overlay
+    name: ecosistema-backend-prod
+    internal: true
+    driver_opts:
+      encrypted: "true"
+    ipam:
+      config:
+        - subnet: 172.31.0.0/24
+
+# =============================================================================
+# CONFIGURACIÓN DE DESPLIEGUE
+# =============================================================================
+configs:
+  nginx_prod_config:
+    external: true
+    name: ecosistema_nginx_config_v1
+  
+  postgres_prod_config:
+    external: true
+    name: ecosistema_postgres_config_v1
+  
+  redis_prod_config:
+    external: true
+    name: ecosistema_redis_config_v1
+
+# =============================================================================
+# INSTRUCCIONES DE USO PARA PRODUCCIÓN
+# =============================================================================
+#
+# 1. Crear secrets antes del despliegue:
+#    echo "your-secret-key" | docker secret create ecosistema_flask_secret_key_v1 -
+#    echo "secure-db-password" | docker secret create ecosistema_db_password_v1 -
+#    echo "redis-password" | docker secret create ecosistema_redis_password_v1 -
+#    echo "google-secret" | docker secret create ecosistema_google_client_secret_v1 -
+#    echo "mail-password" | docker secret create ecosistema_mail_password_v1 -
+#    echo "admin:password" | docker secret create ecosistema_flower_auth_v1 -
+#
+# 2. Configurar variables de entorno en .env.prod:
+#    ENVIRONMENT=production
+#    DOMAIN=yourdomain.com
+#    SSL_EMAIL=admin@yourdomain.com
+#    DB_NAME=ecosistema_prod
+#    DB_USER=ecosistema_user
+#    
+# 3. Desplegar en producción:
+#    docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# 4. Activar servicios opcionales:
+#    # SSL automático
+#    docker-compose -f docker-compose.yml -f docker-compose.prod.yml --profile ssl up -d
+#    
+#    # Monitoreo completo
+#    docker-compose -f docker-compose.yml -f docker-compose.prod.yml --profile monitoring up -d
+#    
+#    # Backups automáticos
+#    docker-compose -f docker-compose.yml -f docker-compose.prod.yml --profile backup up -d
+#    
+#    # Alta disponibilidad
+#    docker-compose -f docker-compose.yml -f docker-compose.prod.yml --profile ha up -d
+#    
+#    # Todo junto
+#    docker-compose -f docker-compose.yml -f docker-compose.prod.yml --profile all up -d
+#
+# 5. Verificar despliegue:
+#    docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps
+#    docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs -f
+#
+# 6. Escalado dinámico:
+#    docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --scale app=5 --scale worker=8
+#
+# =============================================================================

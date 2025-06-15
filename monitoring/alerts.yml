@@ -1,0 +1,1302 @@
+# =============================================================================
+# Prometheus Alerting Rules - Ecosistema de Emprendimiento
+# =============================================================================
+# 
+# Configuración completa de alertas para monitoreo integral que incluye:
+# - Alertas de aplicación Flask y APIs
+# - Monitoreo de infraestructura crítica
+# - Alertas de base de datos PostgreSQL
+# - Monitoreo de cache Redis
+# - Alertas de Celery workers y queues
+# - Monitoreo de Nginx y conectividad
+# - Alertas de métricas de negocio
+# - Alertas de seguridad y performance
+# - Alertas de recursos del sistema
+# - Configuraciones por severidad y escalamiento
+#
+# Severidades:
+# - critical: Problemas que requieren intervención inmediata
+# - warning: Problemas que requieren atención pero no son críticos
+# - info: Información para awareness, no requiere acción inmediata
+#
+# Versión: 1.0.0
+# Autor: Sistema de Emprendimiento
+# Compatible con: Prometheus 2.40+, AlertManager 0.25+
+# =============================================================================
+
+groups:
+  # ---------------------------------------------------------------------------
+  # ALERTAS DE APLICACIÓN Y SERVICIOS CRÍTICOS
+  # ---------------------------------------------------------------------------
+  - name: application.rules
+    interval: 30s
+    rules:
+      # Servicio Down - Crítico
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+          service: "{{ $labels.job }}"
+          environment: "{{ $labels.environment }}"
+        annotations:
+          summary: "🚨 Servicio {{ $labels.job }} está DOWN"
+          description: |
+            El servicio {{ $labels.job }} en la instancia {{ $labels.instance }} 
+            ha estado inaccesible por más de 1 minuto.
+            
+            Instancia: {{ $labels.instance }}
+            Job: {{ $labels.job }}
+            Entorno: {{ $labels.environment }}
+            
+            Acciones recomendadas:
+            1. Verificar logs del servicio
+            2. Revisar conectividad de red
+            3. Verificar recursos del sistema
+            4. Reiniciar servicio si es necesario
+          dashboard: "http://grafana:3000/d/ecosistema-emprendimiento-main"
+          runbook: "https://docs.ecosistema.com/runbooks/service-down"
+
+      # Rate de Requests HTTP Alto
+      - alert: HighHTTPRequestRate
+        expr: rate(flask_http_request_total{job="ecosistema-app"}[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+          service: app
+          endpoint: "{{ $labels.endpoint }}"
+        annotations:
+          summary: "📊 Rate de requests HTTP alto en {{ $labels.endpoint }}"
+          description: |
+            El endpoint {{ $labels.endpoint }} está recibiendo {{ $value }} requests/sec,
+            lo cual está por encima del umbral normal de 100 req/sec.
+            
+            Instancia: {{ $labels.instance }}
+            Endpoint: {{ $labels.endpoint }}
+            Rate actual: {{ $value | humanize }} req/sec
+            
+            Posibles causas:
+            - Pico de tráfico legítimo
+            - Ataque DDoS
+            - Loop infinito en cliente
+            - Bot malicioso
+            
+            Verificar logs de Nginx y aplicación.
+
+      # Tasa de Errores HTTP Alta
+      - alert: HighHTTPErrorRate
+        expr: |
+          (
+            rate(flask_http_request_total{status=~"5..", job="ecosistema-app"}[5m]) /
+            rate(flask_http_request_total{job="ecosistema-app"}[5m])
+          ) * 100 > 5
+        for: 3m
+        labels:
+          severity: critical
+          team: backend
+          service: app
+          endpoint: "{{ $labels.endpoint }}"
+        annotations:
+          summary: "🚨 Tasa de errores HTTP alta en {{ $labels.endpoint }}"
+          description: |
+            El endpoint {{ $labels.endpoint }} tiene una tasa de errores 5xx del {{ $value }}%,
+            lo cual está por encima del umbral crítico del 5%.
+            
+            Instancia: {{ $labels.instance }}
+            Endpoint: {{ $labels.endpoint }}
+            Tasa de error: {{ $value | humanizePercentage }}
+            
+            Acciones inmediatas:
+            1. Revisar logs de aplicación
+            2. Verificar conectividad a BD y Redis
+            3. Revisar recursos del sistema
+            4. Considerar fallback o rollback
+
+      # Latencia Alta de Requests
+      - alert: HighRequestLatency
+        expr: |
+          histogram_quantile(0.95, 
+            rate(flask_request_duration_seconds_bucket{job="ecosistema-app"}[5m])
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+          service: app
+          endpoint: "{{ $labels.endpoint }}"
+        annotations:
+          summary: "⏱️ Latencia alta en {{ $labels.endpoint }}"
+          description: |
+            El percentil 95 de latencia para {{ $labels.endpoint }} es {{ $value }}s,
+            lo cual está por encima del umbral de 2 segundos.
+            
+            Instancia: {{ $labels.instance }}
+            Endpoint: {{ $labels.endpoint }}
+            P95 latencia: {{ $value | humanizeDuration }}
+            
+            Posibles causas:
+            - Queries lentas a base de datos
+            - Procesamiento CPU intensivo
+            - Llamadas externas lentas
+            - Falta de recursos
+
+      # Uso Alto de Memoria Python
+      - alert: HighPythonMemoryUsage
+        expr: process_resident_memory_bytes{job="ecosistema-app"} / 1024 / 1024 > 1024
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+          service: app
+        annotations:
+          summary: "🧠 Uso alto de memoria en aplicación Python"
+          description: |
+            La aplicación Python está usando {{ $value }}MB de memoria,
+            lo cual está por encima del umbral de 1GB.
+            
+            Instancia: {{ $labels.instance }}
+            Memoria actual: {{ $value | humanize }}MB
+            
+            Verificar:
+            - Memory leaks en código
+            - Crecimiento de estructuras de datos
+            - Garbage collection
+            - Configuración de workers
+
+      # Application Startup Lento
+      - alert: SlowApplicationStartup
+        expr: time() - process_start_time_seconds{job="ecosistema-app"} < 300 and on(instance) rate(flask_http_request_total[1m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+          service: app
+        annotations:
+          summary: "🐌 Aplicación tardando en inicializar"
+          description: |
+            La aplicación en {{ $labels.instance }} se reinició hace {{ $value | humanizeDuration }}
+            pero aún no está sirviendo tráfico.
+            
+            Verificar:
+            - Logs de inicialización
+            - Conectividad a dependencias
+            - Health checks
+            - Configuración de timeouts
+
+  # ---------------------------------------------------------------------------
+  # ALERTAS DE BASE DE DATOS POSTGRESQL
+  # ---------------------------------------------------------------------------
+  - name: postgresql.rules
+    interval: 30s
+    rules:
+      # PostgreSQL Down
+      - alert: PostgreSQLDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: database
+          service: postgresql
+        annotations:
+          summary: "🚨 PostgreSQL está DOWN"
+          description: |
+            La base de datos PostgreSQL no está respondiendo.
+            
+            Instancia: {{ $labels.instance }}
+            
+            Acciones críticas:
+            1. Verificar proceso PostgreSQL
+            2. Revisar logs de PostgreSQL
+            3. Verificar espacio en disco
+            4. Verificar memoria disponible
+            5. Activar procedimiento de recuperación
+
+      # Conexiones PostgreSQL Altas
+      - alert: PostgreSQLHighConnections
+        expr: |
+          (
+            pg_stat_database_numbackends{datname!~"template.*|postgres"} /
+            pg_settings_max_connections
+          ) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: database
+          service: postgresql
+          database: "{{ $labels.datname }}"
+        annotations:
+          summary: "🔗 Conexiones PostgreSQL altas en {{ $labels.datname }}"
+          description: |
+            La base de datos {{ $labels.datname }} está usando {{ $value }}% 
+            de las conexiones máximas permitidas.
+            
+            Base de datos: {{ $labels.datname }}
+            Uso actual: {{ $value | humanizePercentage }}
+            
+            Verificar:
+            - Connection pooling
+            - Queries lentas que no liberan conexiones
+            - Configuración de max_connections
+            - Procesos zombie
+
+      # Queries Lentas PostgreSQL
+      - alert: PostgreSQLLongRunningQueries
+        expr: pg_stat_activity_max_tx_duration > 300
+        for: 2m
+        labels:
+          severity: warning
+          team: database
+          service: postgresql
+        annotations:
+          summary: "🐌 Queries PostgreSQL ejecutándose por mucho tiempo"
+          description: |
+            Hay queries ejecutándose por más de {{ $value | humanizeDuration }}.
+            
+            Duración máxima: {{ $value | humanizeDuration }}
+            
+            Acciones:
+            1. Identificar queries problemáticas
+            2. Revisar planes de ejecución
+            3. Considerar optimización de índices
+            4. Evaluar si cancelar queries
+
+      # Deadlocks PostgreSQL
+      - alert: PostgreSQLDeadlocks
+        expr: increase(pg_stat_database_deadlocks{datname!~"template.*|postgres"}[5m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+          team: database
+          service: postgresql
+          database: "{{ $labels.datname }}"
+        annotations:
+          summary: "🔒 Deadlocks detectados en PostgreSQL"
+          description: |
+            Se detectaron {{ $value }} deadlocks en los últimos 5 minutos
+            en la base de datos {{ $labels.datname }}.
+            
+            Base de datos: {{ $labels.datname }}
+            Deadlocks recientes: {{ $value }}
+            
+            Revisar:
+            - Orden de acceso a tablas
+            - Lógica de transacciones
+            - Índices en foreign keys
+            - Logs de PostgreSQL
+
+      # Tamaño de Base de Datos Creciendo Rápido
+      - alert: PostgreSQLDatabaseSizeGrowth
+        expr: |
+          (
+            increase(pg_database_size_bytes{datname!~"template.*|postgres"}[24h]) /
+            pg_database_size_bytes{datname!~"template.*|postgres"} offset 24h
+          ) * 100 > 20
+        for: 1h
+        labels:
+          severity: warning
+          team: database
+          service: postgresql
+          database: "{{ $labels.datname }}"
+        annotations:
+          summary: "📈 Crecimiento rápido de BD {{ $labels.datname }}"
+          description: |
+            La base de datos {{ $labels.datname }} creció {{ $value }}% en las últimas 24 horas.
+            
+            Base de datos: {{ $labels.datname }}
+            Crecimiento: {{ $value | humanizePercentage }}
+            
+            Verificar:
+            - Logs y auditoría
+            - Procesos de limpieza
+            - Retención de datos
+            - Posible data leak
+
+      # Replication Lag Alto
+      - alert: PostgreSQLReplicationLag
+        expr: pg_stat_replication_lag > 60
+        for: 5m
+        labels:
+          severity: critical
+          team: database
+          service: postgresql
+        annotations:
+          summary: "🔄 Lag de replicación PostgreSQL alto"
+          description: |
+            El lag de replicación es {{ $value | humanizeDuration }}.
+            
+            Lag actual: {{ $value | humanizeDuration }}
+            
+            Causas posibles:
+            - Red lenta entre primary y replica
+            - Carga alta en primary
+            - Replica con recursos insuficientes
+            - Configuración incorrecta
+
+  # ---------------------------------------------------------------------------
+  # ALERTAS DE REDIS CACHE
+  # ---------------------------------------------------------------------------
+  - name: redis.rules
+    interval: 30s
+    rules:
+      # Redis Down
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: cache
+          service: redis
+        annotations:
+          summary: "🚨 Redis está DOWN"
+          description: |
+            El servidor Redis no está respondiendo.
+            
+            Instancia: {{ $labels.instance }}
+            
+            Impacto:
+            - Cache no disponible
+            - Sessions de usuario perdidas
+            - Performance degradada
+            - Celery sin message broker
+            
+            Acciones inmediatas:
+            1. Verificar proceso Redis
+            2. Revisar logs de Redis
+            3. Verificar memoria disponible
+            4. Reiniciar Redis si es necesario
+
+      # Uso Alto de Memoria Redis
+      - alert: RedisHighMemoryUsage
+        expr: (redis_memory_used_bytes / redis_memory_max_bytes) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+          team: cache
+          service: redis
+        annotations:
+          summary: "🧠 Uso crítico de memoria en Redis"
+          description: |
+            Redis está usando {{ $value }}% de la memoria máxima configurada.
+            
+            Uso actual: {{ $value | humanizePercentage }}
+            Memoria usada: {{ with query "redis_memory_used_bytes" }}{{ . | first | value | humanizeBytes }}{{ end }}
+            Memoria máxima: {{ with query "redis_memory_max_bytes" }}{{ . | first | value | humanizeBytes }}{{ end }}
+            
+            Riesgo de:
+            - Eviction de keys
+            - Performance degradada
+            - Out of memory
+            
+            Acciones:
+            1. Revisar política de eviction
+            2. Limpiar keys expiradas
+            3. Aumentar memoria si es necesario
+            4. Revisar uso por aplicación
+
+      # Hit Rate Bajo de Redis
+      - alert: RedisLowHitRate
+        expr: |
+          (
+            redis_keyspace_hits_total /
+            (redis_keyspace_hits_total + redis_keyspace_misses_total)
+          ) < 0.8
+        for: 10m
+        labels:
+          severity: warning
+          team: cache
+          service: redis
+        annotations:
+          summary: "🎯 Hit rate bajo en Redis"
+          description: |
+            El hit rate de Redis es {{ $value | humanizePercentage }}, 
+            por debajo del umbral del 80%.
+            
+            Hit rate actual: {{ $value | humanizePercentage }}
+            
+            Posibles causas:
+            - TTL muy corto en keys
+            - Patrones de acceso cambiaron
+            - Eviction frecuente por memoria
+            - Cache warming insuficiente
+            
+            Optimizar:
+            - Estrategia de caching
+            - TTL de keys
+            - Warm-up procedures
+
+      # Conexiones Rechazadas Redis
+      - alert: RedisRejectedConnections
+        expr: increase(redis_rejected_connections_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          team: cache
+          service: redis
+        annotations:
+          summary: "🚫 Redis rechazando conexiones"
+          description: |
+            Redis rechazó {{ $value }} conexiones en los últimos 5 minutos.
+            
+            Conexiones rechazadas: {{ $value }}
+            
+            Causas posibles:
+            - Límite de conexiones alcanzado
+            - Configuración maxclients insuficiente
+            - Connection pooling inadecuado
+            
+            Verificar configuración y uso de conexiones.
+
+      # Keys Expiradas No Procesadas
+      - alert: RedisExpiredKeysHigh
+        expr: increase(redis_expired_keys_total[5m]) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          team: cache
+          service: redis
+        annotations:
+          summary: "⏰ Alto número de keys expiradas en Redis"
+          description: |
+            {{ $value }} keys expiraron en los últimos 5 minutos.
+            
+            Keys expiradas: {{ $value }}
+            
+            Puede indicar:
+            - TTL muy corto
+            - Alto volumen de datos temporales
+            - Necesidad de optimización
+
+  # ---------------------------------------------------------------------------
+  # ALERTAS DE CELERY WORKERS
+  # ---------------------------------------------------------------------------
+  - name: celery.rules
+    interval: 30s
+    rules:
+      # Workers de Celery Down
+      - alert: CeleryWorkersDown
+        expr: sum(up{job="celery-workers"}) == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: backend
+          service: celery
+        annotations:
+          summary: "🚨 Todos los workers de Celery están DOWN"
+          description: |
+            No hay workers de Celery disponibles para procesar tareas.
+            
+            Workers activos: {{ $value }}
+            
+            Impacto crítico:
+            - No se procesan tareas asíncronas
+            - Emails no se envían
+            - Reportes no se generan
+            - Notificaciones no funcionan
+            
+            Acciones inmediatas:
+            1. Verificar procesos de Celery
+            2. Revisar conectividad a Redis
+            3. Verificar logs de workers
+            4. Reiniciar workers
+
+      # Pocos Workers Activos
+      - alert: CeleryFewWorkersActive
+        expr: sum(up{job="celery-workers"}) < 2
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+          service: celery
+        annotations:
+          summary: "⚠️ Pocos workers de Celery activos"
+          description: |
+            Solo {{ $value }} worker(s) de Celery están activos.
+            
+            Workers activos: {{ $value }}
+            Mínimo recomendado: 2
+            
+            Riesgos:
+            - Procesamiento lento de tareas
+            - Single point of failure
+            - Cola de tareas creciendo
+            
+            Considerar levantar más workers.
+
+      # Alta Tasa de Tareas Fallidas
+      - alert: CeleryHighFailureRate
+        expr: |
+          (
+            rate(celery_tasks_total{state="FAILURE"}[10m]) /
+            rate(celery_tasks_total[10m])
+          ) * 100 > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+          service: celery
+          task_name: "{{ $labels.task_name }}"
+        annotations:
+          summary: "❌ Alta tasa de fallos en tareas Celery"
+          description: |
+            La tarea {{ $labels.task_name }} tiene {{ $value }}% de tasa de fallos.
+            
+            Tarea: {{ $labels.task_name }}
+            Tasa de fallos: {{ $value | humanizePercentage }}
+            
+            Verificar:
+            - Logs de errores de la tarea
+            - Dependencias externas
+            - Configuración de reintentos
+            - Datos de entrada válidos
+
+      # Queue de Tareas Creciendo
+      - alert: CeleryQueueSizeGrowing
+        expr: increase(celery_queue_length[10m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+          service: celery
+          queue: "{{ $labels.queue }}"
+        annotations:
+          summary: "📈 Cola de Celery creciendo rápidamente"
+          description: |
+            La cola {{ $labels.queue }} creció en {{ $value }} tareas en 10 minutos.
+            
+            Cola: {{ $labels.queue }}
+            Crecimiento: {{ $value }} tareas
+            
+            Posibles causas:
+            - Workers insuficientes
+            - Tareas lentas
+            - Pico de carga
+            - Workers con problemas
+            
+            Considerar escalar workers.
+
+      # Tareas con Tiempo de Ejecución Largo
+      - alert: CeleryLongRunningTasks
+        expr: celery_task_runtime_seconds > 600
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+          service: celery
+          task_name: "{{ $labels.task_name }}"
+        annotations:
+          summary: "🕐 Tarea Celery ejecutándose por mucho tiempo"
+          description: |
+            La tarea {{ $labels.task_name }} lleva {{ $value | humanizeDuration }} ejecutándose.
+            
+            Tarea: {{ $labels.task_name }}
+            Tiempo ejecución: {{ $value | humanizeDuration }}
+            Worker: {{ $labels.instance }}
+            
+            Verificar si la tarea:
+            - Está colgada
+            - Procesa datos excesivos
+            - Tiene dependencies lentas
+            - Necesita optimización
+
+  # ---------------------------------------------------------------------------
+  # ALERTAS DE NGINX WEB SERVER
+  # ---------------------------------------------------------------------------
+  - name: nginx.rules
+    interval: 30s
+    rules:
+      # Nginx Down
+      - alert: NginxDown
+        expr: nginx_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: infrastructure
+          service: nginx
+        annotations:
+          summary: "🚨 Nginx está DOWN"
+          description: |
+            El servidor web Nginx no está respondiendo.
+            
+            Instancia: {{ $labels.instance }}
+            
+            Impacto crítico:
+            - Sitio web no accesible
+            - APIs no disponibles
+            - Load balancing no funciona
+            
+            Acciones inmediatas:
+            1. Verificar proceso Nginx
+            2. Revisar configuración
+            3. Verificar logs de error
+            4. Reiniciar Nginx
+
+      # Alto Número de Conexiones Nginx
+      - alert: NginxHighConnections
+        expr: nginx_connections_active > 1000
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+          service: nginx
+        annotations:
+          summary: "🔗 Alto número de conexiones en Nginx"
+          description: |
+            Nginx tiene {{ $value }} conexiones activas.
+            
+            Conexiones activas: {{ $value }}
+            Umbral: 1000
+            
+            Posibles causas:
+            - Pico de tráfico
+            - Slow clients
+            - Ataque DDoS
+            - Configuración de timeouts
+            
+            Monitorear tráfico y considerar rate limiting.
+
+      # Rate Limiting Activo
+      - alert: NginxRateLimitingActive
+        expr: increase(nginx_http_requests_total{status="429"}[5m]) > 10
+        for: 2m
+        labels:
+          severity: info
+          team: security
+          service: nginx
+        annotations:
+          summary: "🛡️ Rate limiting activo en Nginx"
+          description: |
+            Nginx bloqueó {{ $value }} requests por rate limiting en 5 minutos.
+            
+            Requests bloqueados: {{ $value }}
+            
+            Puede indicar:
+            - Intentos de abuso
+            - Cliente mal configurado
+            - Bot malicioso
+            - Rate limit muy estricto
+            
+            Revisar logs para identificar origen.
+
+      # Errores 5xx Alto en Nginx
+      - alert: NginxHighServerErrors
+        expr: |
+          (
+            rate(nginx_http_requests_total{status=~"5.."}[5m]) /
+            rate(nginx_http_requests_total[5m])
+          ) * 100 > 5
+        for: 3m
+        labels:
+          severity: critical
+          team: infrastructure
+          service: nginx
+        annotations:
+          summary: "🚨 Alta tasa de errores 5xx en Nginx"
+          description: |
+            Nginx está sirviendo {{ $value }}% de errores 5xx.
+            
+            Tasa de errores: {{ $value | humanizePercentage }}
+            
+            Causas posibles:
+            - Backend servers down
+            - Timeouts a backend
+            - Configuración incorrecta
+            - Sobrecarga del sistema
+            
+            Verificar estado de backends y logs.
+
+  # ---------------------------------------------------------------------------
+  # ALERTAS DE INFRAESTRUCTURA Y SISTEMA
+  # ---------------------------------------------------------------------------
+  - name: infrastructure.rules
+    interval: 30s
+    rules:
+      # CPU Alto
+      - alert: HighCPUUsage
+        expr: |
+          100 - (
+            avg by (instance) (
+              rate(node_cpu_seconds_total{mode="idle"}[5m])
+            ) * 100
+          ) > 85
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+          service: system
+        annotations:
+          summary: "🖥️ Uso alto de CPU en {{ $labels.instance }}"
+          description: |
+            El servidor {{ $labels.instance }} tiene {{ $value }}% de uso de CPU.
+            
+            Instancia: {{ $labels.instance }}
+            CPU usage: {{ $value | humanizePercentage }}
+            
+            Verificar:
+            - Procesos consumiendo CPU
+            - Necesidad de scaling
+            - Optimización de código
+            - Recursos asignados
+
+      # Memoria Alta
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) /
+            node_memory_MemTotal_bytes
+          ) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+          team: infrastructure
+          service: system
+        annotations:
+          summary: "🧠 Uso crítico de memoria en {{ $labels.instance }}"
+          description: |
+            El servidor {{ $labels.instance }} está usando {{ $value }}% de memoria.
+            
+            Instancia: {{ $labels.instance }}
+            Uso de memoria: {{ $value | humanizePercentage }}
+            Memoria total: {{ with query "node_memory_MemTotal_bytes" }}{{ . | first | value | humanizeBytes }}{{ end }}
+            Memoria disponible: {{ with query "node_memory_MemAvailable_bytes" }}{{ . | first | value | humanizeBytes }}{{ end }}
+            
+            Riesgo de OOM killer.
+            
+            Acciones:
+            1. Identificar procesos usando memoria
+            2. Considerar restart de servicios
+            3. Aumentar memoria si es necesario
+            4. Revisar memory leaks
+
+      # Disco Lleno
+      - alert: DiskSpaceLow
+        expr: |
+          (
+            (node_filesystem_size_bytes{fstype!="tmpfs"} - node_filesystem_avail_bytes{fstype!="tmpfs"}) /
+            node_filesystem_size_bytes{fstype!="tmpfs"}
+          ) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+          service: system
+          mountpoint: "{{ $labels.mountpoint }}"
+        annotations:
+          summary: "💾 Espacio en disco bajo en {{ $labels.instance }}"
+          description: |
+            El filesystem {{ $labels.mountpoint }} en {{ $labels.instance }} 
+            está {{ $value }}% lleno.
+            
+            Instancia: {{ $labels.instance }}
+            Mountpoint: {{ $labels.mountpoint }}
+            Uso: {{ $value | humanizePercentage }}
+            Espacio total: {{ with query "node_filesystem_size_bytes" }}{{ . | first | value | humanizeBytes }}{{ end }}
+            Espacio disponible: {{ with query "node_filesystem_avail_bytes" }}{{ . | first | value | humanizeBytes }}{{ end }}
+            
+            Acciones:
+            1. Limpiar logs antiguos
+            2. Limpiar archivos temporales
+            3. Rotar backups
+            4. Aumentar almacenamiento
+
+      # Disco Crítico
+      - alert: DiskSpaceCritical
+        expr: |
+          (
+            (node_filesystem_size_bytes{fstype!="tmpfs"} - node_filesystem_avail_bytes{fstype!="tmpfs"}) /
+            node_filesystem_size_bytes{fstype!="tmpfs"}
+          ) * 100 > 95
+        for: 1m
+        labels:
+          severity: critical
+          team: infrastructure
+          service: system
+          mountpoint: "{{ $labels.mountpoint }}"
+        annotations:
+          summary: "🚨 Espacio en disco CRÍTICO en {{ $labels.instance }}"
+          description: |
+            CRÍTICO: El filesystem {{ $labels.mountpoint }} en {{ $labels.instance }} 
+            está {{ $value }}% lleno.
+            
+            Instancia: {{ $labels.instance }}
+            Mountpoint: {{ $labels.mountpoint }}
+            Uso: {{ $value | humanizePercentage }}
+            
+            ACCIÓN INMEDIATA REQUERIDA:
+            - Servicios pueden fallar
+            - Base de datos puede corromperse
+            - Logs pueden perderse
+            
+            Liberar espacio INMEDIATAMENTE.
+
+      # Load Average Alto
+      - alert: HighLoadAverage
+        expr: node_load15 / on(instance) count by (instance)(node_cpu_seconds_total{mode="idle"}) > 2
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+          service: system
+        annotations:
+          summary: "⚡ Load average alto en {{ $labels.instance }}"
+          description: |
+            El load average de 15 minutos en {{ $labels.instance }} es {{ $value }}.
+            
+            Instancia: {{ $labels.instance }}
+            Load average 15m: {{ $value }}
+            CPU cores: {{ with query "count by (instance)(node_cpu_seconds_total{mode=\"idle\"})" }}{{ . | first | value }}{{ end }}
+            
+            Indica sistema sobrecargado.
+            Verificar procesos y considerar scaling.
+
+      # Reinicio del Sistema
+      - alert: SystemRestarted
+        expr: time() - node_boot_time_seconds < 600
+        for: 0m
+        labels:
+          severity: info
+          team: infrastructure
+          service: system
+        annotations:
+          summary: "🔄 Sistema {{ $labels.instance }} reiniciado"
+          description: |
+            El servidor {{ $labels.instance }} se reinició hace {{ $value | humanizeDuration }}.
+            
+            Instancia: {{ $labels.instance }}
+            Boot time: {{ $value | humanizeDuration }} ago
+            
+            Verificar:
+            - Causa del reinicio
+            - Todos los servicios iniciaron
+            - Health checks pasando
+            - Logs del sistema
+
+  # ---------------------------------------------------------------------------
+  # ALERTAS DE MÉTRICAS DE NEGOCIO
+  # ---------------------------------------------------------------------------
+  - name: business.rules
+    interval: 60s
+    rules:
+      # Registros de Usuario Bajos
+      - alert: LowUserRegistrations
+        expr: increase(ecosistema_user_registrations_total[1h]) < 5
+        for: 2h
+        labels:
+          severity: warning
+          team: business
+          service: app
+        annotations:
+          summary: "📉 Registros de usuarios bajos"
+          description: |
+            Solo {{ $value }} usuarios se registraron en la última hora.
+            
+            Registros última hora: {{ $value }}
+            Umbral mínimo: 5
+            
+            Posibles causas:
+            - Problemas en funnel de registro
+            - Issues en formularios
+            - Problemas de UX
+            - Baja en tráfico orgánico
+            - Campañas de marketing pausadas
+            
+            Revisar analytics y user journey.
+
+      # Creación de Proyectos Baja
+      - alert: LowProjectCreations
+        expr: increase(ecosistema_projects_created_total[24h]) < 10
+        for: 4h
+        labels:
+          severity: warning
+          team: business
+          service: app
+        annotations:
+          summary: "🚀 Creación de proyectos baja"
+          description: |
+            Solo {{ $value }} proyectos creados en las últimas 24 horas.
+            
+            Proyectos últimas 24h: {{ $value }}
+            Umbral mínimo: 10
+            
+            Puede indicar:
+            - Problemas en onboarding
+            - UX compleja para crear proyectos
+            - Falta de engagement
+            - Issues técnicos
+            
+            Revisar flujo de creación de proyectos.
+
+      # Tasa de Conversión Baja
+      - alert: LowConversionRate
+        expr: ecosistema_conversion_rate < 0.03
+        for: 1h
+        labels:
+          severity: warning
+          team: business
+          service: app
+        annotations:
+          summary: "📈 Tasa de conversión baja"
+          description: |
+            La tasa de conversión actual es {{ $value | humanizePercentage }}.
+            
+            Conversión actual: {{ $value | humanizePercentage }}
+            Umbral mínimo: 3%
+            
+            Optimizar:
+            - Landing pages
+            - Call-to-actions
+            - User onboarding
+            - Value proposition
+            - A/B testing
+
+      # Revenue Diario Bajo
+      - alert: LowDailyRevenue
+        expr: ecosistema_daily_revenue < 1000
+        for: 6h
+        labels:
+          severity: critical
+          team: business
+          service: app
+        annotations:
+          summary: "💰 Revenue diario bajo"
+          description: |
+            El revenue diario actual es ${{ $value }}.
+            
+            Revenue actual: ${{ $value }}
+            Objetivo mínimo: $1000
+            
+            Requiere atención inmediata:
+            - Revisar flujos de pago
+            - Verificar integraciones de payment
+            - Analizar abandono de carritos
+            - Revisar pricing strategy
+            - Contactar team de sales
+
+      # Usuarios Activos Bajo
+      - alert: LowActiveUsers
+        expr: ecosistema_active_users_current < 50
+        for: 30m
+        labels:
+          severity: warning
+          team: business
+          service: app
+        annotations:
+          summary: "👥 Pocos usuarios activos"
+          description: |
+            Solo {{ $value }} usuarios están activos actualmente.
+            
+            Usuarios activos: {{ $value }}
+            Umbral mínimo: 50
+            
+            Puede indicar:
+            - Horario de baja actividad natural
+            - Problemas de performance
+            - Issues de UX
+            - Problemas de conectividad
+            
+            Analizar patrones de uso histórico.
+
+      # Spike Anormal en Registros
+      - alert: UnusualRegistrationSpike
+        expr: |
+          increase(ecosistema_user_registrations_total[10m]) >
+          (avg_over_time(increase(ecosistema_user_registrations_total[10m])[1h:10m]) * 3)
+        for: 5m
+        labels:
+          severity: info
+          team: business
+          service: app
+        annotations:
+          summary: "📈 Spike inusual en registros"
+          description: |
+            Hay {{ $value }} registros en los últimos 10 minutos,
+            3x más que el promedio histórico.
+            
+            Registros últimos 10m: {{ $value }}
+            
+            Puede ser:
+            - Viral marketing success
+            - Mención en medios
+            - Bot activity
+            - Campaña exitosa
+            
+            Verificar origen del tráfico y calidad.
+
+  # ---------------------------------------------------------------------------
+  # ALERTAS DE SEGURIDAD
+  # ---------------------------------------------------------------------------
+  - name: security.rules
+    interval: 30s
+    rules:
+      # Múltiples Intentos de Login Fallidos
+      - alert: HighFailedLogins
+        expr: increase(flask_http_request_total{endpoint="/auth/login", status="401"}[5m]) > 20
+        for: 2m
+        labels:
+          severity: warning
+          team: security
+          service: app
+        annotations:
+          summary: "🛡️ Múltiples intentos de login fallidos"
+          description: |
+            {{ $value }} intentos de login fallidos en los últimos 5 minutos.
+            
+            Intentos fallidos: {{ $value }}
+            
+            Posibles indicios de:
+            - Ataque de fuerza bruta
+            - Credential stuffing
+            - Usuario legítimo con password olvidado
+            
+            Revisar:
+            - IPs de origen
+            - Patrones de acceso
+            - Implementar rate limiting
+            - Considerar CAPTCHA
+
+      # Requests a Endpoints No Existentes
+      - alert: High404Errors
+        expr: increase(nginx_http_requests_total{status="404"}[10m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+          service: nginx
+        annotations:
+          summary: "🔍 Alto número de errores 404"
+          description: |
+            {{ $value }} requests a URLs no existentes en 10 minutos.
+            
+            Requests 404: {{ $value }}
+            
+            Puede indicar:
+            - Reconocimiento/scanning
+            - Broken links
+            - Bot malicioso
+            - Referencias incorrectas
+            
+            Revisar logs para identificar patrones.
+
+      # Requests con User-Agent Sospechoso
+      - alert: SuspiciousUserAgents
+        expr: increase(nginx_http_requests_total{user_agent=~".*bot.*|.*crawler.*|.*scanner.*"}[10m]) > 200
+        for: 5m
+        labels:
+          severity: info
+          team: security
+          service: nginx
+        annotations:
+          summary: "🤖 Alto tráfico de bots detectado"
+          description: |
+            {{ $value }} requests de bots/crawlers en 10 minutos.
+            
+            Bot requests: {{ $value }}
+            
+            Verificar si son:
+            - Bots legítimos (Google, etc.)
+            - Scrapers no autorizados
+            - Security scanners
+            - Load testing
+            
+            Considerar rate limiting por user-agent.
+
+      # Acceso a Archivos Sensibles
+      - alert: SensitiveFileAccess
+        expr: increase(nginx_http_requests_total{request=~".*(config|env|backup|sql|log).*"}[5m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+          team: security
+          service: nginx
+        annotations:
+          summary: "⚠️ Intento de acceso a archivos sensibles"
+          description: |
+            {{ $value }} intentos de acceso a archivos sensibles detectados.
+            
+            Intentos: {{ $value }}
+            
+            Archivos objetivo pueden incluir:
+            - Archivos de configuración
+            - Variables de entorno
+            - Backups de BD
+            - Logs del sistema
+            
+            REVISAR INMEDIATAMENTE logs detallados.
+
+      # SQL Injection Attempts
+      - alert: SQLInjectionAttempts
+        expr: increase(nginx_http_requests_total{request=~".*union.*select.*|.*drop.*table.*|.*insert.*into.*"}[10m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          team: security
+          service: nginx
+        annotations:
+          summary: "🚨 Intentos de SQL Injection detectados"
+          description: |
+            {{ $value }} posibles intentos de SQL injection en 10 minutos.
+            
+            Intentos detectados: {{ $value }}
+            
+            ACCIÓN INMEDIATA:
+            1. Bloquear IPs de origen
+            2. Revisar logs detallados
+            3. Verificar queries a BD
+            4. Revisar prepared statements
+            5. Considerar WAF
+            
+            CRÍTICO: Verificar integridad de datos.
+
+  # ---------------------------------------------------------------------------
+  # ALERTAS DE CONECTIVIDAD Y NETWORKING
+  # ---------------------------------------------------------------------------
+  - name: networking.rules
+    interval: 30s
+    rules:
+      # Conectividad HTTP Fallando
+      - alert: HTTPConnectivityFailed
+        expr: probe_success{job="blackbox-http"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: infrastructure
+          service: connectivity
+          target: "{{ $labels.instance }}"
+        annotations:
+          summary: "🌐 Conectividad HTTP fallando a {{ $labels.instance }}"
+          description: |
+            No se puede conectar vía HTTP a {{ $labels.instance }}.
+            
+            Target: {{ $labels.instance }}
+            
+            Verificar:
+            - Servicio ejecutándose
+            - Configuración de firewall
+            - DNS resolution
+            - SSL certificates
+            - Load balancer health
+
+      # Conectividad TCP Fallando
+      - alert: TCPConnectivityFailed
+        expr: probe_success{job="blackbox-tcp"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: infrastructure
+          service: connectivity
+          target: "{{ $labels.instance }}"
+        annotations:
+          summary: "🔌 Conectividad TCP fallando a {{ $labels.instance }}"
+          description: |
+            No se puede conectar vía TCP a {{ $labels.instance }}.
+            
+            Target: {{ $labels.instance }}
+            
+            Verificar:
+            - Puerto abierto
+            - Servicio escuchando
+            - Firewall rules
+            - Network routing
+            - Security groups
+
+      # SSL Certificate Expirando
+      - alert: SSLCertificateExpiring
+        expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 7
+        for: 0m
+        labels:
+          severity: warning
+          team: infrastructure
+          service: ssl
+          target: "{{ $labels.instance }}"
+        annotations:
+          summary: "🔒 Certificado SSL expirando en {{ $labels.instance }}"
+          description: |
+            El certificado SSL para {{ $labels.instance }} expira en {{ $value | humanizeDuration }}.
+            
+            Target: {{ $labels.instance }}
+            Expira en: {{ $value | humanizeDuration }}
+            
+            Acciones:
+            1. Renovar certificado
+            2. Actualizar configuración
+            3. Verificar auto-renewal
+            4. Notificar a stakeholders
+
+      # Latencia de Red Alta
+      - alert: HighNetworkLatency
+        expr: probe_duration_seconds{job="blackbox-http"} > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+          service: networking
+          target: "{{ $labels.instance }}"
+        annotations:
+          summary: "🐌 Latencia alta a {{ $labels.instance }}"
+          description: |
+            La latencia a {{ $labels.instance }} es {{ $value | humanizeDuration }}.
+            
+            Target: {{ $labels.instance }}
+            Latencia: {{ $value | humanizeDuration }}
+            
+            Posibles causas:
+            - Congestión de red
+            - Routing subóptimo
+            - Sobrecarga del servidor
+            - ISP issues
+            
+            Verificar rutas de red y performance.
+
+# =============================================================================
+# CONFIGURACIÓN DE ESCALAMIENTO Y NOTIFICACIONES
+# =============================================================================
+# 
+# Las alertas están configuradas con diferentes niveles de severidad:
+# 
+# CRITICAL (crítico):
+# - Requiere intervención inmediata 24/7
+# - Afecta disponibilidad del servicio
+# - Puede causar pérdida de datos
+# - Escalamiento: PagerDuty, SMS, llamadas
+# 
+# WARNING (advertencia):  
+# - Requiere atención durante horas de trabajo
+# - Puede afectar performance
+# - Riesgo de escalada a crítico
+# - Escalamiento: Email, Slack, dashboard
+# 
+# INFO (información):
+# - Awareness, no acción inmediata
+# - Trends y patrones
+# - Business intelligence
+# - Escalamiento: Dashboard, reports
+# 
+# =============================================================================
+# 
+# CONFIGURACIÓN RECOMENDADA DE ALERTMANAGER:
+# 
+# route:
+#   group_by: ['alertname', 'cluster', 'service']
+#   group_wait: 10s
+#   group_interval: 10s
+#   repeat_interval: 1h
+#   receiver: 'web.hook'
+#   routes:
+#   - match:
+#       severity: critical
+#     receiver: 'pagerduty'
+#     group_wait: 5s
+#     repeat_interval: 30m
+#   - match:
+#       severity: warning  
+#     receiver: 'slack'
+#     group_wait: 30s
+#     repeat_interval: 2h
+#   - match:
+#       severity: info
+#     receiver: 'dashboard'
+#     group_wait: 5m
+#     repeat_interval: 12h
+# 
+# =============================================================================

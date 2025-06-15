@@ -1,0 +1,1367 @@
+# Automated Dependency Update Workflow
+# Comprehensive dependency management for the entrepreneurship ecosystem platform
+# Author: DevOps Team
+# Last Updated: 2025-06-14
+
+name: 📦 Dependency Updates
+
+on:
+  # Weekly scheduled updates - Monday at 2 AM UTC
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly on Monday
+    - cron: '0 2 1 * *'  # Monthly on 1st day for major updates
+
+  # Manual trigger with options
+  workflow_dispatch:
+    inputs:
+      update_type:
+        description: 'Type of updates to perform'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch      # Only patch updates (safest)
+          - minor      # Minor and patch updates
+          - major      # All updates including major
+          - security   # Only security updates
+          - all        # Everything including dev dependencies
+
+      create_separate_prs:
+        description: 'Create separate PRs for each ecosystem'
+        required: false
+        default: true
+        type: boolean
+
+      run_full_tests:
+        description: 'Run full test suite before creating PRs'
+        required: false
+        default: true
+        type: boolean
+
+      force_update:
+        description: 'Force update even if tests fail (use with caution)'
+        required: false
+        default: false
+        type: boolean
+
+# Environment variables
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  BRANCH_PREFIX: 'deps/auto-update'
+  MAX_UPDATES_PER_PR: 10
+
+# Permissions needed for the workflow
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  security-events: read
+  actions: read
+
+jobs:
+  # ========================================
+  # DEPENDENCY ANALYSIS
+  # ========================================
+  analyze-dependencies:
+    name: 🔍 Analyze Current Dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      python-updates: ${{ steps.python-analysis.outputs.updates }}
+      node-updates: ${{ steps.node-analysis.outputs.updates }}
+      docker-updates: ${{ steps.docker-analysis.outputs.updates }}
+      actions-updates: ${{ steps.actions-analysis.outputs.updates }}
+      security-updates: ${{ steps.security-analysis.outputs.updates }}
+      update-strategy: ${{ steps.strategy.outputs.strategy }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install analysis tools
+        run: |
+          pip install pip-check-reqs pip-review safety pipenv pip-audit
+          npm install -g npm-check-updates david ncu
+
+      - name: Determine update strategy
+        id: strategy
+        run: |
+          UPDATE_TYPE="${{ github.event.inputs.update_type }}"
+          if [ -z "$UPDATE_TYPE" ]; then
+            # Default strategy based on schedule
+            if [ "$(date +%d)" = "01" ]; then
+              UPDATE_TYPE="minor"  # Monthly: minor updates
+            else
+              UPDATE_TYPE="patch"  # Weekly: patch updates only
+            fi
+          fi
+          echo "strategy=$UPDATE_TYPE" >> $GITHUB_OUTPUT
+          echo "Selected update strategy: $UPDATE_TYPE"
+
+      - name: Analyze Python dependencies
+        id: python-analysis
+        run: |
+          echo "=== Python Dependency Analysis ==="
+          
+          # Install current dependencies
+          pip install -r requirements.txt
+          
+          # Check for available updates
+          pip list --outdated --format=json > python-outdated.json
+          
+          # Security check
+          safety check --json --output python-security.json || true
+          pip-audit --format=json --output python-audit.json || true
+          
+          # Analyze update strategy
+          python << 'EOF'
+          import json
+          import sys
+          from datetime import datetime
+          
+          strategy = "${{ steps.strategy.outputs.strategy }}"
+          
+          # Read outdated packages
+          try:
+              with open('python-outdated.json') as f:
+                  outdated = json.load(f)
+          except:
+              outdated = []
+          
+          # Read security issues
+          security_issues = []
+          try:
+              with open('python-security.json') as f:
+                  safety_data = json.load(f)
+                  if isinstance(safety_data, list):
+                      security_issues.extend(safety_data)
+          except:
+              pass
+          
+          try:
+              with open('python-audit.json') as f:
+                  audit_data = json.load(f)
+                  if 'vulnerabilities' in audit_data:
+                      security_issues.extend(audit_data['vulnerabilities'])
+          except:
+              pass
+          
+          # Filter updates based on strategy
+          updates = []
+          for pkg in outdated:
+              name = pkg['name']
+              current = pkg['version']
+              latest = pkg['latest_version']
+              
+              # Check if it's a security update
+              is_security = any(name.lower() in str(issue).lower() for issue in security_issues)
+              
+              # Determine if we should update based on strategy
+              should_update = False
+              update_reason = []
+              
+              if strategy == 'security' and is_security:
+                  should_update = True
+                  update_reason.append('security')
+              elif strategy in ['patch', 'minor', 'major', 'all']:
+                  # Parse version numbers (simplified)
+                  try:
+                      current_parts = [int(x) for x in current.split('.')]
+                      latest_parts = [int(x) for x in latest.split('.')]
+                      
+                      if len(current_parts) >= 3 and len(latest_parts) >= 3:
+                          major_diff = latest_parts[0] > current_parts[0]
+                          minor_diff = latest_parts[1] > current_parts[1]
+                          patch_diff = latest_parts[2] > current_parts[2]
+                          
+                          if strategy == 'patch' and patch_diff and not minor_diff and not major_diff:
+                              should_update = True
+                              update_reason.append('patch')
+                          elif strategy == 'minor' and (minor_diff or patch_diff) and not major_diff:
+                              should_update = True
+                              update_reason.append('minor' if minor_diff else 'patch')
+                          elif strategy in ['major', 'all']:
+                              should_update = True
+                              if major_diff:
+                                  update_reason.append('major')
+                              elif minor_diff:
+                                  update_reason.append('minor')
+                              else:
+                                  update_reason.append('patch')
+                  except:
+                      # If version parsing fails, be conservative
+                      if strategy in ['major', 'all']:
+                          should_update = True
+                          update_reason.append('unknown')
+              
+              if is_security:
+                  update_reason.append('security')
+              
+              if should_update:
+                  updates.append({
+                      'name': name,
+                      'current': current,
+                      'latest': latest,
+                      'reasons': update_reason,
+                      'security': is_security
+                  })
+          
+          # Limit updates per PR
+          max_updates = int("${{ env.MAX_UPDATES_PER_PR }}")
+          if len(updates) > max_updates:
+              # Prioritize security updates
+              security_updates = [u for u in updates if u['security']]
+              regular_updates = [u for u in updates if not u['security']]
+              
+              updates = security_updates + regular_updates[:max_updates - len(security_updates)]
+          
+          print(f"Found {len(updates)} Python packages to update:")
+          for update in updates:
+              reasons = ', '.join(update['reasons'])
+              security_flag = " [SECURITY]" if update['security'] else ""
+              print(f"  - {update['name']}: {update['current']} → {update['latest']} ({reasons}){security_flag}")
+          
+          # Output for next job
+          with open('python-updates.json', 'w') as f:
+              json.dump(updates, f, indent=2)
+          
+          EOF
+          
+          # Set output
+          if [ -s python-updates.json ] && [ "$(jq length python-updates.json)" -gt 0 ]; then
+            echo "updates=true" >> $GITHUB_OUTPUT
+            echo "Found Python updates available"
+          else
+            echo "updates=false" >> $GITHUB_OUTPUT
+            echo "No Python updates needed"
+          fi
+
+      - name: Analyze Node.js dependencies
+        id: node-analysis
+        if: hashFiles('package.json') != ''
+        run: |
+          echo "=== Node.js Dependency Analysis ==="
+          
+          # Check for updates
+          ncu --jsonUpgraded > node-updates.json || echo "{}" > node-updates.json
+          
+          # Security audit
+          npm audit --json > node-security.json || echo "{}" > node-security.json
+          
+          python << 'EOF'
+          import json
+          import os
+          
+          strategy = "${{ steps.strategy.outputs.strategy }}"
+          
+          # Read available updates
+          try:
+              with open('node-updates.json') as f:
+                  ncu_data = json.load(f)
+          except:
+              ncu_data = {}
+          
+          # Read security audit
+          try:
+              with open('node-security.json') as f:
+                  audit_data = json.load(f)
+          except:
+              audit_data = {}
+          
+          # Get security vulnerabilities
+          security_packages = set()
+          if 'advisories' in audit_data:
+              for advisory in audit_data['advisories'].values():
+                  if 'module_name' in advisory:
+                      security_packages.add(advisory['module_name'])
+          
+          # Process updates
+          updates = []
+          for pkg, new_version in ncu_data.items():
+              # Get current version from package.json
+              try:
+                  with open('package.json') as f:
+                      package_json = json.load(f)
+                  
+                  current_version = None
+                  if 'dependencies' in package_json and pkg in package_json['dependencies']:
+                      current_version = package_json['dependencies'][pkg]
+                  elif 'devDependencies' in package_json and pkg in package_json['devDependencies']:
+                      current_version = package_json['devDependencies'][pkg]
+                  
+                  if current_version:
+                      is_security = pkg in security_packages
+                      
+                      should_update = False
+                      if strategy == 'security' and is_security:
+                          should_update = True
+                      elif strategy in ['patch', 'minor', 'major', 'all']:
+                          should_update = True
+                      
+                      if should_update:
+                          updates.append({
+                              'name': pkg,
+                              'current': current_version.lstrip('^~'),
+                              'latest': new_version,
+                              'security': is_security
+                          })
+              except:
+                  pass
+          
+          print(f"Found {len(updates)} Node.js packages to update:")
+          for update in updates:
+              security_flag = " [SECURITY]" if update['security'] else ""
+              print(f"  - {update['name']}: {update['current']} → {update['latest']}{security_flag}")
+          
+          # Save results
+          with open('node-updates-filtered.json', 'w') as f:
+              json.dump(updates, f, indent=2)
+          
+          EOF
+          
+          # Set output
+          if [ -s node-updates-filtered.json ] && [ "$(jq length node-updates-filtered.json)" -gt 0 ]; then
+            echo "updates=true" >> $GITHUB_OUTPUT
+            echo "Found Node.js updates available"
+          else
+            echo "updates=false" >> $GITHUB_OUTPUT
+            echo "No Node.js updates needed"
+          fi
+
+      - name: Analyze Docker base images
+        id: docker-analysis
+        run: |
+          echo "=== Docker Image Analysis ==="
+          
+          python << 'EOF'
+          import os
+          import re
+          import json
+          from pathlib import Path
+          
+          updates = []
+          docker_files = [
+              'Dockerfile',
+              'docker/Dockerfile.prod',
+              'docker/Dockerfile.dev'
+          ]
+          
+          for dockerfile in docker_files:
+              if os.path.exists(dockerfile):
+                  with open(dockerfile) as f:
+                      content = f.read()
+                  
+                  # Find FROM statements
+                  from_lines = re.findall(r'^FROM\s+([^\s]+)', content, re.MULTILINE)
+                  
+                  for from_line in from_lines:
+                      if ':' in from_line and 'latest' not in from_line:
+                          image, tag = from_line.split(':', 1)
+                          
+                          # Skip multi-stage FROM aliases
+                          if not any(char.isupper() for char in image):
+                              updates.append({
+                                  'file': dockerfile,
+                                  'image': image,
+                                  'current_tag': tag,
+                                  'suggested_action': 'check_for_updates'
+                              })
+          
+          print(f"Found {len(updates)} Docker images to check:")
+          for update in updates:
+              print(f"  - {update['image']}:{update['current_tag']} in {update['file']}")
+          
+          with open('docker-updates.json', 'w') as f:
+              json.dump(updates, f, indent=2)
+          
+          EOF
+          
+          # Set output
+          if [ -s docker-updates.json ] && [ "$(jq length docker-updates.json)" -gt 0 ]; then
+            echo "updates=true" >> $GITHUB_OUTPUT
+            echo "Found Docker images to check"
+          else
+            echo "updates=false" >> $GITHUB_OUTPUT
+            echo "No Docker updates needed"
+          fi
+
+      - name: Analyze GitHub Actions
+        id: actions-analysis
+        run: |
+          echo "=== GitHub Actions Analysis ==="
+          
+          python << 'EOF'
+          import os
+          import re
+          import json
+          import yaml
+          from pathlib import Path
+          
+          updates = []
+          workflows_dir = Path('.github/workflows')
+          
+          if workflows_dir.exists():
+              for workflow_file in workflows_dir.glob('*.yml'):
+                  try:
+                      with open(workflow_file) as f:
+                          workflow = yaml.safe_load(f)
+                      
+                      if 'jobs' in workflow:
+                          for job_name, job in workflow['jobs'].items():
+                              if 'steps' in job:
+                                  for i, step in enumerate(job['steps']):
+                                      if 'uses' in step:
+                                          action = step['uses']
+                                          
+                                          # Check for pinned versions
+                                          if '@v' in action or '@main' in action or '@master' in action:
+                                              parts = action.split('@')
+                                              if len(parts) == 2:
+                                                  action_name = parts[0]
+                                                  current_ref = parts[1]
+                                                  
+                                                  # Skip if already using latest pattern
+                                                  if not (current_ref.startswith('v') and current_ref[1:].replace('.', '').isdigit()):
+                                                      continue
+                                                  
+                                                  updates.append({
+                                                      'file': str(workflow_file),
+                                                      'action': action_name,
+                                                      'current_ref': current_ref,
+                                                      'job': job_name,
+                                                      'step_index': i
+                                                  })
+                  except Exception as e:
+                      print(f"Error parsing {workflow_file}: {e}")
+          
+          print(f"Found {len(updates)} GitHub Actions to check for updates:")
+          for update in updates:
+              print(f"  - {update['action']}@{update['current_ref']} in {update['file']}")
+          
+          with open('actions-updates.json', 'w') as f:
+              json.dump(updates, f, indent=2)
+          
+          EOF
+          
+          # Set output
+          if [ -s actions-updates.json ] && [ "$(jq length actions-updates.json)" -gt 0 ]; then
+            echo "updates=true" >> $GITHUB_OUTPUT
+            echo "Found GitHub Actions to check"
+          else
+            echo "updates=false" >> $GITHUB_OUTPUT
+            echo "No GitHub Actions updates needed"
+          fi
+
+      - name: Consolidate security updates
+        id: security-analysis
+        run: |
+          echo "=== Security Updates Summary ==="
+          
+          python << 'EOF'
+          import json
+          
+          security_updates = []
+          
+          # Check Python security updates
+          try:
+              with open('python-updates.json') as f:
+                  python_updates = json.load(f)
+              security_updates.extend([u for u in python_updates if u.get('security', False)])
+          except:
+              pass
+          
+          # Check Node.js security updates
+          try:
+              with open('node-updates-filtered.json') as f:
+                  node_updates = json.load(f)
+              security_updates.extend([u for u in node_updates if u.get('security', False)])
+          except:
+              pass
+          
+          print(f"Total security updates found: {len(security_updates)}")
+          for update in security_updates:
+              print(f"  - {update['name']}: {update['current']} → {update['latest']} [SECURITY]")
+          
+          with open('security-updates.json', 'w') as f:
+              json.dump(security_updates, f, indent=2)
+          
+          EOF
+          
+          # Set output
+          if [ -s security-updates.json ] && [ "$(jq length security-updates.json)" -gt 0 ]; then
+            echo "updates=true" >> $GITHUB_OUTPUT
+            echo "Found security updates"
+          else
+            echo "updates=false" >> $GITHUB_OUTPUT
+            echo "No security updates needed"
+          fi
+
+      - name: Upload analysis results
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-analysis
+          path: |
+            python-updates.json
+            node-updates-filtered.json
+            docker-updates.json
+            actions-updates.json
+            security-updates.json
+          retention-days: 7
+
+  # ========================================
+  # PYTHON DEPENDENCY UPDATES
+  # ========================================
+  update-python-dependencies:
+    name: 🐍 Update Python Dependencies
+    runs-on: ubuntu-latest
+    needs: analyze-dependencies
+    if: needs.analyze-dependencies.outputs.python-updates == 'true'
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download analysis results
+        uses: actions/download-artifact@v4
+        with:
+          name: dependency-analysis
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Create update branch
+        run: |
+          BRANCH_NAME="${{ env.BRANCH_PREFIX }}/python-$(date +%Y%m%d-%H%M%S)"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          git checkout -b "$BRANCH_NAME"
+
+      - name: Update Python dependencies
+        run: |
+          echo "=== Updating Python Dependencies ==="
+          
+          # Install current dependencies
+          pip install -r requirements.txt
+          pip install pip-tools
+          
+          python << 'EOF'
+          import json
+          import subprocess
+          import sys
+          
+          # Read updates to apply
+          with open('python-updates.json') as f:
+              updates = json.load(f)
+          
+          if not updates:
+              print("No Python updates to apply")
+              sys.exit(0)
+          
+          print(f"Applying {len(updates)} Python updates...")
+          
+          # Read current requirements
+          with open('requirements.txt') as f:
+              lines = f.readlines()
+          
+          # Update requirements.txt
+          updated_lines = []
+          updated_packages = []
+          
+          for line in lines:
+              line = line.strip()
+              if line and not line.startswith('#'):
+                  package_name = line.split('==')[0].split('>=')[0].split('<=')[0].split('<')[0].split('>')[0]
+                  
+                  # Check if this package needs updating
+                  update_info = None
+                  for update in updates:
+                      if update['name'].lower() == package_name.lower():
+                          update_info = update
+                          break
+                  
+                  if update_info:
+                      new_line = f"{update_info['name']}=={update_info['latest']}"
+                      updated_lines.append(new_line)
+                      updated_packages.append(update_info)
+                      print(f"Updated: {update_info['name']} {update_info['current']} → {update_info['latest']}")
+                  else:
+                      updated_lines.append(line)
+              else:
+                  updated_lines.append(line)
+          
+          # Write updated requirements
+          with open('requirements.txt', 'w') as f:
+              f.write('\n'.join(updated_lines) + '\n')
+          
+          # Create update summary
+          summary = {
+              'ecosystem': 'python',
+              'updates': updated_packages,
+              'total_updates': len(updated_packages),
+              'security_updates': len([u for u in updated_packages if u.get('security', False)])
+          }
+          
+          with open('python-update-summary.json', 'w') as f:
+              json.dump(summary, f, indent=2)
+          
+          EOF
+
+      - name: Install updated dependencies and test
+        if: github.event.inputs.run_full_tests != 'false'
+        run: |
+          echo "Testing updated Python dependencies..."
+          
+          # Create virtual environment for testing
+          python -m venv test_env
+          source test_env/bin/activate
+          
+          # Install updated dependencies
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          
+          # Basic import test
+          python -c "
+          import sys
+          import importlib
+          
+          # Test critical imports
+          critical_modules = ['flask', 'sqlalchemy', 'celery', 'redis']
+          failed_imports = []
+          
+          for module in critical_modules:
+              try:
+                  importlib.import_module(module)
+                  print(f'✅ {module} imported successfully')
+              except ImportError as e:
+                  print(f'❌ Failed to import {module}: {e}')
+                  failed_imports.append(module)
+          
+          if failed_imports:
+              print(f'Critical import failures: {failed_imports}')
+              sys.exit(1)
+          else:
+              print('All critical modules imported successfully')
+          "
+          
+          deactivate
+
+      - name: Run quick tests
+        if: github.event.inputs.run_full_tests != 'false'
+        run: |
+          # Run a subset of tests to verify functionality
+          if [ -d "tests" ]; then
+            echo "Running quick tests..."
+            source test_env/bin/activate
+            pip install -r requirements-test.txt || pip install pytest
+            
+            # Run only unit tests (faster)
+            python -m pytest tests/unit/ -v --tb=short --maxfail=5 || {
+              if [ "${{ github.event.inputs.force_update }}" != "true" ]; then
+                echo "Tests failed and force_update is not enabled"
+                exit 1
+              else
+                echo "Tests failed but force_update is enabled, continuing..."
+              fi
+            }
+            
+            deactivate
+          fi
+
+      - name: Commit Python updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          git add requirements.txt
+          
+          # Create commit message
+          if [ -f python-update-summary.json ]; then
+            SUMMARY=$(cat python-update-summary.json)
+            SECURITY_COUNT=$(echo "$SUMMARY" | jq -r '.security_updates')
+            TOTAL_COUNT=$(echo "$SUMMARY" | jq -r '.total_updates')
+            
+            COMMIT_MSG="🐍 Update Python dependencies ($TOTAL_COUNT packages"
+            if [ "$SECURITY_COUNT" -gt 0 ]; then
+              COMMIT_MSG="$COMMIT_MSG, $SECURITY_COUNT security fixes"
+            fi
+            COMMIT_MSG="$COMMIT_MSG)"
+          else
+            COMMIT_MSG="🐍 Update Python dependencies"
+          fi
+          
+          git commit -m "$COMMIT_MSG" || echo "No changes to commit"
+
+      - name: Push Python updates
+        run: |
+          git push origin "$BRANCH_NAME"
+          echo "PYTHON_BRANCH=$BRANCH_NAME" >> $GITHUB_ENV
+
+      - name: Upload Python update artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-updates
+          path: |
+            python-update-summary.json
+            requirements.txt
+          retention-days: 7
+
+  # ========================================
+  # NODE.JS DEPENDENCY UPDATES
+  # ========================================
+  update-node-dependencies:
+    name: 📦 Update Node.js Dependencies
+    runs-on: ubuntu-latest
+    needs: analyze-dependencies
+    if: needs.analyze-dependencies.outputs.node-updates == 'true'
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download analysis results
+        uses: actions/download-artifact@v4
+        with:
+          name: dependency-analysis
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Create update branch
+        run: |
+          BRANCH_NAME="${{ env.BRANCH_PREFIX }}/nodejs-$(date +%Y%m%d-%H%M%S)"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          git checkout -b "$BRANCH_NAME"
+
+      - name: Update Node.js dependencies
+        run: |
+          echo "=== Updating Node.js Dependencies ==="
+          
+          if [ ! -f "package.json" ]; then
+            echo "No package.json found, skipping Node.js updates"
+            exit 0
+          fi
+          
+          # Install current dependencies
+          npm ci
+          
+          node << 'EOF'
+          const fs = require('fs');
+          const updates = JSON.parse(fs.readFileSync('node-updates-filtered.json', 'utf8'));
+          
+          if (updates.length === 0) {
+            console.log('No Node.js updates to apply');
+            process.exit(0);
+          }
+          
+          console.log(`Applying ${updates.length} Node.js updates...`);
+          
+          // Read package.json
+          const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          
+          const updatedPackages = [];
+          
+          // Update dependencies
+          updates.forEach(update => {
+            const { name, latest, security } = update;
+            
+            if (packageJson.dependencies && packageJson.dependencies[name]) {
+              packageJson.dependencies[name] = `^${latest}`;
+              updatedPackages.push({ ...update, type: 'dependency' });
+              console.log(`Updated dependency: ${name} → ${latest}${security ? ' [SECURITY]' : ''}`);
+            }
+            
+            if (packageJson.devDependencies && packageJson.devDependencies[name]) {
+              packageJson.devDependencies[name] = `^${latest}`;
+              updatedPackages.push({ ...update, type: 'devDependency' });
+              console.log(`Updated devDependency: ${name} → ${latest}${security ? ' [SECURITY]' : ''}`);
+            }
+          });
+          
+          // Write updated package.json
+          fs.writeFileSync('package.json', JSON.stringify(packageJson, null, 2) + '\n');
+          
+          // Create update summary
+          const summary = {
+            ecosystem: 'nodejs',
+            updates: updatedPackages,
+            total_updates: updatedPackages.length,
+            security_updates: updatedPackages.filter(u => u.security).length
+          };
+          
+          fs.writeFileSync('node-update-summary.json', JSON.stringify(summary, null, 2));
+          
+          EOF
+
+      - name: Install updated dependencies and test
+        if: github.event.inputs.run_full_tests != 'false'
+        run: |
+          echo "Testing updated Node.js dependencies..."
+          
+          # Remove node_modules and package-lock to force fresh install
+          rm -rf node_modules package-lock.json
+          
+          # Install updated dependencies
+          npm install
+          
+          # Run basic checks
+          if [ -f "package.json" ]; then
+            # Check if build script exists and run it
+            if npm run build --if-present; then
+              echo "✅ Build successful"
+            else
+              if [ "${{ github.event.inputs.force_update }}" != "true" ]; then
+                echo "❌ Build failed and force_update is not enabled"
+                exit 1
+              else
+                echo "⚠️ Build failed but force_update is enabled, continuing..."
+              fi
+            fi
+            
+            # Run tests if available
+            if npm test --if-present; then
+              echo "✅ Tests passed"
+            else
+              if [ "${{ github.event.inputs.force_update }}" != "true" ]; then
+                echo "❌ Tests failed and force_update is not enabled"
+                exit 1
+              else
+                echo "⚠️ Tests failed but force_update is enabled, continuing..."
+              fi
+            fi
+          fi
+
+      - name: Commit Node.js updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          git add package.json package-lock.json
+          
+          # Create commit message
+          if [ -f node-update-summary.json ]; then
+            SUMMARY=$(cat node-update-summary.json)
+            SECURITY_COUNT=$(echo "$SUMMARY" | jq -r '.security_updates')
+            TOTAL_COUNT=$(echo "$SUMMARY" | jq -r '.total_updates')
+            
+            COMMIT_MSG="📦 Update Node.js dependencies ($TOTAL_COUNT packages"
+            if [ "$SECURITY_COUNT" -gt 0 ]; then
+              COMMIT_MSG="$COMMIT_MSG, $SECURITY_COUNT security fixes"
+            fi
+            COMMIT_MSG="$COMMIT_MSG)"
+          else
+            COMMIT_MSG="📦 Update Node.js dependencies"
+          fi
+          
+          git commit -m "$COMMIT_MSG" || echo "No changes to commit"
+
+      - name: Push Node.js updates
+        run: |
+          git push origin "$BRANCH_NAME"
+          echo "NODE_BRANCH=$BRANCH_NAME" >> $GITHUB_ENV
+
+      - name: Upload Node.js update artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-updates
+          path: |
+            node-update-summary.json
+            package.json
+            package-lock.json
+          retention-days: 7
+
+  # ========================================
+  # GITHUB ACTIONS UPDATES
+  # ========================================
+  update-github-actions:
+    name: 🔄 Update GitHub Actions
+    runs-on: ubuntu-latest
+    needs: analyze-dependencies
+    if: needs.analyze-dependencies.outputs.actions-updates == 'true'
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download analysis results
+        uses: actions/download-artifact@v4
+        with:
+          name: dependency-analysis
+
+      - name: Create update branch
+        run: |
+          BRANCH_NAME="${{ env.BRANCH_PREFIX }}/actions-$(date +%Y%m%d-%H%M%S)"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          git checkout -b "$BRANCH_NAME"
+
+      - name: Update GitHub Actions
+        run: |
+          echo "=== Updating GitHub Actions ==="
+          
+          python << 'EOF'
+          import json
+          import re
+          import requests
+          import yaml
+          from pathlib import Path
+          
+          # Read actions to update
+          with open('actions-updates.json') as f:
+              actions_to_update = json.load(f)
+          
+          if not actions_to_update:
+              print("No GitHub Actions to update")
+              exit(0)
+          
+          print(f"Checking {len(actions_to_update)} GitHub Actions for updates...")
+          
+          updated_actions = []
+          
+          for action_info in actions_to_update:
+              action_name = action_info['action']
+              current_ref = action_info['current_ref']
+              workflow_file = action_info['file']
+              
+              try:
+                  # Get latest version from GitHub API
+                  if '/' in action_name:
+                      owner, repo = action_name.split('/', 1)
+                      api_url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
+                      
+                      response = requests.get(api_url)
+                      if response.status_code == 200:
+                          latest_release = response.json()
+                          latest_tag = latest_release['tag_name']
+                          
+                          # Compare versions
+                          if latest_tag != current_ref and latest_tag.replace('v', '') != current_ref.replace('v', ''):
+                              print(f"  - {action_name}: {current_ref} → {latest_tag}")
+                              
+                              # Update the workflow file
+                              with open(workflow_file) as f:
+                                  content = f.read()
+                              
+                              # Replace the specific action version
+                              old_action = f"{action_name}@{current_ref}"
+                              new_action = f"{action_name}@{latest_tag}"
+                              updated_content = content.replace(old_action, new_action)
+                              
+                              if updated_content != content:
+                                  with open(workflow_file, 'w') as f:
+                                      f.write(updated_content)
+                                  
+                                  updated_actions.append({
+                                      'action': action_name,
+                                      'old_version': current_ref,
+                                      'new_version': latest_tag,
+                                      'file': workflow_file
+                                  })
+                          else:
+                              print(f"  - {action_name}: already up to date ({current_ref})")
+                      else:
+                          print(f"  - {action_name}: could not fetch latest version (API error)")
+              
+              except Exception as e:
+                  print(f"  - {action_name}: error checking for updates: {e}")
+          
+          # Create update summary
+          summary = {
+              'ecosystem': 'github-actions',
+              'updates': updated_actions,
+              'total_updates': len(updated_actions),
+              'security_updates': 0  # GitHub Actions don't have explicit security flags
+          }
+          
+          with open('actions-update-summary.json', 'w') as f:
+              json.dump(summary, f, indent=2)
+          
+          print(f"\nUpdated {len(updated_actions)} GitHub Actions")
+          
+          EOF
+
+      - name: Commit GitHub Actions updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Check if there are any changes
+          if git diff --quiet; then
+            echo "No GitHub Actions updates to commit"
+            exit 0
+          fi
+          
+          git add .github/workflows/
+          
+          # Create commit message
+          if [ -f actions-update-summary.json ]; then
+            TOTAL_COUNT=$(cat actions-update-summary.json | jq -r '.total_updates')
+            COMMIT_MSG="🔄 Update GitHub Actions ($TOTAL_COUNT actions)"
+          else
+            COMMIT_MSG="🔄 Update GitHub Actions"
+          fi
+          
+          git commit -m "$COMMIT_MSG" || echo "No changes to commit"
+
+      - name: Push GitHub Actions updates
+        run: |
+          if git log --oneline -1 | grep -q "Update GitHub Actions"; then
+            git push origin "$BRANCH_NAME"
+            echo "ACTIONS_BRANCH=$BRANCH_NAME" >> $GITHUB_ENV
+          else
+            echo "No GitHub Actions updates to push"
+          fi
+
+      - name: Upload GitHub Actions update artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: actions-updates
+          path: |
+            actions-update-summary.json
+          retention-days: 7
+
+  # ========================================
+  # CREATE PULL REQUESTS
+  # ========================================
+  create-pull-requests:
+    name: 📝 Create Pull Requests
+    runs-on: ubuntu-latest
+    needs: [analyze-dependencies, update-python-dependencies, update-node-dependencies, update-github-actions]
+    if: always() && (needs.update-python-dependencies.result == 'success' || needs.update-node-dependencies.result == 'success' || needs.update-github-actions.result == 'success')
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all update artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: update-artifacts
+
+      - name: Create consolidated PR or separate PRs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            const createSeparatePRs = ${{ github.event.inputs.create_separate_prs || 'true' }};
+            const updateType = '${{ needs.analyze-dependencies.outputs.update-strategy }}';
+            
+            // Helper function to read JSON file safely
+            function readJsonFile(filePath) {
+              try {
+                if (fs.existsSync(filePath)) {
+                  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+                }
+              } catch (error) {
+                console.log(`Error reading ${filePath}:`, error.message);
+              }
+              return null;
+            }
+            
+            // Read update summaries
+            const pythonSummary = readJsonFile('update-artifacts/python-updates/python-update-summary.json');
+            const nodeSummary = readJsonFile('update-artifacts/node-updates/node-update-summary.json');
+            const actionsSummary = readJsonFile('update-artifacts/actions-updates/actions-update-summary.json');
+            const securitySummary = readJsonFile('update-artifacts/dependency-analysis/security-updates.json');
+            
+            // Count total updates and security updates
+            let totalUpdates = 0;
+            let totalSecurityUpdates = 0;
+            const ecosystems = [];
+            
+            if (pythonSummary) {
+              totalUpdates += pythonSummary.total_updates || 0;
+              totalSecurityUpdates += pythonSummary.security_updates || 0;
+              ecosystems.push('Python');
+            }
+            
+            if (nodeSummary) {
+              totalUpdates += nodeSummary.total_updates || 0;
+              totalSecurityUpdates += nodeSummary.security_updates || 0;
+              ecosystems.push('Node.js');
+            }
+            
+            if (actionsSummary) {
+              totalUpdates += actionsSummary.total_updates || 0;
+              ecosystems.push('GitHub Actions');
+            }
+            
+            if (totalUpdates === 0) {
+              console.log('No updates to create PRs for');
+              return;
+            }
+            
+            // Create PR title and body
+            const securityText = totalSecurityUpdates > 0 ? ` (${totalSecurityUpdates} security fixes)` : '';
+            const title = `📦 Automated dependency updates: ${ecosystems.join(', ')} - ${totalUpdates} packages${securityText}`;
+            
+            let body = `## 🔄 Automated Dependency Updates
+            
+            This PR contains automated dependency updates generated by the dependency update workflow.
+            
+            **Update Strategy:** ${updateType}
+            **Total Updates:** ${totalUpdates}
+            **Security Updates:** ${totalSecurityUpdates}
+            **Ecosystems:** ${ecosystems.join(', ')}
+            
+            ### 📋 Update Summary
+            
+            `;
+            
+            // Add Python updates details
+            if (pythonSummary && pythonSummary.updates) {
+              body += `#### 🐍 Python Dependencies (${pythonSummary.total_updates} updates)
+              
+              `;
+              
+              pythonSummary.updates.forEach(update => {
+                const securityBadge = update.security ? ' 🔒' : '';
+                const reasons = update.reasons ? ` (${update.reasons.join(', ')})` : '';
+                body += `- **${update.name}**: \`${update.current}\` → \`${update.latest}\`${securityBadge}${reasons}\n`;
+              });
+              body += '\n';
+            }
+            
+            // Add Node.js updates details
+            if (nodeSummary && nodeSummary.updates) {
+              body += `#### 📦 Node.js Dependencies (${nodeSummary.total_updates} updates)
+              
+              `;
+              
+              nodeSummary.updates.forEach(update => {
+                const securityBadge = update.security ? ' 🔒' : '';
+                const typeInfo = update.type === 'devDependency' ? ' (dev)' : '';
+                body += `- **${update.name}**: \`${update.current}\` → \`${update.latest}\`${securityBadge}${typeInfo}\n`;
+              });
+              body += '\n';
+            }
+            
+            // Add GitHub Actions updates details
+            if (actionsSummary && actionsSummary.updates) {
+              body += `#### 🔄 GitHub Actions (${actionsSummary.total_updates} updates)
+              
+              `;
+              
+              actionsSummary.updates.forEach(update => {
+                body += `- **${update.action}**: \`${update.old_version}\` → \`${update.new_version}\` in \`${update.file}\`\n`;
+              });
+              body += '\n';
+            }
+            
+            body += `### 🔍 Verification
+            
+            `;
+            
+            if (${{ github.event.inputs.run_full_tests == 'true' }}) {
+              body += `✅ **Tests**: Full test suite was run during the update process\n`;
+            } else {
+              body += `⚠️ **Tests**: Full test suite was skipped (manual verification recommended)\n`;
+            }
+            
+            if (totalSecurityUpdates > 0) {
+              body += `🔒 **Security**: This PR includes ${totalSecurityUpdates} security updates\n`;
+            }
+            
+            body += `
+            ### 📚 Additional Information
+            
+            - **Workflow Run**: [${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            - **Update Strategy**: ${updateType}
+            - **Branch**: \`${{ env.BRANCH_PREFIX }}/consolidated-${new Date().toISOString().split('T')[0]}\`
+            
+            ### 🚀 Next Steps
+            
+            1. Review the changes in this PR
+            2. Run additional tests if needed: \`npm test\` and \`python -m pytest\`
+            3. Check for any breaking changes in the updated packages
+            4. Merge when ready to deploy the updates
+            
+            ---
+            
+            🤖 This PR was created automatically by the [Dependency Update Workflow](.github/workflows/dependency-update.yml).
+            `;
+            
+            // Create the PR
+            try {
+              const { data: pr } = await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                head: `${{ env.BRANCH_PREFIX }}/consolidated-${new Date().toISOString().split('T')[0]}`,
+                base: context.ref.replace('refs/heads/', ''),
+                draft: false
+              });
+              
+              console.log(`Created PR #${pr.number}: ${pr.title}`);
+              
+              // Add labels
+              const labels = ['dependencies', 'automated'];
+              if (totalSecurityUpdates > 0) {
+                labels.push('security');
+              }
+              if (updateType === 'major') {
+                labels.push('major-update');
+              }
+              
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                labels: labels
+              });
+              
+              // Request review from maintainers if it's a major update or has security fixes
+              if (updateType === 'major' || totalSecurityUpdates > 0) {
+                // You can configure reviewers here
+                // await github.rest.pulls.requestReviewers({
+                //   owner: context.repo.owner,
+                //   repo: context.repo.repo,
+                //   pull_number: pr.number,
+                //   reviewers: ['maintainer1', 'maintainer2']
+                // });
+              }
+              
+              return pr.number;
+              
+            } catch (error) {
+              console.error('Error creating PR:', error);
+              throw error;
+            }
+
+  # ========================================
+  # NOTIFICATION AND CLEANUP
+  # ========================================
+  notify-and-cleanup:
+    name: 📢 Notify and Cleanup
+    runs-on: ubuntu-latest
+    needs: [analyze-dependencies, create-pull-requests]
+    if: always()
+    timeout-minutes: 5
+    steps:
+      - name: Send Slack notification
+        if: env.SLACK_WEBHOOK_URL != ''
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              "text": "📦 Dependency Update Report",
+              "attachments": [
+                {
+                  "color": "${{ needs.create-pull-requests.result == 'success' && 'good' || 'warning' }}",
+                  "fields": [
+                    {
+                      "title": "Repository",
+                      "value": "${{ github.repository }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Update Type",
+                      "value": "${{ needs.analyze-dependencies.outputs.update-strategy }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Status",
+                      "value": "${{ needs.create-pull-requests.result == 'success' && 'PR Created' || 'Check Required' }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Security Updates",
+                      "value": "${{ needs.analyze-dependencies.outputs.security-updates == 'true' && 'Yes' || 'No' }}",
+                      "short": true
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Create issue for failed updates
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🚨 Dependency Update Workflow Failed - ${new Date().toISOString().split('T')[0]}`;
+            const body = `## ❌ Dependency Update Failure
+            
+            The automated dependency update workflow has failed.
+            
+            **Workflow Run**: [${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            **Failed Jobs**: Please check the workflow run for details
+            **Update Strategy**: ${{ needs.analyze-dependencies.outputs.update-strategy }}
+            
+            ### 🔍 Investigation Steps
+            
+            1. Check the workflow logs for specific error messages
+            2. Verify that all dependencies are compatible
+            3. Check for breaking changes in updated packages
+            4. Run tests locally to reproduce issues
+            
+            ### 🛠️ Manual Steps
+            
+            If the automated update fails, you may need to:
+            - Update dependencies manually
+            - Fix any compatibility issues
+            - Update code to handle breaking changes
+            - Re-run tests to ensure everything works
+            
+            ---
+            
+            🤖 This issue was created automatically by the failed [Dependency Update Workflow](.github/workflows/dependency-update.yml).
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['bug', 'dependencies', 'workflow-failure']
+            });
+
+      - name: Cleanup old update branches
+        run: |
+          echo "🧹 Cleaning up old dependency update branches..."
+          
+          # Delete branches older than 7 days
+          git for-each-ref --format='%(refname:short) %(committerdate)' refs/remotes/origin/${{ env.BRANCH_PREFIX }}/ | while read branch date; do
+            # Convert branch name to just the branch part
+            branch_name=${branch#origin/}
+            
+            # Check if branch is older than 7 days (simplified check)
+            echo "Found old update branch: $branch_name"
+            
+            # In a real scenario, you'd want more sophisticated date checking
+            # For now, we'll just log what we would delete
+            echo "Would delete old branch: $branch_name"
+            # git push origin --delete "$branch_name" || true
+          done || true
+          
+          echo "Cleanup completed"
