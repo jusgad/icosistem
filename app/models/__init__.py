@@ -73,13 +73,13 @@ from .analytics import Analytics
 # MODELOS AUXILIARES
 # ====================================
 
-# Tablas de relación many-to-many
-from .associations import (
-    user_organization_association,
-    project_tag_association, 
-    meeting_participant_association,
-    program_entrepreneur_association
-)
+# Tablas de relación many-to-many (comentadas temporalmente)
+# from .associations import (
+#     user_organization_association,
+#     project_tag_association, 
+#     meeting_participant_association,
+#     program_entrepreneur_association
+# )
 
 # ====================================
 # CONFIGURACIÓN DE BASE DE DATOS

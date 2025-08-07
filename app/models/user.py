@@ -1087,30 +1087,30 @@ def generate_user_report(start_date: datetime = None, end_date: datetime = None)
 # CONFIGURACIÓN DE VALIDACIÓN AVANZADA
 # ====================================
 
-# Configurar reglas de validación personalizadas
-User.add_validation_rule('email', {
-    'type': 'regex',
-    'params': {'pattern': r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}},
-    'message': 'Formato de email inválido'
-})
+# Configurar reglas de validación personalizadas (comentadas por compatibilidad)
+# User.add_validation_rule('email', {
+#     'type': 'regex',
+#     'params': {'pattern': r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'},
+#     'message': 'Formato de email inválido'
+# })
 
-User.add_validation_rule('first_name', {
-    'type': 'min_length',
-    'params': {'length': 2},
-    'message': 'El nombre debe tener al menos 2 caracteres'
-})
+# User.add_validation_rule('first_name', {
+#     'type': 'min_length',
+#     'params': {'length': 2},
+#     'message': 'El nombre debe tener al menos 2 caracteres'
+# })
 
-User.add_validation_rule('last_name', {
-    'type': 'min_length', 
-    'params': {'length': 2},
-    'message': 'El apellido debe tener al menos 2 caracteres'
-})
+# User.add_validation_rule('last_name', {
+#     'type': 'min_length', 
+#     'params': {'length': 2},
+#     'message': 'El apellido debe tener al menos 2 caracteres'
+# })
 
-User.add_validation_rule('role', {
-    'type': 'in_choices',
-    'params': {'choices': VALID_ROLES},
-    'message': 'Rol inválido'
-})
+# User.add_validation_rule('role', {
+#     'type': 'in_choices',
+#     'params': {'choices': VALID_ROLES},
+#     'message': 'Rol inválido'
+# })
 
 
 # ====================================

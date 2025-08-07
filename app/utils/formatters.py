@@ -10,11 +10,18 @@ Version: 1.0.0
 """
 
 import re
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, time, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
+from typing import Optional, List, Union
 from flask import current_app, Markup
-import bleach
-import phonenumbers
+try:
+    import bleach
+except ImportError:
+    bleach = None
+try:
+    import phonenumbers
+except ImportError:
+    phonenumbers = None
 from babel.dates import format_datetime as babel_format_datetime, \
                         format_date as babel_format_date, \
                         format_time as babel_format_time, \
@@ -247,7 +254,11 @@ def nl2br(value: Optional[str]) -> Markup:
         return Markup('')
     
     # Escapar HTML primero para seguridad, luego reemplazar saltos de línea
-    escaped_value = bleach.clean(value, tags=[], strip=True)
+    if bleach:
+        escaped_value = bleach.clean(value, tags=[], strip=True)
+    else:
+        # Fallback si bleach no está disponible
+        escaped_value = value.replace('<', '&lt;').replace('>', '&gt;')
     return Markup(escaped_value.replace('\n', '<br>\n'))
 
 def markdown_to_html(text: Optional[str]) -> Markup:

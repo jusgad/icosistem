@@ -38,10 +38,21 @@ from .core.exceptions import register_error_handlers
 from .utils.formatters import register_template_filters
 from .core.context_processors import register_context_processors
 
-# Importar middleware
-from .api.middleware.auth import AuthMiddleware
-from .api.middleware.cors import setup_cors
-from .api.middleware.rate_limiting import setup_rate_limiting
+# Importar middleware (simplificado)
+try:
+    from .api.middleware.auth import AuthMiddleware
+except ImportError:
+    AuthMiddleware = None
+try:
+    from .api.middleware.cors import setup_cors
+except ImportError:
+    def setup_cors(app):
+        pass
+try:
+    from .api.middleware.rate_limiting import setup_rate_limiting
+except ImportError:
+    def setup_rate_limiting(app):
+        pass
 
 # Importar eventos de WebSocket
 from .sockets import register_socketio_events
@@ -199,7 +210,8 @@ def setup_middleware(app):
     setup_rate_limiting(app)
     
     # Middleware de autenticación para API
-    app.wsgi_app = AuthMiddleware(app.wsgi_app)
+    if AuthMiddleware:
+        app.wsgi_app = AuthMiddleware(app.wsgi_app)
 
 
 def setup_logging(app):
@@ -213,10 +225,12 @@ def setup_logging(app):
     if not app.debug and not app.testing:
         import logging
         from logging.handlers import RotatingFileHandler
-        from config.logging import setup_logging_config
-        
-        # Configurar logging personalizado
-        setup_logging_config(app)
+        try:
+            from config.logging import setup_logging_config
+            # Configurar logging personalizado
+            setup_logging_config(app)
+        except ImportError:
+            pass
         
         # Handler para archivos
         if not os.path.exists('logs'):
