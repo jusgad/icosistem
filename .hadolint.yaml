@@ -1,0 +1,134 @@
+# Hadolint Configuration for Docker Security Scanning
+# Optimized for Flask application containers
+
+# Ignored rules (with justification)
+ignored:
+  # DL3008: Pin versions in apt get install - We clean cache afterward
+  # DL3009: Delete the apt-get lists after installing something - We do this
+  # DL3015: Avoid additional packages by specifying --no-install-recommends - Intentionally using recommends
+  
+# Trusted registries for base images
+trustedRegistries:
+  - docker.io
+  - ghcr.io
+  - gcr.io
+  - quay.io
+  - registry-1.docker.io
+
+# Override specific rules
+override:
+  error: []
+  warning: []
+  info: []
+  style: []
+
+# Allowed rules
+allowedRules:
+  - DL3000  # Use absolute WORKDIR
+  - DL3001  # For some bash commands it makes no sense to use pipefail
+  - DL3002  # Last user should not be root
+  - DL3003  # Use WORKDIR to switch to a directory
+  - DL3004  # Do not use sudo as it leads to unpredictable behavior
+  - DL3005  # Do not use apt-get dist-upgrade
+  - DL3006  # Always tag the version of an image explicitly
+  - DL3007  # Using latest is prone to errors
+  - DL3008  # Pin versions in apt-get install
+  - DL3009  # Delete the apt-get lists after installing
+  - DL3010  # Use ADD for extracting archives into an image
+  - DL3011  # Valid UNIX ports range from 0 to 65535
+  - DL3012  # Provide an email address or URL as maintainer
+  - DL3013  # Pin versions in pip
+  - DL3014  # Use the -y switch
+  - DL3015  # Avoid additional packages
+  - DL3016  # Pin versions in npm
+  - DL3017  # Do not use apk upgrade
+  - DL3018  # Pin versions in apk add
+  - DL3019  # Use the --no-cache switch
+  - DL3020  # Use COPY instead of ADD for files and folders
+  - DL3021  # COPY with more than 2 arguments requires the last argument to end with /
+  - DL3022  # COPY --from should reference a previously defined FROM alias
+  - DL3023  # COPY --from cannot reference its own FROM alias
+  - DL3024  # FROM aliases should be unique
+  - DL3025  # Use arguments JSON notation for CMD and ENTRYPOINT arguments
+  - DL3026  # Use only an allowed registry in the FROM image
+  - DL3027  # Do not use apt as it is meant to be an end-user tool
+  - DL3028  # Pin versions in gem install
+  - DL3029  # Do not use --platform flag with FROM
+  - DL3030  # Use the -y switch to avoid manual input
+  - DL3031  # Specify a tag in the 'FROM' statement for image
+  - DL3032  # yum clean all missing after yum command
+  - DL3033  # Specify version with yum install -y <package>-<version>
+  - DL3034  # Non-interactive switch missing
+  - DL3035  # Do not use zypper dist-upgrade
+  - DL3036  # Specify version with zypper install -y <package>=<version>
+  - DL3037  # Specify version with zypper install -y <package>-<version>
+  - DL3038  # Use the -y switch to avoid manual input
+  - DL3039  # Drop the zypper clean step or use zypper install -y --no-recommends && zypper clean
+  - DL3040  # dnf clean all missing after dnf command
+  - DL3041  # Specify version with dnf install -y <package>-<version>
+  - DL3042  # Avoid cache directory with pip install --no-cache-dir <package>
+  - DL3043  # ONBUILD instruction should be avoided in dockerfiles
+  - DL3044  # Do not refer to an environment variable in the same ENV statement where it is set
+  - DL3045  # COPY --from should reference a previously defined FROM alias
+  - DL3046  # useradd without flag -l and high UID will result in excessively large Image
+  - DL3047  # wget without flag --progress will result in excessively large Image
+  - DL3048  # Invalid label key
+  - DL3049  # Label `<label>` is missing
+  - DL3050  # Superfluous label(s) present
+  - DL3051  # Label `<label>` is empty
+  - DL3052  # Label `<label>` is not a valid URL
+  - DL3053  # Label `<label>` is not a valid email format
+  - DL3054  # Label `<label>` is not a valid date format
+  - DL3055  # Label `<label>` is not a valid version format
+  - DL3056  # Label `<label>` does not conform to semantic versioning
+  - DL3057  # HEALTHCHECK instruction missing
+  - DL3058  # Label `<label>` is not a valid SPDX license identifier
+  - DL3059  # Multiple consecutive RUN instructions
+  - DL3060  # yarn cache clean missing after yarn install
+
+# Failure threshold (error, warning, info, style)
+failure-threshold: warning
+
+# Format output (tty, json, checkstyle, codeclimate, gitlab_codeclimate, gnu, codacy, sonarqube, sarif)
+format: sarif
+
+# Output file
+# output: hadolint-results.sarif
+
+# Inline ignore comments - allow or disallow
+no-fail: false
+no-color: false
+verbose: true
+
+# Strict mode - treat warnings as errors
+strict-labels: true
+
+# Custom rules configuration
+config:
+  # Require specific labels
+  label-schema: true
+  
+  # Allowed base images (security requirement)
+  allowed-registry:
+    - docker.io/library
+    - gcr.io/distroless
+    - ghcr.io/
+    
+  # Required labels for compliance
+  required-labels:
+    - maintainer
+    - version
+    - description
+    
+  # Security configurations
+  security:
+    # Require non-root user
+    require-non-root: true
+    
+    # Require pinned versions
+    require-version-pinning: true
+    
+    # Disallow dangerous commands
+    disallow-root-user: true
+    disallow-sudo: true
+    disallow-curl-bash: true

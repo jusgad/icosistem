@@ -377,7 +377,13 @@ jobs:
 
       - name: 📦 Install dependencies
         run: |
-          npm ci --prefer-offline --no-audit
+          if [ -f package-lock.json ]; then
+            npm ci --prefer-offline --no-audit
+          elif [ -f yarn.lock ]; then
+            yarn install --frozen-lockfile --prefer-offline
+          else
+            npm install --prefer-offline --no-audit
+          fi
 
       - name: 🔍 Lint JavaScript/CSS
         run: |

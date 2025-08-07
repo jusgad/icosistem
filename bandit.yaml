@@ -1,0 +1,228 @@
+# Bandit Security Linting Configuration
+# Configured for Flask application security scanning
+
+# Tests to skip (with justification)
+skips:
+  # B101: Test for use of assert - Assert is acceptable in test files
+  - B101
+  
+  # B601: Parameterized shell injection - We validate shell commands
+  # - B601  # Uncomment if you need to allow parameterized shell commands
+
+# Tests to run (explicitly specify for better control)
+tests:
+  # High severity security tests
+  - B102  # Test for exec used
+  - B103  # Test for chmod setting a permissive mask
+  - B104  # Test for binding to all interfaces
+  - B105  # Test for hardcoded password strings
+  - B106  # Test for hardcoded password funcarg
+  - B107  # Test for hardcoded password default
+  - B108  # Test for insecure temp file
+  - B110  # Test for a pass in the except block
+  - B112  # Test for a continue in the except block
+  
+  # Injection vulnerabilities
+  - B201  # Test for flask debug true
+  - B301  # Test for pickle
+  - B302  # Test for marshal loads/dumps
+  - B303  # Test for MD5 insecure hash
+  - B304  # Test for insecure cipher usage
+  - B305  # Test for cipher modes
+  - B306  # Test for mktemp_q
+  - B307  # Test for eval use
+  - B308  # Test for mark_safe usage
+  - B309  # Test for HTTPSConnection
+  - B310  # Test for urllib_urlopen
+  - B311  # Test for random usage
+  - B312  # Test for telnetlib usage
+  - B313  # Test for xml usage
+  - B314  # Test for xml usage
+  - B315  # Test for xml usage
+  - B316  # Test for xml usage
+  - B317  # Test for xml usage
+  - B318  # Test for xml usage
+  - B319  # Test for xml usage
+  - B320  # Test for xml usage
+  - B321  # Test for FTP related modules
+  - B322  # Test for input usage
+  - B323  # Test for unverified context
+  
+  # Flask specific tests
+  - B201  # Flask app with debug=True
+  - B501  # Test for request with no cert validation
+  - B502  # Test for ssl with bad version
+  - B503  # Test for ssl with bad defaults
+  - B504  # Test for ssl with no version
+  - B505  # Test for weak cryptographic key
+  - B506  # Test for yaml load
+  - B507  # Test for ssh no host key verification
+  - B601  # Test for shell injection
+  - B602  # Test for subprocess popen with shell equals true
+  - B603  # Test for subprocess without shell equals false
+  - B604  # Test for any function with shell equals true
+  - B605  # Test for starting a process with a shell
+  - B606  # Test for starting a process with no shell
+  - B607  # Test for starting a process with a partial path
+  - B608  # Test for SQL injection
+  - B609  # Test for wildcard injection
+  - B610  # Test for SQL injection
+  - B611  # Test for SQL injection
+  - B701  # Test for jinja2 autoescape false
+  - B702  # Test for use of mako templates
+  - B703  # Test for django mark safe
+
+# Paths to exclude from scanning  
+exclude_dirs:
+  - '*/tests/*'
+  - '*/test_*'
+  - '*/venv/*'
+  - '*/.venv/*'
+  - '*/node_modules/*'
+  - '*/migrations/*'  # Alembic migrations often have SQL strings
+  - '*/static/dist/*'
+  - '*/htmlcov/*'
+  - '*/__pycache__/*'
+  - '*/build/*'
+  - '*/dist/*'
+
+# File patterns to exclude
+exclude:
+  - '**/*test*.py'
+  - '**/*_test.py'
+  - '**/test_*.py'
+  - '**/conftest.py'
+  - '**/setup.py'
+  - '**/manage.py'
+
+# Confidence levels: HIGH, MEDIUM, LOW
+# Include all confidence levels for comprehensive scanning
+confidence:
+  - HIGH
+  - MEDIUM  
+  - LOW
+
+# Severity levels: HIGH, MEDIUM, LOW
+# Report all severity levels
+severity:
+  - HIGH
+  - MEDIUM
+  - LOW
+
+# Output format: json, txt, csv, xml, html, yaml
+# JSON is preferred for CI/CD integration
+# Will be overridden by command-line options
+
+# Global settings
+settings:
+  # Flask specific configurations
+  flask:
+    # Check for debug mode in production
+    debug_mode: true
+    
+    # Check for secret key issues
+    secret_key: true
+    
+    # Check for CSRF protection
+    csrf_protection: true
+    
+    # Check for secure cookies
+    secure_cookies: true
+    
+  # SQL injection detection
+  sql:
+    # Check for SQL injection patterns
+    injection_patterns: true
+    
+    # Check for dynamic SQL construction  
+    dynamic_sql: true
+    
+  # Cryptography settings
+  crypto:
+    # Check for weak algorithms
+    weak_algorithms:
+      - md5
+      - sha1
+      - des
+      - 3des
+      - rc2
+      - rc4
+      
+    # Check for hardcoded keys/passwords
+    hardcoded_secrets: true
+    
+    # Check for weak key sizes
+    weak_key_sizes:
+      rsa: 2048
+      dsa: 2048
+      
+  # Network security
+  network:
+    # Check for insecure protocols
+    insecure_protocols:
+      - http
+      - ftp  
+      - telnet
+      
+    # Check for certificate validation
+    cert_validation: true
+    
+  # File operations
+  files:
+    # Check for insecure temp files
+    temp_files: true
+    
+    # Check for dangerous file operations
+    dangerous_operations: true
+    
+  # Process execution
+  processes:
+    # Check for shell injection
+    shell_injection: true
+    
+    # Check for command injection
+    command_injection: true
+
+# Plugin configurations
+plugins:
+  # Enable Flask security plugin
+  flask_security: true
+  
+  # Enable SQLAlchemy security checks
+  sqlalchemy_security: true
+  
+  # Enable Jinja2 security checks
+  jinja2_security: true
+
+# Custom rules (if you have custom bandit plugins)
+custom_rules:
+  # Add paths to custom rule files
+  # - /path/to/custom/rules.py
+
+# Baseline file for ignoring known issues
+# baseline: .bandit_baseline.json
+
+# Assert usage configuration
+assert_used:
+  # Skip assert usage in test files
+  skips: ['*/test_*.py', '*/tests/*', '*_test.py']
+  
+# Hardcoded password configuration  
+hardcoded_password_string:
+  # Additional patterns to check
+  word_list: 
+    - password
+    - passwd  
+    - pwd
+    - secret
+    - token
+    - key
+    - api_key
+    - auth_token
+    - access_token
+
+# Flask debug configuration
+flask_debug_true:
+  # Severity for Flask debug=True
+  severity: HIGH
+  confidence: HIGH

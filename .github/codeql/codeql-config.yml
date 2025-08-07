@@ -1,0 +1,216 @@
+# CodeQL Configuration for Ecosistema de Emprendimiento
+# Comprehensive security analysis configuration
+#
+# This configuration optimizes CodeQL for Python Flask applications
+# and JavaScript/Node.js environments with focus on web security
+
+name: "Security-Focused CodeQL Configuration"
+
+# Disable default queries and use only security-focused ones
+disable-default-queries: false
+
+# Additional query packs for enhanced security analysis
+packs:
+  - codeql/python-queries:Security
+  - codeql/javascript-queries:Security
+  - codeql/python-queries:AlertSuppression
+  - codeql/javascript-queries:AlertSuppression
+
+# Custom queries for specific security patterns
+queries:
+  - name: python-security-extended
+    uses: security-extended
+  - name: javascript-security-extended  
+    uses: security-extended
+  - name: python-web-vulnerabilities
+    uses: security-and-quality
+
+# Path filters - focus on application code, exclude test data
+paths:
+  # Include application code
+  - "app/**"
+  - "config/**"
+  - "scripts/**"
+  - "migrations/**"
+  - "wsgi.py"
+  - "run.py"
+  
+paths-ignore:
+  # Exclude test files and mock data
+  - "tests/**"
+  - "**/*test*.py"
+  - "**/*_test.py"
+  - "**/test_*.py"
+  - "**/*.test.js"
+  - "**/mock*.py"
+  - "**/fixtures/**"
+  
+  # Exclude documentation and configuration
+  - "docs/**"
+  - "*.md"
+  - "*.rst"
+  - ".github/**"
+  - "docker/**"
+  
+  # Exclude vendor/third-party code
+  - "**/node_modules/**"
+  - "**/vendor/**"
+  - "**/.venv/**"
+  - "**/venv/**"
+  - "**/__pycache__/**"
+  - "**/*.pyc"
+  
+  # Exclude static assets
+  - "**/static/dist/**"
+  - "**/static/build/**"
+  - "**/static/lib/**"
+  - "**/static/vendor/**"
+
+# Python-specific configuration
+python:
+  # Setup for Python environment
+  setup:
+    # Use specific Python version for consistency
+    version: "3.11"
+    
+  # Python-specific path configuration
+  paths:
+    - "app"
+    - "config"
+    - "scripts"
+    - "migrations"
+  
+  # Exclude Python test paths
+  paths-ignore:
+    - "tests"
+    - "**/*test*.py"
+    - "**/__pycache__"
+
+# JavaScript-specific configuration  
+javascript:
+  # Include JavaScript/TypeScript files
+  paths:
+    - "app/static/src"
+    - "*.js"
+    - "*.ts"
+    
+  # Exclude JavaScript test and build files
+  paths-ignore:
+    - "app/static/dist"
+    - "node_modules"
+    - "**/*.test.js"
+    - "**/*.spec.js"
+
+# Query filters to focus on critical security issues
+query-filters:
+  # Exclude low-priority alerts
+  - exclude:
+      kind: 
+        - "path-problem"
+      severity: "note"
+      
+  # Include all high-severity security issues
+  - include:
+      kind: "problem"  
+      severity: 
+        - "error"
+        - "warning"
+      tags:
+        - "security"
+        - "external/cwe/top25"
+        - "external/owasp/top10"
+
+# Custom configurations for Flask-specific security patterns
+flask-security:
+  # Common Flask security anti-patterns to detect
+  patterns:
+    - "hardcoded-secrets"
+    - "sql-injection" 
+    - "xss-vulnerabilities"
+    - "csrf-bypass"
+    - "insecure-deserialization"
+    - "path-traversal"
+    - "command-injection"
+    - "weak-authentication"
+    - "session-fixation"
+    - "insecure-redirects"
+
+# Performance optimizations
+performance:
+  # Limit analysis scope for faster execution
+  max-paths: 10000
+  max-results: 1000
+  
+  # Memory optimization
+  max-memory: "8192M"
+  
+  # Timeout settings
+  timeout: 
+    query: "20m"
+    total: "120m"
+
+# Advanced security configurations
+security-config:
+  # Enhanced detection for web vulnerabilities
+  web-security:
+    enable: true
+    patterns:
+      - "sql-injection"
+      - "nosql-injection" 
+      - "xss-stored"
+      - "xss-reflected"
+      - "xss-dom"
+      - "csrf-missing-protection"
+      - "insecure-cors"
+      - "sensitive-data-exposure"
+      - "broken-authentication"
+      - "security-misconfiguration"
+      - "vulnerable-components"
+      - "insufficient-logging"
+  
+  # API security patterns
+  api-security:
+    enable: true
+    patterns:
+      - "broken-object-authorization"
+      - "broken-user-authentication"
+      - "excessive-data-exposure"
+      - "lack-resources-rate-limiting"
+      - "broken-function-authorization"
+      - "mass-assignment"
+      - "security-misconfiguration"
+      - "injection-flaws"
+      - "improper-assets-management"
+      - "insufficient-logging-monitoring"
+
+# Reporting configuration
+reporting:
+  # Format for results
+  format: "sarif-latest"
+  
+  # Include source code snippets in results
+  include-sources: true
+  
+  # Severity thresholds
+  fail-on: 
+    - "error"
+  warn-on:
+    - "warning"
+    - "recommendation"
+
+# Integration settings
+integrations:
+  # GitHub Security tab integration
+  github-security-advisories: true
+  
+  # SARIF upload configuration
+  sarif-upload:
+    enable: true
+    include-rule-metadata: true
+    
+  # Third-party integration settings
+  external-tools:
+    bandit: true
+    safety: true
+    semgrep: true
+    snyk: true

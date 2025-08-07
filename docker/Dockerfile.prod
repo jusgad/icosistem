@@ -86,7 +86,8 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copiar archivos de dependencias
-COPY requirements.txt requirements-prod.txt ./
+COPY requirements.txt ./
+COPY requirements-prod.txt* ./
 
 # Actualizar pip y setuptools
 RUN pip install --upgrade pip setuptools wheel
@@ -97,7 +98,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Instalar dependencias Python
 RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir -r requirements-prod.txt
+    if [ -f requirements-prod.txt ]; then pip install --no-cache-dir -r requirements-prod.txt; fi
 
 # -----------------------------------------------------------------------------
 # Stage 3: Production Stage - Imagen final optimizada
