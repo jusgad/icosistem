@@ -1,44 +1,44 @@
-# API Reference
+# Referencia de la API
 
-## Overview
+## Descripción General
 
-The Ecosistema de Emprendimiento API v2 provides a comprehensive REST API for managing the entrepreneurship ecosystem platform. This document provides detailed information about all available endpoints, request/response formats, and authentication methods.
+La API v2 del Ecosistema de Emprendimiento proporciona una API REST integral para gestionar la plataforma del ecosistema de emprendimiento. Este documento proporciona información detallada sobre todos los endpoints disponibles, formatos de solicitud/respuesta y métodos de autenticación.
 
-## Base Information
+## Información Base
 
-- **Base URL**: `https://api.ecosistema-emprendimiento.com/api/v2`
-- **Content Type**: `application/json`
-- **API Version**: `2.0`
-- **Documentation**: Available at `/docs/` (Swagger UI)
+- **URL Base**: `https://api.ecosistema-emprendimiento.com/api/v2`
+- **Tipo de Contenido**: `application/json`
+- **Versión de la API**: `2.0`
+- **Documentación**: Disponible en `/docs/` (Swagger UI)
 
-## Authentication
+## Autenticación
 
-### JWT Bearer Token
+### Token Bearer JWT
 
-Most endpoints require authentication using JWT tokens:
+La mayoría de los endpoints requieren autenticación usando tokens JWT:
 
 ```http
 Authorization: Bearer <access_token>
 ```
 
-### API Key (Service-to-Service)
+### Clave API (Servicio a Servicio)
 
-For service-to-service communication:
+Para comunicación de servicio a servicio:
 
 ```http
 X-API-Key: <api_key>
 ```
 
-## Rate Limiting
+## Limitación de Velocidad
 
-API requests are rate limited:
+Las solicitudes de API tienen limitación de velocidad:
 
-- **Default**: 1000 requests per hour per IP
-- **Authenticated users**: 2000 requests per hour
-- **Login attempts**: 5 attempts per minute
-- **Registration**: 3 attempts per minute
+- **Por defecto**: 1000 solicitudes por hora por IP
+- **Usuarios autenticados**: 2000 solicitudes por hora
+- **Intentos de inicio de sesión**: 5 intentos por minuto
+- **Registro**: 3 intentos por minuto
 
-Rate limit headers are included in responses:
+Los headers de limitación de velocidad se incluyen en las respuestas:
 
 ```http
 X-RateLimit-Limit: 1000
@@ -46,949 +46,702 @@ X-RateLimit-Remaining: 999
 X-RateLimit-Reset: 1642694400
 ```
 
-## Common Response Formats
+## Formatos de Respuesta Comunes
 
-### Success Response
-
-```json
-{
-  "success": true,
-  "data": { ... },
-  "metadata": {
-    "request_id": "uuid",
-    "timestamp": "2024-01-15T10:30:00Z",
-    "execution_time": 0.123
-  }
-}
-```
-
-### Error Response
+### Respuesta de Éxito
 
 ```json
 {
-  "success": false,
-  "error_type": "validation_error",
-  "message": "Invalid input data",
-  "details": [
-    {
-      "field": "email",
-      "message": "Invalid email format"
-    }
-  ],
-  "timestamp": "2024-01-15T10:30:00Z",
-  "request_id": "uuid"
-}
-```
-
-### Paginated Response
-
-```json
-{
-  "success": true,
-  "items": [ ... ],
-  "pagination": {
-    "current_page": 1,
-    "per_page": 20,
-    "total_items": 100,
-    "total_pages": 5,
-    "has_next": true,
-    "has_prev": false,
-    "next_page": 2,
-    "prev_page": null
-  }
-}
-```
-
-## Health Endpoints
-
-### GET /health
-
-Basic health check endpoint.
-
-**Response:**
-```json
-{
-  "healthy": true,
-  "service": "ecosistema-emprendimiento-api",
-  "version": "2.0.0",
-  "timestamp": "2024-01-15T10:30:00Z",
-  "uptime_seconds": 3600,
-  "environment": "production"
-}
-```
-
-### GET /health/detailed
-
-Comprehensive health check with dependencies.
-
-**Response:**
-```json
-{
-  "overall_status": "healthy",
-  "services": [
-    {
-      "name": "database",
-      "status": "healthy",
-      "response_time_ms": 50,
-      "details": {
-        "pool_size": 20,
-        "checked_out": 5
-      }
+    "success": true,
+    "data": {
+        // datos del objeto
     },
-    {
-      "name": "cache",
-      "status": "healthy",
-      "response_time_ms": 10,
-      "details": {
-        "connection": "ok"
-      }
+    "metadata": {
+        "timestamp": "2024-01-01T12:00:00Z",
+        "version": "2.0"
     }
-  ],
-  "system_info": {
-    "cpu_percent": 25.5,
-    "memory": {
-      "total_mb": 8192,
-      "available_mb": 4096,
-      "percent_used": 50
+}
+```
+
+### Respuesta de Error
+
+```json
+{
+    "success": false,
+    "error": {
+        "type": "validation_error",
+        "message": "Datos de entrada inválidos",
+        "details": {
+            "field": "email",
+            "issue": "formato de email inválido"
+        }
+    },
+    "metadata": {
+        "timestamp": "2024-01-01T12:00:00Z",
+        "request_id": "req_123456789"
     }
-  }
 }
 ```
 
-## Authentication Endpoints
+### Respuesta Paginada
 
-### POST /auth/login
-
-Authenticate user and receive JWT tokens.
-
-**Request:**
 ```json
 {
-  "email": "user@example.com",
-  "password": "password123",
-  "remember_me": false,
-  "device_name": "iPhone 15",
-  "two_factor_code": "123456"
+    "success": true,
+    "data": [
+        // array de objetos
+    ],
+    "pagination": {
+        "current_page": 1,
+        "per_page": 20,
+        "total_pages": 5,
+        "total_count": 100,
+        "has_next": true,
+        "has_prev": false
+    }
 }
 ```
 
-**Response:**
+## Códigos de Estado HTTP
+
+| Código | Descripción |
+|--------|-------------|
+| 200 | Éxito |
+| 201 | Creado |
+| 204 | Sin Contenido |
+| 400 | Solicitud Incorrecta |
+| 401 | No Autorizado |
+| 403 | Prohibido |
+| 404 | No Encontrado |
+| 409 | Conflicto |
+| 422 | Entidad No Procesable |
+| 429 | Demasiadas Solicitudes |
+| 500 | Error Interno del Servidor |
+
+## Endpoints de Autenticación
+
+### Iniciar Sesión
+
+```http
+POST /auth/login
+```
+
+**Solicitud:**
 ```json
 {
-  "success": true,
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "token_type": "bearer",
-  "expires_in": 3600,
-  "user": {
-    "id": "uuid",
-    "email": "user@example.com",
-    "first_name": "John",
-    "last_name": "Doe",
-    "user_type": "entrepreneur"
-  },
-  "permissions": ["create_project", "manage_profile"],
-  "session_id": "session_uuid"
+    "email": "usuario@ejemplo.com",
+    "password": "contraseña123",
+    "remember_me": false
 }
 ```
 
-**Error Responses:**
-- `400` Validation Error
-- `401` Authentication Failed
-- `423` Account Locked
-
-### POST /auth/register
-
-Register a new user account.
-
-**Request:**
+**Respuesta:**
 ```json
 {
-  "email": "newuser@example.com",
-  "password": "SecurePass123!",
-  "confirm_password": "SecurePass123!",
-  "first_name": "Jane",
-  "last_name": "Smith",
-  "user_type": "entrepreneur",
-  "phone": "+1234567890",
-  "terms_accepted": true,
-  "privacy_accepted": true,
-  "marketing_consent": false,
-  "organization_name": "My Startup"
+    "success": true,
+    "data": {
+        "access_token": "jwt_access_token",
+        "refresh_token": "jwt_refresh_token",
+        "token_type": "bearer",
+        "expires_in": 3600,
+        "user": {
+            "id": "user_123",
+            "email": "usuario@ejemplo.com",
+            "user_type": "entrepreneur",
+            "name": "Juan Pérez"
+        }
+    }
 }
 ```
 
-**Response:**
+### Actualizar Token
+
+```http
+POST /auth/refresh
+```
+
+**Headers:**
+```http
+Authorization: Bearer <refresh_token>
+```
+
+**Respuesta:**
 ```json
 {
-  "success": true,
-  "message": "Registration successful. Please check your email for verification.",
-  "user": {
-    "id": "uuid",
-    "email": "newuser@example.com",
-    "first_name": "Jane",
-    "last_name": "Smith"
-  },
-  "email_verification_required": true,
-  "verification_email_sent": true
+    "success": true,
+    "data": {
+        "access_token": "nuevo_jwt_access_token",
+        "expires_in": 3600
+    }
 }
 ```
 
-### POST /auth/logout
+### Cerrar Sesión
 
-Logout and invalidate current token.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Logged out successfully",
-  "timestamp": "2024-01-15T10:30:00Z"
-}
+```http
+POST /auth/logout
 ```
 
-### POST /auth/refresh
-
-Refresh access token using refresh token.
-
-**Headers:** `Authorization: Bearer <refresh_token>`
-
-**Response:**
-```json
-{
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "token_type": "bearer",
-  "expires_in": 3600
-}
+**Headers:**
+```http
+Authorization: Bearer <access_token>
 ```
 
-### POST /auth/password-reset
+### Registro
 
-Request password reset email.
-
-**Request:**
-```json
-{
-  "email": "user@example.com"
-}
+```http
+POST /auth/register
 ```
 
-**Response:**
+**Solicitud:**
 ```json
 {
-  "success": true,
-  "message": "If an account with that email exists, a password reset email has been sent",
-  "timestamp": "2024-01-15T10:30:00Z"
-}
-```
-
-### POST /auth/two-factor/setup
-
-Setup two-factor authentication.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Response:**
-```json
-{
-  "qr_code": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
-  "secret": "JBSWY3DPEHPK3PXP",
-  "backup_codes": [
-    "123456",
-    "789012",
-    "345678",
-    "901234",
-    "567890"
-  ]
-}
-```
-
-### POST /auth/two-factor/verify
-
-Verify and enable two-factor authentication.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Request:**
-```json
-{
-  "code": "123456"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Two-factor authentication enabled successfully",
-  "timestamp": "2024-01-15T10:30:00Z"
-}
-```
-
-## User Management Endpoints
-
-### GET /users/me
-
-Get current user profile.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid",
-    "email": "user@example.com",
-    "first_name": "John",
-    "last_name": "Doe",
+    "email": "nuevo@ejemplo.com",
+    "password": "contraseña123",
+    "confirm_password": "contraseña123",
     "user_type": "entrepreneur",
-    "status": "active",
-    "email_verified": true,
-    "phone_verified": false,
-    "two_factor_enabled": true,
-    "profile_completion": 85,
-    "avatar_url": "https://example.com/avatar.jpg",
-    "contact_info": {
-      "phone": "+1234567890",
-      "website": "https://johndoe.com",
-      "linkedin": "https://linkedin.com/in/johndoe"
+    "first_name": "Juan",
+    "last_name": "Pérez",
+    "phone": "+57 300 123 4567",
+    "terms_accepted": true
+}
+```
+
+## Endpoints de Gestión de Usuarios
+
+### Obtener Perfil Actual
+
+```http
+GET /users/me
+```
+
+**Headers:**
+```http
+Authorization: Bearer <access_token>
+```
+
+**Respuesta:**
+```json
+{
+    "success": true,
+    "data": {
+        "id": "user_123",
+        "email": "usuario@ejemplo.com",
+        "user_type": "entrepreneur",
+        "first_name": "Juan",
+        "last_name": "Pérez",
+        "phone": "+57 300 123 4567",
+        "profile": {
+            "bio": "Emprendedor apasionado por la tecnología",
+            "skills": ["Python", "JavaScript", "Gestión"],
+            "experience_years": 5,
+            "education": "Ingeniería de Sistemas",
+            "location": "Bogotá, Colombia"
+        },
+        "created_at": "2023-01-01T00:00:00Z",
+        "updated_at": "2023-12-01T10:30:00Z",
+        "is_verified": true,
+        "is_active": true
+    }
+}
+```
+
+### Actualizar Perfil
+
+```http
+PUT /users/me
+```
+
+**Solicitud:**
+```json
+{
+    "first_name": "Juan Carlos",
+    "last_name": "Pérez García",
+    "phone": "+57 300 123 4567",
+    "profile": {
+        "bio": "Emprendedor con experiencia en fintech",
+        "skills": ["Python", "React", "Blockchain"],
+        "experience_years": 6,
+        "location": "Medellín, Colombia"
+    }
+}
+```
+
+### Listar Usuarios (Solo Admins)
+
+```http
+GET /users
+```
+
+**Parámetros de Consulta:**
+- `page` (int): Número de página (por defecto: 1)
+- `per_page` (int): Elementos por página (por defecto: 20, máximo: 100)
+- `user_type` (string): Filtrar por tipo de usuario
+- `is_active` (boolean): Filtrar por estado activo
+- `search` (string): Buscar por nombre o email
+
+**Ejemplo:**
+```http
+GET /users?page=1&per_page=20&user_type=entrepreneur&search=juan
+```
+
+## Endpoints de Gestión de Proyectos
+
+### Crear Proyecto
+
+```http
+POST /projects
+```
+
+**Headers:**
+```http
+Authorization: Bearer <access_token>
+```
+
+**Solicitud:**
+```json
+{
+    "name": "Mi Startup Fintech",
+    "description": "Plataforma de pagos para pequeñas empresas",
+    "category": "fintech",
+    "stage": "idea",
+    "industry": "tecnología",
+    "business_model": "saas",
+    "target_market": "pymes",
+    "problem_statement": "Las pymes no tienen acceso a soluciones de pago digitales",
+    "solution_description": "Plataforma integral de pagos con API simple",
+    "revenue_model": "comisión por transacción",
+    "funding_needed": 50000,
+    "team_size": 3,
+    "technologies": ["Python", "React", "PostgreSQL"],
+    "tags": ["fintech", "pagos", "pymes"]
+}
+```
+
+**Respuesta:**
+```json
+{
+    "success": true,
+    "data": {
+        "id": "project_456",
+        "name": "Mi Startup Fintech",
+        "description": "Plataforma de pagos para pequeñas empresas",
+        "owner": {
+            "id": "user_123",
+            "name": "Juan Pérez",
+            "email": "juan@ejemplo.com"
+        },
+        "category": "fintech",
+        "stage": "idea",
+        "status": "active",
+        "created_at": "2024-01-01T10:00:00Z",
+        "updated_at": "2024-01-01T10:00:00Z"
+    }
+}
+```
+
+### Listar Proyectos
+
+```http
+GET /projects
+```
+
+**Parámetros de Consulta:**
+- `page` (int): Número de página
+- `per_page` (int): Elementos por página
+- `category` (string): Filtrar por categoría
+- `stage` (string): Filtrar por etapa
+- `status` (string): Filtrar por estado
+- `owner_id` (string): Filtrar por propietario
+- `search` (string): Buscar en nombre y descripción
+
+### Obtener Detalles del Proyecto
+
+```http
+GET /projects/{project_id}
+```
+
+### Actualizar Proyecto
+
+```http
+PUT /projects/{project_id}
+```
+
+### Eliminar Proyecto
+
+```http
+DELETE /projects/{project_id}
+```
+
+## Endpoints de Mentoría
+
+### Crear Sesión de Mentoría
+
+```http
+POST /mentorship/sessions
+```
+
+**Solicitud:**
+```json
+{
+    "mentor_id": "user_789",
+    "entrepreneur_id": "user_123",
+    "project_id": "project_456",
+    "session_type": "one_on_one",
+    "topic": "estrategia_negocio",
+    "description": "Revisión del modelo de negocio y estrategia de go-to-market",
+    "scheduled_date": "2024-01-15T14:00:00Z",
+    "duration_minutes": 60,
+    "location": "virtual",
+    "meeting_link": "https://meet.google.com/abc-def-ghi"
+}
+```
+
+### Listar Sesiones
+
+```http
+GET /mentorship/sessions
+```
+
+**Parámetros de Consulta:**
+- `mentor_id` (string): Filtrar por mentor
+- `entrepreneur_id` (string): Filtrar por emprendedor
+- `project_id` (string): Filtrar por proyecto
+- `status` (string): Filtrar por estado (scheduled, completed, cancelled)
+- `from_date` (datetime): Desde fecha
+- `to_date` (datetime): Hasta fecha
+
+### Actualizar Sesión
+
+```http
+PUT /mentorship/sessions/{session_id}
+```
+
+### Completar Sesión con Feedback
+
+```http
+POST /mentorship/sessions/{session_id}/complete
+```
+
+**Solicitud:**
+```json
+{
+    "mentor_feedback": {
+        "rating": 5,
+        "notes": "Sesión muy productiva, el emprendedor mostró gran compromiso",
+        "recommendations": [
+            "Enfocarse en validación de mercado",
+            "Desarrollar MVP mínimo viable"
+        ],
+        "next_steps": [
+            "Crear encuestas para validar problema",
+            "Definir métricas de éxito"
+        ]
     },
-    "notification_preferences": {
-      "email_notifications": true,
-      "sms_notifications": false,
-      "push_notifications": true
-    },
-    "audit_info": {
-      "created_at": "2024-01-01T00:00:00Z",
-      "updated_at": "2024-01-15T10:30:00Z"
+    "entrepreneur_feedback": {
+        "rating": 5,
+        "notes": "Excelentes insights, muy claros los siguientes pasos",
+        "helpful_topics": ["validación de mercado", "métricas"],
+        "would_recommend": true
     }
-  }
 }
 ```
 
-### PUT /users/me
+## Endpoints de Analytics
 
-Update current user profile.
+### Dashboard de Métricas Generales
 
-**Headers:** `Authorization: Bearer <token>`
-
-**Request:**
-```json
-{
-  "first_name": "John",
-  "last_name": "Doe",
-  "phone": "+1234567890",
-  "bio": "Experienced entrepreneur passionate about technology.",
-  "contact_info": {
-    "website": "https://johndoe.com",
-    "linkedin": "https://linkedin.com/in/johndoe"
-  },
-  "notification_preferences": {
-    "email_notifications": true,
-    "push_notifications": false
-  }
-}
+```http
+GET /analytics/dashboard
 ```
 
-**Response:**
+**Respuesta:**
 ```json
 {
-  "success": true,
-  "data": {
-    // Updated user object
-  },
-  "message": "Profile updated successfully"
-}
-```
-
-### GET /users
-
-List users (admin/ally only).
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Query Parameters:**
-- `page`: Page number (default: 1)
-- `per_page`: Items per page (default: 20, max: 100)
-- `search`: Search term
-- `user_type`: Filter by user type
-- `status`: Filter by status
-- `verified_only`: Show only verified users
-
-**Response:**
-```json
-{
-  "success": true,
-  "items": [
-    {
-      "id": "uuid",
-      "email": "user@example.com",
-      "first_name": "John",
-      "last_name": "Doe",
-      "user_type": "entrepreneur",
-      "status": "active",
-      "created_at": "2024-01-01T00:00:00Z"
+    "success": true,
+    "data": {
+        "summary": {
+            "total_users": 1250,
+            "active_projects": 345,
+            "completed_sessions": 892,
+            "success_rate": 0.78
+        },
+        "user_growth": [
+            {"date": "2024-01-01", "new_users": 23, "total_users": 1227},
+            {"date": "2024-01-02", "new_users": 18, "total_users": 1245}
+        ],
+        "project_stages": {
+            "idea": 125,
+            "validation": 89,
+            "prototype": 67,
+            "launch": 45,
+            "growth": 19
+        },
+        "mentorship_metrics": {
+            "avg_session_rating": 4.6,
+            "total_hours": 1784,
+            "active_mentors": 78
+        }
     }
-  ],
-  "pagination": {
-    "current_page": 1,
-    "per_page": 20,
-    "total_items": 100,
-    "total_pages": 5
-  }
 }
 ```
 
-### GET /users/{user_id}
+### Métricas de Usuario
 
-Get user by ID (admin/ally only).
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    // Full user object
-  }
-}
+```http
+GET /analytics/users/{user_id}/metrics
 ```
 
-### PUT /users/{user_id}/status
+### Métricas de Proyecto
 
-Update user status (admin only).
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Request:**
-```json
-{
-  "status": "suspended",
-  "reason": "Policy violation",
-  "notes": "Temporary suspension for review",
-  "notify_user": true
-}
+```http
+GET /analytics/projects/{project_id}/metrics
 ```
 
-## Entrepreneur Endpoints
+## Endpoints de Notificaciones
 
-### GET /entrepreneurs
+### Listar Notificaciones
 
-List entrepreneurs.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Query Parameters:**
-- `page`, `per_page`: Pagination
-- `industry`: Filter by industry
-- `business_stage`: Filter by business stage
-- `location`: Filter by location
-
-**Response:**
-```json
-{
-  "success": true,
-  "items": [
-    {
-      "id": "uuid",
-      "user": {
-        "first_name": "John",
-        "last_name": "Doe",
-        "email": "john@example.com"
-      },
-      "business_stage": "growth",
-      "company_name": "Tech Innovations Inc",
-      "industry": "Technology",
-      "description": "Revolutionary AI solutions...",
-      "founded_year": 2020,
-      "employees_count": 15,
-      "location": {
-        "city": "San Francisco",
-        "country": "USA"
-      }
-    }
-  ],
-  "pagination": { ... }
-}
+```http
+GET /notifications
 ```
 
-### GET /entrepreneurs/{entrepreneur_id}
+**Parámetros de Consulta:**
+- `is_read` (boolean): Filtrar por leídas/no leídas
+- `notification_type` (string): Tipo de notificación
+- `from_date` (datetime): Desde fecha
 
-Get entrepreneur details.
+### Marcar como Leída
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid",
-    "user": { ... },
-    "business_stage": "growth",
-    "company_name": "Tech Innovations Inc",
-    "industry": "Technology",
-    "description": "Revolutionary AI solutions for small businesses",
-    "founded_year": 2020,
-    "employees_count": 15,
-    "annual_revenue": 500000,
-    "funding_raised": 1000000,
-    "projects": [
-      {
-        "id": "uuid",
-        "name": "AI Assistant",
-        "status": "active"
-      }
-    ],
-    "metrics": {
-      "total_projects": 3,
-      "active_projects": 2,
-      "completed_projects": 1
-    }
-  }
-}
+```http
+PUT /notifications/{notification_id}/read
 ```
 
-### PUT /entrepreneurs/me
+### Marcar Todas como Leídas
 
-Update entrepreneur profile.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Request:**
-```json
-{
-  "business_stage": "scale",
-  "company_name": "Tech Innovations Corp",
-  "industry": "AI/ML",
-  "description": "Leading AI solutions provider",
-  "employees_count": 25,
-  "annual_revenue": 750000,
-  "website": "https://techinnovations.com",
-  "skills": ["AI", "Machine Learning", "Product Management"],
-  "achievements": [
-    {
-      "title": "Best Startup 2023",
-      "organization": "TechCrunch",
-      "date": "2023-12-01"
-    }
-  ]
-}
-```
-
-## Project Endpoints
-
-### GET /projects
-
-List projects.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Query Parameters:**
-- `page`, `per_page`: Pagination
-- `owner_id`: Filter by owner
-- `status`: Filter by status
-- `industry`: Filter by industry
-
-**Response:**
-```json
-{
-  "success": true,
-  "items": [
-    {
-      "id": "uuid",
-      "name": "AI-Powered CRM",
-      "description": "Customer relationship management with AI insights",
-      "owner": {
-        "id": "uuid",
-        "first_name": "John",
-        "last_name": "Doe"
-      },
-      "status": "active",
-      "industry": "SaaS",
-      "budget": 50000,
-      "timeline_months": 12,
-      "created_at": "2024-01-01T00:00:00Z",
-      "updated_at": "2024-01-15T10:30:00Z"
-    }
-  ],
-  "pagination": { ... }
-}
-```
-
-### POST /projects
-
-Create new project.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Request:**
-```json
-{
-  "name": "AI-Powered Analytics",
-  "description": "Advanced analytics platform using machine learning",
-  "industry": "Analytics",
-  "stage": "idea",
-  "budget": 75000,
-  "timeline_months": 18,
-  "team_size": 5,
-  "technologies": ["Python", "React", "PostgreSQL"],
-  "goals": [
-    "Build MVP within 6 months",
-    "Acquire 100 beta users",
-    "Raise Series A funding"
-  ]
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid",
-    "name": "AI-Powered Analytics",
-    // ... full project object
-  },
-  "message": "Project created successfully"
-}
-```
-
-### GET /projects/{project_id}
-
-Get project details.
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid",
-    "name": "AI-Powered Analytics",
-    "description": "Advanced analytics platform...",
-    "owner": { ... },
-    "status": "active",
-    "progress": 35,
-    "milestones": [
-      {
-        "id": "uuid",
-        "title": "MVP Development",
-        "description": "Build minimum viable product",
-        "due_date": "2024-06-01",
-        "status": "in_progress",
-        "completion_percentage": 60
-      }
-    ],
-    "team_members": [
-      {
-        "user_id": "uuid",
-        "role": "Developer",
-        "joined_at": "2024-01-01T00:00:00Z"
-      }
-    ],
-    "metrics": {
-      "hours_logged": 240,
-      "budget_used": 15000,
-      "budget_remaining": 35000
-    }
-  }
-}
-```
-
-### PUT /projects/{project_id}
-
-Update project.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Request:**
-```json
-{
-  "name": "AI Analytics Pro",
-  "description": "Updated description",
-  "status": "in_progress",
-  "budget": 80000,
-  "progress": 45
-}
-```
-
-### DELETE /projects/{project_id}
-
-Delete project.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Project deleted successfully"
-}
-```
-
-## Analytics Endpoints
-
-### GET /analytics/dashboard
-
-Get dashboard analytics data.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Query Parameters:**
-- `period`: Time period (7d, 30d, 90d, 1y)
-- `user_type`: Filter by user type
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "overview": {
-      "total_users": 1250,
-      "active_users": 890,
-      "total_projects": 340,
-      "active_projects": 180
-    },
-    "growth_metrics": {
-      "user_growth_rate": 15.5,
-      "project_creation_rate": 8.2,
-      "engagement_rate": 72.3
-    },
-    "charts": {
-      "user_registration": [
-        {"date": "2024-01-01", "count": 45},
-        {"date": "2024-01-02", "count": 52}
-      ],
-      "project_creation": [
-        {"date": "2024-01-01", "count": 12},
-        {"date": "2024-01-02", "count": 18}
-      ]
-    }
-  }
-}
-```
-
-### GET /analytics/users
-
-User analytics data.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "user_distribution": {
-      "by_type": {
-        "entrepreneur": 45,
-        "ally": 25,
-        "client": 20,
-        "admin": 10
-      },
-      "by_location": {
-        "Colombia": 40,
-        "Mexico": 25,
-        "Argentina": 20,
-        "Other": 15
-      }
-    },
-    "engagement_metrics": {
-      "daily_active_users": 420,
-      "weekly_active_users": 680,
-      "monthly_active_users": 890
-    }
-  }
-}
-```
-
-## Error Codes
-
-### Authentication Errors
-- `authentication_error`: Invalid credentials
-- `token_expired`: JWT token has expired
-- `token_invalid`: Invalid JWT token format
-- `account_locked`: Account temporarily locked
-- `account_inactive`: Account is inactive
-- `email_not_verified`: Email verification required
-
-### Validation Errors
-- `validation_error`: Input validation failed
-- `business_rule_violation`: Business rule validation failed
-- `duplicate_resource`: Resource already exists
-- `resource_not_found`: Requested resource not found
-
-### Authorization Errors
-- `permission_denied`: Insufficient permissions
-- `forbidden_action`: Action not allowed
-- `resource_access_denied`: Cannot access resource
-
-### System Errors
-- `internal_error`: Internal server error
-- `service_unavailable`: Service temporarily unavailable
-- `rate_limit_exceeded`: Too many requests
-- `database_error`: Database operation failed
-
-## Pagination
-
-All list endpoints support pagination:
-
-**Query Parameters:**
-- `page`: Page number (starts from 1)
-- `per_page`: Items per page (1-100, default: 20)
-- `sort`: Sort field (default varies by endpoint)
-- `order`: Sort order (`asc` or `desc`, default: `desc`)
-
-**Response includes:**
-```json
-{
-  "pagination": {
-    "current_page": 1,
-    "per_page": 20,
-    "total_items": 100,
-    "total_pages": 5,
-    "has_next": true,
-    "has_prev": false,
-    "next_page": 2,
-    "prev_page": null
-  }
-}
-```
-
-## Filtering and Search
-
-### Query Parameters
-- `search`: Search across relevant fields
-- `filter[field]`: Filter by specific field
-- `date_from`, `date_to`: Date range filtering
-
-### Examples
-```
-GET /users?search=john&filter[user_type]=entrepreneur&filter[status]=active
-GET /projects?date_from=2024-01-01&date_to=2024-01-31
+```http
+PUT /notifications/mark-all-read
 ```
 
 ## Webhooks
 
-### Supported Events
-- `user.created`
-- `user.updated`
-- `user.deleted`
-- `project.created`
-- `project.updated`
-- `project.completed`
+### Configurar Webhook
 
-### Webhook Payload
+```http
+POST /webhooks
+```
+
+**Solicitud:**
 ```json
 {
-  "event": "user.created",
-  "data": {
-    "user_id": "uuid",
-    "user": { ... }
-  },
-  "timestamp": "2024-01-15T10:30:00Z",
-  "signature": "sha256=..."
+    "url": "https://tu-app.com/webhook",
+    "events": [
+        "user.created",
+        "project.created",
+        "session.completed"
+    ],
+    "secret": "tu_secreto_webhook"
 }
 ```
 
-## SDK Examples
+### Eventos Disponibles
+
+- `user.created` - Usuario registrado
+- `user.updated` - Usuario actualizado
+- `project.created` - Proyecto creado
+- `project.updated` - Proyecto actualizado
+- `session.scheduled` - Sesión programada
+- `session.completed` - Sesión completada
+- `session.cancelled` - Sesión cancelada
+
+### Formato de Payload del Webhook
+
+```json
+{
+    "event": "project.created",
+    "data": {
+        "id": "project_456",
+        "name": "Mi Startup Fintech",
+        "owner_id": "user_123"
+    },
+    "timestamp": "2024-01-01T10:00:00Z",
+    "webhook_id": "webhook_789"
+}
+```
+
+## Manejo de Errores
+
+### Códigos de Error Comunes
+
+| Código | Tipo | Descripción |
+|--------|------|-------------|
+| `auth_required` | 401 | Autenticación requerida |
+| `invalid_token` | 401 | Token JWT inválido |
+| `token_expired` | 401 | Token JWT expirado |
+| `insufficient_permissions` | 403 | Permisos insuficientes |
+| `resource_not_found` | 404 | Recurso no encontrado |
+| `validation_error` | 422 | Error de validación |
+| `rate_limit_exceeded` | 429 | Límite de velocidad excedido |
+| `internal_error` | 500 | Error interno del servidor |
+
+### Ejemplo de Error de Validación
+
+```json
+{
+    "success": false,
+    "error": {
+        "type": "validation_error",
+        "message": "Los datos proporcionados no son válidos",
+        "details": [
+            {
+                "field": "email",
+                "message": "El formato del email no es válido"
+            },
+            {
+                "field": "password",
+                "message": "La contraseña debe tener al menos 8 caracteres"
+            }
+        ]
+    }
+}
+```
+
+## SDKs y Librerías
 
 ### Python SDK
+
 ```python
-from ecosistema_client import EcosistemaAPI
+from ecosistema_api import EcosistemaAPI
 
-client = EcosistemaAPI(api_key="your-api-key")
+# Inicializar cliente
+client = EcosistemaAPI(
+    api_key="tu_api_key",
+    base_url="https://api.ecosistema-emprendimiento.com/api/v2"
+)
 
-# Authenticate
-auth = client.auth.login("user@example.com", "password")
-client.set_access_token(auth.access_token)
+# Autenticarse
+auth_result = client.auth.login(
+    email="usuario@ejemplo.com",
+    password="contraseña123"
+)
 
-# Get current user
-user = client.users.me()
-print(f"Hello, {user.first_name}!")
+# Crear proyecto
+project = client.projects.create({
+    "name": "Mi Startup",
+    "description": "Descripción del proyecto",
+    "category": "fintech"
+})
 
-# List projects
-projects = client.projects.list(page=1, per_page=10)
-for project in projects.items:
-    print(f"Project: {project.name}")
+# Listar proyectos
+projects = client.projects.list(
+    page=1,
+    per_page=20,
+    category="fintech"
+)
 ```
 
 ### JavaScript SDK
+
 ```javascript
-import { EcosistemaAPI } from '@ecosistema/api-client';
+import { EcosistemaAPI } from 'ecosistema-api-js';
 
+// Inicializar cliente
 const client = new EcosistemaAPI({
-  apiKey: 'your-api-key',
-  baseURL: 'https://api.ecosistema-emprendimiento.com/api/v2'
+    apiKey: 'tu_api_key',
+    baseUrl: 'https://api.ecosistema-emprendimiento.com/api/v2'
 });
 
-// Authenticate
-const auth = await client.auth.login({
-  email: 'user@example.com',
-  password: 'password'
+// Autenticarse
+const authResult = await client.auth.login({
+    email: 'usuario@ejemplo.com',
+    password: 'contraseña123'
 });
 
-client.setAccessToken(auth.access_token);
-
-// Get current user
-const user = await client.users.me();
-console.log(`Hello, ${user.first_name}!`);
-
-// Create project
+// Crear proyecto
 const project = await client.projects.create({
-  name: 'My New Project',
-  description: 'A revolutionary idea'
+    name: 'Mi Startup',
+    description: 'Descripción del proyecto',
+    category: 'fintech'
+});
+
+// Listar proyectos
+const projects = await client.projects.list({
+    page: 1,
+    perPage: 20,
+    category: 'fintech'
 });
 ```
 
-## Testing
+## Ejemplos de cURL
 
-### API Testing
-Use tools like Postman, Insomnia, or curl to test endpoints:
+### Autenticación
 
 ```bash
-# Login
-curl -X POST https://api.example.com/api/v2/auth/login \
+curl -X POST https://api.ecosistema-emprendimiento.com/api/v2/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"password"}'
-
-# Get user profile
-curl -X GET https://api.example.com/api/v2/users/me \
-  -H "Authorization: Bearer <token>"
+  -d '{
+    "email": "usuario@ejemplo.com",
+    "password": "contraseña123"
+  }'
 ```
 
-### Automated Testing
+### Crear Proyecto
+
 ```bash
-# Run API tests
-pytest tests/api/
-
-# Load testing
-locust -f load_tests.py --host=https://api.example.com
+curl -X POST https://api.ecosistema-emprendimiento.com/api/v2/projects \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer tu_access_token" \
+  -d '{
+    "name": "Mi Startup Fintech",
+    "description": "Plataforma de pagos innovadora",
+    "category": "fintech",
+    "stage": "idea"
+  }'
 ```
 
-## Support
+### Listar Proyectos
 
-- **Documentation**: [https://docs.ecosistema-emprendimiento.com](https://docs.ecosistema-emprendimiento.com)
-- **API Status**: [https://status.ecosistema-emprendimiento.com](https://status.ecosistema-emprendimiento.com)
-- **Support**: [support@ecosistema-emprendimiento.com](mailto:support@ecosistema-emprendimiento.com)
-- **Issues**: [GitHub Issues](https://github.com/ecosistema/api/issues)
+```bash
+curl -X GET "https://api.ecosistema-emprendimiento.com/api/v2/projects?page=1&per_page=20&category=fintech" \
+  -H "Authorization: Bearer tu_access_token"
+```
 
-## Changelog
+## Entornos
 
-### v2.0.0 (2024-01-15)
-- **NEW**: Modern API architecture with Flask-RESTX
-- **NEW**: Comprehensive authentication with 2FA support
-- **NEW**: Advanced user management and profiles
-- **NEW**: Project management with milestones
-- **NEW**: Real-time analytics dashboard
-- **IMPROVED**: Better error handling and validation
-- **IMPROVED**: Enhanced security with rate limiting
-- **IMPROVED**: Comprehensive API documentation
+### Producción
+- **URL Base**: `https://api.ecosistema-emprendimiento.com/api/v2`
+- **Documentación**: `https://api.ecosistema-emprendimiento.com/docs/`
 
-### v1.0.0 (2023-12-01)
-- Initial API release
-- Basic authentication and user management
-- Simple project management
+### Staging
+- **URL Base**: `https://staging-api.ecosistema-emprendimiento.com/api/v2`
+- **Documentación**: `https://staging-api.ecosistema-emprendimiento.com/docs/`
+
+### Desarrollo
+- **URL Base**: `http://localhost:5000/api/v2`
+- **Documentación**: `http://localhost:5000/docs/`
+
+## Changelog de la API
+
+### v2.1.0 (Próximamente)
+- Nuevos endpoints para gestión de organizaciones
+- Mejoras en el sistema de notificaciones
+- Soporte para webhooks batch
+
+### v2.0.0 (Actual)
+- API completamente rediseñada con arquitectura moderna
+- Nuevos endpoints de mentoría
+- Sistema de analytics mejorado
+- Webhooks para integraciones en tiempo real
+
+### v1.0.0 (Legacy)
+- API básica inicial
+- Endpoints fundamentales de usuarios y proyectos
+
+## Soporte
+
+Para soporte con la API:
+
+- **Documentación**: Revisa esta documentación y la documentación interactiva en `/docs/`
+- **Issues**: Reporta problemas en GitHub Issues
+- **Email**: Contacta el equipo de API en api-support@ecosistema-emprendimiento.com
+- **Status**: Verifica el estado de la API en status.ecosistema-emprendimiento.com

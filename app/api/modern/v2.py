@@ -1,41 +1,41 @@
 """
-Modern API v2 using Flask-RESTX with automatic OpenAPI documentation.
+API moderna v2 usando Flask-RESTX con documentación OpenAPI automática.
 """
 
 from flask import Blueprint
 from flask_restx import Api
 
-# Create API v2 blueprint
+# Crear blueprint de API v2
 api_v2_bp = Blueprint('api_v2', __name__, url_prefix='/api/v2')
 
-# Create Flask-RESTX API instance
+# Crear instancia de Flask-RESTX API
 api = Api(
     api_v2_bp,
     version='2.0',
     title='Ecosistema Emprendimiento API',
     description='''
-    Modern REST API for the Entrepreneurship Ecosystem Platform.
+    API REST moderna para la Plataforma del Ecosistema de Emprendimiento.
     
-    ## Features
-    - Modern authentication with JWT
-    - Comprehensive user management
-    - Project and mentorship tracking
-    - Real-time analytics
-    - File upload and management
-    - Notification system
+    ## Características
+    - Autenticación moderna con JWT
+    - Gestión integral de usuarios
+    - Seguimiento de proyectos y mentoría
+    - Analíticas en tiempo real
+    - Carga y gestión de archivos
+    - Sistema de notificaciones
     
-    ## Authentication
-    Most endpoints require authentication. Use the `/auth/login` endpoint to obtain an access token,
-    then include it in the `Authorization` header as `Bearer <token>`.
+    ## Autenticación
+    La mayoría de endpoints requieren autenticación. Usa el endpoint `/auth/login` para obtener un token de acceso,
+    luego inclúyelo en el header `Authorization` como `Bearer <token>`.
     
-    ## Rate Limiting
-    API requests are rate limited. Check response headers for current limits.
+    ## Limitación de Velocidad
+    Las solicitudes de API tienen limitación de velocidad. Verifica los headers de respuesta para límites actuales.
     
-    ## Pagination
-    List endpoints support pagination with `page` and `per_page` parameters.
+    ## Paginación
+    Los endpoints de lista soportan paginación con parámetros `page` y `per_page`.
     
-    ## Error Handling
-    All errors follow a consistent format with appropriate HTTP status codes.
+    ## Manejo de Errores
+    Todos los errores siguen un formato consistente con códigos de estado HTTP apropiados.
     ''',
     doc='/docs/',
     prefix='/api/v2',
@@ -49,16 +49,16 @@ api = Api(
             'type': 'apiKey',
             'in': 'header',
             'name': 'Authorization',
-            'description': 'JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"'
+            'description': 'Header de autorización JWT usando el esquema Bearer. Ejemplo: "Authorization: Bearer {token}"'
         },
         'API Key': {
             'type': 'apiKey',
             'in': 'header',
             'name': 'X-API-Key',
-            'description': 'API Key for service-to-service authentication'
+            'description': 'Clave API para autenticación servicio-a-servicio'
         }
     },
-    # Custom Swagger UI configuration
+    # Configuración personalizada de Swagger UI
     swagger_ui_config={
         'supportedSubmitMethods': ['get', 'post', 'put', 'delete', 'patch'],
         'tryItOutEnabled': True,
@@ -72,10 +72,10 @@ api = Api(
     }
 )
 
-# Custom error handlers for the API
+# Manejadores de errores personalizados para la API
 @api.errorhandler(ValueError)
 def handle_validation_error(error):
-    """Handle validation errors."""
+    """Manejar errores de validación."""
     return {
         'success': False,
         'error_type': 'validation_error',
@@ -89,7 +89,7 @@ def handle_permission_error(error):
     return {
         'success': False,
         'error_type': 'permission_error',
-        'message': 'Insufficient permissions to access this resource',
+        'message': 'Permisos insuficientes para acceder a este recurso',
         'timestamp': api.datetime.utcnow().isoformat()
     }, 403
 

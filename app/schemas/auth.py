@@ -1,5 +1,5 @@
 """
-Modern Pydantic schemas for authentication operations.
+Esquemas Pydantic modernos para operaciones de autenticación.
 """
 
 from typing import Optional, List, Dict, Any
@@ -12,7 +12,7 @@ from .user import UserType, UserResponse
 
 
 class TokenType(str, Enum):
-    """Token type enumeration"""
+    """Enumeración de tipos de token"""
     ACCESS = "access"
     REFRESH = "refresh"
     EMAIL_VERIFICATION = "email_verification"
@@ -21,7 +21,7 @@ class TokenType(str, Enum):
 
 
 class AuthProvider(str, Enum):
-    """Authentication provider enumeration"""
+    """Enumeración de proveedores de autenticación"""
     LOCAL = "local"
     GOOGLE = "google"
     MICROSOFT = "microsoft"
@@ -30,27 +30,27 @@ class AuthProvider(str, Enum):
 
 
 class TwoFactorMethod(str, Enum):
-    """Two-factor authentication methods"""
+    """Métodos de autenticación de dos factores"""
     SMS = "sms"
     EMAIL = "email"
-    TOTP = "totp"  # Time-based One-Time Password (Google Authenticator, etc.)
+    TOTP = "totp"  # Contraseña de un solo uso basada en tiempo (Google Authenticator, etc.)
     BACKUP_CODES = "backup_codes"
 
 
 # ====================================
-# LOGIN/LOGOUT SCHEMAS
+# ESQUEMAS DE INICIO/CIERRE DE SESIÓN
 # ====================================
 
 class LoginRequest(BaseSchema):
-    """Login request schema"""
+    """Esquema de solicitud de inicio de sesión"""
     
-    email: EmailStr = Field(description="User email address")
-    password: str = Field(min_length=1, description="User password")
-    remember_me: bool = Field(default=False, description="Remember user session")
+    email: EmailStr = Field(description="Dirección de email del usuario")
+    password: str = Field(min_length=1, description="Contraseña del usuario")
+    remember_me: bool = Field(default=False, description="Recordar sesión del usuario")
     device_name: Optional[str] = Field(
         default=None,
         max_length=100,
-        description="Device name for tracking"
+        description="Nombre del dispositivo para seguimiento"
     )
     two_factor_code: Optional[str] = Field(
         default=None,

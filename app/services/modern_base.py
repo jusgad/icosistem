@@ -1,20 +1,20 @@
 """
-Modern service base class for the entrepreneurship ecosystem.
+Clase base de servicio moderna para el ecosistema de emprendimiento.
 
-This module provides the modern infrastructure for all services in the system,
-using latest Python patterns, async/await, modern validation, and observability.
+Este módulo proporciona la infraestructura moderna para todos los servicios del sistema,
+usando los patrones más recientes de Python, async/await, validación moderna y observabilidad.
 
-Features:
-- Modern async-first architecture
-- Pydantic validation integration
-- Structured logging with Loguru
-- OpenTelemetry tracing
-- Redis-based caching
-- Circuit breaker pattern
-- Dependency injection
-- Event-driven architecture
-- Health checks and metrics
-- Modern error handling
+Características:
+- Arquitectura moderna async-first
+- Integración de validación Pydantic
+- Logging estructurado con Loguru
+- Trazado OpenTelemetry
+- Caché basado en Redis
+- Patrón circuit breaker
+- Inyección de dependencias
+- Arquitectura orientada a eventos
+- Verificaciones de salud y métricas
+- Manejo de errores moderno
 """
 
 import asyncio
@@ -30,7 +30,7 @@ from typing import (
 )
 from uuid import UUID, uuid4
 
-# Modern imports
+# Importaciones modernas
 from pydantic import BaseModel, ValidationError, Field
 from loguru import logger
 import structlog
@@ -45,21 +45,21 @@ try:
 except ImportError:
     TRACING_AVAILABLE = False
 
-# Flask integration
+# Integración con Flask
 from flask import current_app, g, has_request_context
 from flask_login import current_user
 
-# Local imports
+# Importaciones locales
 from app.schemas.common import BaseSchema, ErrorType, create_error_response
 from app.extensions_modern import extensions
 
-# Type variables
+# Variables de tipo
 T = TypeVar('T', bound=BaseModel)
 ServiceT = TypeVar('ServiceT', bound='ModernBaseService')
 
 
 class ServiceState(str, Enum):
-    """Modern service lifecycle states."""
+    """Estados del ciclo de vida del servicio moderno."""
     INITIALIZING = "initializing"
     HEALTHY = "healthy"
     DEGRADED = "degraded"
@@ -69,18 +69,18 @@ class ServiceState(str, Enum):
 
 
 class OperationResult(BaseModel, Generic[T]):
-    """Generic operation result wrapper."""
+    """Envoltorio genérico para resultados de operaciones."""
     
-    success: bool = Field(description="Operation success status")
-    data: Optional[T] = Field(default=None, description="Operation data")
-    error: Optional[str] = Field(default=None, description="Error message")
-    error_code: Optional[str] = Field(default=None, description="Error code")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
-    execution_time: Optional[float] = Field(default=None, description="Execution time in seconds")
+    success: bool = Field(description="Estado de éxito de la operación")
+    data: Optional[T] = Field(default=None, description="Datos de la operación")
+    error: Optional[str] = Field(default=None, description="Mensaje de error")
+    error_code: Optional[str] = Field(default=None, description="Código de error")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Metadatos adicionales")
+    execution_time: Optional[float] = Field(default=None, description="Tiempo de ejecución en segundos")
     
     @classmethod
     def success_result(cls, data: T = None, metadata: Dict[str, Any] = None) -> 'OperationResult[T]':
-        """Create a successful operation result."""
+        """Crear un resultado de operación exitoso."""
         return cls(
             success=True,
             data=data,
@@ -94,7 +94,7 @@ class OperationResult(BaseModel, Generic[T]):
         error_code: str = None,
         metadata: Dict[str, Any] = None
     ) -> 'OperationResult[T]':
-        """Create an error operation result."""
+        """Crear un resultado de operación con error."""
         return cls(
             success=False,
             error=error,

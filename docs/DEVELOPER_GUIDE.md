@@ -1,121 +1,121 @@
-# Developer Guide
+# Guía del Desarrollador
 
-## Quick Start
+## Inicio Rápido
 
-### Prerequisites
+### Prerrequisitos
 
 - Python 3.11+
-- Node.js 18+ (for frontend)
+- Node.js 18+ (para frontend)
 - PostgreSQL 15+
 - Redis 7+
-- Docker & Docker Compose (optional)
+- Docker & Docker Compose (opcional)
 
-### Local Development Setup
+### Configuración del Entorno de Desarrollo Local
 
-1. **Clone the repository**
+1. **Clonar el repositorio**
    ```bash
    git clone <repository-url>
    cd icosistem
    ```
 
-2. **Create virtual environment**
+2. **Crear entorno virtual**
    ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   source venv/bin/activate  # En Windows: venv\Scripts\activate
    ```
 
-3. **Install dependencies**
+3. **Instalar dependencias**
    ```bash
-   pip install -e .[dev]  # Install with development dependencies
+   pip install -e .[dev]  # Instalar con dependencias de desarrollo
    ```
 
-4. **Set up environment variables**
+4. **Configurar variables de entorno**
    ```bash
    cp .env.example .env
-   # Edit .env with your local configuration
+   # Editar .env con tu configuración local
    ```
 
-5. **Start services with Docker Compose**
+5. **Iniciar servicios con Docker Compose**
    ```bash
    docker-compose up -d postgres redis
    ```
 
-6. **Run database migrations**
+6. **Ejecutar migraciones de base de datos**
    ```bash
    flask db upgrade
    ```
 
-7. **Start the application**
+7. **Iniciar la aplicación**
    ```bash
    python run.py
    ```
 
-8. **Run tests**
+8. **Ejecutar pruebas**
    ```bash
    pytest
    ```
 
-## Development Workflow
+## Flujo de Trabajo de Desarrollo
 
-### Code Style and Quality
+### Estilo y Calidad del Código
 
-The project uses modern Python tooling for consistent code quality:
+El proyecto utiliza herramientas modernas de Python para mantener la calidad del código consistente:
 
 ```bash
-# Format code
+# Formatear código
 black .
 isort .
 
-# Lint code
+# Linter del código
 ruff check .
-ruff check . --fix  # Auto-fix issues
+ruff check . --fix  # Auto-corregir problemas
 
-# Type checking
+# Verificación de tipos
 mypy .
 
-# Security scanning
+# Escaneo de seguridad
 bandit -r app/
 
-# Run all quality checks
+# Ejecutar todas las verificaciones de calidad
 pre-commit run --all-files
 ```
 
-### Git Workflow
+### Flujo de Trabajo con Git
 
-1. **Create feature branch**
+1. **Crear rama de funcionalidad**
    ```bash
-   git checkout -b feature/your-feature-name
+   git checkout -b feature/nombre-de-tu-funcionalidad
    ```
 
-2. **Make changes and commit**
+2. **Realizar cambios y confirmar**
    ```bash
    git add .
-   git commit -m "feat: add user authentication"
+   git commit -m "feat: agregar autenticación de usuario"
    ```
 
-3. **Push and create PR**
+3. **Subir y crear PR**
    ```bash
-   git push origin feature/your-feature-name
-   # Create pull request on GitHub/GitLab
+   git push origin feature/nombre-de-tu-funcionalidad
+   # Crear pull request en GitHub/GitLab
    ```
 
-### Commit Message Convention
+### Convención de Mensajes de Commit
 
-Use [Conventional Commits](https://www.conventionalcommits.org/):
+Usar [Conventional Commits](https://www.conventionalcommits.org/):
 
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation changes
-- `style:` Formatting changes
-- `refactor:` Code refactoring
-- `test:` Adding tests
-- `chore:` Maintenance tasks
+- `feat:` Nueva funcionalidad
+- `fix:` Corrección de errores
+- `docs:` Cambios en documentación
+- `style:` Cambios de formato
+- `refactor:` Refactorización del código
+- `test:` Agregar pruebas
+- `chore:` Tareas de mantenimiento
 
-## API Development
+## Desarrollo de API
 
-### Creating New Endpoints
+### Creación de Nuevos Endpoints
 
-1. **Define Pydantic schemas**
+1. **Definir esquemas de Pydantic**
    ```python
    # app/schemas/my_resource.py
    from pydantic import BaseModel, Field
@@ -131,7 +131,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
        created_at: datetime
    ```
 
-2. **Create service layer**
+2. **Crear capa de servicios**
    ```python
    # app/services/my_resource_service.py
    from app.services.modern_base import ModernBaseService, service_operation
@@ -139,27 +139,27 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
    class MyResourceService(ModernBaseService):
        @service_operation("create_resource")
        async def create_resource(self, data: MyResourceCreate) -> OperationResult[MyResourceResponse]:
-           # Business logic here
+           # Lógica de negocio aquí
            pass
    ```
 
-3. **Create API endpoints**
+3. **Crear endpoints de API**
    ```python
    # app/api/modern/my_resource.py
    from flask_restx import Namespace, Resource
    
-   my_resource_ns = Namespace('my-resource', description='My resource operations')
+   my_resource_ns = Namespace('my-resource', description='Operaciones de mi recurso')
    
    @my_resource_ns.route('/')
    class MyResourceListResource(Resource):
        @my_resource_ns.expect(MyResourceCreate)
        @my_resource_ns.marshal_with(MyResourceResponse, code=201)
        def post(self):
-           """Create new resource"""
+           """Crear nuevo recurso"""
            pass
    ```
 
-4. **Register namespace**
+4. **Registrar namespace**
    ```python
    # app/api/modern/v2.py
    from .my_resource import my_resource_ns
@@ -167,7 +167,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
    api.add_namespace(my_resource_ns, path='/my-resources')
    ```
 
-### Authentication & Authorization
+### Autenticación y Autorización
 
 ```python
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -179,12 +179,12 @@ class MyResourceResource(Resource):
     @require_permission('create_resource')
     def post(self):
         current_user_id = get_jwt_identity()
-        # ... implementation
+        # ... implementación
 ```
 
-## Database Development
+## Desarrollo de Base de Datos
 
-### Creating Models
+### Creación de Modelos
 
 ```python
 # app/models/my_model.py
@@ -199,26 +199,26 @@ class MyModel(BaseModel):
     description = Column(Text)
     user_id = Column(String, ForeignKey('users.id'), nullable=False)
     
-    # Relationships
+    # Relaciones
     user = relationship("User", back_populates="my_models")
 ```
 
-### Creating Migrations
+### Creación de Migraciones
 
 ```bash
-# Generate migration
-flask db migrate -m "Add my_model table"
+# Generar migración
+flask db migrate -m "Agregar tabla my_model"
 
-# Apply migration
+# Aplicar migración
 flask db upgrade
 
-# Downgrade migration
+# Revertir migración
 flask db downgrade
 ```
 
-### Database Queries
+### Consultas de Base de Datos
 
-Use async patterns for better performance:
+Usar patrones async para mejor rendimiento:
 
 ```python
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -234,9 +234,9 @@ async def get_user_resources(self, user_id: str) -> List[MyModel]:
         return result.scalars().all()
 ```
 
-## Testing
+## Pruebas
 
-### Unit Tests
+### Pruebas Unitarias
 
 ```python
 import pytest
@@ -247,7 +247,7 @@ from app.schemas.my_resource import MyResourceCreate
 class TestMyService:
     def test_create_resource(self, clean_db):
         service = MyService()
-        data = MyResourceCreate(name="Test", description="Test resource")
+        data = MyResourceCreate(name="Test", description="Recurso de prueba")
         
         result = service.create_resource(data)
         
@@ -255,80 +255,80 @@ class TestMyService:
         assert result.data.name == "Test"
 ```
 
-### API Tests
+### Pruebas de API
 
 ```python
 @pytest.mark.api
 class TestMyResourceAPI:
     def test_create_resource(self, authenticated_api_client):
         data = {
-            'name': 'Test Resource',
-            'description': 'Test description'
+            'name': 'Recurso de Prueba',
+            'description': 'Descripción de prueba'
         }
         
         response = authenticated_api_client.post('/api/v2/my-resources', json=data)
         
         assert response.status_code == 201
-        assert response.json()['name'] == 'Test Resource'
+        assert response.json()['name'] == 'Recurso de Prueba'
 ```
 
-### Integration Tests
+### Pruebas de Integración
 
 ```python
 @pytest.mark.integration
 class TestResourceWorkflow:
     def test_complete_resource_lifecycle(self, api_client, test_user):
-        # Create resource
-        # Update resource  
-        # Delete resource
+        # Crear recurso
+        # Actualizar recurso  
+        # Eliminar recurso
         pass
 ```
 
-### Running Tests
+### Ejecutar Pruebas
 
 ```bash
-# Run all tests
+# Ejecutar todas las pruebas
 pytest
 
-# Run specific test types
+# Ejecutar tipos específicos de pruebas
 pytest -m unit
 pytest -m integration
 pytest -m api
 
-# Run with coverage
+# Ejecutar con cobertura
 pytest --cov=app --cov-report=html
 
-# Run specific test file
+# Ejecutar archivo de prueba específico
 pytest tests/modern/test_my_service.py
 
-# Run tests in parallel
+# Ejecutar pruebas en paralelo
 pytest -n auto
 ```
 
-## Frontend Development (Future)
+## Desarrollo de Frontend (Futuro)
 
-The project will include a modern frontend built with:
+El proyecto incluirá un frontend moderno construido con:
 
-- **Framework**: Vue.js 3 or React 18
-- **Language**: TypeScript
-- **Build Tool**: Vite
-- **State Management**: Pinia (Vue) or Zustand (React)
-- **HTTP Client**: Axios
-- **UI Library**: Tailwind CSS + Headless UI
+- **Framework**: Vue.js 3 o React 18
+- **Lenguaje**: TypeScript
+- **Herramienta de Construcción**: Vite
+- **Gestión de Estado**: Pinia (Vue) o Zustand (React)
+- **Cliente HTTP**: Axios
+- **Librería UI**: Tailwind CSS + Headless UI
 
-## Environment Configuration
+## Configuración del Entorno
 
-### Environment Variables
+### Variables de Entorno
 
-Create `.env` file with:
+Crear archivo `.env` con:
 
 ```env
-# Application
+# Aplicación
 FLASK_ENV=development
-SECRET_KEY=your-secret-key
+SECRET_KEY=tu-clave-secreta
 APP_VERSION=2.0.0
 
-# Database
+# Base de Datos
 DATABASE_URL=postgresql://user:password@localhost:5432/ecosistema_dev
 SQLALCHEMY_ECHO=false
 
@@ -336,26 +336,26 @@ SQLALCHEMY_ECHO=false
 REDIS_URL=redis://localhost:6379/0
 
 # JWT
-JWT_SECRET_KEY=your-jwt-secret
+JWT_SECRET_KEY=tu-secreto-jwt
 JWT_ACCESS_TOKEN_EXPIRES=3600
 JWT_REFRESH_TOKEN_EXPIRES=2592000
 
 # Email
 MAIL_SERVER=smtp.gmail.com
 MAIL_PORT=587
-MAIL_USERNAME=your-email@gmail.com
-MAIL_PASSWORD=your-app-password
+MAIL_USERNAME=tu-email@gmail.com
+MAIL_PASSWORD=tu-contraseña-app
 MAIL_USE_TLS=true
 
-# External Services
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
+# Servicios Externos
+GOOGLE_CLIENT_ID=tu-google-client-id
+GOOGLE_CLIENT_SECRET=tu-google-client-secret
 
-# Monitoring
-SENTRY_DSN=your-sentry-dsn
+# Monitoreo
+SENTRY_DSN=tu-sentry-dsn
 ```
 
-### Configuration Classes
+### Clases de Configuración
 
 ```python
 # config/development.py
@@ -365,16 +365,16 @@ class DevelopmentConfig(Config):
     CACHE_TYPE = 'SimpleCache'
 ```
 
-## Debugging
+## Depuración
 
-### Debug Mode
+### Modo Debug
 
 ```bash
 export FLASK_DEBUG=1
 python run.py
 ```
 
-### Logging Configuration
+### Configuración de Logging
 
 ```python
 import structlog
@@ -382,35 +382,35 @@ import structlog
 logger = structlog.get_logger(__name__)
 
 def my_function():
-    logger.info("Processing user", user_id="123", action="create")
+    logger.info("Procesando usuario", user_id="123", action="create")
     
     try:
-        # ... some code
-        logger.info("User created successfully", user_id="123")
+        # ... algún código
+        logger.info("Usuario creado exitosamente", user_id="123")
     except Exception as e:
-        logger.error("Failed to create user", user_id="123", error=str(e))
+        logger.error("Error al crear usuario", user_id="123", error=str(e))
         raise
 ```
 
-### Debugging with IDE
+### Depuración con IDE
 
-Configure your IDE to run Flask in debug mode:
+Configura tu IDE para ejecutar Flask en modo debug:
 
-- **PyCharm**: Create run configuration with `FLASK_APP=app` and `FLASK_ENV=development`
-- **VS Code**: Use launch.json configuration for Flask debugging
+- **PyCharm**: Crear configuración de ejecución con `FLASK_APP=app` y `FLASK_ENV=development`
+- **VS Code**: Usar configuración launch.json para depuración de Flask
 
-## Performance Optimization
+## Optimización de Rendimiento
 
-### Database Optimization
+### Optimización de Base de Datos
 
 ```python
-# Use indexes
+# Usar índices
 class MyModel(BaseModel):
     __table_args__ = (
         Index('idx_user_created', 'user_id', 'created_at'),
     )
 
-# Use select_in_loading for relationships
+# Usar select_in_loading para relaciones
 from sqlalchemy.orm import selectinload
 
 users = session.execute(
@@ -418,7 +418,7 @@ users = session.execute(
 ).scalars().all()
 ```
 
-### Caching
+### Caché
 
 ```python
 from app.services.modern_base import cached_operation
@@ -426,11 +426,11 @@ from app.services.modern_base import cached_operation
 class MyService(ModernBaseService):
     @cached_operation("user_list", ttl=300)
     async def get_users(self) -> List[User]:
-        # Expensive operation
+        # Operación costosa
         return await self.user_repository.find_all()
 ```
 
-### Connection Pooling
+### Pool de Conexiones
 
 ```python
 from sqlalchemy import create_engine
@@ -446,36 +446,36 @@ engine = create_engine(
 )
 ```
 
-## Monitoring and Observability
+## Monitoreo y Observabilidad
 
-### Health Checks
+### Verificaciones de Salud
 
-The application includes comprehensive health checks:
+La aplicación incluye verificaciones de salud integrales:
 
-- `/api/v2/health/` - Basic health check
-- `/api/v2/health/detailed` - Detailed system health
-- `/api/v2/health/liveness` - Kubernetes liveness probe
-- `/api/v2/health/readiness` - Kubernetes readiness probe
+- `/api/v2/health/` - Verificación básica de salud
+- `/api/v2/health/detailed` - Salud detallada del sistema
+- `/api/v2/health/liveness` - Sonda de vida de Kubernetes
+- `/api/v2/health/readiness` - Sonda de preparación de Kubernetes
 
-### Metrics
+### Métricas
 
-Prometheus metrics are automatically collected:
+Las métricas de Prometheus se recopilan automáticamente:
 
 ```python
 from prometheus_client import Counter, Histogram
 
-request_counter = Counter('app_requests_total', 'Total requests')
-request_duration = Histogram('app_request_duration_seconds', 'Request duration')
+request_counter = Counter('app_requests_total', 'Total de solicitudes')
+request_duration = Histogram('app_request_duration_seconds', 'Duración de solicitudes')
 
 @request_duration.time()
 def my_endpoint():
     request_counter.inc()
-    # ... endpoint logic
+    # ... lógica del endpoint
 ```
 
-### Distributed Tracing
+### Trazado Distribuido
 
-OpenTelemetry tracing is built-in:
+El trazado OpenTelemetry está integrado:
 
 ```python
 from opentelemetry import trace
@@ -485,70 +485,70 @@ tracer = trace.get_tracer(__name__)
 def my_function():
     with tracer.start_as_current_span("my_operation") as span:
         span.set_attribute("user.id", user_id)
-        # ... operation logic
+        # ... lógica de la operación
 ```
 
-## Troubleshooting
+## Solución de Problemas
 
-### Common Issues
+### Problemas Comunes
 
-1. **Import Errors**
+1. **Errores de Importación**
    ```bash
-   # Make sure you're in the virtual environment
+   # Asegúrate de estar en el entorno virtual
    source venv/bin/activate
    
-   # Install dependencies
+   # Instalar dependencias
    pip install -e .[dev]
    ```
 
-2. **Database Connection Issues**
+2. **Problemas de Conexión a Base de Datos**
    ```bash
-   # Check PostgreSQL is running
+   # Verificar que PostgreSQL esté ejecutándose
    sudo systemctl status postgresql
    
-   # Test connection
+   # Probar conexión
    psql -h localhost -U username -d database_name
    ```
 
-3. **Redis Connection Issues**
+3. **Problemas de Conexión a Redis**
    ```bash
-   # Check Redis is running
+   # Verificar que Redis esté ejecutándose
    redis-cli ping
    
-   # Should return PONG
+   # Debería devolver PONG
    ```
 
-4. **Migration Issues**
+4. **Problemas de Migración**
    ```bash
-   # Reset migrations (development only)
+   # Reiniciar migraciones (solo desarrollo)
    flask db downgrade base
    flask db upgrade
    
-   # Or recreate database
+   # O recrear base de datos
    dropdb ecosistema_dev
    createdb ecosistema_dev
    flask db upgrade
    ```
 
-### Debug Tools
+### Herramientas de Debug
 
 ```bash
-# Flask shell for debugging
+# Shell de Flask para depuración
 flask shell
 
-# Database shell
+# Shell de base de datos
 flask db-shell
 
-# Show routes
+# Mostrar rutas
 flask routes
 
-# Show configuration
+# Mostrar configuración
 flask config
 ```
 
-## Code Examples
+## Ejemplos de Código
 
-### Complete Service Implementation
+### Implementación Completa de Servicio
 
 ```python
 from typing import List, Optional
@@ -567,7 +567,7 @@ class ProjectService(ModernBaseService):
     @service_operation("create_project", validation_schema=ProjectCreate)
     async def create_project(self, data: ProjectCreate, user_id: str) -> OperationResult[ProjectResponse]:
         async with self.operation_context("create_project", user_id=user_id):
-            # Validate business rules
+            # Validar reglas de negocio
             errors = await self.validate_business_rules(data)
             if errors:
                 return self.create_operation_result(
@@ -585,7 +585,7 @@ class ProjectService(ModernBaseService):
                 await db.session.commit()
                 await db.session.refresh(project)
                 
-                # Emit event
+                # Emitir evento
                 self.emit_event("project.created", {
                     "project_id": project.id,
                     "owner_id": user_id
@@ -598,22 +598,22 @@ class ProjectService(ModernBaseService):
     async def validate_business_rules(self, data: ProjectCreate) -> List[str]:
         errors = []
         
-        # Check if user can create more projects
+        # Verificar si el usuario puede crear más proyectos
         user_project_count = await self.get_user_project_count(data.owner_id)
         if user_project_count >= self.max_projects_per_user():
-            errors.append("Maximum number of projects reached")
+            errors.append("Se ha alcanzado el número máximo de proyectos")
         
         return errors
 ```
 
-### Complete API Resource
+### Recurso API Completo
 
 ```python
 from flask import request
 from flask_restx import Namespace, Resource
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-project_ns = Namespace('projects', description='Project management')
+project_ns = Namespace('projects', description='Gestión de proyectos')
 
 @project_ns.route('/')
 class ProjectListResource(Resource):
@@ -622,7 +622,7 @@ class ProjectListResource(Resource):
     @project_ns.marshal_with(ProjectResponse, code=201)
     @project_ns.marshal_with(ErrorResponse, code=400)
     def post(self):
-        """Create a new project"""
+        """Crear un nuevo proyecto"""
         try:
             user_id = get_jwt_identity()
             data = request.get_json()
@@ -643,13 +643,13 @@ class ProjectListResource(Resource):
             return {
                 'success': False,
                 'error_type': 'internal_error',
-                'message': 'An error occurred'
+                'message': 'Ocurrió un error'
             }, 500
     
     @jwt_required()
     @project_ns.marshal_list_with(ProjectResponse)
     def get(self):
-        """List user's projects"""
+        """Listar proyectos del usuario"""
         user_id = get_jwt_identity()
         project_service = ProjectService()
         
@@ -657,69 +657,69 @@ class ProjectListResource(Resource):
         return projects
 ```
 
-## Best Practices
+## Mejores Prácticas
 
-### Service Layer
+### Capa de Servicios
 
-1. **Single Responsibility**: Each service should have one clear purpose
-2. **Async First**: Use async/await for database operations
-3. **Error Handling**: Always handle exceptions gracefully
-4. **Validation**: Validate both input data and business rules
-5. **Caching**: Cache expensive operations appropriately
-6. **Logging**: Log important operations with context
+1. **Responsabilidad Única**: Cada servicio debe tener un propósito claro
+2. **Async Primero**: Usar async/await para operaciones de base de datos
+3. **Manejo de Errores**: Siempre manejar excepciones de manera elegante
+4. **Validación**: Validar tanto datos de entrada como reglas de negocio
+5. **Caché**: Cachear operaciones costosas apropiadamente
+6. **Logging**: Registrar operaciones importantes con contexto
 
-### API Layer
+### Capa de API
 
-1. **RESTful Design**: Follow REST principles consistently
-2. **Input Validation**: Use Pydantic schemas for validation
-3. **Error Responses**: Return consistent error formats
-4. **Authentication**: Protect endpoints appropriately
-5. **Documentation**: Document all endpoints with OpenAPI
-6. **Versioning**: Use API versioning for backward compatibility
+1. **Diseño RESTful**: Seguir principios REST consistentemente
+2. **Validación de Entrada**: Usar esquemas Pydantic para validación
+3. **Respuestas de Error**: Devolver formatos de error consistentes
+4. **Autenticación**: Proteger endpoints apropiadamente
+5. **Documentación**: Documentar todos los endpoints con OpenAPI
+6. **Versionado**: Usar versionado de API para compatibilidad hacia atrás
 
-### Database Layer
+### Capa de Base de Datos
 
-1. **Migrations**: Always use migrations for schema changes
-2. **Indexes**: Add indexes for frequently queried columns
-3. **Relationships**: Use proper SQLAlchemy relationships
-4. **Async Operations**: Use async database operations
-5. **Connection Pooling**: Configure appropriate pool sizes
-6. **Query Optimization**: Use joins and eager loading appropriately
+1. **Migraciones**: Siempre usar migraciones para cambios de esquema
+2. **Índices**: Agregar índices para columnas consultadas frecuentemente
+3. **Relaciones**: Usar relaciones SQLAlchemy apropiadas
+4. **Operaciones Async**: Usar operaciones de base de datos async
+5. **Pool de Conexiones**: Configurar tamaños de pool apropiados
+6. **Optimización de Consultas**: Usar joins y eager loading apropiadamente
 
-### Testing
+### Pruebas
 
-1. **Test Coverage**: Maintain high test coverage (>80%)
-2. **Test Types**: Write unit, integration, and API tests
-3. **Test Data**: Use factories for consistent test data
-4. **Test Isolation**: Each test should be independent
-5. **Async Testing**: Test async code properly
-6. **Mock External Services**: Mock external dependencies
+1. **Cobertura de Pruebas**: Mantener alta cobertura de pruebas (>80%)
+2. **Tipos de Pruebas**: Escribir pruebas unitarias, de integración y de API
+3. **Datos de Prueba**: Usar factories para datos de prueba consistentes
+4. **Aislamiento de Pruebas**: Cada prueba debe ser independiente
+5. **Pruebas Async**: Probar código async apropiadamente
+6. **Mock de Servicios Externos**: Hacer mock de dependencias externas
 
-## Contributing
+## Contribución
 
-1. **Fork the repository**
-2. **Create feature branch** from `main`
-3. **Write tests** for your changes
-4. **Ensure all tests pass** and code quality checks pass
-5. **Create pull request** with detailed description
-6. **Address review feedback**
-7. **Squash commits** before merge
+1. **Fork del repositorio**
+2. **Crear rama de funcionalidad** desde `main`
+3. **Escribir pruebas** para tus cambios
+4. **Asegurar que todas las pruebas pasen** y las verificaciones de calidad pasen
+5. **Crear pull request** con descripción detallada
+6. **Atender retroalimentación de revisión**
+7. **Squash commits** antes del merge
 
-## Resources
+## Recursos
 
-- [Flask Documentation](https://flask.palletsprojects.com/)
-- [Pydantic Documentation](https://docs.pydantic.dev/)
-- [SQLAlchemy Documentation](https://docs.sqlalchemy.org/)
-- [pytest Documentation](https://docs.pytest.org/)
+- [Documentación de Flask](https://flask.palletsprojects.com/)
+- [Documentación de Pydantic](https://docs.pydantic.dev/)
+- [Documentación de SQLAlchemy](https://docs.sqlalchemy.org/)
+- [Documentación de pytest](https://docs.pytest.org/)
 - [OpenTelemetry Python](https://opentelemetry.io/docs/python/)
-- [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/)
+- [Arquitectura Hexagonal](https://alistair.cockburn.us/hexagonal-architecture/)
 
-## Support
+## Soporte
 
-For questions and support:
+Para preguntas y soporte:
 
-1. **Check Documentation**: Review this guide and architecture docs
-2. **Search Issues**: Look for similar issues on GitHub
-3. **Create Issue**: Create detailed issue with reproduction steps
-4. **Team Chat**: Contact development team on Slack/Teams
-5. **Code Review**: Request code review for complex changes
+1. **Revisar Documentación**: Revisar esta guía y documentación de arquitectura
+2. **Buscar Issues**: Buscar issues similares en GitHub
+3. **Crear Issue**: Crear issue detallado con pasos de reproducción
+4. **Chat del Equipo**: Contactar equipo de desarrollo en Slack/Teams
+5. **Revisión de Código**: Solicitar revisión de código para cambios complejos
