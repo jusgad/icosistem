@@ -10,7 +10,7 @@
 # CORE FLASK FRAMEWORK AND EXTENSIONS
 # ============================================================================
 Flask>=3.0.3,<4.0.0
-Flask-SQLAlchemy>=3.1.2,<4.0.0
+Flask-SQLAlchemy>=3.1.1,<4.0.0
 Flask-Migrate>=4.0.7,<5.0.0
 Flask-Login>=0.6.3,<1.0.0
 Flask-WTF>=1.2.1,<2.0.0
