@@ -23,7 +23,7 @@ from flask import Flask, g, request, session, current_app, url_for, render_templ
 from flask_babel import Babel, get_locale, ngettext
 from flask_wtf.csrf import CSRFProtect
 from flask_compress import Compress
-from flask_assets import Environment, Bundle
+# from flask_assets import Environment, Bundle  # No instalado
 from markupsafe import Markup
 from datetime import datetime, date, timedelta
 from typing import Dict, List, Optional, Any, Union, Callable
@@ -480,7 +480,7 @@ class ViewsManager:
                 css_classes += ' is-invalid'
             
             # Renderizar campo
-            field_html = field(class=css_classes, **kwargs)
+            field_html = field(class_=css_classes, **kwargs)
             
             # Agregar mensajes de error
             if field.errors:

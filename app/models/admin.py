@@ -1090,7 +1090,7 @@ def generate_user_report(start_date: datetime = None, end_date: datetime = None)
 # Configurar reglas de validación personalizadas
 User.add_validation_rule('email', {
     'type': 'regex',
-    'params': {'pattern': r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}},
+    'params': {'pattern': r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'},
     'message': 'Formato de email inválido'
 })
 

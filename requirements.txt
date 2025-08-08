@@ -49,7 +49,7 @@ marshmallow-sqlalchemy>=1.0.0,<2.0.0
 # ============================================================================
 passlib[bcrypt]>=1.7.4,<2.0.0
 PyJWT>=2.8.0,<3.0.0
-cryptography>=41.0.8,<42.0.0
+cryptography>=41.0.8
 python-jose[cryptography]>=3.3.0,<4.0.0
 authlib>=1.3.0,<2.0.0
 itsdangerous>=2.1.2,<3.0.0
@@ -91,7 +91,7 @@ celery[redis]>=5.3.6,<6.0.0
 flower>=2.0.1,<3.0.0
 celery-redbeat>=2.0.0,<3.0.0
 kombu>=5.3.4,<6.0.0
-dramatiq[redis,watch]>=1.17.0,<2.0.0
+dramatiq>=1.17.0,<2.0.0
 arq>=0.26.0,<1.0.0
 
 # ============================================================================
@@ -117,10 +117,10 @@ googleapis-common-protos>=1.61.0,<2.0.0
 # EMAIL SERVICES
 # ============================================================================
 sendgrid>=6.11.0,<7.0.0
-mailgun>=0.1.1,<1.0.0
+# mailgun>=0.1.1,<1.0.0  # Deprecated package - removed
 premailer>=3.10.0,<4.0.0
 jinja2>=3.1.2,<4.0.0
-html2text>=2020.1.16,<2021.0.0
+html2text>=2020.1.16
 
 # ============================================================================
 # FILE PROCESSING AND STORAGE
@@ -170,12 +170,12 @@ plotly>=5.17.0,<6.0.0
 matplotlib>=3.8.2,<4.0.0
 seaborn>=0.13.0,<1.0.0
 mixpanel>=4.10.0,<5.0.0
-amplitude>=2.1.0,<3.0.0
+# amplitude>=2.1.0,<3.0.0  # Package not found - removed
 
 # ============================================================================
 # MONITORING AND LOGGING (ENHANCED)
 # ============================================================================
-sentry-sdk[flask,sqlalchemy]>=1.48.0,<2.0.0
+# sentry-sdk[flask,sqlalchemy]>=1.48.0,<2.0.0  # Duplicate - using newer version below
 structlog>=24.1.0,<25.0.0
 loguru>=0.7.2,<1.0.0
 colorlog>=6.8.2,<7.0.0
@@ -194,14 +194,14 @@ opentelemetry-instrumentation-sqlalchemy>=0.43b0,<1.0.0
 # ============================================================================
 python-socketio>=5.10.0,<6.0.0
 eventlet>=0.33.3,<1.0.0
-gevent>=23.9.1,<24.0.0
+gevent>=23.9.1
 greenlet>=3.0.3,<4.0.0
 
 # ============================================================================
 # DATE AND TIME UTILITIES
 # ============================================================================
 python-dateutil>=2.8.2,<3.0.0
-pytz>=2023.3,<2024.0
+pytz>=2023.3
 arrow>=1.3.0,<2.0.0
 babel>=2.13.1,<3.0.0
 
@@ -250,7 +250,7 @@ geoip2>=4.7.0,<5.0.0
 # ============================================================================
 # BACKUP AND ARCHIVING
 # ============================================================================
-zipfile38>=0.0.3,<1.0.0
+# zipfile38>=0.0.3,<1.0.0  # Built-in module - not needed
 
 # ============================================================================
 # NETWORKING AND PROTOCOLS
@@ -287,7 +287,7 @@ importlib-metadata>=6.8.0,<7.0.0
 # PRODUCTION WSGI SERVERS
 # ============================================================================
 gunicorn>=22.0.0,<23.0.0         # Production WSGI server
-gevent>=24.2.1,<25.0.0           # Async networking library
+# gevent>=24.2.1,<25.0.0           # Duplicate - removed
 greenlet>=3.0.3,<4.0.0           # Lightweight coroutines
 
 # ============================================================================
@@ -301,8 +301,8 @@ datadog>=0.49.1,<1.0.0           # Infrastructure monitoring
 # ============================================================================
 # PRODUCTION SECURITY ENHANCEMENTS  
 # ============================================================================
-flask-talisman>=1.1.0,<2.0.0     # Security headers
-flask-limiter>=3.8.0,<4.0.0      # Rate limiting (enhanced)
+# flask-talisman>=1.1.0,<2.0.0     # Duplicate - already defined above
+# flask-limiter>=3.8.0,<4.0.0      # Duplicate - already defined above
 flask-seasurf>=1.1.2,<2.0.0      # CSRF protection
 
 # ============================================================================
@@ -316,8 +316,8 @@ pymemcache>=4.0.0,<5.0.0         # Memcached client
 # PRODUCTION DATABASE OPTIMIZATIONS
 # ============================================================================
 # Database connection pooling
-psycopg2-pool>=1.1,<2.0.0        # PostgreSQL connection pooling
-sqlalchemy-pool>=1.3.0,<2.0.0    # Enhanced connection pooling
+# psycopg2-pool>=1.1,<2.0.0        # Non-existent package - removed
+# sqlalchemy-pool>=1.3.0,<2.0.0    # Non-existent package - removed
 
 # ============================================================================
 # PRODUCTION ASSET OPTIMIZATION
@@ -330,21 +330,21 @@ zstandard>=0.22.0,<1.0.0         # Zstandard compression
 # PRODUCTION SSL/TLS
 # ============================================================================
 certifi>=2024.2.2                # CA certificates bundle
-urllib3[secure]>=2.2.2,<3.0.0    # Secure HTTP client
+urllib3>=2.1.0,<3.0.0    # Secure HTTP client
 
 # ============================================================================
 # PRODUCTION EMAIL OPTIMIZATION
 # ============================================================================
 # Enhanced email delivery
-sendgrid>=6.11.0,<7.0.0          # SendGrid email service
-boto3>=1.34.131,<2.0.0           # AWS SES integration
+# sendgrid>=6.11.0,<7.0.0          # Duplicate - already defined above
+# boto3>=1.34.131,<2.0.0           # Duplicate - already defined above
 
 # ============================================================================
 # PRODUCTION LOGGING OPTIMIZATION
 # ============================================================================
 # Structured logging for production
-python-json-logger>=2.0.7,<3.0.0  # JSON logging
-loguru>=0.7.2,<1.0.0               # Enhanced logging
+# python-json-logger>=2.0.7,<3.0.0  # Duplicate - already defined above
+# loguru>=0.7.2,<1.0.0               # Duplicate - already defined above
 
 # ============================================================================
 # OAUTH PROVIDERS
@@ -358,7 +358,7 @@ requests-oauthlib>=1.3.1,<2.0.0
 pycountry>=23.12.11,<24.0.0
 shortuuid>=1.0.11,<2.0.0
 packaging>=23.2,<24.0.0
-setuptools>=69.0.2,<70.0.0
+setuptools>=69.0.2
 
 # ============================================================================
 # DEVELOPMENT AND TESTING (OPTIONAL)

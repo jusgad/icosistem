@@ -19,7 +19,7 @@ Version: 1.0.0
 import logging
 import json
 import hashlib
-from typing import Any, Optional, Callable, List, Dict
+from typing import Any, Optional, Callable, List, Dict, Union
 from functools import wraps
 
 from flask import current_app

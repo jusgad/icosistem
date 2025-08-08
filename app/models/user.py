@@ -16,6 +16,22 @@ from sqlalchemy.orm import validates, relationship, backref
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from sqlalchemy.dialects.postgresql import JSONB
 from werkzeug.security import generate_password_hash, check_password_hash
+from enum import Enum
+
+# Añadir UserType que falta
+class UserType(str, Enum):
+    ADMIN = 'admin'
+    ENTREPRENEUR = 'entrepreneur'
+    ALLY = 'ally'
+    CLIENT = 'client'
+
+
+class UserStatus(str, Enum):
+    ACTIVE = 'active'
+    INACTIVE = 'inactive'
+    PENDING = 'pending'
+    SUSPENDED = 'suspended'
+    BANNED = 'banned'
 
 from app.extensions import db, login_manager
 from app.core.constants import (

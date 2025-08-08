@@ -13,6 +13,7 @@ import time
 import logging
 from functools import wraps
 from datetime import datetime
+from typing import Optional, Callable, Any, Dict
 
 from flask import request, jsonify, current_app, g
 from flask_login import current_user
@@ -255,4 +256,31 @@ def retry_on_failure(max_retries: int = 3, delay: float = 1.0, backoff: float = 
                     current_delay *= backoff
         return wrapper
     return decorator
+
+
+# Missing functions - adding stubs
+def handle_exceptions(f):
+    """Decorator to handle exceptions."""
+    from functools import wraps
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Exception in {f.__name__}: {e}")
+            raise
+    return decorated_function
+
+def login_required(f):
+    """Decorator to require login."""
+    from functools import wraps
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        from flask_login import current_user
+        if not current_user.is_authenticated:
+            from flask import abort
+            abort(401)
+        return f(*args, **kwargs)
+    return decorated_function
 

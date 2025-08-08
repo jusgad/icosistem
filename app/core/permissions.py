@@ -1193,3 +1193,30 @@ __all__ = [
     'init_permissions',
     'on_identity_loaded'
 ]
+
+# Missing decorator functions - adding stubs
+def admin_required(f):
+    """Decorator to require admin role."""
+    from functools import wraps
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        from flask_login import current_user
+        if not current_user.is_authenticated or getattr(current_user, 'role', None) != 'admin':
+            from flask import abort
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
+
+def permission_required(permission):
+    """Decorator to require specific permission."""
+    def decorator(f):
+        from functools import wraps
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            from flask_login import current_user
+            if not current_user.is_authenticated:
+                from flask import abort
+                abort(403)
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator

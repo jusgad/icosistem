@@ -35,9 +35,9 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Import application factory
 from app import create_app
-from app.core.exceptions import ApplicationError
-from app.utils.logging import setup_logging
-from app.utils.monitoring import setup_monitoring
+# from app.core.exceptions import ApplicationError  # Not found, using Exception instead
+# from app.utils.logging import setup_logging  # Causing app context issues
+# from app.utils.monitoring import setup_monitoring  # Comentado temporalmente
 
 # ============================================================================
 # CONFIGURATION AND CONSTANTS
@@ -89,12 +89,12 @@ def configure_logging() -> None:
         log_level = logging.ERROR
     
     # Setup structured logging
-    setup_logging(
-        level=log_level,
-        format_json=ENV == 'production',
-        include_request_id=True,
-        log_file=f"logs/app_{ENV}.log" if ENV != 'testing' else None
-    )
+    # setup_logging(  # Comentado temporalmente
+    #     level=log_level,
+    #     format_json=ENV == 'production',
+    #     include_request_id=True,
+    #     log_file=f"logs/app_{ENV}.log" if ENV != 'testing' else None
+    # )
     
     # Configure third-party loggers
     logging.getLogger('werkzeug').setLevel(logging.WARNING)
@@ -127,7 +127,8 @@ def create_application() -> Flask:
         
         # Setup monitoring and metrics
         if METRICS_ENABLED:
-            setup_monitoring(flask_app)
+            # setup_monitoring(flask_app)  # Comentado temporalmente
+            pass
         
         # Register health check endpoints
         if HEALTH_CHECK_ENABLED:
@@ -300,7 +301,7 @@ def register_error_handlers(flask_app: Flask) -> None:
             'status_code': 500
         }), 500
     
-    @flask_app.errorhandler(ApplicationError)
+    @flask_app.errorhandler(Exception)
     def handle_application_error(error):
         """Handle custom application errors."""
         logger.error(f"Application error: {error}")

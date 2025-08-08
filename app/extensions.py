@@ -357,7 +357,6 @@ def make_cache_key(*args, **kwargs):
 # CONFIGURACIÓN DE BABEL
 # ====================================
 
-@babel.localeselector
 def get_locale():
     """
     Selector de idioma para Flask-Babel.
@@ -377,7 +376,6 @@ def get_locale():
     return request.accept_languages.best_match(['es', 'en']) or 'es'
 
 
-@babel.timezoneselector
 def get_timezone():
     """
     Selector de zona horaria.

@@ -42,3 +42,10 @@ def validate_email_format(email: str) -> Dict[str, Any]:
         'is_valid': True,
         'normalized_email': email.lower().strip()
     }
+
+
+def log_security_event(event_type: str, details: Dict[str, Any] = None, user_id: int = None):
+    """Log security event - stub implementation."""
+    import logging
+    logger = logging.getLogger('security')
+    logger.info(f"Security event: {event_type}, User: {user_id}, Details: {details}")

@@ -1422,5 +1422,16 @@ def configure_strings(**kwargs):
     """Configura utilidades de string globalmente."""
     string_utils.configure(**kwargs)
 
+# Missing functions - adding stubs
+def generate_secure_token(length=32):
+    """Generate a secure random token."""
+    import secrets
+    return secrets.token_urlsafe(length)
+
+def get_client_ip():
+    """Get the client IP address from Flask request."""
+    from flask import request
+    return request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+
 # Logging de inicialización
 logger.info("Módulo de utilidades de string inicializado correctamente")

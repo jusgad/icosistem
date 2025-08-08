@@ -13,7 +13,11 @@ import re
 from datetime import datetime, date, time, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional, List, Union
-from flask import current_app, Markup
+from flask import current_app
+try:
+    from flask import Markup
+except ImportError:
+    from markupsafe import Markup
 try:
     import bleach
 except ImportError:
@@ -431,3 +435,25 @@ __all__ = [
     'time_ago', 'sanitize_html', 'get_gravatar_url', 'format_list_as_string',
     'register_template_filters'
 ]
+
+
+# Missing functions - adding stubs
+def format_number(number):
+    """Format a number with thousands separators."""
+    try:
+        return f"{float(number):,.0f}"
+    except (ValueError, TypeError):
+        return str(number)
+
+def format_currency_short(amount, currency='USD'):
+    """Format currency in short form (e.g., $1.2K)."""
+    try:
+        amount = float(amount)
+        if amount >= 1000000:
+            return f"${amount/1000000:.1f}M"
+        elif amount >= 1000:
+            return f"${amount/1000:.1f}K"
+        else:
+            return f"${amount:.0f}"
+    except (ValueError, TypeError):
+        return f"${amount}"

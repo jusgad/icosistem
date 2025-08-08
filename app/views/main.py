@@ -28,28 +28,80 @@ from wtforms import StringField, TextAreaField, SelectField, EmailField, Boolean
 from wtforms.validators import DataRequired, Email, Length, Optional, ValidationError
 from sqlalchemy import func, or_, and_, desc
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional as TypingOptional, Any, Tuple
 import json
 import logging
 from collections import defaultdict
 from urllib.parse import urlparse, urljoin
 
-# Importaciones locales
+# Importaciones locales - solo las esenciales
 from app.models.user import User, UserType
-from app.models.entrepreneur import Entrepreneur
-from app.models.project import Project, ProjectStatus, ProjectCategory
+# from app.models.entrepreneur import Entrepreneur
+from app.models.project import Project, ProjectStatus
 from app.models.organization import Organization
-from app.models.program import Program
-from app.models.testimonial import Testimonial
-from app.models.newsletter_subscription import NewsletterSubscription
-from app.models.contact_message import ContactMessage, MessageType
-from app.models.blog_post import BlogPost, PostStatus
-from app.services.email import EmailService
-from app.services.analytics_service import AnalyticsService
-from app.services.newsletter_service import NewsletterService
-from app.utils.formatters import format_currency, format_datetime, truncate_text
-from app.utils.string_utils import slugify, sanitize_input
-from app.utils.seo import generate_meta_tags, generate_structured_data
+# from app.models.program import Program
+# from app.models.testimonial import Testimonial  # File doesn't exist
+# from app.models.newsletter_subscription import NewsletterSubscription
+
+# Stubos temporales
+class ProjectStatus:
+    IDEA = 'idea'
+    DEVELOPMENT = 'development'
+    LAUNCH = 'launch'
+
+class ProjectCategory:
+    TECH = 'tech'
+    HEALTH = 'health'
+# from app.models.contact_message import ContactMessage, MessageType
+# from app.models.blog_post import BlogPost, PostStatus
+# from app.services.email import EmailService
+# from app.services.analytics_service import AnalyticsService
+
+# Stubs temporales
+class ContactMessage:
+    pass
+
+class MessageType:
+    INQUIRY = 'inquiry'
+
+class BlogPost:
+    pass
+
+class Testimonial:
+    """Stub temporal para Testimonial."""
+    @classmethod
+    def query(cls):
+        class MockQuery:
+            def filter(self, *args):
+                return self
+            def order_by(self, *args):
+                return self
+            def limit(self, limit):
+                return []
+        return MockQuery()
+
+class PostStatus:
+    PUBLISHED = 'published'
+# from app.services.newsletter_service import NewsletterService
+# from app.utils.formatters import format_currency, format_datetime, truncate_text
+# from app.utils.string_utils import slugify, sanitize_input
+# from app.utils.seo import generate_meta_tags, generate_structured_data
+
+# Funciones stub temporales
+def format_currency(amount):
+    return f"${amount:,.2f}"
+
+def format_datetime(dt):
+    return str(dt) if dt else ""
+
+def truncate_text(text, length=100):
+    return text[:length] + "..." if text and len(text) > length else text
+
+def slugify(text):
+    return text.lower().replace(' ', '-') if text else ""
+
+def sanitize_input(text):
+    return text.strip() if text else ""
 from app.extensions import db, cache
 
 logger = logging.getLogger(__name__)

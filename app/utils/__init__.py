@@ -204,7 +204,8 @@ except ImportError as e:
     format_business_hours = format_list_to_string = format_tags = lambda x: str(x)
     format_enum_value = lambda x: str(x)
 
-try:
+# Commented out due to application context issues
+if False:  # try:
     from .db_utils import (
         # Utilidades de consulta
         get_or_create,
@@ -237,8 +238,8 @@ try:
     
     logger.debug("Utilidades de BD importadas exitosamente")
     
-except ImportError as e:
-    logger.warning(f"Error importando utilidades de BD: {e}")
+# except ImportError as e:  # Commented out due to application context issues
+    # logger.warning(f"Error importando utilidades de BD: {e}")
 
 # ==============================================================================
 # IMPORTACIONES DE FECHA Y TIEMPO
@@ -437,7 +438,7 @@ except ImportError as e:
 # IMPORTACIONES DE CACHE
 # ==============================================================================
 
-try:
+if False:  # try:  # Commented out due to application context issues
     from .cache_utils import (
         # Cache básico
         cache_get,
@@ -461,8 +462,8 @@ try:
     
     logger.debug("Utilidades de cache importadas exitosamente")
     
-except ImportError as e:
-    logger.warning(f"Error importando utilidades de cache: {e}")
+# except ImportError as e:  # Commented out due to application context issues
+#     logger.warning(f"Error importando utilidades de cache: {e}")
     cache_get = cache_set = cache_delete = lambda *args, **kwargs: None
     cached = lambda func: func
     CacheManager = type('CacheManager', (), {})

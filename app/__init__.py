@@ -17,7 +17,7 @@ from .extensions import (
 from .config import config
 
 # Importar comandos CLI
-from .commands import register_commands
+# from .commands import register_commands  # Comentado temporalmente
 
 # Importar blueprints
 from .views.main import main_bp
@@ -90,8 +90,10 @@ def create_app(config_name=None):
     # Registrar blueprints
     register_blueprints(app)
     
+    # Blueprints will handle all routes
+    
     # Registrar comandos CLI
-    register_commands(app)
+    # register_commands(app)  # Comentado temporalmente para evitar errores de tabla duplicada
     
     # Registrar manejadores de errores
     register_error_handlers(app)
@@ -157,6 +159,11 @@ def init_extensions(app):
     
     # Internacionalización
     babel.init_app(app)
+    
+    # Registrar selector de locale para babel
+    # from .extensions import get_locale, get_timezone
+    # babel.localeselector(get_locale)  # Method doesn't exist in newer Flask-Babel versions
+    # babel.timezoneselector(get_timezone)  # Comentado temporalmente
     
     # Sesiones
     session.init_app(app)
@@ -285,21 +292,7 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-@babel.localeselector
-def get_locale():
-    """
-    Selector de idioma para Flask-Babel.
-    
-    Returns:
-        str: Código del idioma seleccionado.
-    """
-    from flask import request, session
-    
-    # Prioridad: 1. Sesión, 2. Request headers, 3. Default
-    if 'language' in session:
-        return session['language']
-    
-    return request.accept_languages.best_match(['es', 'en']) or 'es'
+# Babel locale selector already configured in init_extensions()
 
 
 def create_celery_app(app=None):

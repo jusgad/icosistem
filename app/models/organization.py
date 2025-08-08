@@ -7,7 +7,8 @@ incluyendo incubadoras, aceleradoras, universidades, corporaciones, etc.
 
 from datetime import datetime, date
 from typing import List, Optional, Dict, Any, Union
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Enum as SQLEnum, Float, Date
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Enum as SQLEnum, Float, Date, Table
+from app.extensions import db
 from sqlalchemy.orm import relationship, validates, backref
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -74,8 +75,9 @@ class CertificationLevel(Enum):
 
 
 # Tabla de asociación para organizaciones colaboradoras
-organization_partnerships = Column(
+organization_partnerships = Table(
     'organization_partnerships',
+    db.metadata,
     Column('organization_id', Integer, ForeignKey('organizations.id'), primary_key=True),
     Column('partner_id', Integer, ForeignKey('organizations.id'), primary_key=True),
     Column('partnership_type', String(50)),

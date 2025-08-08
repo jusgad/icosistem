@@ -122,7 +122,7 @@ class ActivityLog(BaseModel, TimestampMixin, SoftDeleteMixin):
         activity_type: Tipo de actividad realizada
         severity: Nivel de severidad de la actividad
         description: Descripción textual de la actividad
-        metadata: Datos adicionales en formato JSON
+        meta_data: Datos adicionales en formato JSON
         ip_address: Dirección IP desde donde se realizó la actividad
         user_agent: User agent del cliente
         target_type: Tipo de entidad afectada (opcional)
@@ -162,8 +162,8 @@ class ActivityLog(BaseModel, TimestampMixin, SoftDeleteMixin):
         nullable=False
     )
     
-    # Metadatos flexibles
-    metadata = db.Column(
+    # Metadatos flexibles (renamed to avoid SQLAlchemy reserved word)
+    meta_data = db.Column(
         JSONB,  # PostgreSQL JSONB para mejor rendimiento
         nullable=True,
         default=dict
@@ -268,8 +268,8 @@ class ActivityLog(BaseModel, TimestampMixin, SoftDeleteMixin):
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
         
-        if include_metadata and self.metadata:
-            data['metadata'] = self.metadata
+        if include_metadata and self.meta_data:
+            data['metadata'] = self.meta_data
             
         return data
     
@@ -312,7 +312,7 @@ class ActivityLog(BaseModel, TimestampMixin, SoftDeleteMixin):
             description=description,
             user_id=user_id,
             severity=severity,
-            metadata=metadata or {},
+            meta_data=metadata or {},
             ip_address=ip_address,
             user_agent=user_agent,
             target_type=target_type,

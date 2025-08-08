@@ -8,6 +8,7 @@ incluyendo seguimiento completo desde la idea hasta la implementación y escalam
 from datetime import datetime, date, timedelta
 from typing import List, Optional, Dict, Any, Union
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Enum as SQLEnum, Float, Date, Table
+from app.extensions import db
 from sqlalchemy.orm import relationship, validates, backref
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -18,7 +19,7 @@ from decimal import Decimal
 from .base import BaseModel
 from .mixins import TimestampMixin, SoftDeleteMixin, AuditMixin
 from ..core.constants import (
-    PROJECT_STATUS,
+    PROJECT_STATUSES,
     PROJECT_TYPES,
     BUSINESS_MODELS,
     INDUSTRY_SECTORS,
@@ -119,6 +120,7 @@ class RiskLevel(Enum):
 # Tabla de asociación para co-fundadores
 project_cofounders = Table(
     'project_cofounders',
+    db.metadata,
     Column('project_id', Integer, ForeignKey('projects.id'), primary_key=True),
     Column('entrepreneur_id', Integer, ForeignKey('entrepreneurs.id'), primary_key=True),
     Column('role', String(100)),
@@ -132,6 +134,7 @@ project_cofounders = Table(
 # Tabla de asociación para inversores interesados
 project_interests = Table(
     'project_interests',
+    db.metadata,
     Column('project_id', Integer, ForeignKey('projects.id'), primary_key=True),
     Column('client_id', Integer, ForeignKey('clients.id'), primary_key=True),
     Column('interest_level', String(20), default='medium'),  # low, medium, high
@@ -145,6 +148,7 @@ project_interests = Table(
 # Tabla de asociación para mentores asignados
 project_mentors = Table(
     'project_mentors',
+    db.metadata,
     Column('project_id', Integer, ForeignKey('projects.id'), primary_key=True),
     Column('ally_id', Integer, ForeignKey('allies.id'), primary_key=True),
     Column('specialization', String(100)),

@@ -1,0 +1,139 @@
+# ============================================================================
+# ECOSISTEMA DE EMPRENDIMIENTO - CORE WORKING REQUIREMENTS
+# ============================================================================
+# Version funcional sin dependencias problemáticas
+# ============================================================================
+
+# CORE FLASK FRAMEWORK
+Flask>=3.0.3,<4.0.0
+Flask-SQLAlchemy>=3.1.1,<4.0.0
+Flask-Migrate>=4.0.7,<5.0.0
+Flask-Login>=0.6.3,<1.0.0
+Flask-WTF>=1.2.1,<2.0.0
+Flask-Mail>=0.10.0,<1.0.0
+Flask-Caching>=2.3.0,<3.0.0
+Flask-CORS>=4.0.2,<5.0.0
+Flask-RESTX>=1.3.0,<2.0.0
+Flask-JWT-Extended>=4.6.0,<5.0.0
+Flask-SocketIO>=5.3.6,<6.0.0
+Flask-Admin>=1.6.1,<2.0.0
+Flask-Security-Too>=5.4.3,<6.0.0
+Flask-Limiter>=3.8.0,<4.0.0
+Flask-Compress>=1.15,<2.0.0
+Flask-Session>=0.8.0,<1.0.0
+Flask-Babel>=4.0.0,<5.0.0
+Flask-Marshmallow>=1.2.0,<2.0.0
+Flask-Talisman>=1.1.0,<2.0.0
+Flask-Principal>=0.4.0,<1.0.0
+Flask-HTTPAuth>=4.8.0,<5.0.0
+flask-bcrypt>=1.0.1,<2.0.0
+Flask-Pydantic>=0.12.0,<1.0.0
+
+# DATABASE AND ORM
+SQLAlchemy[asyncio]>=2.0.34,<3.0.0
+psycopg[binary,pool]>=3.2.1,<4.0.0
+psycopg2-binary>=2.9.9,<3.0.0
+alembic>=1.13.2,<2.0.0
+SQLAlchemy-Utils>=0.41.2,<1.0.0
+asyncpg>=0.29.0,<1.0.0
+marshmallow-sqlalchemy>=1.0.0,<2.0.0
+
+# AUTHENTICATION AND SECURITY
+passlib[bcrypt]>=1.7.4,<2.0.0
+PyJWT>=2.8.0,<3.0.0
+cryptography>=41.0.8
+python-jose[cryptography]>=3.3.0,<4.0.0
+authlib>=1.3.0,<2.0.0
+itsdangerous>=2.1.2,<3.0.0
+werkzeug>=3.0.1,<4.0.0
+bleach>=6.1.0,<7.0.0
+
+# FORMS AND VALIDATION
+WTForms>=3.1.1,<4.0.0
+email-validator>=2.1.0,<3.0.0
+wtforms-sqlalchemy>=0.3,<1.0.0
+wtforms-json>=0.3.5,<1.0.0
+validators>=0.22.0,<1.0.0
+phonenumbers>=8.13.25,<9.0.0
+
+# API AND SERIALIZATION
+pydantic>=2.5.3,<3.0.0
+pydantic-settings>=2.1.0,<3.0.0
+marshmallow>=3.22.0,<4.0.0
+apispec>=6.6.0,<7.0.0
+apispec-webframeworks>=1.1.0,<2.0.0
+orjson>=3.9.15,<4.0.0
+ujson>=5.10.0,<6.0.0
+
+# CACHING AND SESSION
+redis>=5.0.1,<6.0.0
+hiredis>=2.2.3,<3.0.0
+
+# BACKGROUND TASKS
+celery[redis]>=5.3.6,<6.0.0
+flower>=2.0.1,<3.0.0
+celery-redbeat>=2.0.0,<3.0.0
+kombu>=5.3.4,<6.0.0
+
+# HTTP CLIENTS
+requests>=2.31.0,<3.0.0
+httpx>=0.25.2,<1.0.0
+urllib3>=2.1.0,<3.0.0
+
+# EMAIL SERVICES
+sendgrid>=6.11.0,<7.0.0
+premailer>=3.10.0,<4.0.0
+jinja2>=3.1.2,<4.0.0
+html2text>=2020.1.16
+
+# FILE PROCESSING
+boto3>=1.34.0,<2.0.0
+botocore>=1.34.0,<2.0.0
+Pillow>=10.1.0,<11.0.0
+python-magic>=0.4.27,<1.0.0
+PyPDF2>=3.0.1,<4.0.0
+python-docx>=1.1.0,<2.0.0
+openpyxl>=3.1.5,<4.0.0
+
+# MESSAGING
+twilio>=8.10.1,<9.0.0
+slack-sdk>=3.25.0,<4.0.0
+
+# PAYMENT PROCESSING
+stripe>=7.7.0,<8.0.0
+
+# MONITORING
+sentry-sdk[flask,sqlalchemy]>=2.3.1,<3.0.0
+structlog>=24.1.0,<25.0.0
+loguru>=0.7.2,<1.0.0
+python-json-logger>=2.0.7,<3.0.0
+
+# WEBSOCKETS
+python-socketio>=5.10.0,<6.0.0
+eventlet>=0.33.3,<1.0.0
+gevent>=23.9.1
+
+# DATE AND TIME
+python-dateutil>=2.8.2,<3.0.0
+pytz>=2023.3
+arrow>=1.3.0,<2.0.0
+babel>=2.13.1,<3.0.0
+
+# TEXT PROCESSING
+python-slugify>=8.0.1,<9.0.0
+unidecode>=1.3.7,<2.0.0
+markdown>=3.5.1,<4.0.0
+markupsafe>=2.1.3,<3.0.0
+
+# CONFIGURATION
+python-dotenv>=1.0.1,<2.0.0
+dynaconf>=3.2.7,<4.0.0
+click>=8.1.7,<9.0.0
+
+# UTILITIES
+typing-extensions>=4.8.0,<5.0.0
+setuptools>=69.0.2
+
+# PRODUCTION SERVER
+gunicorn>=22.0.0,<23.0.0
+greenlet>=3.0.3,<4.0.0

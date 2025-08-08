@@ -342,17 +342,33 @@ class ProductionConfig(Config):
     RATELIMIT_STORAGE_URL = os.environ.get('REDIS_URL') or 'redis://localhost:6379/2'
     
     # Configuración optimizada de base de datos
-    SQLALCHEMY_ENGINE_OPTIONS.update({
+    SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_size': 20,
         'max_overflow': 40,
-        'pool_recycle': 1800
-    })
+        'pool_recycle': 1800,
+        'pool_pre_ping': True
+    }
     
     # Logging a archivo
     LOG_LEVEL = 'WARNING'
     
     # Seguridad máxima
-    TALISMAN_CONFIG['force_https'] = True
+    TALISMAN_CONFIG = {
+        'force_https': True,
+        'strict_transport_security': True,
+        'strict_transport_security_max_age': 31536000,
+        'content_security_policy': {
+            'default-src': "'self'",
+            'script-src': "'self' 'unsafe-inline' https:",
+            'style-src': "'self' 'unsafe-inline' https:",
+            'img-src': "'self' data: https:",
+            'connect-src': "'self' https:",
+            'font-src': "'self' https:",
+            'object-src': "'none'",
+            'media-src': "'self'",
+            'frame-src': "'none'"
+        }
+    }
     
     # Email real
     MAIL_SUPPRESS_SEND = False

@@ -16,11 +16,77 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import validates
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from app.extensions import db, cache
-from app.core.constants import CACHE_TIMEOUT_SHORT, CACHE_TIMEOUT_MEDIUM
+from app.core import CACHE_TIMEOUT_SHORT, CACHE_TIMEOUT_MEDIUM
 from .base import JSONType
 
 # Configurar logger para mixins
 mixins_logger = logging.getLogger('ecosistema.mixins')
+
+
+# ====================================
+# MIXINS BASE
+# ====================================
+
+class TimestampMixin:
+    """Mixin que añade campos de timestamp automáticos."""
+    
+    @declared_attr
+    def created_at(cls):
+        return Column(DateTime, default=datetime.utcnow, nullable=False)
+    
+    @declared_attr
+    def updated_at(cls):
+        return Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class SoftDeleteMixin:
+    """Mixin que añade funcionalidad de soft delete."""
+    
+    @declared_attr
+    def deleted_at(cls):
+        return Column(DateTime, nullable=True)
+    
+    @declared_attr
+    def is_deleted(cls):
+        return Column(Boolean, default=False, nullable=False)
+    
+    def soft_delete(self):
+        """Marca el objeto como eliminado."""
+        self.is_deleted = True
+        self.deleted_at = datetime.utcnow()
+    
+    def restore(self):
+        """Restaura el objeto eliminado."""
+        self.is_deleted = False
+        self.deleted_at = None
+
+
+class AuditMixin:
+    """Mixin que añade campos de auditoría."""
+    
+    @declared_attr
+    def created_by_id(cls):
+        return Column(Integer, nullable=True)
+    
+    @declared_attr
+    def updated_by_id(cls):
+        return Column(Integer, nullable=True)
+
+
+class ContactMixin:
+    """Mixin que añade campos de contacto."""
+    
+    @declared_attr
+    def email(cls):
+        return Column(String(120), nullable=True)
+    
+    @declared_attr
+    def phone(cls):
+        return Column(String(20), nullable=True)
+    
+    @declared_attr
+    def address(cls):
+        return Column(Text, nullable=True)
 
 
 # ====================================
