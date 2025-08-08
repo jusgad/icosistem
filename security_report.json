@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-08-08T14:22:28.019014",
+  "checks": {
+    "secure_keys": "PASSED",
+    "file_permissions": "FAILED",
+    "security_headers": "PASSED",
+    "dependencies": "FAILED",
+    "logging": "PASSED",
+    "ssl_config": "PASSED"
+  },
+  "recommendations": [],
+  "critical_issues": [
+    ".env should have 600 permissions, has 644",
+    "Vulnerable dependencies detected"
+  ]
+}

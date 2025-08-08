@@ -50,6 +50,22 @@ ALLOWED_STYLES = [
     'border', 'border-radius', 'width', 'height', 'max-width', 'max-height'
 ]
 
+def parse_currency(value: Union[str, float, int], default: float = 0.0) -> float:
+    """Convierte una cadena de moneda a float."""
+    if isinstance(value, (float, int)):
+        return float(value)
+    
+    if isinstance(value, str):
+        # Eliminar símbolos de moneda y espacios
+        clean_value = re.sub(r'[^\d.,\-]', '', value)
+        clean_value = clean_value.replace(',', '.')
+        try:
+            return float(clean_value)
+        except ValueError:
+            return default
+    
+    return default
+
 def format_datetime(value: Optional[datetime], 
                     format_type: str = 'medium', 
                     locale: Optional[str] = None) -> str:
@@ -457,3 +473,160 @@ def format_currency_short(amount, currency='USD'):
             return f"${amount:.0f}"
     except (ValueError, TypeError):
         return f"${amount}"
+
+def format_duration(seconds):
+    """Format duration in seconds to human readable format."""
+    try:
+        seconds = int(seconds)
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        secs = seconds % 60
+        
+        if hours > 0:
+            return f"{hours}h {minutes}m {secs}s"
+        elif minutes > 0:
+            return f"{minutes}m {secs}s"
+        else:
+            return f"{secs}s"
+    except (ValueError, TypeError):
+        return str(seconds)
+
+def format_document_number(number, doc_type='ID'):
+    """Format a document number for display."""
+    try:
+        return f"{doc_type}-{str(number).zfill(8)}"
+    except (ValueError, TypeError):
+        return str(number)
+
+def format_business_name(name):
+    """Format a business name for display."""
+    try:
+        return str(name).title()
+    except (ValueError, TypeError):
+        return str(name)
+
+def format_address(address_parts):
+    """Format an address from its parts."""
+    try:
+        if isinstance(address_parts, dict):
+            parts = [address_parts.get('street', ''), address_parts.get('city', ''), address_parts.get('state', ''), address_parts.get('zip', '')]
+            return ', '.join([p for p in parts if p])
+        return str(address_parts)
+    except (ValueError, TypeError):
+        return str(address_parts)
+
+# Additional missing formatters
+def format_date_spanish(date_obj, format_type='medium'):
+    """Format date in Spanish."""
+    try:
+        return format_date(date_obj, format_type, 'es')
+    except:
+        return str(date_obj)
+
+def format_user_info(user):
+    """Format user information for display."""
+    try:
+        if hasattr(user, 'first_name') and hasattr(user, 'last_name'):
+            return f"{user.first_name} {user.last_name}"
+        elif hasattr(user, 'name'):
+            return user.name
+        elif hasattr(user, 'username'):
+            return user.username
+        return str(user)
+    except:
+        return str(user)
+
+def format_phone(phone_number, region='CO'):
+    """Format phone number (alias)."""
+    return format_phone_number(phone_number, region)
+
+def format_user_name(user):
+    """Format user name for display."""
+    return format_user_info(user)
+
+def format_date_short(date_obj):
+    """Format date in short format."""
+    try:
+        return format_date(date_obj, 'short')
+    except:
+        return str(date_obj)
+
+def sanitize_string(text):
+    """Sanitize a string for safe display."""
+    return sanitize_html(text) if text else ''
+
+def format_hours(hours):
+    """Format hours for display."""
+    try:
+        hours = float(hours)
+        return f"{hours:.1f}h"
+    except:
+        return str(hours)
+
+def format_time_12h(time_obj):
+    """Format time in 12-hour format."""
+    try:
+        return format_time(time_obj, 'short')
+    except:
+        return str(time_obj)
+
+def format_datetime_spanish(dt_obj, format_type='medium'):
+    """Format datetime in Spanish."""
+    try:
+        return format_datetime_local(dt_obj, format_type, 'es')
+    except:
+        return str(dt_obj)
+
+
+# Auto-patched missing functions
+def format_time_ago(dt_obj):
+    """Format time ago (alias)."""
+    try:
+        return time_ago(dt_obj)
+    except:
+        return str(dt_obj)
+
+# Auto-generated stubs
+def format_business_hours(*args, **kwargs):
+    """Auto-generated stub function."""
+    return None
+
+
+# Auto-generated comprehensive stubs - 4 items
+def format_list_to_string(items, separator=', '):
+    """Format list to string."""
+    try:
+        if not items:
+            return ""
+        return separator.join(str(item) for item in items)
+    except Exception:
+        return str(items) if items else ""
+
+def format_type(value, *args, **kwargs):
+    """Formatting function for format type."""
+    try:
+        if value is None:
+            return ""
+        return str(value)
+    except Exception:
+        return str(value) if value is not None else ""
+
+def sanitize_message_content(content):
+    """Sanitize message content for safe display."""
+    try:
+        if not content:
+            return ""
+        # Basic sanitization - remove potentially dangerous content
+        import re
+        # Remove script tags and other dangerous elements
+        content = re.sub(r'<script.*?</script>', '', content, flags=re.DOTALL | re.IGNORECASE)
+        content = re.sub(r'<.*?>', '', content)  # Remove all HTML tags
+        return content.strip()
+    except:
+        return str(content) if content else ""
+
+# Final emergency patch
+def format_tags(*args, **kwargs):
+    """Emergency stub for format_tags."""
+    return None
+

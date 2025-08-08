@@ -16,6 +16,7 @@ import re
 
 from .base import BaseModel
 from .mixins import TimestampMixin, SoftDeleteMixin, AuditMixin
+from app.extensions import db
 from ..core.constants import (
     PROGRAM_TYPES,
     PROGRAM_STATUS,
@@ -95,6 +96,7 @@ class EnrollmentStatus(Enum):
 # Tabla de asociación para mentores del programa
 program_mentors = Table(
     'program_mentors',
+    db.metadata,
     Column('program_id', Integer, ForeignKey('programs.id'), primary_key=True),
     Column('mentor_id', Integer, ForeignKey('allies.id'), primary_key=True),
     Column('role', String(50), default='mentor'),
@@ -109,6 +111,7 @@ program_mentors = Table(
 # Tabla de asociación para partners del programa
 program_partners = Table(
     'program_partners',
+    db.metadata,
     Column('program_id', Integer, ForeignKey('programs.id'), primary_key=True),
     Column('organization_id', Integer, ForeignKey('organizations.id'), primary_key=True),
     Column('partnership_type', String(50)),

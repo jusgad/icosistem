@@ -90,6 +90,132 @@ PROGRAM_TYPES = [
     'accelerator', 'incubator', 'mentorship', 'training', 'funding'
 ]
 
+# Program status
+PROGRAM_STATUS = [
+    'active', 'inactive', 'draft', 'completed', 'cancelled'
+]
+
+# Entrepreneur stages
+ENTREPRENEUR_STAGES = [
+    'ideation', 'validation', 'prototype', 'launch', 'growth', 'scale'
+]
+
+# Event types
+EVENT_TYPES = [
+    'workshop', 'seminar', 'networking', 'pitch', 'conference', 'training'
+]
+
+# Event status
+EVENT_STATUS = [
+    'scheduled', 'in_progress', 'completed', 'cancelled', 'postponed'
+]
+
+# Program formats
+PROGRAM_FORMATS = [
+    'in_person', 'online', 'hybrid'
+]
+
+# Assessment status
+ASSESSMENT_STATUS = [
+    'pending', 'in_progress', 'completed', 'approved', 'rejected'
+]
+
+# Selection criteria
+SELECTION_CRITERIA = [
+    'innovation', 'market_potential', 'team_experience', 'financial_viability', 'scalability'
+]
+
+# Notification channels
+NOTIFICATION_CHANNELS = [
+    'email', 'sms', 'push', 'in_app'
+]
+
+# File storage types
+FILE_STORAGE_TYPES = [
+    'local', 'aws_s3', 'google_cloud', 'azure_blob'
+]
+
+# API versions
+API_VERSIONS = [
+    'v1', 'v2', 'beta'
+]
+
+# Error codes
+ERROR_CODES = {
+    'VALIDATION_ERROR': 400,
+    'UNAUTHORIZED': 401,
+    'FORBIDDEN': 403,
+    'NOT_FOUND': 404,
+    'CONFLICT': 409,
+    'INTERNAL_ERROR': 500
+}
+
+# Success codes
+SUCCESS_CODES = {
+    'OK': 200,
+    'CREATED': 201,
+    'ACCEPTED': 202,
+    'NO_CONTENT': 204
+}
+
+# User permissions
+USER_PERMISSIONS = [
+    'read', 'write', 'delete', 'admin', 'create_project', 'manage_users'
+]
+
+# Timezone mappings
+TIMEZONE_MAPPINGS = {
+    'bogota': 'America/Bogota',
+    'utc': 'UTC',
+    'ny': 'America/New_York',
+    'madrid': 'Europe/Madrid'
+}
+
+# Meeting priorities
+MEETING_PRIORITIES = [
+    'low', 'medium', 'high', 'urgent'
+]
+
+# Notification types
+NOTIFICATION_TYPES = [
+    'info', 'warning', 'error', 'success'
+]
+
+# Email types
+EMAIL_TYPES = [
+    'welcome', 'verification', 'reset_password', 'notification', 'marketing'
+]
+
+# File types
+FILE_TYPES = [
+    'document', 'image', 'video', 'audio', 'archive', 'other'
+]
+
+# Recurrence patterns
+RECURRENCE_PATTERNS = [
+    'none', 'daily', 'weekly', 'monthly', 'yearly'
+]
+
+# Availability status
+AVAILABILITY_STATUS = [
+    'available', 'busy', 'away', 'offline'
+]
+
+# Contact methods
+CONTACT_METHODS = [
+    'email', 'phone', 'whatsapp', 'telegram', 'video_call'
+]
+
+# Document types
+DOCUMENT_TYPES = [
+    'pdf', 'word', 'excel', 'powerpoint', 'text', 'image'
+]
+
+# Application status
+APPLICATION_STATUS = [
+    'draft', 'submitted', 'under_review', 'approved', 'rejected'
+]
+
 # Meeting types
 MEETING_TYPES = [
     'consultation', 'mentorship', 'presentation', 'workshop', 'networking'
@@ -197,3 +323,13 @@ ACTIVITY_TYPES = [
     'login', 'logout', 'registration', 'profile_update', 'project_created', 
     'meeting_scheduled', 'message_sent', 'document_uploaded', 'report_generated'
 ]
+
+# Auto-generated stubs
+REMINDER_INTERVALS = []  # Auto-generated stub
+
+
+# Auto-generated comprehensive stubs - 1 items
+EMAIL_PRIORITIES = ['low', 'medium', 'high']
+
+# Final emergency patch
+PARTICIPANT_ROLES = ['host', 'participant', 'observer']

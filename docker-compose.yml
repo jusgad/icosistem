@@ -1,0 +1,607 @@
+# =============================================================================
+# Docker Compose - Ecosistema de Emprendimiento
+# =============================================================================
+# 
+# Orquestación completa de servicios para la plataforma de emprendedores:
+# - Aplicación Flask principal
+# - Base de datos PostgreSQL con replicación
+# - Redis para cache y message broker
+# - Celery workers y scheduler
+# - Nginx como proxy reverso y load balancer
+# - Monitoring y observabilidad
+# - Servicios auxiliares para desarrollo
+#
+# Uso:
+#   Desarrollo:   docker-compose up
+#   Producción:   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
+#   Solo servicios: docker-compose up db redis
+#
+# Autor: Sistema de Emprendimiento
+# Version: 1.0.0
+# =============================================================================
+
+version: '3.8'
+
+# =============================================================================
+# SERVICIOS PRINCIPALES
+# =============================================================================
+services:
+  
+  # ---------------------------------------------------------------------------
+  # Nginx - Proxy Reverso y Load Balancer
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: ecosistema-nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "${NGINX_SSL_PORT:-443}:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+      - static_files:/var/www/static:ro
+      - media_files:/var/www/media:ro
+      - nginx_logs:/var/log/nginx
+    environment:
+      - NGINX_ENVSUBST_TEMPLATE_DIR=/etc/nginx/templates
+      - NGINX_ENVSUBST_TEMPLATE_SUFFIX=.template
+      - UPSTREAM_APP=app
+      - UPSTREAM_PORT=8000
+    depends_on:
+      - app
+    networks:
+      - frontend
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ecosistema.rule=Host(`${DOMAIN:-localhost}`)"
+      - "traefik.http.services.ecosistema.loadbalancer.server.port=80"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ---------------------------------------------------------------------------
+  # Aplicación Principal Flask
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.${ENVIRONMENT:-dev}
+      args:
+        - BUILD_DATE=${BUILD_DATE}
+        - VERSION=${VERSION:-1.0.0}
+        - GIT_COMMIT=${GIT_COMMIT}
+    container_name: ecosistema-app
+    restart: unless-stopped
+    expose:
+      - "8000"
+    ports:
+      - "${APP_DEBUG_PORT:-5678}:5678"  # Puerto de debugging
+    volumes:
+      # Código fuente (solo en desarrollo)
+      - "${APP_CODE_PATH:-.}:/app"
+      # Uploads persistentes
+      - media_files:/app/uploads
+      # Logs
+      - app_logs:/app/logs
+      # Configuración
+      - ./docker/app/config:/app/config/docker:ro
+      # Cache de Node modules (desarrollo)
+      - node_modules:/app/node_modules
+    environment:
+      # Flask
+      - FLASK_APP=wsgi.py
+      - FLASK_ENV=${ENVIRONMENT:-development}
+      - FLASK_DEBUG=${DEBUG:-1}
+      - SECRET_KEY=${SECRET_KEY}
+      
+      # Base de datos
+      - DATABASE_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-password}@db:5432/${DB_NAME:-ecosistema}
+      - SQLALCHEMY_ENGINE_OPTIONS={"pool_pre_ping":true,"pool_recycle":300}
+      
+      # Redis
+      - REDIS_URL=redis://redis:6379/${REDIS_DB:-0}
+      - CACHE_REDIS_URL=redis://redis:6379/${REDIS_CACHE_DB:-1}
+      
+      # Celery
+      - CELERY_BROKER_URL=redis://redis:6379/${REDIS_CELERY_DB:-2}
+      - CELERY_RESULT_BACKEND=redis://redis:6379/${REDIS_CELERY_DB:-2}
+      
+      # Email
+      - MAIL_SERVER=${MAIL_SERVER:-mailhog}
+      - MAIL_PORT=${MAIL_PORT:-1025}
+      - MAIL_USE_TLS=${MAIL_USE_TLS:-false}
+      - MAIL_USE_SSL=${MAIL_USE_SSL:-false}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_DEFAULT_SENDER=${MAIL_DEFAULT_SENDER:-noreply@ecosistema.com}
+      
+      # Google Services
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALENDAR_ENABLED=${GOOGLE_CALENDAR_ENABLED:-true}
+      
+      # File Storage
+      - UPLOAD_FOLDER=/app/uploads
+      - MAX_CONTENT_LENGTH=${MAX_CONTENT_LENGTH:-16777216}
+      
+      # Security
+      - WTF_CSRF_ENABLED=${WTF_CSRF_ENABLED:-true}
+      - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-false}
+      - SESSION_COOKIE_HTTPONLY=true
+      - SESSION_COOKIE_SAMESITE=Lax
+      
+      # Features
+      - AUTO_MIGRATE=${AUTO_MIGRATE:-false}
+      - CREATE_INITIAL_DATA=${CREATE_INITIAL_DATA:-false}
+      
+      # Monitoring
+      - SENTRY_DSN=${SENTRY_DSN}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      
+      # Performance
+      - WEB_CONCURRENCY=${WEB_CONCURRENCY:-4}
+      - WORKER_TIMEOUT=${WORKER_TIMEOUT:-120}
+      
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    networks:
+      - backend
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=8000"
+      - "prometheus.io/path=/metrics"
+    healthcheck:
+      test: ["CMD", "python", "/app/scripts/health_check.py", "--quiet", "--component", "app"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=app,environment=${ENVIRONMENT:-development}"
+
+  # ---------------------------------------------------------------------------
+  # Base de Datos PostgreSQL
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:15.4-alpine
+    container_name: ecosistema-db
+    restart: unless-stopped
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+      - ./docker/postgres/config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - db_logs:/var/log/postgresql
+      - db_backups:/backups
+    environment:
+      - POSTGRES_DB=${DB_NAME:-ecosistema}
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=es_ES.UTF-8 --lc-ctype=es_ES.UTF-8
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_HOST_AUTH_METHOD=md5
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    networks:
+      - backend
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=9187"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-ecosistema}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=database,environment=${ENVIRONMENT:-development}"
+
+  # ---------------------------------------------------------------------------
+  # Redis - Cache y Message Broker
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7.2-alpine
+    container_name: ecosistema-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+      - ./docker/redis/redis.conf:/etc/redis/redis.conf:ro
+      - redis_logs:/var/log/redis
+    command: redis-server /etc/redis/redis.conf
+    environment:
+      - REDIS_REPLICATION_MODE=master
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - backend
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=9121"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+        labels: "service=redis,environment=${ENVIRONMENT:-development}"
+
+  # ---------------------------------------------------------------------------
+  # Celery Worker - Procesamiento Asíncrono
+  # ---------------------------------------------------------------------------
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.${ENVIRONMENT:-dev}
+      args:
+        - BUILD_DATE=${BUILD_DATE}
+        - VERSION=${VERSION:-1.0.0}
+    container_name: ecosistema-worker
+    restart: unless-stopped
+    scale: ${CELERY_WORKERS:-2}
+    volumes:
+      - "${APP_CODE_PATH:-.}:/app"
+      - media_files:/app/uploads
+      - worker_logs:/app/logs
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/${REDIS_CELERY_DB:-2}
+      - CELERY_RESULT_BACKEND=redis://redis:6379/${REDIS_CELERY_DB:-2}
+      - DATABASE_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-password}@db:5432/${DB_NAME:-ecosistema}
+      - REDIS_URL=redis://redis:6379/${REDIS_DB:-0}
+      - C_FORCE_ROOT=1
+      - CELERY_LOG_LEVEL=${CELERY_LOG_LEVEL:-info}
+      - CELERY_CONCURRENCY=${CELERY_CONCURRENCY:-4}
+      - WORKER_PREFETCH_MULTIPLIER=${WORKER_PREFETCH_MULTIPLIER:-4}
+      - SENTRY_DSN=${SENTRY_DSN}
+    command: celery -A celery_worker.celery worker --loglevel=${CELERY_LOG_LEVEL:-info} --concurrency=${CELERY_CONCURRENCY:-4}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=9540"
+    healthcheck:
+      test: ["CMD", "celery", "-A", "celery_worker.celery", "inspect", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=worker,environment=${ENVIRONMENT:-development}"
+
+  # ---------------------------------------------------------------------------
+  # Celery Beat - Scheduler de Tareas
+  # ---------------------------------------------------------------------------
+  beat:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.${ENVIRONMENT:-dev}
+    container_name: ecosistema-beat
+    restart: unless-stopped
+    volumes:
+      - "${APP_CODE_PATH:-.}:/app"
+      - beat_schedule:/app/celerybeat-schedule
+      - beat_logs:/app/logs
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/${REDIS_CELERY_DB:-2}
+      - CELERY_RESULT_BACKEND=redis://redis:6379/${REDIS_CELERY_DB:-2}
+      - DATABASE_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-password}@db:5432/${DB_NAME:-ecosistema}
+      - C_FORCE_ROOT=1
+      - CELERY_LOG_LEVEL=${CELERY_LOG_LEVEL:-info}
+      - SENTRY_DSN=${SENTRY_DSN}
+    command: celery -A celery_worker.celery beat --loglevel=${CELERY_LOG_LEVEL:-info} --schedule=/app/celerybeat-schedule/celerybeat-schedule --pidfile=/app/celerybeat-schedule/celerybeat.pid
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /app/celerybeat-schedule/celerybeat.pid"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+        labels: "service=beat,environment=${ENVIRONMENT:-development}"
+
+  # ---------------------------------------------------------------------------
+  # Flower - Monitoreo de Celery
+  # ---------------------------------------------------------------------------
+  flower:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.${ENVIRONMENT:-dev}
+    container_name: ecosistema-flower
+    restart: unless-stopped
+    ports:
+      - "${FLOWER_PORT:-5555}:5555"
+    volumes:
+      - flower_data:/app/flower
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/${REDIS_CELERY_DB:-2}
+      - CELERY_RESULT_BACKEND=redis://redis:6379/${REDIS_CELERY_DB:-2}
+      - FLOWER_BASIC_AUTH=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-admin}
+      - FLOWER_URL_PREFIX=${FLOWER_URL_PREFIX:-/flower}
+      - FLOWER_PORT=5555
+      - FLOWER_ADDRESS=0.0.0.0
+    command: celery -A celery_worker.celery flower --port=5555 --address=0.0.0.0 --url_prefix=${FLOWER_URL_PREFIX:-/flower}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+      - frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.flower.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/flower`)"
+      - "traefik.http.services.flower.loadbalancer.server.port=5555"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5555/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ---------------------------------------------------------------------------
+  # MailHog - Servidor de Email para Desarrollo
+  # ---------------------------------------------------------------------------
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: ecosistema-mailhog
+    restart: unless-stopped
+    ports:
+      - "${MAILHOG_WEB_PORT:-8025}:8025"   # Web UI
+      - "${MAILHOG_SMTP_PORT:-1025}:1025"  # SMTP
+    environment:
+      - MH_STORAGE=maildir
+      - MH_MAILDIR_PATH=/maildir
+      - MH_UI_WEB_PATH=${MAILHOG_WEB_PATH:-/mailhog}
+    volumes:
+      - mailhog_data:/maildir
+    networks:
+      - backend
+      - frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mailhog.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/mailhog`)"
+      - "traefik.http.services.mailhog.loadbalancer.server.port=8025"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8025/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Exporter - Métricas de Base de Datos
+  # ---------------------------------------------------------------------------
+  postgres_exporter:
+    image: prometheuscommunity/postgres-exporter:v0.13.2
+    container_name: ecosistema-postgres-exporter
+    restart: unless-stopped
+    environment:
+      - DATA_SOURCE_NAME=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-password}@db:5432/${DB_NAME:-ecosistema}?sslmode=disable
+      - PG_EXPORTER_EXTEND_QUERY_PATH=/etc/postgres_exporter/queries.yaml
+    volumes:
+      - ./docker/monitoring/postgres_exporter/queries.yaml:/etc/postgres_exporter/queries.yaml:ro
+    ports:
+      - "9187:9187"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+    profiles:
+      - monitoring
+
+  # ---------------------------------------------------------------------------
+  # Redis Exporter - Métricas de Redis
+  # ---------------------------------------------------------------------------
+  redis_exporter:
+    image: oliver006/redis_exporter:v1.52.0
+    container_name: ecosistema-redis-exporter
+    restart: unless-stopped
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    ports:
+      - "9121:9121"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    profiles:
+      - monitoring
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+networks:
+  frontend:
+    driver: bridge
+    name: ecosistema-frontend
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+  backend:
+    driver: bridge
+    name: ecosistema-backend
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.21.0.0/24
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  # Base de datos
+  postgres_data:
+    driver: local
+    name: ecosistema-postgres-data
+  
+  # Redis
+  redis_data:
+    driver: local
+    name: ecosistema-redis-data
+  
+  # Aplicación
+  static_files:
+    driver: local
+    name: ecosistema-static-files
+  
+  media_files:
+    driver: local
+    name: ecosistema-media-files
+  
+  node_modules:
+    driver: local
+    name: ecosistema-node-modules
+  
+  # Logs
+  app_logs:
+    driver: local
+    name: ecosistema-app-logs
+  
+  nginx_logs:
+    driver: local
+    name: ecosistema-nginx-logs
+  
+  db_logs:
+    driver: local
+    name: ecosistema-db-logs
+  
+  redis_logs:
+    driver: local
+    name: ecosistema-redis-logs
+  
+  worker_logs:
+    driver: local
+    name: ecosistema-worker-logs
+  
+  beat_logs:
+    driver: local
+    name: ecosistema-beat-logs
+  
+  # Celery
+  beat_schedule:
+    driver: local
+    name: ecosistema-beat-schedule
+  
+  # Monitoreo
+  flower_data:
+    driver: local
+    name: ecosistema-flower-data
+  
+  # Email
+  mailhog_data:
+    driver: local
+    name: ecosistema-mailhog-data
+  
+  # Backups
+  db_backups:
+    driver: local
+    name: ecosistema-db-backups
+
+# =============================================================================
+# CONFIGURACIÓN POR DEFECTO DE VARIABLES
+# =============================================================================
+# 
+# Puedes sobrescribir estas variables creando un archivo .env:
+#
+# # Entorno
+# ENVIRONMENT=development
+# DOMAIN=localhost
+# 
+# # Base de datos
+# DB_NAME=ecosistema
+# DB_USER=postgres
+# DB_PASSWORD=secure_password_here
+# DB_PORT=5432
+# 
+# # Redis
+# REDIS_PORT=6379
+# REDIS_PASSWORD=
+# REDIS_DB=0
+# REDIS_CACHE_DB=1
+# REDIS_CELERY_DB=2
+# 
+# # Aplicación
+# SECRET_KEY=your-super-secret-key-change-this
+# DEBUG=0
+# WEB_CONCURRENCY=4
+# WORKER_TIMEOUT=120
+# 
+# # Celery
+# CELERY_WORKERS=2
+# CELERY_CONCURRENCY=4
+# CELERY_LOG_LEVEL=info
+# 
+# # Email
+# MAIL_SERVER=smtp.gmail.com
+# MAIL_PORT=587
+# MAIL_USE_TLS=true
+# MAIL_USERNAME=your-email@gmail.com
+# MAIL_PASSWORD=your-app-password
+# 
+# # Google Services
+# GOOGLE_CLIENT_ID=your-google-client-id
+# GOOGLE_CLIENT_SECRET=your-google-client-secret
+# 
+# # Flower
+# FLOWER_USER=admin
+# FLOWER_PASSWORD=secure_password_here
+# FLOWER_PORT=5555
+# 
+# # Puertos
+# NGINX_PORT=80
+# NGINX_SSL_PORT=443
+# APP_DEBUG_PORT=5678
+# FLOWER_PORT=5555
+# MAILHOG_WEB_PORT=8025
+# MAILHOG_SMTP_PORT=1025
+# 
+# # Monitoring
+# SENTRY_DSN=your-sentry-dsn
+# LOG_LEVEL=info
+# 
+# =============================================================================
