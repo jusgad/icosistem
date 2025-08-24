@@ -73,6 +73,28 @@ class AuditMixin:
         return Column(Integer, nullable=True)
 
 
+class UserTrackingMixin:
+    """Mixin que añade seguimiento de usuario creador y modificador."""
+    
+    @declared_attr
+    def created_by_id(cls):
+        return Column(Integer, db.ForeignKey('users.id'), nullable=True)
+    
+    @declared_attr
+    def updated_by_id(cls):
+        return Column(Integer, db.ForeignKey('users.id'), nullable=True)
+    
+    @declared_attr
+    def created_by(cls):
+        return db.relationship('User', foreign_keys=[cls.created_by_id], 
+                              backref=f'{cls.__name__.lower()}_created', lazy='select')
+    
+    @declared_attr
+    def updated_by(cls):
+        return db.relationship('User', foreign_keys=[cls.updated_by_id],
+                              backref=f'{cls.__name__.lower()}_updated', lazy='select')
+
+
 class ContactMixin:
     """Mixin que añade campos de contacto."""
     
@@ -869,6 +891,11 @@ def invalidate_cache_on_change(mapper, connection, target):
 # ====================================
 
 __all__ = [
+    'TimestampMixin',
+    'SoftDeleteMixin',
+    'AuditMixin',
+    'UserTrackingMixin',
+    'ContactMixin',
     'SearchableMixin',
     'CacheableMixin', 
     'ExportableMixin',

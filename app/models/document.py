@@ -18,6 +18,7 @@ import mimetypes
 from pathlib import Path
 
 from .base import BaseModel
+from ..extensions import db
 from .mixins import TimestampMixin, SoftDeleteMixin, AuditMixin
 from ..core.constants import (
     DOCUMENT_TYPES,
@@ -118,6 +119,7 @@ class ApprovalStatus(Enum):
 # Tabla de asociación para colaboradores del documento
 document_collaborators = Table(
     'document_collaborators',
+    db.metadata,
     Column('document_id', Integer, ForeignKey('documents.id'), primary_key=True),
     Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
     Column('permission_level', String(20), default='read'),  # read, comment, edit, admin
@@ -133,6 +135,7 @@ document_collaborators = Table(
 # Tabla de asociación para tags del documento
 document_tags = Table(
     'document_tags',
+    db.metadata,
     Column('document_id', Integer, ForeignKey('documents.id'), primary_key=True),
     Column('tag_id', Integer, ForeignKey('tags.id'), primary_key=True),
     Column('created_at', DateTime, default=datetime.utcnow)

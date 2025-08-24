@@ -400,8 +400,15 @@ class NotificationService(BaseService):
     def __init__(self):
         super().__init__()
         self.model = Notification
-        self.providers = self._initialize_providers()
+        self._providers = None
         self.executor = ThreadPoolExecutor(max_workers=10)
+    
+    @property
+    def providers(self) -> Dict[str, NotificationProvider]:
+        """Lazy initialization of providers"""
+        if self._providers is None:
+            self._providers = self._initialize_providers()
+        return self._providers
     
     def _initialize_providers(self) -> Dict[str, NotificationProvider]:
         """Inicializar proveedores de notificación"""
@@ -422,7 +429,7 @@ class NotificationService(BaseService):
         
         return providers
     
-    @log_activity("notification_sent")
+    @log_activity("notification_sent", "Notification sent to user")
     def send_notification(
         self,
         user_id: int,
@@ -1107,15 +1114,42 @@ class NotificationService(BaseService):
         
         return notifications
 
+    def _perform_initialization(self) -> bool:
+        """Initialize the notification service."""
+        try:
+            # Initialize providers
+            self.providers = self._initialize_providers()
+            logger.info("Notification service initialized successfully")
+            return True
+        except Exception as e:
+            logger.error(f"Error initializing notification service: {e}")
+            return False
 
-# Instancia del servicio para uso global
-notification_service = NotificationService()
+    def health_check(self) -> Dict[str, Any]:
+        """Check health of notification service."""
+        return {
+            'service': 'notification_service',
+            'status': 'healthy',
+            'providers': len(self.providers),
+            'timestamp': datetime.utcnow().isoformat()
+        }
+
+
+# Instancia del servicio para uso global (initialized within app context)
+notification_service = None
+
+def get_notification_service():
+    """Get notification service instance, initializing if needed."""
+    global notification_service
+    if notification_service is None:
+        notification_service = NotificationService()
+    return notification_service
 
 
 # Funciones de conveniencia para uso rápido
 def send_welcome_notification(user_id: int) -> NotificationResult:
     """Enviar notificación de bienvenida"""
-    return notification_service.send_notification(
+    return get_notification_service().send_notification(
         user_id=user_id,
         type=NotificationType.WELCOME.value,
         title="¡Bienvenido al Ecosistema de Emprendimiento!",
@@ -1130,7 +1164,7 @@ def send_project_update_notification(
     changes: List[str]
 ) -> BulkNotificationResult:
     """Enviar notificación de actualización de proyecto"""
-    return notification_service.send_bulk_notification(
+    return get_notification_service().send_bulk_notification(
         user_ids=users_ids,
         type=NotificationType.PROJECT_UPDATED.value,
         title="Proyecto actualizado",
@@ -1141,7 +1175,7 @@ def send_project_update_notification(
 
 def send_meeting_reminder(meeting_id: int, user_id: int, meeting_title: str, start_time: datetime) -> NotificationResult:
     """Enviar recordatorio de reunión"""
-    return notification_service.send_notification(
+    return get_notification_service().send_notification(
         user_id=user_id,
         type=NotificationType.MEETING_REMINDER.value,
         title="Recordatorio de reunión",

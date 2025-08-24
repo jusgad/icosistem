@@ -219,11 +219,19 @@ class AttachmentSchema(Schema):
     download_count = fields.Int()
     uploaded_at = fields.DateTime()
 
-# Servicios
-file_storage_service = FileStorageService()
-notification_service = NotificationService()
-analytics_service = AnalyticsService()
-email_service = EmailService()
+# Servicios - lazy loading
+def get_services():
+    from app.services.file_storage import get_file_storage_service
+    from app.services.notification_service import NotificationService
+    from app.services.analytics_service import AnalyticsService
+    from app.services.email import EmailService
+    
+    return {
+        'file_storage': get_file_storage_service(),
+        'notification': NotificationService(),
+        'analytics': AnalyticsService(),
+        'email': EmailService()
+    }
 
 # Schema instances
 message_create_schema = MessageCreateSchema()
@@ -795,7 +803,8 @@ def upload_attachment(message_id: uuid.UUID):
         
         # Subir archivo
         try:
-            file_info = file_storage_service.upload_file(
+            services = get_services()
+            file_info = services['file_storage'].upload_file(
                 file=file,
                 filename=unique_filename,
                 folder=f"messages/{message.thread_id}"
@@ -818,7 +827,7 @@ def upload_attachment(message_id: uuid.UUID):
         # Generar thumbnail si es imagen
         if attachment.file_type == 'image':
             try:
-                thumbnail_info = file_storage_service.generate_thumbnail(
+                thumbnail_info = services['file_storage'].generate_thumbnail(
                     file_url=file_info['url'],
                     sizes=[(150, 150), (300, 300)]
                 )
@@ -896,10 +905,11 @@ def download_attachment(attachment_id: uuid.UUID):
         
         # Obtener archivo del storage
         try:
-            file_stream = file_storage_service.get_file(attachment.file_url)
+            services = get_services()
+            file_stream = services['file_storage'].get_file(attachment.file_url)
             
             # Registrar descarga en analytics
-            analytics_service.track_file_download(attachment_id, current_user.id)
+            services['analytics'].track_file_download(attachment_id, current_user.id)
             
             return send_file(
                 file_stream,

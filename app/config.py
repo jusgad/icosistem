@@ -28,7 +28,11 @@ class Config:
         'pool_recycle': 3600,
         'pool_pre_ping': True,
         'pool_size': 10,
-        'max_overflow': 20
+        'max_overflow': 20,
+        'echo': False,
+        'echo_pool': False,
+        'pool_timeout': 30,
+        'pool_reset_on_return': 'commit'
     }
     
     # === SEGURIDAD ===
@@ -341,12 +345,21 @@ class ProductionConfig(Config):
     # Rate limiting con Redis
     RATELIMIT_STORAGE_URL = os.environ.get('REDIS_URL') or 'redis://localhost:6379/2'
     
-    # Configuración optimizada de base de datos
+    # Configuración optimizada de base de datos para producción
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_size': 20,
         'max_overflow': 40,
         'pool_recycle': 1800,
-        'pool_pre_ping': True
+        'pool_pre_ping': True,
+        'pool_timeout': 30,
+        'pool_reset_on_return': 'commit',
+        'echo': False,
+        'echo_pool': False,
+        'connect_args': {
+            'sslmode': 'prefer',
+            'connect_timeout': 10,
+            'application_name': 'ecosistema_emprendimiento'
+        }
     }
     
     # Logging a archivo

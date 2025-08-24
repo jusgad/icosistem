@@ -208,13 +208,17 @@ user_permission = Permission(
 # CALLBACKS Y CONFIGURACIONES
 # ====================================
 
-@login_manager.user_loader
-def load_user(user_id):
+def configure_login_manager():
     """
-    Callback para cargar usuario en Flask-Login.
+    Configurar callbacks de login_manager después de la inicialización.
     """
-    from app.models.user import User
-    return User.query.get(int(user_id))
+    @login_manager.user_loader
+    def load_user(user_id):
+        """
+        Callback para cargar usuario en Flask-Login.
+        """
+        from app.models.user import User
+        return User.query.get(int(user_id))
 
 
 @login_manager.unauthorized_handler
@@ -453,6 +457,7 @@ def init_all_extensions(app):
     
     # Autenticación
     login_manager.init_app(app)
+    configure_login_manager()  # Configurar callbacks después de init
     jwt.init_app(app)
     principal.init_app(app)
     bcrypt.init_app(app)
@@ -471,14 +476,17 @@ def init_all_extensions(app):
     # Email
     mail.init_app(app)
     
-    # WebSockets
-    socketio.init_app(
-        app,
-        cors_allowed_origins=app.config.get('SOCKETIO_CORS_ORIGINS', "*"),
-        async_mode=app.config.get('SOCKETIO_ASYNC_MODE', 'threading'),
-        logger=app.config.get('SOCKETIO_LOGGER', False),
-        engineio_logger=app.config.get('ENGINEIO_LOGGER', False)
-    )
+    # WebSockets - Configuración mejorada para evitar conflictos
+    socketio_config = {
+        'cors_allowed_origins': app.config.get('SOCKETIO_CORS_ORIGINS', "*"),
+        'async_mode': app.config.get('SOCKETIO_ASYNC_MODE', 'threading'),
+        'logger': app.config.get('SOCKETIO_LOGGER', False),
+        'engineio_logger': app.config.get('ENGINEIO_LOGGER', False),
+        'ping_timeout': 60,
+        'ping_interval': 25,
+        'manage_session': False  # Dejar que Flask-Session maneje las sesiones
+    }
+    socketio.init_app(app, **socketio_config)
     
     # HTTP
     cors.init_app(app)
@@ -497,6 +505,16 @@ def init_all_extensions(app):
     
     # Internacionalización
     babel.init_app(app)
+    
+    # Configurar selectores de Babel (usando el método moderno)
+    if hasattr(babel, 'localeselector'):
+        babel.localeselector(get_locale)
+        babel.timezoneselector(get_timezone)
+    else:
+        # Método moderno para Flask-Babel 3.0+
+        app.babel = babel
+        babel.locale_selector_func = get_locale
+        babel.timezone_selector_func = get_timezone
     
     # Redis
     init_redis(app)

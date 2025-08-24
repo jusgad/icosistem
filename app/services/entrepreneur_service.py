@@ -37,7 +37,7 @@ from app.core.exceptions import (
     UserNotFoundError,
     PermissionError,
     ServiceError,
-    BusinessRuleError
+    BusinessLogicError
 )
 from app.core.constants import (
     USER_STATUS,
@@ -55,10 +55,10 @@ from app.services.user_service import UserService
 from app.services.notification_service import NotificationService
 from app.services.email import EmailService
 from app.services.analytics_service import AnalyticsService
-from app.utils.validators import validate_business_model, validate_market_size
+# from app.utils.validators import validate_business_model, validate_market_size  # Temporalmente comentado
 from app.utils.formatters import format_currency, format_percentage
 from app.utils.date_utils import get_business_days_between, add_business_days
-from app.utils.export_utils import generate_entrepreneur_report
+# from app.utils.export_utils import generate_entrepreneur_report  # Temporalmente comentado
 
 logger = logging.getLogger(__name__)
 
@@ -380,11 +380,11 @@ class EntrepreneurService(BaseService):
             
             # Verificar disponibilidad del mentor
             if not self._check_mentor_availability(mentor):
-                raise BusinessRuleError("El mentor no tiene disponibilidad para nuevos mentoreados")
+                raise BusinessLogicError("El mentor no tiene disponibilidad para nuevos mentoreados")
             
             # Verificar si ya tiene mentor asignado
             if entrepreneur.assigned_mentor_id:
-                raise BusinessRuleError("El emprendedor ya tiene un mentor asignado")
+                raise BusinessLogicError("El emprendedor ya tiene un mentor asignado")
             
             # Asignar mentor
             entrepreneur.assigned_mentor_id = mentor_id
@@ -428,7 +428,7 @@ class EntrepreneurService(BaseService):
             logger.info(f"Mentor asignado: {mentor.user.email} -> {entrepreneur.user.email}")
             return True
             
-        except (UserNotFoundError, BusinessRuleError):
+        except (UserNotFoundError, BusinessLogicError):
             db.session.rollback()
             raise
         except Exception as e:
@@ -453,7 +453,7 @@ class EntrepreneurService(BaseService):
                 raise UserNotFoundError(f"Emprendedor {entrepreneur_id} no encontrado")
             
             if not entrepreneur.assigned_mentor:
-                raise BusinessRuleError("El emprendedor no tiene mentor asignado")
+                raise BusinessLogicError("El emprendedor no tiene mentor asignado")
             
             # Validar datos de la sesión
             self._validate_session_data(session_data)
@@ -464,7 +464,7 @@ class EntrepreneurService(BaseService):
                 session_data['scheduled_at'],
                 session_data.get('duration_minutes', 60)
             ):
-                raise BusinessRuleError("El mentor no está disponible en el horario solicitado")
+                raise BusinessLogicError("El mentor no está disponible en el horario solicitado")
             
             # Crear sesión
             session = MentorshipSession(
@@ -503,7 +503,7 @@ class EntrepreneurService(BaseService):
             logger.info(f"Sesión programada: {session.title} entre {entrepreneur.user.email} y {entrepreneur.assigned_mentor.user.email}")
             return session
             
-        except (UserNotFoundError, BusinessRuleError, ValidationError):
+        except (UserNotFoundError, BusinessLogicError, ValidationError):
             db.session.rollback()
             raise
         except Exception as e:

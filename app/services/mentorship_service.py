@@ -35,8 +35,8 @@ from app.core.exceptions import (
     UserNotFoundError,
     PermissionError,
     ServiceError,
-    BusinessRuleError,
-    ConflictError
+    BusinessLogicError,
+    SessionConflictError as ConflictError  # Usar SessionConflictError como ConflictError
 )
 from app.core.constants import (
     MENTORSHIP_STATUS,
@@ -109,7 +109,7 @@ class MentorshipService(BaseService):
             
         Raises:
             ValidationError: Si los datos no son válidos
-            BusinessRuleError: Si viola reglas de negocio
+            BusinessLogicError: Si viola reglas de negocio
             ConflictError: Si hay conflicto de horarios
         """
         try:
@@ -128,7 +128,7 @@ class MentorshipService(BaseService):
             # Verificar que están relacionados (si es requerido)
             if session_data.get('require_assignment', True):
                 if entrepreneur.assigned_mentor_id != mentor.id:
-                    raise BusinessRuleError("El emprendedor no está asignado a este mentor")
+                    raise BusinessLogicError("El emprendedor no está asignado a este mentor")
             
             # Verificar disponibilidad
             scheduled_at = session_data['scheduled_at']
@@ -139,7 +139,7 @@ class MentorshipService(BaseService):
             
             # Verificar límites del mentor
             if not self._check_mentor_session_limits(mentor, scheduled_at):
-                raise BusinessRuleError("El mentor ha alcanzado su límite de sesiones para este período")
+                raise BusinessLogicError("El mentor ha alcanzado su límite de sesiones para este período")
             
             # Crear sesión
             session = MentorshipSession(
@@ -194,7 +194,7 @@ class MentorshipService(BaseService):
             logger.info(f"Sesión creada: {session.id} - {mentor.user.email} con {entrepreneur.user.email}")
             return session
             
-        except (ValidationError, UserNotFoundError, BusinessRuleError, ConflictError):
+        except (ValidationError, UserNotFoundError, BusinessLogicError, ConflictError):
             db.session.rollback()
             raise
         except Exception as e:
@@ -223,7 +223,7 @@ class MentorshipService(BaseService):
             
             # Validar transición de estado
             if not self._is_valid_status_transition(session.status, new_status):
-                raise BusinessRuleError(f"Transición de estado inválida: {session.status} -> {new_status}")
+                raise BusinessLogicError(f"Transición de estado inválida: {session.status} -> {new_status}")
             
             old_status = session.status
             session.status = new_status
@@ -280,7 +280,7 @@ class MentorshipService(BaseService):
             logger.info(f"Estado de sesión {session_id} actualizado: {old_status} -> {new_status}")
             return True
             
-        except (UserNotFoundError, BusinessRuleError):
+        except (UserNotFoundError, BusinessLogicError):
             db.session.rollback()
             raise
         except Exception as e:
@@ -309,7 +309,7 @@ class MentorshipService(BaseService):
             
             # Validar que la sesión puede ser reprogramada
             if session.status not in [MENTORSHIP_STATUS.SCHEDULED, MENTORSHIP_STATUS.RESCHEDULED]:
-                raise BusinessRuleError("Solo se pueden reprogramar sesiones programadas")
+                raise BusinessLogicError("Solo se pueden reprogramar sesiones programadas")
             
             # Validar nueva fecha
             if not validate_future_datetime(new_datetime, hours_ahead=self.min_advance_hours):
@@ -369,7 +369,7 @@ class MentorshipService(BaseService):
             logger.info(f"Sesión {session_id} reprogramada: {previous_datetime} -> {new_datetime}")
             return True
             
-        except (UserNotFoundError, ValidationError, BusinessRuleError, ConflictError):
+        except (UserNotFoundError, ValidationError, BusinessLogicError, ConflictError):
             db.session.rollback()
             raise
         except Exception as e:
@@ -398,7 +398,7 @@ class MentorshipService(BaseService):
                 raise UserNotFoundError(f"Sesión {session_id} no encontrada")
             
             if session.status != MENTORSHIP_STATUS.COMPLETED:
-                raise BusinessRuleError("Solo se puede evaluar sesiones completadas")
+                raise BusinessLogicError("Solo se puede evaluar sesiones completadas")
             
             # Determinar tipo de feedback (mentor o emprendedor)
             is_mentor_feedback = submitted_by == session.mentor.user_id
@@ -463,7 +463,7 @@ class MentorshipService(BaseService):
             logger.info(f"Feedback recibido para sesión {session_id} de {feedback_type}")
             return True
             
-        except (UserNotFoundError, BusinessRuleError, PermissionError, ValidationError):
+        except (UserNotFoundError, BusinessLogicError, PermissionError, ValidationError):
             db.session.rollback()
             raise
         except Exception as e:

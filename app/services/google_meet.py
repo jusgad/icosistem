@@ -353,7 +353,7 @@ class GoogleMeetService(BaseService):
             logger.error(f"Error creando reunión Meet: {str(e)}")
             raise BusinessLogicError(f"Error creando reunión: {str(e)}")
     
-    @rate_limit(max_requests=30, window=60)
+    # @rate_limit(max_requests=30, window=60)  # Rate limiting commented out for compatibility
     def get_meeting(self, meeting_id: str, user_id: int) -> MeetRoom:
         """
         Obtener información de reunión
@@ -409,7 +409,7 @@ class GoogleMeetService(BaseService):
             logger.error(f"Error obteniendo reunión {meeting_id}: {str(e)}")
             raise BusinessLogicError(f"Error obteniendo reunión: {str(e)}")
     
-    @rate_limit(max_requests=20, window=60)
+    # @rate_limit(max_requests=20, window=60)  # Rate limiting commented out for compatibility
     def update_meeting(
         self,
         meeting_id: str,

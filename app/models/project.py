@@ -48,8 +48,37 @@ class ProjectStatus(Enum):
     PIVOTING = "pivoting"
     PAUSED = "paused"
     COMPLETED = "completed"
-    CANCELLED = "cancelled"
-    FAILED = "failed"
+
+
+class ProjectPriority(Enum):
+    """Prioridades del proyecto"""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
+class ProjectCategory(Enum):
+    """Categorías del proyecto"""
+    TECHNOLOGY = "technology"
+    FINTECH = "fintech"
+    HEALTHTECH = "healthtech"
+    EDTECH = "edtech"
+    AGTECH = "agtech"
+    CLEANTECH = "cleantech"
+    ECOMMERCE = "ecommerce"
+    MARKETPLACE = "marketplace"
+    SAAS = "saas"
+    MOBILE_APP = "mobile_app"
+    IOT = "iot"
+    AI_ML = "ai_ml"
+    BLOCKCHAIN = "blockchain"
+    SOCIAL_IMPACT = "social_impact"
+    OTHER = "other"
+
+
+# Alias for compatibility
+PriorityLevel = ProjectPriority
 
 
 class ProjectType(Enum):

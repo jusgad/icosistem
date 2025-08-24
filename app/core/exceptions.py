@@ -27,6 +27,28 @@ class EcosistemaException(Exception):
         self.details = details or {}
         self.user_message = user_message or message
         self.timestamp = datetime.utcnow()
+
+class DuplicateUserError(EcosistemaException):
+    """Exception raised when attempting to create a duplicate user."""
+    
+    def __init__(self, email, message=None):
+        self.email = email
+        message = message or f"User with email {email} already exists"
+        super().__init__(message, error_code="DUPLICATE_USER")
+
+class UserNotFoundError(EcosistemaException):
+    """Exception raised when user is not found."""
+    
+    def __init__(self, user_id=None, email=None):
+        self.user_id = user_id
+        self.email = email
+        if email:
+            message = f"User with email {email} not found"
+        elif user_id:
+            message = f"User with ID {user_id} not found"
+        else:
+            message = "User not found"
+        super().__init__(message, error_code="USER_NOT_FOUND")
         
         # Log automático del error
         self._log_error()
@@ -779,3 +801,157 @@ def register_error_handlers(app):
         return render_template('errors/403.html'), 403
     
     app.logger.info("Error handlers registered successfully")
+class PermissionError(EcosistemaException):
+    """Exception raised for permission denied errors."""
+    
+    def __init__(self, action, message=None):
+        self.action = action
+        message = message or f'Permission denied for action: {action}'
+        super().__init__(message, error_code='PERMISSION_DENIED')
+
+
+class ServiceError(EcosistemaException):
+    """Exception raised by service layer errors."""
+    
+    def __init__(self, service, message=None):
+        self.service = service
+        message = message or f'Service error in {service}'
+        super().__init__(message, error_code='SERVICE_ERROR')
+
+class ValidationError(EcosistemaException):
+    """Exception raised for validation errors."""
+    
+    def __init__(self, field, message=None):
+        self.field = field
+        message = message or f'Validation error in field: {field}'
+        super().__init__(message, error_code='VALIDATION_ERROR')
+
+
+class NotFoundError(EcosistemaException):
+    """Exception raised when resource is not found."""
+    
+    def __init__(self, resource, message=None):
+        self.resource = resource
+        message = message or f'{resource} not found'
+        super().__init__(message, error_code='NOT_FOUND')
+
+class AuthorizationError(EcosistemaException):
+    """Exception raised for authorization errors."""
+    
+    def __init__(self, message='Authorization required'):
+        super().__init__(message, error_code='AUTHORIZATION_ERROR')
+
+
+class ExternalServiceError(EcosistemaException):
+    """Exception raised for externalservice errors."""
+    
+    def __init__(self, message=None):
+        message = message or 'externalservice error occurred'
+        super().__init__(message, error_code='EXTERNALSERVICE_ERROR')
+
+class ConfigurationError(EcosistemaException):
+    """Exception raised for configuration errors."""
+    
+    def __init__(self, message=None):
+        message = message or 'configuration error occurred'
+        super().__init__(message, error_code='CONFIGURATION_ERROR')
+
+class DatabaseError(EcosistemaException):
+    """Exception raised for database errors."""
+    
+    def __init__(self, message=None):
+        message = message or 'database error occurred'
+        super().__init__(message, error_code='DATABASE_ERROR')
+
+class CacheError(EcosistemaException):
+    """Exception raised for cache errors."""
+    
+    def __init__(self, message=None):
+        message = message or 'cache error occurred'
+        super().__init__(message, error_code='CACHE_ERROR')
+
+class EmailError(EcosistemaException):
+    """Exception raised for email errors."""
+    
+    def __init__(self, message=None):
+        message = message or 'email error occurred'
+        super().__init__(message, error_code='EMAIL_ERROR')
+
+class FileError(EcosistemaException):
+    """Exception raised for file errors."""
+    
+    def __init__(self, message=None):
+        message = message or 'file error occurred'
+        super().__init__(message, error_code='FILE_ERROR')
+
+class APIError(EcosistemaException):
+    """Exception raised for api errors."""
+    
+    def __init__(self, message=None):
+        message = message or 'api error occurred'
+        super().__init__(message, error_code='API_ERROR')
+
+class RateLimitError(EcosistemaException):
+    """Exception raised for ratelimit errors."""
+    
+    def __init__(self, message=None):
+        message = message or 'ratelimit error occurred'
+        super().__init__(message, error_code='RATELIMIT_ERROR')
+
+class SecurityError(EcosistemaException):
+    """Exception raised for security errors."""
+    
+    def __init__(self, message=None):
+        message = message or 'security error occurred'
+        super().__init__(message, error_code='SECURITY_ERROR')
+
+class TokenError(EcosistemaException):
+    """Exception raised for token errors."""
+    
+    def __init__(self, message=None):
+        message = message or 'token error occurred'
+        super().__init__(message, error_code='TOKEN_ERROR')
+
+class SessionError(EcosistemaException):
+    """Exception raised for session errors."""
+    
+    def __init__(self, message=None):
+        message = message or 'session error occurred'
+        super().__init__(message, error_code='SESSION_ERROR')
+
+class WebhookError(EcosistemaException):
+    """Exception raised for webhook errors."""
+    
+    def __init__(self, message=None):
+        message = message or 'webhook error occurred'
+        super().__init__(message, error_code='WEBHOOK_ERROR')
+
+class ExternalAPIError(EcosistemaException):
+    """Exception raised for external API errors."""
+    
+    def __init__(self, message=None):
+        message = message or 'external API error occurred'
+        super().__init__(message, error_code='EXTERNAL_API_ERROR')
+
+
+class ResourceNotFoundError(EcosistemaException):
+    """Exception raised when a requested resource is not found."""
+    
+    def __init__(self, resource_type=None, resource_id=None, message=None):
+        if not message:
+            if resource_type and resource_id:
+                message = f"{resource_type} with ID {resource_id} not found"
+            elif resource_type:
+                message = f"{resource_type} not found"
+            else:
+                message = "Requested resource not found"
+        
+        super().__init__(
+            message=message,
+            error_code='RESOURCE_NOT_FOUND',
+            details={
+                'resource_type': resource_type,
+                'resource_id': resource_id
+            },
+            user_message="El recurso solicitado no fue encontrado"
+        )

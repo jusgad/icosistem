@@ -321,10 +321,15 @@ class CacheManager:
             logger.error(f"Error obteniendo estadísticas de cache: {e}")
             return {"error": str(e)}
 
-# Instancia global del gestor de cache
-# Se puede inicializar en app/__init__.py o aquí si se pasa la app
-# Por ahora, asumimos que se usará con current_app
-cache_manager = CacheManager()
+# Instancia global del gestor de cache (initialized within app context)
+cache_manager = None
+
+def get_cache_manager():
+    """Get cache manager instance, initializing if needed."""
+    global cache_manager
+    if cache_manager is None:
+        cache_manager = CacheManager()
+    return cache_manager
 
 # Funciones de utilidad de cache (pueden usar cache_manager o app_cache directamente)
 

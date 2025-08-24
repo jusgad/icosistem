@@ -15,7 +15,7 @@ from sqlalchemy.orm import joinedload
 from app.core.permissions import require_role
 from app.core.exceptions import ValidationError, PermissionError
 from app.models.entrepreneur import Entrepreneur
-from app.models.project import Project, ProjectStatus, ProjectPriority
+from app.models.project import Project, ProjectStatus, PriorityLevel as ProjectPriority
 from app.models.meeting import Meeting, MeetingStatus
 from app.models.task import Task, TaskStatus, TaskPriority
 from app.models.mentorship import MentorshipSession, SessionStatus
@@ -133,7 +133,7 @@ def index():
 @entrepreneur_dashboard.route('/dashboard/quick-stats')
 @login_required
 @require_role('entrepreneur')
-@rate_limit(requests=60, window=60)  # 60 requests por minuto
+@rate_limit("60/minute")  # 60 requests por minuto
 def quick_stats():
     """
     API endpoint para obtener estadísticas rápidas del dashboard.

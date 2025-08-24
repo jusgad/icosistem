@@ -289,5 +289,33 @@ class ExportUtils:
             logger.error(f"Error exportando todos los datos a Excel: {str(e)}")
             return Response(f"Error generando Excel: {str(e)}", mimetype="text/plain", status=500)
 
+# Instancia global para usar como funciones de conveniencia
+_export_utils = None
+
+def get_export_utils():
+    """Obtener instancia global de ExportUtils"""
+    global _export_utils
+    if _export_utils is None:
+        _export_utils = ExportUtils()
+    return _export_utils
+
+# Funciones de conveniencia
+def export_to_csv(data: List[Dict[str, Any]], filename_base: str = "export") -> Response:
+    """Exportar datos a CSV"""
+    return get_export_utils().export_to_csv(data, filename_base)
+
+def export_to_excel(data: List[Dict[str, Any]], filename_base: str = "export", sheet_name: str = "Datos") -> Response:
+    """Exportar datos a Excel"""
+    return get_export_utils().export_to_excel(data, filename_base, sheet_name)
+
+def export_to_pdf(data: List[Dict[str, Any]], filename_base: str = "export") -> Response:
+    """Exportar datos a PDF (actualmente no implementado, devuelve CSV)"""
+    # TODO: Implementar exportación a PDF
+    return export_to_csv(data, filename_base)
+
+def export_to_json(data: List[Dict[str, Any]], filename_base: str = "export") -> Response:
+    """Exportar datos a JSON"""
+    return get_export_utils().export_to_json(data, filename_base)
+
 # Exportaciones principales del módulo
-__all__ = ['ExportUtils']
+__all__ = ['ExportUtils', 'export_to_csv', 'export_to_excel', 'export_to_pdf', 'export_to_json']

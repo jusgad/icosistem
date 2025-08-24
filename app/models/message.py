@@ -18,6 +18,7 @@ import bleach
 
 from .base import BaseModel
 from .mixins import TimestampMixin, SoftDeleteMixin, AuditMixin
+from ..extensions import db
 from ..core.constants import (
     MESSAGE_TYPES,
     MESSAGE_STATUS,
@@ -102,6 +103,7 @@ class AttachmentType(Enum):
 # Tabla de asociación para participantes de conversación
 conversation_participants = Table(
     'conversation_participants',
+    db.metadata,
     Column('conversation_id', Integer, ForeignKey('conversations.id'), primary_key=True),
     Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
     Column('role', String(50), default='member'),  # admin, moderator, member
@@ -116,6 +118,7 @@ conversation_participants = Table(
 # Tabla de asociación para destinatarios de mensaje
 message_recipients = Table(
     'message_recipients',
+    db.metadata,
     Column('message_id', Integer, ForeignKey('messages.id'), primary_key=True),
     Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
     Column('status', String(20), default='sent'),  # sent, delivered, read, failed
@@ -583,7 +586,7 @@ class Message(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     
     # Metadatos del mensaje
     subject = Column(String(300))  # Asunto (para algunos tipos de mensaje)
-    metadata = Column(JSON)  # Metadatos adicionales
+    message_metadata = Column(JSON)  # Metadatos adicionales
     
     # Archivos adjuntos
     attachments = Column(JSON)  # Lista de archivos adjuntos
@@ -644,8 +647,8 @@ class Message(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             self._process_text_content()
         
         # Configurar metadatos por defecto
-        if not self.metadata:
-            self.metadata = {}
+        if not self.message_metadata:
+            self.message_metadata = {}
     
     def __repr__(self):
         return f'<Message {self.id} - {self.message_type.value}>'
@@ -1174,6 +1177,7 @@ class Message(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             'is_scheduled': self.is_scheduled,
             'scheduled_at': self.scheduled_at.isoformat() if self.scheduled_at else None,
             'view_count': self.view_count,
+            'message_metadata': self.message_metadata,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
@@ -1371,7 +1375,7 @@ def send_system_notification(user_ids: List[int], title: str, content: str,
             message_type=MessageType.NOTIFICATION,
             status=MessageStatus.SENT,
             priority=MessagePriority.HIGH if notification_type == 'urgent' else MessagePriority.NORMAL,
-            metadata={
+            message_metadata={
                 'notification_type': notification_type,
                 'related_entity_type': related_entity_type,
                 'related_entity_id': related_entity_id

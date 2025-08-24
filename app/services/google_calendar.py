@@ -46,14 +46,14 @@ from app.core.constants import (
 )
 from app.models.user import User
 from app.models.meeting import Meeting
-from app.models.mentorship import Mentorship
-from app.models.calendar_integration import CalendarIntegration
-from app.models.calendar_sync import CalendarSync
-from app.models.oauth_token import OAuthToken
+from app.models.mentorship import MentorshipRelationship as Mentorship
+# from app.models.calendar_integration import CalendarIntegration  # No existe temporalmente
+# from app.models.calendar_sync import CalendarSync  # No existe temporalmente
+# from app.models.oauth_token import OAuthToken  # No existe temporalmente
 from app.services.base import BaseService
 from app.services.notification_service import NotificationService
 from app.utils.decorators import log_activity, retry_on_failure, rate_limit
-from app.utils.validators import validate_email, validate_datetime
+# from app.utils.validators import validate_email, validate_datetime  # validate_datetime no existe
 from app.utils.formatters import format_datetime, format_duration
 from app.utils.date_utils import (
     convert_timezone, 

@@ -659,10 +659,36 @@ class EmailService(BaseService):
     
     def __init__(self):
         super().__init__()
-        self.providers = self._initialize_providers()
-        self.template_env = self._setup_template_environment()
+        self._providers = None
+        self._template_env = None
         self.executor = ThreadPoolExecutor(max_workers=10)
-        self._load_suppression_list()
+        self._suppressed_emails = None
+    
+    @property
+    def providers(self) -> Dict[str, EmailProviderInterface]:
+        """Lazy initialization of providers"""
+        if self._providers is None:
+            self._providers = self._initialize_providers()
+        return self._providers
+    
+    @property
+    def template_env(self) -> jinja2.Environment:
+        """Lazy initialization of template environment"""
+        if self._template_env is None:
+            self._template_env = self._setup_template_environment()
+        return self._template_env
+    
+    @property
+    def suppressed_emails(self) -> set:
+        """Lazy initialization of suppressed emails"""
+        if self._suppressed_emails is None:
+            self._load_suppression_list()
+        return self._suppressed_emails
+    
+    @suppressed_emails.setter
+    def suppressed_emails(self, value: set):
+        """Setter for suppressed emails"""
+        self._suppressed_emails = value
     
     def _initialize_providers(self) -> Dict[str, EmailProviderInterface]:
         """Inicializar proveedores de email"""
@@ -709,12 +735,17 @@ class EmailService(BaseService):
     
     def _load_suppression_list(self):
         """Cargar lista de supresión desde base de datos"""
-        self.suppressed_emails = set()
-        suppressions = EmailSuppression.query.filter_by(is_active=True).all()
-        for suppression in suppressions:
-            self.suppressed_emails.add(suppression.email.lower())
+        self._suppressed_emails = set()
+        try:
+            from flask import has_app_context
+            if has_app_context():
+                suppressions = EmailSuppression.query.filter_by(is_active=True).all()
+                for suppression in suppressions:
+                    self._suppressed_emails.add(suppression.email.lower())
+        except Exception as e:
+            logger.warning(f"No se pudo cargar lista de supresión: {e}")
+            self._suppressed_emails = set()
     
-    @log_activity("email_sent")
     def send_email(
         self,
         to: Union[str, List[str], EmailAddress, List[EmailAddress]],
@@ -1251,7 +1282,8 @@ class EmailService(BaseService):
             db.session.commit()
             
             # Actualizar cache
-            self.suppressed_emails.add(email)
+            if self._suppressed_emails is not None:
+                self._suppressed_emails.add(email)
             
             logger.info(f"Email agregado a supresión: {email}")
             return True
@@ -1285,7 +1317,8 @@ class EmailService(BaseService):
                 db.session.commit()
                 
                 # Actualizar cache
-                self.suppressed_emails.discard(email)
+                if self._suppressed_emails is not None:
+                    self._suppressed_emails.discard(email)
                 
                 logger.info(f"Email removido de supresión: {email}")
                 return True
@@ -1374,6 +1407,64 @@ class EmailService(BaseService):
     def is_configured(self) -> bool:
         """Verificar si el servicio está configurado"""
         return len(self.providers) > 0
+    
+    def _perform_initialization(self):
+        """Inicialización específica del servicio de email."""
+        # Already initialized in __init__, nothing additional needed
+        pass
+    
+    def health_check(self) -> Dict[str, Any]:
+        """
+        Verifica el estado de salud del servicio de email.
+        
+        Returns:
+            Dict con información de estado del servicio
+        """
+        try:
+            health_status = {
+                'service': 'email',
+                'status': 'healthy',
+                'timestamp': datetime.utcnow().isoformat(),
+                'providers': {},
+                'configuration': {
+                    'providers_configured': len(self.providers),
+                    'suppression_list_loaded': len(self.suppressed_emails) > 0,
+                    'template_env_ready': self.template_env is not None
+                },
+                'issues': []
+            }
+            
+            # Check each provider
+            for provider_name, provider in self.providers.items():
+                try:
+                    is_valid = provider.validate_config()
+                    health_status['providers'][provider_name] = {
+                        'status': 'healthy' if is_valid else 'degraded',
+                        'configured': is_valid
+                    }
+                except Exception as e:
+                    health_status['providers'][provider_name] = {
+                        'status': 'error',
+                        'error': str(e)
+                    }
+                    health_status['issues'].append(f"Provider {provider_name}: {str(e)}")
+            
+            # Overall status assessment
+            if not self.providers:
+                health_status['status'] = 'error'
+                health_status['issues'].append('No email providers configured')
+            elif any(p['status'] == 'error' for p in health_status['providers'].values()):
+                health_status['status'] = 'degraded'
+            
+            return health_status
+            
+        except Exception as e:
+            return {
+                'service': 'email',
+                'status': 'error',
+                'timestamp': datetime.utcnow().isoformat(),
+                'error': str(e)
+            }
     
     # Métodos privados
     def _prepare_message(self, **kwargs) -> EmailMessage:
@@ -1634,8 +1725,15 @@ class EmailService(BaseService):
             logger.error(f"Error configurando tracking: {str(e)}")
 
 
-# Instancia del servicio para uso global
-email_service = EmailService()
+# Instancia del servicio para uso global (will be initialized within app context)
+email_service = None
+
+def get_email_service():
+    """Get email service instance, initializing if needed."""
+    global email_service
+    if email_service is None:
+        email_service = EmailService()
+    return email_service
 
 
 # Funciones de conveniencia para uso rápido

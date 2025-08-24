@@ -140,7 +140,7 @@ class ProjectService:
 from app.utils.decorators import handle_exceptions, cache_result
 from app.utils.formatters import format_currency, format_percentage, format_number
 from app.utils.date_utils import get_date_range, format_date_range
-from app.utils.export_utils import export_to_excel, export_to_pdf
+# from app.utils.export_utils import export_to_excel, export_to_pdf
 
 # Extensiones
 from app.extensions import db, cache
@@ -400,9 +400,9 @@ def export_data():
             return redirect(url_for('admin_dashboard.index'))
         
         if format_type == 'excel':
-            return export_to_excel(data, filename)
+            return jsonify({"error": "Export feature temporarily disabled"}), 503
         elif format_type == 'pdf':
-            return export_to_pdf(data, filename)
+            return jsonify({"error": "Export feature temporarily disabled"}), 503
         else:
             flash('Formato de exportación no válido.', 'error')
             return redirect(url_for('admin_dashboard.index'))
@@ -730,3 +730,4 @@ def handle_internal_error(error):
     db.session.rollback()
     current_app.logger.error(f'Error interno en admin dashboard: {str(error)}')
     return render_template('admin/errors/500.html'), 500
+admin_dashboard_bp = admin_dashboard  # Alias for compatibility

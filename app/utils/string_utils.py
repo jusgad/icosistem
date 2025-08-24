@@ -875,6 +875,47 @@ def generate_slug(text: str,
     
     return slug
 
+def generate_username(first_name: str, last_name: str = "", base_username: str = None) -> str:
+    """
+    Generar un nombre de usuario único basado en nombre y apellido
+    
+    Args:
+        first_name: Nombre
+        last_name: Apellido (opcional)
+        base_username: Username base (opcional)
+    
+    Returns:
+        str: Username único generado
+    """
+    import random
+    import string
+    
+    if base_username:
+        base = base_username.lower().strip()
+    else:
+        # Generar base a partir de nombre y apellido
+        name_parts = []
+        if first_name:
+            name_parts.append(first_name.lower().strip())
+        if last_name:
+            name_parts.append(last_name.lower().strip())
+        
+        base = "_".join(name_parts) if name_parts else "user"
+    
+    # Limpiar caracteres especiales
+    base = re.sub(r'[^a-z0-9_]', '', base)
+    
+    # Asegurar que no esté vacío
+    if not base:
+        base = "user"
+    
+    # Si es muy corto, agregar sufijo aleatorio
+    if len(base) < 3:
+        suffix = ''.join(random.choices(string.digits, k=3))
+        base += suffix
+    
+    return base
+
 def slugify(text: str, **kwargs) -> str:
     """Alias para generate_slug."""
     return generate_slug(text, **kwargs)
@@ -1432,6 +1473,10 @@ def get_client_ip():
     """Get the client IP address from Flask request."""
     from flask import request
     return request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+
+
+# Aliases for compatibility
+sanitize_input = sanitize_text
 
 # Logging de inicialización
 logger.info("Módulo de utilidades de string inicializado correctamente")

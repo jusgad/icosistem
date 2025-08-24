@@ -32,13 +32,15 @@ from app.core.constants import (
 # Importaciones de modelos
 from app.models import (
     User, Entrepreneur, Ally, Project, Program, Organization,
-    Mentorship, Meeting, Document, Task, ActivityLog, Analytics,
+    # Mentorship,  # No disponible temporalmente
+    Meeting, Document, Task, ActivityLog, 
+    # Analytics,   # No disponible temporalmente  
     Notification
 )
 
 # Importaciones de servicios
 from app.services.entrepreneur_service import EntrepreneurService
-from app.services.mentorship_service import MentorshipService
+# from app.services.mentorship_service import MentorshipService  # Temporalmente comentado por errores de dependencias
 from app.services.project_service import ProjectService
 from app.services.analytics_service import AnalyticsService
 from app.services.notification_service import NotificationService

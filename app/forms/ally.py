@@ -1482,5 +1482,41 @@ __all__ = [
     'MentorshipSessionForm',
     'SessionFeedbackForm',
     'HourLogForm',
-    'AllyApplicationForm'
+    'AllyApplicationForm',
+    'ExpertiseForm'
 ]
+
+
+# ====================================
+# FORMULARIOS ADICIONALES PARA COMPATIBILIDAD
+# ====================================
+
+class ExpertiseForm(BaseForm):
+    """Formulario para gestión de expertise de aliado"""
+    
+    expertise_areas = SelectMultipleField(
+        'Áreas de Expertise',
+        choices=[
+            ('technology', 'Tecnología'),
+            ('marketing', 'Marketing'),
+            ('finance', 'Finanzas'),
+            ('operations', 'Operaciones'),
+            ('strategy', 'Estrategia'),
+            ('legal', 'Legal'),
+            ('hr', 'Recursos Humanos'),
+            ('sales', 'Ventas')
+        ],
+        validators=[DataRequired()]
+    )
+    
+    expertise_description = TextAreaField(
+        'Descripción de Expertise',
+        validators=[WTFOptional(), Length(max=500)],
+        render_kw={'rows': 4}
+    )
+    
+    years_experience = IntegerField(
+        'Años de Experiencia',
+        validators=[WTFOptional(), NumberRange(min=0, max=50)],
+        default=0
+    )

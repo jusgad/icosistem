@@ -708,3 +708,100 @@ def add_days(*args, **kwargs):
     """Emergency stub for add_days."""
     return None
 
+
+def subtract_days(date, days):
+    """Subtract days from a date."""
+    from datetime import timedelta
+    return date - timedelta(days=days)
+
+def days_between(start_date, end_date):
+    """Calculate days between two dates."""
+    return (end_date - start_date).days
+
+def move_file(src, dst):
+    """Move file from src to dst."""
+    import shutil
+    try:
+        shutil.move(src, dst)
+        return True
+    except:
+        return False
+
+def business_days_between(start, end): return (end - start).days
+def copy_file(src, dst): import shutil; return shutil.copy2(src, dst)
+
+def date_range(start_date, end_date):
+    """Generate date range between two dates."""
+    from datetime import timedelta
+    current = start_date
+    while current <= end_date:
+        yield current
+        current += timedelta(days=1)
+
+def month_range(start_date, end_date):
+    """Generate month range between dates."""
+    from datetime import date
+    current = start_date.replace(day=1)
+    while current <= end_date:
+        yield current
+        if current.month == 12:
+            current = current.replace(year=current.year + 1, month=1)
+        else:
+            current = current.replace(month=current.month + 1)
+
+def week_range(start_date, end_date):
+    """Generate week range between dates."""
+    from datetime import timedelta
+    current = start_date - timedelta(days=start_date.weekday())
+    while current <= end_date:
+        yield current
+        current += timedelta(weeks=1)
+
+def year_range(start_date, end_date):
+    """Generate year range between dates.""" 
+    current = start_date.replace(month=1, day=1)
+    while current.year <= end_date.year:
+        yield current
+        current = current.replace(year=current.year + 1)
+
+# Aliases for compatibility
+def get_week_start(dt=None, first_day_is_monday=True):
+    """Alias for get_start_of_week that returns datetime instead of date."""
+    week_start_date = get_start_of_week(dt, first_day_is_monday)
+    return datetime.combine(week_start_date, time.min)
+
+def get_month_start(dt=None):
+    """Alias for get_start_of_month that returns datetime instead of date."""
+    month_start_date = get_start_of_month(dt)
+    return datetime.combine(month_start_date, time.min)
+
+def get_quarter_start(dt=None):
+    """Get start of quarter for a given date."""
+    if dt is None:
+        dt = get_current_utc_time()
+    if isinstance(dt, datetime):
+        dt = dt.date()
+    
+    # Calculate quarter start month
+    quarter = get_quarter_from_date(dt)
+    quarter_start_month = (quarter - 1) * 3 + 1
+    quarter_start = date(dt.year, quarter_start_month, 1)
+    return datetime.combine(quarter_start, time.min)
+
+class DateUtils:
+    """Date utility class."""
+    
+    @staticmethod
+    def now():
+        from datetime import datetime
+        return datetime.now()
+    
+    @staticmethod
+    def today():
+        from datetime import date
+        return date.today()
+    
+    @staticmethod
+    def parse_date(date_str):
+        from datetime import datetime
+        return datetime.strptime(date_str, '%Y-%m-%d')

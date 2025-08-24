@@ -1178,5 +1178,208 @@ def get_allowed_file_extensions() -> Dict[str, set]:
     """Obtiene extensiones de archivo permitidas por categoría."""
     return {k: v.copy() for k, v in ALLOWED_FILE_EXTENSIONS.items()}
 
+# ==============================================================================
+# ALIASES FOR BACKWARD COMPATIBILITY
+# ==============================================================================
+
+# Alias for email service compatibility
+def validate_email(email: str) -> bool:
+    """Alias for is_valid_email for backward compatibility."""
+    return is_valid_email(email)
+
+def validate_domain(domain: str) -> bool:
+    """
+    Validate domain name format.
+    
+    Args:
+        domain: Domain name to validate
+        
+    Returns:
+        True if domain is valid
+    """
+    if not domain or not isinstance(domain, str):
+        return False
+    
+    domain = domain.strip().lower()
+    
+    # Basic domain regex
+    domain_pattern = re.compile(
+        r'^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$'
+    )
+    
+    return bool(domain_pattern.match(domain))
+
+def validate_phone(phone: str) -> bool:
+    """
+    Validate phone number format.
+    
+    Args:
+        phone: Phone number to validate
+        
+    Returns:
+        True if phone is valid
+    """
+    if not phone or not isinstance(phone, str):
+        return False
+    
+    # Clean phone number
+    clean_phone = re.sub(r'[\s\-\(\)\+]', '', phone)
+    
+    # Basic phone validation - 7 to 15 digits
+    phone_pattern = re.compile(r'^\d{7,15}$')
+    
+    return bool(phone_pattern.match(clean_phone))
+
+def validate_password(password: str) -> bool:
+    """
+    Basic password validation.
+    
+    Args:
+        password: Password to validate
+        
+    Returns:
+        True if password meets basic requirements
+    """
+    if not password or len(password) < 8:
+        return False
+    
+    # Check for at least one letter and one number
+    has_letter = any(c.isalpha() for c in password)
+    has_number = any(c.isdigit() for c in password)
+    
+    return has_letter and has_number
+
+def validate_filename(filename: str) -> bool:
+    """
+    Validate filename for security and filesystem compatibility.
+    
+    Args:
+        filename: Filename to validate
+        
+    Returns:
+        True if filename is valid
+    """
+    if not filename or len(filename) > 255:
+        return False
+    
+    # Check for dangerous characters
+    dangerous_chars = ['<', '>', ':', '"', '|', '?', '*', '\\', '/', '\0']
+    for char in dangerous_chars:
+        if char in filename:
+            return False
+    
+    # Check for reserved names (Windows)
+    reserved_names = ['CON', 'PRN', 'AUX', 'NUL'] + [f'COM{i}' for i in range(1, 10)] + [f'LPT{i}' for i in range(1, 10)]
+    if filename.upper().split('.')[0] in reserved_names:
+        return False
+    
+    return True
+
+def validate_file_type(filename: str, allowed_extensions: list = None) -> bool:
+    """
+    Validate file type based on extension.
+    
+    Args:
+        filename: Filename to validate
+        allowed_extensions: List of allowed extensions
+        
+    Returns:
+        True if file type is allowed
+    """
+    if not filename:
+        return False
+    
+    if allowed_extensions is None:
+        allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt']
+    
+    ext = filename.lower().split('.')[-1] if '.' in filename else ''
+    return ext in [ext.lower() for ext in allowed_extensions]
+
+
+def validate_url(url: str) -> bool:
+    """
+    Validate URL format.
+    
+    Args:
+        url: URL string to validate
+        
+    Returns:
+        True if URL is valid
+    """
+    if not url:
+        return False
+    
+    # Basic URL pattern check
+    import re
+    url_pattern = re.compile(
+        r'^https?://'  # http:// or https://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|'  # domain...
+        r'localhost|'  # localhost...
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+        r'(?::\d+)?'  # optional port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+    
+    return bool(url_pattern.match(url))
+
+
+def validate_phone_number(phone: str) -> bool:
+    """
+    Validate phone number format.
+    
+    Args:
+        phone: Phone number string to validate
+        
+    Returns:
+        True if phone number is valid
+    """
+    if not phone:
+        return False
+    
+    # Remove common phone number characters
+    cleaned = re.sub(r'[^\d+]', '', phone)
+    
+    # Basic phone number validation
+    # Should start with + and have 7-15 digits
+    if cleaned.startswith('+'):
+        digits = cleaned[1:]
+        return len(digits) >= 7 and len(digits) <= 15 and digits.isdigit()
+    elif cleaned.isdigit():
+        # Local number should be at least 7 digits
+        return len(cleaned) >= 7 and len(cleaned) <= 15
+    
+    return False
+
+
+def validate_social_handle(handle: str, platform: str = 'generic') -> bool:
+    """
+    Validate social media handle format.
+    
+    Args:
+        handle: Social handle to validate
+        platform: Platform type (twitter, instagram, linkedin, etc.)
+        
+    Returns:
+        True if handle is valid
+    """
+    if not handle:
+        return False
+    
+    # Remove @ if present
+    clean_handle = handle.lstrip('@')
+    
+    # Basic validation - alphanumeric plus underscore, dot, dash
+    if not re.match(r'^[a-zA-Z0-9._-]+$', clean_handle):
+        return False
+    
+    # Platform-specific validation
+    if platform.lower() == 'twitter':
+        return len(clean_handle) <= 15 and len(clean_handle) >= 1
+    elif platform.lower() == 'instagram':
+        return len(clean_handle) <= 30 and len(clean_handle) >= 1
+    else:
+        # Generic validation
+        return len(clean_handle) <= 50 and len(clean_handle) >= 1
+
+
 # Logging de inicialización
 logger.info("Módulo de validadores inicializado correctamente")

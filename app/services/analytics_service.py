@@ -44,7 +44,7 @@ from app.models.entrepreneur import Entrepreneur
 from app.models.ally import Ally
 from app.models.client import Client
 from app.models.project import Project
-from app.models.mentorship import Mentorship
+from app.models.mentorship import MentorshipRelationship
 from app.models.meeting import Meeting
 from app.models.organization import Organization
 from app.models.program import Program
@@ -52,12 +52,9 @@ from app.models.task import Task
 from app.models.notification import Notification
 from app.models.activity_log import ActivityLog
 from app.models.analytics import (
-    AnalyticsEvent, 
-    UserSession, 
-    MetricSnapshot,
-    CohortAnalysis,
-    FunnelStep,
-    ABTestResult
+    AnalyticsMetric, 
+    AnalyticsDashboard, 
+    AnalyticsReport
 )
 from app.services.base import BaseService
 from app.utils.decorators import log_activity, cache_result
@@ -830,7 +827,7 @@ class AnalyticsService(BaseService):
         organization_id: Optional[int]
     ) -> MetricResult:
         """Calcular horas de mentoría completadas"""
-        query = db.session.query(func.sum(Meeting.duration_minutes)).join(Mentorship)
+        query = db.session.query(func.sum(Meeting.duration_minutes)).join(MentorshipRelationship)
         
         query = query.filter(
             Meeting.start_time.between(start_date, end_date),
@@ -1157,6 +1154,92 @@ class AnalyticsService(BaseService):
         return User.query.filter(
             func.date(User.created_at) == today
         ).count()
+
+    # Missing event processor methods
+    def _process_mentorship_started(self, event: AnalyticsEvent) -> None:
+        """Procesar evento de inicio de mentoría"""
+        if event.user_id:
+            self.redis.incr("mentorships:started:today")
+
+    def _process_meeting_completed(self, event: AnalyticsEvent) -> None:
+        """Procesar evento de reunión completada"""
+        if event.user_id:
+            self.redis.incr("meetings:completed:today")
+
+    def _process_task_completed(self, event: AnalyticsEvent) -> None:
+        """Procesar evento de tarea completada"""
+        if event.user_id:
+            self.redis.incr("tasks:completed:today")
+
+    def _process_login(self, event: AnalyticsEvent) -> None:
+        """Procesar evento de login"""
+        if event.user_id:
+            self.redis.incr("logins:today")
+
+    def _process_page_view(self, event: AnalyticsEvent) -> None:
+        """Procesar evento de vista de página"""
+        if event.user_id:
+            self.redis.incr("page_views:today")
+
+    def _process_feature_usage(self, event: AnalyticsEvent) -> None:
+        """Procesar evento de uso de funcionalidad"""
+        if event.user_id:
+            self.redis.incr("feature_usage:today")
+
+    def _perform_initialization(self):
+        """Inicialización específica del servicio analytics."""
+        self.logger.info("Inicializando AnalyticsService")
+        # Verificar conexiones a las bases de datos
+        try:
+            db.session.execute('SELECT 1')
+            self.logger.info("Conexión a base de datos verificada")
+        except Exception as e:
+            self.logger.error(f"Error conectando a base de datos: {e}")
+            raise
+
+        # Verificar Redis si está disponible
+        try:
+            if self.redis:
+                self.redis.ping()
+                self.logger.info("Conexión a Redis verificada")
+        except Exception as e:
+            self.logger.warning(f"Redis no disponible: {e}")
+
+    def health_check(self) -> Dict[str, Any]:
+        """Verifica el estado de salud del servicio de analytics."""
+        health_info = {
+            'service': 'AnalyticsService',
+            'status': 'healthy',
+            'timestamp': datetime.utcnow().isoformat(),
+            'checks': {}
+        }
+        
+        # Verificar base de datos
+        try:
+            db.session.execute('SELECT 1')
+            health_info['checks']['database'] = 'healthy'
+        except Exception as e:
+            health_info['checks']['database'] = f'unhealthy: {str(e)}'
+            health_info['status'] = 'degraded'
+            
+        # Verificar Redis
+        try:
+            if self.redis:
+                self.redis.ping()
+                health_info['checks']['redis'] = 'healthy'
+            else:
+                health_info['checks']['redis'] = 'not_configured'
+        except Exception as e:
+            health_info['checks']['redis'] = f'unhealthy: {str(e)}'
+            health_info['status'] = 'degraded'
+            
+        # Verificar ThreadPoolExecutor
+        try:
+            health_info['checks']['thread_pool'] = f'healthy ({self.executor._max_workers} workers)'
+        except Exception as e:
+            health_info['checks']['thread_pool'] = f'unhealthy: {str(e)}'
+            
+        return health_info
 
 
 # Instancia del servicio para uso global

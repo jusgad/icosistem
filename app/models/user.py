@@ -893,29 +893,10 @@ def user_created_actions(mapper, connection, target):
 
 
 # ====================================
-# CONFIGURACIÓN FLASK-LOGIN
+# CONFIGURACIÓN FLASK-LOGIN  
 # ====================================
-
-@login_manager.user_loader
-def load_user(user_id):
-    """Cargar usuario para Flask-Login."""
-    try:
-        return User.get_by_id(user_id)
-    except Exception as e:
-        user_logger.error(f"Error loading user {user_id}: {str(e)}")
-        return None
-
-
-@login_manager.unauthorized_handler
-def unauthorized():
-    """Manejar usuarios no autorizados."""
-    from flask import request, jsonify, redirect, url_for, flash
-    
-    if request.is_json or request.path.startswith('/api/'):
-        return jsonify({'error': 'Authentication required'}), 401
-    
-    flash('Debes iniciar sesión para acceder a esta página.', 'warning')
-    return redirect(url_for('auth.login'))
+# Los decorators de Flask-Login se configuran en extensions.py
+# para evitar importaciones circulares
 
 
 # ====================================

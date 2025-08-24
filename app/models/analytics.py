@@ -201,7 +201,7 @@ class AnalyticsMetric(BaseModel, TimestampMixin):
     )
     
     # Metadatos flexibles
-    metadata = db.Column(
+    analytics_metadata = db.Column(
         JSONB,
         nullable=True,
         default=dict
@@ -247,7 +247,7 @@ class AnalyticsMetric(BaseModel, TimestampMixin):
             'organization_id': self.organization_id,
             'program_id': self.program_id,
             'user_id': self.user_id,
-            'metadata': self.metadata,
+            'metadata': self.analytics_metadata,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
@@ -423,7 +423,7 @@ class AnalyticsService:
         organization_id: Optional[int] = None,
         program_id: Optional[int] = None,
         user_id: Optional[int] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        analytics_metadata: Optional[Dict[str, Any]] = None,
         timestamp: Optional[datetime] = None
     ) -> AnalyticsMetric:
         """
@@ -458,7 +458,7 @@ class AnalyticsService:
             organization_id=organization_id,
             program_id=program_id,
             user_id=user_id,
-            metadata=metadata or {}
+            analytics_metadata=analytics_metadata or {}
         )
         
         db.session.add(metric)

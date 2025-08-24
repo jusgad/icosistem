@@ -45,9 +45,24 @@ class BaseValidator:
     
     def __init__(self, message: str = None, **kwargs):
         self.message = message
-        self.cache = CacheManager()
+        self._cache = None
         for key, value in kwargs.items():
             setattr(self, key, value)
+    
+    @property
+    def cache(self):
+        """Lazy initialization of cache manager"""
+        if self._cache is None:
+            try:
+                from flask import has_app_context
+                if has_app_context():
+                    self._cache = CacheManager()
+                else:
+                    # Fallback para cuando no hay contexto de aplicación
+                    self._cache = None
+            except Exception:
+                self._cache = None
+        return self._cache
     
     def __call__(self, form, field):
         """Método principal de validación"""
@@ -325,6 +340,87 @@ class InternationalPhone(BaseValidator):
             }
             message = error_messages.get(e.error_type, 'Número de teléfono inválido')
             raise ValidationError(self.message or message)
+
+
+class SecurePassword(BaseValidator):
+    """
+    Validador para contraseñas seguras
+    
+    Verifica que la contraseña cumpla con criterios de seguridad:
+    - Mínimo 8 caracteres
+    - Al menos una letra mayúscula
+    - Al menos una letra minúscula
+    - Al menos un número
+    - Al menos un caracter especial
+    """
+    
+    def __init__(
+        self, 
+        min_length: int = 8,
+        max_length: int = 128,
+        require_uppercase: bool = True,
+        require_lowercase: bool = True,
+        require_numbers: bool = True,
+        require_special: bool = True,
+        message: str = None,
+        **kwargs
+    ):
+        self.min_length = min_length
+        self.max_length = max_length
+        self.require_uppercase = require_uppercase
+        self.require_lowercase = require_lowercase
+        self.require_numbers = require_numbers
+        self.require_special = require_special
+        
+        if not message:
+            requirements = []
+            requirements.append(f"mínimo {min_length} caracteres")
+            if require_uppercase:
+                requirements.append("una mayúscula")
+            if require_lowercase:
+                requirements.append("una minúscula")
+            if require_numbers:
+                requirements.append("un número")
+            if require_special:
+                requirements.append("un caracter especial")
+            
+            message = f"La contraseña debe tener {', '.join(requirements)}"
+        
+        super().__init__(message=message, **kwargs)
+    
+    def __call__(self, form, field):
+        """Validar contraseña segura"""
+        password = field.data
+        if not password:
+            return
+        
+        errors = []
+        
+        # Verificar longitud
+        if len(password) < self.min_length:
+            errors.append(f"debe tener al menos {self.min_length} caracteres")
+        
+        if len(password) > self.max_length:
+            errors.append(f"no puede tener más de {self.max_length} caracteres")
+        
+        # Verificar mayúsculas
+        if self.require_uppercase and not re.search(r'[A-Z]', password):
+            errors.append("debe contener al menos una letra mayúscula")
+        
+        # Verificar minúsculas
+        if self.require_lowercase and not re.search(r'[a-z]', password):
+            errors.append("debe contener al menos una letra minúscula")
+        
+        # Verificar números
+        if self.require_numbers and not re.search(r'\d', password):
+            errors.append("debe contener al menos un número")
+        
+        # Verificar caracteres especiales
+        if self.require_special and not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+            errors.append("debe contener al menos un caracter especial")
+        
+        if errors:
+            raise ValidationError(f"La contraseña {', '.join(errors)}")
 
 
 class BusinessEmail(BaseValidator):
@@ -1104,5 +1200,48 @@ __all__ = [
     
     # Validadores condicionales
     'ConditionalRequired',
-    'ConditionalLength'
+    'ConditionalLength',
+    
+    # Funciones de validación adicionales
+    'validate_future_date',
+    'validate_past_or_today_date',
+    'validate_positive_number'
 ]
+
+
+# Funciones de validación adicionales para compatibilidad
+def validate_future_date(date_value, allow_today=False):
+    """Función de validación para fechas futuras"""
+    if not date_value:
+        return True
+    
+    from datetime import date
+    today = date.today()
+    
+    if allow_today:
+        return date_value >= today
+    else:
+        return date_value > today
+
+
+def validate_past_or_today_date(date_value):
+    """Función de validación para fechas pasadas o de hoy"""
+    if not date_value:
+        return True
+    
+    from datetime import date
+    today = date.today()
+    
+    return date_value <= today
+
+
+def validate_positive_number(value):
+    """Función de validación para números positivos"""
+    if value is None:
+        return True
+    
+    try:
+        num_value = float(value)
+        return num_value > 0
+    except (ValueError, TypeError):
+        return False

@@ -976,12 +976,15 @@ class SMSService:
         # SMSLog.create(message=message, result=result)
 
 
-# Instancia global del servicio
-sms_service = SMSService()
+# Instancia global del servicio (initialized within app context)
+sms_service = None
 
 
 def get_sms_service() -> SMSService:
     """Factory function para obtener el servicio SMS"""
+    global sms_service
+    if sms_service is None:
+        sms_service = SMSService()
     return sms_service
 
 
@@ -989,7 +992,7 @@ def get_sms_service() -> SMSService:
 
 def send_otp_sms(phone_number: str, code: str, expiry_minutes: int = 10) -> SMSResult:
     """Función helper para enviar OTP"""
-    return sms_service.send_otp(phone_number, code, expiry_minutes)
+    return get_sms_service().send_otp(phone_number, code, expiry_minutes)
 
 
 def send_notification_sms(phone_number: str, message: str, 
@@ -1001,7 +1004,7 @@ def send_notification_sms(phone_number: str, message: str,
         sms_type=SMSType.NOTIFICATION,
         user_id=user_id
     )
-    return sms_service.send_sms(sms_message, async_send=True)
+    return get_sms_service().send_sms(sms_message, async_send=True)
 
 
 # Decoradores

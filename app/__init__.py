@@ -10,7 +10,8 @@ from flask_migrate import Migrate
 # Importar extensiones
 from .extensions import (
     db, ma, login_manager, mail, socketio, cors, limiter,
-    jwt, cache, babel, session, oauth, compress, talisman
+    jwt, cache, babel, session, oauth, compress, talisman,
+    init_all_extensions
 )
 
 # Importar configuraciones
@@ -121,62 +122,16 @@ def create_app(config_name=None):
 
 def init_extensions(app):
     """
-    Inicializa todas las extensiones de Flask.
+    Inicializa todas las extensiones de Flask usando el método centralizado.
     
     Args:
         app (Flask): Instancia de la aplicación Flask.
     """
+    # Usar la función centralizada de extensions.py
+    init_all_extensions(app)
     
-    # Base de datos
-    db.init_app(app)
-    ma.init_app(app)
-    
-    # Migración de base de datos
+    # Migración de base de datos (se inicializa aquí para mantener la referencia)
     migrate = Migrate(app, db)
-    
-    # Autenticación y autorización
-    login_manager.init_app(app)
-    jwt.init_app(app)
-    
-    # Email
-    mail.init_app(app)
-    
-    # WebSockets
-    socketio.init_app(app, 
-                     cors_allowed_origins="*",
-                     async_mode='threading',
-                     logger=app.config.get('SOCKETIO_LOGGER', False),
-                     engineio_logger=app.config.get('ENGINEIO_LOGGER', False))
-    
-    # CORS
-    cors.init_app(app)
-    
-    # Rate limiting
-    limiter.init_app(app)
-    
-    # Cache
-    cache.init_app(app)
-    
-    # Internacionalización
-    babel.init_app(app)
-    
-    # Registrar selector de locale para babel
-    # from .extensions import get_locale, get_timezone
-    # babel.localeselector(get_locale)  # Method doesn't exist in newer Flask-Babel versions
-    # babel.timezoneselector(get_timezone)  # Comentado temporalmente
-    
-    # Sesiones
-    session.init_app(app)
-    
-    # OAuth
-    oauth.init_app(app)
-    
-    # Compresión
-    compress.init_app(app)
-    
-    # Seguridad
-    if app.config.get('ENABLE_SECURITY_HEADERS', True):
-        talisman.init_app(app, **app.config.get('TALISMAN_CONFIG', {}))
 
 
 def register_blueprints(app):
@@ -277,19 +232,7 @@ def setup_upload_directory(app):
             os.makedirs(os.path.join(upload_folder, subdir), exist_ok=True)
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    """
-    Callback para cargar usuarios para Flask-Login.
-    
-    Args:
-        user_id (str): ID del usuario.
-    
-    Returns:
-        User: Instancia del usuario o None.
-    """
-    from .models.user import User
-    return User.query.get(int(user_id))
+# El user_loader se configura ahora en extensions.py para evitar imports circulares
 
 
 # Babel locale selector already configured in init_extensions()

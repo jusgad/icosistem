@@ -276,6 +276,9 @@ class Ally(User):
     programs_created_rel = relationship("Program", backref="creator", lazy='dynamic',
                                        foreign_keys="Program.creator_id")
     
+    # Disponibilidad/horarios
+    availability_slots = relationship("Availability", back_populates="ally", lazy='dynamic')
+    
     # Configurar relación con User
     __mapper_args__ = {
         'polymorphic_identity': ALLY_ROLE,

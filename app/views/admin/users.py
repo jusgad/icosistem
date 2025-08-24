@@ -45,8 +45,8 @@ from app.services.file_storage import FileStorageService
 
 # Importaciones de formularios
 from app.forms.admin import (
-    CreateUserForm, EditUserForm, BulkActionForm, UserFilterForm,
-    ChangePasswordForm, AssignRoleForm, ImportUsersForm
+    AdminUserCreateForm, AdminUserEditForm, AdminBulkUserForm,
+    AdminOrganizationForm, AdminProgramForm, AdminReportForm, AdminSettingsForm
 )
 
 # Importaciones de utilidades
@@ -882,7 +882,7 @@ def import_users():
 @admin_users.route('/api/search')
 @login_required
 @admin_required
-@rate_limit(100, per_minute=True)
+@rate_limit("100/minute")
 def api_search_users():
     """API endpoint para búsqueda de usuarios en tiempo real."""
     try:

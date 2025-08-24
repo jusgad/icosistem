@@ -125,8 +125,9 @@ class AttendanceStatus(Enum):
 
 
 # Tabla de asociación para participantes
+from app.extensions import db
 meeting_participants = Table(
-    'meeting_participants',
+    'meeting_participants', db.metadata,
     Column('meeting_id', Integer, ForeignKey('meetings.id'), primary_key=True),
     Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
     Column('role', String(50), default='required'),
@@ -140,7 +141,7 @@ meeting_participants = Table(
 
 # Tabla de asociación para reuniones relacionadas
 meeting_relations = Table(
-    'meeting_relations',
+    'meeting_relations', db.metadata,
     Column('parent_meeting_id', Integer, ForeignKey('meetings.id'), primary_key=True),
     Column('child_meeting_id', Integer, ForeignKey('meetings.id'), primary_key=True),
     Column('relation_type', String(50)),  # follow_up, prerequisite, related, series

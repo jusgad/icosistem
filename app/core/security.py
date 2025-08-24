@@ -49,3 +49,18 @@ def log_security_event(event_type: str, details: Dict[str, Any] = None, user_id:
     import logging
     logger = logging.getLogger('security')
     logger.info(f"Security event: {event_type}, User: {user_id}, Details: {details}")
+
+def generate_secure_token(length: int = 32) -> str:
+    """Generate secure random token."""
+    import secrets
+    return secrets.token_urlsafe(length)
+
+def hash_password(password: str) -> str:
+    """Hash password securely."""
+    from werkzeug.security import generate_password_hash
+    return generate_password_hash(password)
+
+def verify_password(password: str, password_hash: str) -> bool:
+    """Verify password against hash."""
+    from werkzeug.security import check_password_hash
+    return check_password_hash(password_hash, password)

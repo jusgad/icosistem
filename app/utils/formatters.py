@@ -630,3 +630,78 @@ def format_tags(*args, **kwargs):
     """Emergency stub for format_tags."""
     return None
 
+def format_enum_value(value): return str(value) if value else ""
+
+class CurrencyFormatter:
+    """Simple currency formatter."""
+    @staticmethod
+    def format(amount, currency='COP'):
+        return f"{currency} {amount:,.2f}"
+
+class NumberFormatter:
+    """Simple number formatter."""
+    @staticmethod 
+    def format(number, decimals=2):
+        return f"{number:,.{decimals}f}"
+
+class TextFormatter:
+    """Text formatting utilities."""
+    
+    @staticmethod
+    def truncate(text, max_length=100, suffix="..."):
+        if len(text) <= max_length:
+            return text
+        return text[:max_length-len(suffix)] + suffix
+    
+    @staticmethod
+    def capitalize_words(text):
+        return ' '.join(word.capitalize() for word in text.split())
+    
+    @staticmethod
+    def slugify(text):
+        import re
+        text = text.lower()
+        text = re.sub(r'[^\w\s-]', '', text)
+        text = re.sub(r'[\s_-]+', '-', text)
+        return text.strip('-')
+
+class DateFormatter:
+    """Date formatting utilities."""
+    
+    @staticmethod
+    def format_datetime(dt, format_str='%Y-%m-%d %H:%M:%S'):
+        """Format datetime object."""
+        if dt is None:
+            return ""
+        return dt.strftime(format_str)
+    
+    @staticmethod
+    def format_date(dt, format_str='%Y-%m-%d'):
+        """Format date object."""
+        if dt is None:
+            return ""
+        return dt.strftime(format_str)
+    
+    @staticmethod
+    def time_ago(dt):
+        """Get human readable time ago."""
+        from datetime import datetime, timedelta
+        if dt is None:
+            return ""
+        
+        now = datetime.now()
+        if dt.tzinfo:
+            now = now.replace(tzinfo=dt.tzinfo)
+            
+        diff = now - dt
+        
+        if diff.days > 0:
+            return f"{diff.days} day{'s' if diff.days != 1 else ''} ago"
+        elif diff.seconds > 3600:
+            hours = diff.seconds // 3600
+            return f"{hours} hour{'s' if hours != 1 else ''} ago"
+        elif diff.seconds > 60:
+            minutes = diff.seconds // 60
+            return f"{minutes} minute{'s' if minutes != 1 else ''} ago"
+        else:
+            return "just now"

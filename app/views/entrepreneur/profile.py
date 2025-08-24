@@ -159,7 +159,7 @@ def edit():
 @entrepreneur_profile.route('/update', methods=['POST'])
 @login_required
 @require_role('entrepreneur')
-@rate_limit(requests=10, window=300)  # 10 requests en 5 minutos
+@rate_limit("10/5minutes")  # 10 requests en 5 minutos
 def update():
     """
     Actualizar información del perfil del emprendedor.
@@ -1039,3 +1039,7 @@ def handle_file_error(error):
     else:
         flash(str(error), 'error')
         return redirect(request.referrer or url_for('entrepreneur_profile.view'))
+
+
+# Alias para compatibilidad con imports
+entrepreneur_profile_bp = entrepreneur_profile

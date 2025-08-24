@@ -527,8 +527,8 @@ class RegisterForm(BaseForm, AuditMixin):
         default=False
     )
     
-    # reCAPTCHA (si está configurado)
-    recaptcha = RecaptchaField() if current_app.config.get('RECAPTCHA_PUBLIC_KEY') else None
+    # reCAPTCHA (si está configurado) - se inicializará en __init__ cuando haya contexto
+    recaptcha = None
     
     # Campos ocultos
     timezone = HiddenField('Timezone')
@@ -540,8 +540,17 @@ class RegisterForm(BaseForm, AuditMixin):
         super().__init__(*args, **kwargs)
         
         # Configurar campos dinámicos según disponibilidad
-        if not current_app.config.get('RECAPTCHA_PUBLIC_KEY'):
-            delattr(self, 'recaptcha')
+        try:
+            from flask import has_app_context
+            if has_app_context() and current_app.config.get('RECAPTCHA_PUBLIC_KEY'):
+                from flask_wtf import RecaptchaField
+                self.recaptcha = RecaptchaField()
+            elif hasattr(self, 'recaptcha'):
+                delattr(self, 'recaptcha')
+        except Exception:
+            # Si hay algún problema, simplemente no incluir recaptcha
+            if hasattr(self, 'recaptcha'):
+                delattr(self, 'recaptcha')
     
     def validate_linkedin_url(self, field):
         """Validación adicional para LinkedIn"""

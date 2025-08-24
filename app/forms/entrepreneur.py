@@ -1450,9 +1450,161 @@ __all__ = [
     
     # Formularios principales
     'EntrepreneurProfileForm',
+    'ProfileForm',  # Alias para EntrepreneurProfileForm
     'ProjectCreateForm',
     'ProjectUpdateForm',
     'PitchDeckForm',
     'BusinessPlanForm',
-    'ProgramApplicationForm'
+    'ProgramApplicationForm',
+    # Formularios adicionales necesarios
+    'PasswordChangeForm', 'PreferencesForm', 'PrivacySettingsForm', 
+    'TwoFactorForm', 'SocialLinksForm', 'ProfilePictureForm', 
+    'BusinessInfoForm', 'ContactInfoForm'
 ]
+
+
+# ====================================
+# FORMULARIOS ADICIONALES PARA COMPATIBILIDAD
+# ====================================
+
+class PasswordChangeForm(BaseForm):
+    """Formulario para cambio de contraseña de emprendedor"""
+    
+    current_password = StringField(
+        'Contraseña Actual',
+        validators=[DataRequired()],
+        render_kw={'type': 'password', 'autocomplete': 'current-password'}
+    )
+    
+    new_password = StringField(
+        'Nueva Contraseña',
+        validators=[DataRequired(), Length(min=8)],
+        render_kw={'type': 'password', 'autocomplete': 'new-password'}
+    )
+    
+    confirm_password = StringField(
+        'Confirmar Nueva Contraseña',
+        validators=[DataRequired()],
+        render_kw={'type': 'password', 'autocomplete': 'new-password'}
+    )
+
+
+class PreferencesForm(BaseForm):
+    """Formulario de preferencias del emprendedor"""
+    
+    email_notifications = BooleanField('Notificaciones por Email', default=True)
+    sms_notifications = BooleanField('Notificaciones por SMS', default=False)
+    newsletter = BooleanField('Recibir Newsletter', default=True)
+    marketing_emails = BooleanField('Emails de Marketing', default=False)
+
+
+class PrivacySettingsForm(BaseForm):
+    """Formulario de configuración de privacidad"""
+    
+    profile_visibility = SelectField(
+        'Visibilidad del Perfil',
+        choices=[
+            ('public', 'Público'),
+            ('private', 'Privado'),
+            ('connections', 'Solo Conexiones')
+        ],
+        default='public'
+    )
+    
+    show_contact_info = BooleanField('Mostrar Información de Contacto', default=False)
+    show_social_links = BooleanField('Mostrar Enlaces Sociales', default=True)
+
+
+class TwoFactorForm(BaseForm):
+    """Formulario de configuración de autenticación de dos factores"""
+    
+    enable_2fa = BooleanField('Habilitar 2FA', default=False)
+    backup_codes = HiddenField('Códigos de Respaldo')
+
+
+class SocialLinksForm(BaseForm):
+    """Formulario para enlaces sociales del emprendedor"""
+    
+    linkedin_url = StringField(
+        'LinkedIn',
+        validators=[WTFOptional(), URL()],
+        render_kw={'placeholder': 'https://linkedin.com/in/usuario'}
+    )
+    
+    twitter_url = StringField(
+        'Twitter',
+        validators=[WTFOptional(), URL()],
+        render_kw={'placeholder': 'https://twitter.com/usuario'}
+    )
+    
+    website_url = StringField(
+        'Sitio Web',
+        validators=[WTFOptional(), URL()],
+        render_kw={'placeholder': 'https://misitio.com'}
+    )
+
+
+class ProfilePictureForm(BaseForm):
+    """Formulario para foto de perfil"""
+    
+    profile_picture = FileField(
+        'Foto de Perfil',
+        validators=[WTFOptional(), FileAllowed(['jpg', 'png', 'gif'], 'Solo imágenes')]
+    )
+
+
+class BusinessInfoForm(BaseForm):
+    """Formulario de información de negocio"""
+    
+    business_name = StringField(
+        'Nombre del Negocio',
+        validators=[WTFOptional(), Length(max=100)]
+    )
+    
+    business_type = SelectField(
+        'Tipo de Negocio',
+        choices=[
+            ('', 'Seleccionar...'),
+            ('startup', 'Startup'),
+            ('small_business', 'Pequeño Negocio'),
+            ('corporation', 'Corporación'),
+            ('nonprofit', 'Sin Fines de Lucro')
+        ]
+    )
+    
+    business_stage = SelectField(
+        'Etapa del Negocio',
+        choices=[
+            ('', 'Seleccionar...'),
+            ('idea', 'Idea'),
+            ('prototype', 'Prototipo'),
+            ('mvp', 'MVP'),
+            ('growth', 'Crecimiento'),
+            ('mature', 'Maduro')
+        ]
+    )
+
+
+class ContactInfoForm(BaseForm):
+    """Formulario de información de contacto"""
+    
+    phone = TelField(
+        'Teléfono',
+        validators=[WTFOptional()],
+        render_kw={'placeholder': '+57 300 123 4567'}
+    )
+    
+    alternative_email = EmailField(
+        'Email Alternativo',
+        validators=[WTFOptional(), Email()]
+    )
+    
+    address = TextAreaField(
+        'Dirección',
+        validators=[WTFOptional(), Length(max=200)],
+        render_kw={'rows': 3}
+    )
+
+
+# Alias para compatibilidad
+ProfileForm = EntrepreneurProfileForm

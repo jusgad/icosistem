@@ -701,8 +701,8 @@ try:
     
     # Formularios de administración
     from .admin import (
-        AdminUserForm, AdminOrganizationForm, AdminProgramForm,
-        AdminSettingsForm, AdminReportForm, AdminBulkActionForm
+        AdminUserCreateForm, AdminUserEditForm, AdminOrganizationForm, AdminProgramForm,
+        AdminSettingsForm, AdminReportForm, AdminBulkUserForm
     )
     
     # Formularios de emprendedores
@@ -781,7 +781,7 @@ __all__ = [
     
     # Formularios importados (si están disponibles)
     'LoginForm', 'RegisterForm', 'ForgotPasswordForm', 'ResetPasswordForm',
-    'AdminUserForm', 'AdminOrganizationForm', 'AdminProgramForm',
+    'AdminUserCreateForm', 'AdminUserEditForm', 'AdminOrganizationForm', 'AdminProgramForm',
     'EntrepreneurProfileForm', 'ProjectCreateForm', 'ProjectUpdateForm',
     'AllyProfileForm', 'MentorshipSessionForm', 'AvailabilityForm',
     'ClientProfileForm', 'FeedbackForm', 'AssessmentForm',

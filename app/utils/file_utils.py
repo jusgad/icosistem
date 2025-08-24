@@ -459,3 +459,112 @@ def save_uploaded_file(*args, **kwargs):
     """Emergency stub for save_uploaded_file."""
     return None
 
+
+def delete_file(filepath):
+    """Delete a file."""
+    import os
+    try:
+        if os.path.exists(filepath):
+            os.remove(filepath)
+            return True
+        return False
+    except:
+        return False
+
+def move_file(src, dst):
+    """Move file from src to dst.""" 
+    import shutil
+    try:
+        shutil.move(src, dst)
+        return True
+    except:
+        return False
+
+def copy_file(src, dst): import shutil; return shutil.copy2(src, dst)
+
+def compress_file(filepath, compression='zip'):
+    """Compress a file."""
+    import zipfile
+    import os
+    
+    if compression == 'zip':
+        zip_path = filepath + '.zip'
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            zipf.write(filepath, os.path.basename(filepath))
+        return zip_path
+    return filepath
+
+def decompress_file(filepath, destination=None):
+    """Decompress a file."""
+    import zipfile
+    import os
+    
+    if filepath.endswith('.zip'):
+        if destination is None:
+            destination = os.path.dirname(filepath)
+        
+        with zipfile.ZipFile(filepath, 'r') as zipf:
+            zipf.extractall(destination)
+        
+        return destination
+    return filepath
+
+def create_zip_archive(files, archive_path):
+    """Create ZIP archive from files."""
+    import zipfile
+    import os
+    
+    with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for file_path in files:
+            if os.path.exists(file_path):
+                zipf.write(file_path, os.path.basename(file_path))
+    return archive_path
+
+def extract_archive(archive_path, destination):
+    """Extract archive to destination."""
+    import zipfile
+    import os
+    
+    with zipfile.ZipFile(archive_path, 'r') as zipf:
+        zipf.extractall(destination)
+    return destination
+def extract_zip_archive(archive_path, destination): return extract_archive(archive_path, destination)
+
+class FileManager:
+    """File management utility class."""
+    
+    @staticmethod
+    def get_file_size(filepath):
+        """Get file size in bytes."""
+        import os
+        return os.path.getsize(filepath) if os.path.exists(filepath) else 0
+    
+    @staticmethod
+    def get_file_extension(filepath):
+        """Get file extension."""
+        import os
+        return os.path.splitext(filepath)[1].lower()
+    
+    @staticmethod
+    def is_allowed_file(filename, allowed_extensions):
+        """Check if file extension is allowed."""
+        return '.' in filename and \
+               filename.rsplit('.', 1)[1].lower() in allowed_extensions
+    
+    @staticmethod
+    def secure_filename(filename):
+        """Generate secure filename."""
+        import re
+        import unicodedata
+        
+        # Normalize unicode characters
+        filename = unicodedata.normalize('NFKD', filename)
+        filename = filename.encode('ascii', 'ignore').decode('ascii')
+        
+        # Remove any character that isn't alphanumeric, dash, underscore or dot
+        filename = re.sub(r'[^a-zA-Z0-9._-]', '_', filename)
+        
+        # Remove multiple consecutive underscores
+        filename = re.sub(r'_+', '_', filename)
+        
+        return filename
