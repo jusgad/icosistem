@@ -291,16 +291,16 @@ class ErrorTracker:
     
     def _get_error_severity(self, error_code: int) -> ErrorSeverity:
         """Determina la severidad del error."""
+        # Critical errors should be checked first
+        if error_code in [500, 502, 503]:
+            return ErrorSeverity.CRITICAL
+
         severity_map = {
             range(400, 500): ErrorSeverity.MEDIUM,
-            range(500, 600): ErrorSeverity.HIGH,
-            [500, 502, 503]: ErrorSeverity.CRITICAL
+            range(500, 600): ErrorSeverity.HIGH
         }
-        
         for codes, severity in severity_map.items():
-            if isinstance(codes, range) and error_code in codes:
-                return severity
-            elif isinstance(codes, list) and error_code in codes:
+            if error_code in codes:
                 return severity
         
         return ErrorSeverity.LOW
@@ -473,7 +473,7 @@ def get_error_alternatives(user: User = None) -> List[Dict[str, str]]:
                     'title': alt['title'],
                     'url': url_for(alt['url'])
                 })
-            except Exception:
+            except Exception: # Catch BuildError if URL doesn't exist
                 # Si la ruta no existe, saltarla
                 continue
     
@@ -543,7 +543,7 @@ def bad_request_error(error):
         }), 400
     
     context = get_error_context(400, error)
-    return render_template('errors/400.html', **context), 400
+    return render_template('errors/base.html', **context), 400
 
 @errors_bp.app_errorhandler(401)
 def unauthorized_error(error):
@@ -565,7 +565,7 @@ def unauthorized_error(error):
     context = get_error_context(401, error)
     context['login_url'] = url_for('auth.login')
     
-    return render_template('errors/401.html', **context), 401
+    return render_template('errors/401.html', **context), 401 # Keep specific template for login suggestion
 
 @errors_bp.app_errorhandler(403)
 def forbidden_error(error):
@@ -584,7 +584,7 @@ def forbidden_error(error):
         }), 403
     
     context = get_error_context(403, error)
-    return render_template('errors/403.html', **context), 403
+    return render_template('errors/base.html', **context), 403
 
 @errors_bp.app_errorhandler(404)
 def not_found_error(error):
@@ -607,7 +607,7 @@ def not_found_error(error):
     # Sugerencias inteligentes basadas en la URL
     context['smart_suggestions'] = _get_smart_suggestions(request.path)
     
-    return render_template('errors/404.html', **context), 404
+    return render_template('errors/404.html', **context), 404 # Keep specific for smart suggestions
 
 @errors_bp.app_errorhandler(422)
 def unprocessable_entity_error(error):
@@ -627,7 +627,7 @@ def unprocessable_entity_error(error):
         }), 422
     
     context = get_error_context(422, error)
-    return render_template('errors/422.html', **context), 422
+    return render_template('errors/base.html', **context), 422
 
 @errors_bp.app_errorhandler(429)
 def too_many_requests_error(error):
@@ -652,7 +652,7 @@ def too_many_requests_error(error):
     context = get_error_context(429, error)
     context['retry_after'] = retry_after
     
-    response = render_template('errors/429.html', **context), 429
+    response = render_template('errors/base.html', **context), 429
     return response
 
 @errors_bp.app_errorhandler(500)
@@ -675,7 +675,7 @@ def internal_server_error(error):
         }), 500
     
     context = get_error_context(500, error)
-    return render_template('errors/500.html', **context), 500
+    return render_template('errors/base.html', **context), 500
 
 @errors_bp.app_errorhandler(502)
 def bad_gateway_error(error):
@@ -691,7 +691,7 @@ def bad_gateway_error(error):
         }), 502
     
     context = get_error_context(502, error)
-    return render_template('errors/502.html', **context), 502
+    return render_template('errors/base.html', **context), 502
 
 @errors_bp.app_errorhandler(503)
 def service_unavailable_error(error):
@@ -713,7 +713,7 @@ def service_unavailable_error(error):
     if maintenance_info:
         context['maintenance_info'] = maintenance_info
     
-    return render_template('errors/503.html', **context), 503
+    return render_template('errors/maintenance.html', **context), 503 # Keep specific for maintenance info
 
 @errors_bp.app_errorhandler(Exception)
 def handle_exception(error):
@@ -743,7 +743,7 @@ def handle_exception(error):
     db.session.rollback()
     
     context = get_error_context(500, error)
-    return render_template('errors/500.html', **context), 500
+    return render_template('errors/base.html', **context), 500
 
 # Rutas específicas de error
 @errors_bp.route('/error/<int:code>')
@@ -753,13 +753,13 @@ def show_error(code: int):
         code = 500
     
     context = get_error_context(code)
-    template = f'errors/{code}.html'
+    template = f'errors/base.html'
     
     # Fallback a template genérico si no existe específico
     try:
         return render_template(template, **context), code
     except Exception:
-        return render_template('errors/generic.html', **context), code
+        return render_template('errors/base.html', **context), code
 
 @errors_bp.route('/maintenance')
 @cache.cached(timeout=300)  # Cache por 5 minutos

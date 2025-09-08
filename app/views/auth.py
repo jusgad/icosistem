@@ -70,10 +70,10 @@ from app.models.user import User, UserType, UserStatus
 from app.models.entrepreneur import Entrepreneur
 from app.models.ally import Ally
 from app.models.client import Client
-# from app.models.user_session import UserSession, SessionStatus  # Module doesn't exist
+from app.models.user_session import UserSession, SessionStatus
 
 # Stub classes for missing models
-class UserSession:
+class UserSessionStub:
     @classmethod 
     def query(cls):
         class MockQuery:
@@ -85,7 +85,7 @@ class UserSession:
                 return []
         return MockQuery()
 
-class SessionStatus:
+class SessionStatusStub:
     ACTIVE = 'active'
     EXPIRED = 'expired'
     REVOKED = 'revoked'
@@ -126,85 +126,29 @@ class AttemptStatus:
 
 class OAuthProvider:
     pass
-
 class OAuthAccount:
     pass
-# from app.models.password_reset import PasswordReset  # Module doesn't exist
-# from app.models.email_verification import EmailVerification  # Module doesn't exist
-# from app.models.login_attempt import LoginAttempt, AttemptStatus  # Module doesn't exist
-# from app.models.oauth_provider import OAuthProvider, OAuthAccount  # Module doesn't exist
-# from app.models.two_factor import TwoFactorAuth, TwoFactorType  # Module doesn't exist
-
+from app.models.password_reset import PasswordReset
+from app.models.email_verification import EmailVerification
+from app.models.login_attempt import LoginAttempt, AttemptStatus
+from app.models.oauth_provider import OAuthProvider, OAuthAccount
+from app.models.two_factor import TwoFactorAuth, TwoFactorType
+ 
 class TwoFactorAuth:
     pass
-
 class TwoFactorType:
     SMS = 'sms'
     EMAIL = 'email'
     TOTP = 'totp'
 
-# Stub service classes
-class EmailService:
-    @staticmethod
-    def send_email(*args, **kwargs):
-        pass
-
-class AnalyticsService:
-    @staticmethod
-    def track_event(*args, **kwargs):
-        pass
-
-class OAuthService:
-    @staticmethod
-    def get_provider(*args, **kwargs):
-        return None
-
-class NotificationService:
-    @staticmethod
-    def send_notification(*args, **kwargs):
-        pass
-# from app.services.email import EmailService  # Module doesn't exist
-# from app.services.analytics_service import AnalyticsService  # Module doesn't exist
-# from app.services.oauth_service import OAuthService  # Module doesn't exist
-# from app.services.notification_service import NotificationService  # Module doesn't exist
-# from app.utils.string_utils import generate_secure_token, get_client_ip
-# from app.utils.validators import (  # Commenting out complex utils imports
-
-# Simple stub functions
-def generate_secure_token(length=32):
-    import secrets
-    return secrets.token_urlsafe(length)
-
-def get_client_ip():
-    from flask import request
-    return request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
-
-def validate_username(username):
-    return len(username) >= 3
-
-def validate_email_format(email):
-    import re
-    return '@' in email and '.' in email
-
-def validate_password_strength(password):
-    return len(password) >= 8
-
-def validate_phone_number(phone):
-    return True  # Simple stub
-
-def is_safe_url(url):
-    return True  # Simple stub
-
-def generate_csrf_token():
-    import secrets
-    return secrets.token_hex(16)
-
-def check_suspicious_activity(user_id):
-    return False  # Simple stub
-
-def log_security_event(event, details=None):
-    import logging
-    logging.getLogger('security').info(f"Security event: {event}")
+# Service imports
+from app.services.email_service import EmailService
+from app.services.analytics_service import AnalyticsService
+from app.services.oauth_service import OAuthService
+from app.services.notification_service import NotificationService
+from app.utils.security import generate_secure_token, is_safe_url, log_security_event
+from app.utils.network import get_client_ip
+from app.utils.validators import validate_password_strength, validate_phone_number
 
 class RateLimiter:
     def __init__(self, *args, **kwargs):
@@ -212,17 +156,8 @@ class RateLimiter:
     def is_allowed(self, *args, **kwargs):
         return True
 
-if False:  # Commented out complex validators import
-    from app.utils.validators import (
-    validate_password_strength, validate_username,
-    validate_phone_number
-)
-# from app.utils.rate_limiter import RateLimiter  # Commented out
-# from app.utils.security import (  # Commented out
-#     is_safe_url, generate_csrf_token,
-#     check_suspicious_activity, log_security_event
-# )
 from app.extensions import db, cache
+from app.services.auth_service import AuthService
 
 logger = logging.getLogger(__name__)
 
@@ -233,6 +168,9 @@ auth_bp = Blueprint('auth', __name__)
 login_limiter = RateLimiter(max_attempts=5, window=300)  # 5 intentos por 5 minutos
 register_limiter = RateLimiter(max_attempts=3, window=3600)  # 3 registros por hora
 password_reset_limiter = RateLimiter(max_attempts=3, window=1800)  # 3 resets por 30 min
+
+# Instancia del servicio de autenticación
+auth_service = AuthService()
 
 # Formularios de autenticación
 class LoginForm(FlaskForm):
@@ -462,30 +400,14 @@ def login():
             
             # Registrar intento de login
             login_attempt = LoginAttempt(
-                email=email,
-                ip_address=client_ip,
-                user_agent=request.user_agent.string,
-                status=AttemptStatus.PENDING
+                email=email, ip_address=client_ip,
+                user_agent=request.user_agent.string, status=AttemptStatus.PENDING
             )
             db.session.add(login_attempt)
             
-            # Buscar usuario
-            user = User.query.filter_by(email=email).first()
-            
-            if user and user.check_password(password):
-                # Verificar estado de la cuenta
-                if user.status != UserStatus.ACTIVE:
-                    login_attempt.status = AttemptStatus.FAILED
-                    login_attempt.failure_reason = 'account_inactive'
-                    db.session.commit()
-                    
-                    if user.status == UserStatus.PENDING_VERIFICATION:
-                        flash(_('Debes verificar tu email antes de iniciar sesión.'), 'warning')
-                        return redirect(url_for('auth.verify_email_reminder', email=email))
-                    else:
-                        flash(_('Tu cuenta está inactiva. Contacta al soporte.'), 'error')
-                        return render_template('auth/login.html', form=form)
-                
+            user, error_message = auth_service.verify_credentials(email, password)
+
+            if user:
                 # Verificar si requiere 2FA
                 if user.two_factor_enabled:
                     # Guardar en sesión temporalmente
@@ -497,14 +419,24 @@ def login():
                     return redirect(url_for('auth.verify_2fa'))
                 
                 # Login exitoso
-                success = _complete_user_login(user, remember, login_attempt)
+                success = auth_service.complete_login(user, remember, client_ip, request.user_agent.string)
                 if success:
+                    login_attempt.status = AttemptStatus.SUCCESS
+                    db.session.commit()
                     return _redirect_after_login(user)
                 else:
                     flash(_('Error iniciando sesión. Intenta nuevamente.'), 'error')
             
             else:
                 # Credenciales incorrectas
+                if error_message == "account_pending_verification":
+                    flash(_('Debes verificar tu email antes de iniciar sesión.'), 'warning')
+                    return redirect(url_for('auth.verify_email_reminder', email=email))
+                elif error_message == "account_inactive":
+                    flash(_('Tu cuenta está inactiva. Contacta al soporte.'), 'error')
+                else: # invalid_credentials
+                    flash(_('Email o contraseña incorrectos.'), 'error')
+
                 login_attempt.status = AttemptStatus.FAILED
                 login_attempt.failure_reason = 'invalid_credentials'
                 db.session.commit()
@@ -519,15 +451,13 @@ def login():
                     'user_agent': request.user_agent.string
                 })
                 
-                flash(_('Email o contraseña incorrectos.'), 'error')
-        
         except Exception as e:
             logger.error(f"Error during login: {str(e)}")
             db.session.rollback()
             flash(_('Ha ocurrido un error. Intenta nuevamente.'), 'error')
     
     # Trackear vista de página de login
-    _track_auth_event('login_page_view')
+    auth_service.track_auth_event('login_page_view', {'ip_address': client_ip, 'user_agent': request.user_agent.string})
     
     return render_template('auth/login.html', form=form)
 
@@ -547,73 +477,24 @@ def register():
     
     if form.validate_on_submit():
         try:
-            # Crear usuario base
-            user = User(
-                email=form.email.data.lower().strip(),
-                first_name=form.first_name.data.strip(),
-                last_name=form.last_name.data.strip(),
-                phone=form.phone.data.strip() if form.phone.data else None,
-                user_type=UserType(form.user_type.data),
-                status=UserStatus.PENDING_VERIFICATION,
-                registration_ip=client_ip,
-                preferred_language=get_locale()
-            )
-            user.set_password(form.password.data)
-            
-            db.session.add(user)
-            db.session.flush()  # Para obtener el ID
-            
-            # Crear perfil específico según tipo de usuario
-            if user.user_type == UserType.ENTREPRENEUR:
-                entrepreneur = Entrepreneur(
-                    user_id=user.id,
-                    company_name=form.company_name.data.strip() if form.company_name.data else None,
-                    industry=form.industry.data if form.industry.data else None,
-                    bio=form.expertise.data.strip() if form.expertise.data else None
-                )
-                db.session.add(entrepreneur)
-            
-            elif user.user_type == UserType.ALLY:
-                ally = Ally(
-                    user_id=user.id,
-                    expertise=form.expertise.data.strip() if form.expertise.data else None,
-                    company=form.company_name.data.strip() if form.company_name.data else None,
-                    industry_focus=form.industry.data if form.industry.data else None
-                )
-                db.session.add(ally)
-            
-            elif user.user_type == UserType.CLIENT:
-                client = Client(
-                    user_id=user.id,
-                    company_name=form.company_name.data.strip() if form.company_name.data else None,
-                    industry=form.industry.data if form.industry.data else None,
-                    investment_focus=form.expertise.data.strip() if form.expertise.data else None
-                )
-                db.session.add(client)
-            
-            db.session.commit()
-            
-            # Enviar email de verificación
-            success = _send_verification_email(user)
-            
-            if success:
+            form_data = form.data
+            form_data['ip_address'] = client_ip
+            form_data['language'] = str(get_locale())
+
+            success, user, error_message = auth_service.register_user(form_data)
+
+            if success and user:
                 # Incrementar rate limiter
                 register_limiter.increment(client_ip)
                 
                 # Suscribir al newsletter si lo solicitó
                 if form.newsletter.data:
                     _subscribe_to_newsletter(user.email, user.user_type.value)
-                
-                # Trackear registro
-                _track_auth_event('user_registered', {
-                    'user_id': user.id,
-                    'user_type': user.user_type.value
-                })
-                
+
                 flash(_('¡Registro exitoso! Revisa tu email para verificar tu cuenta.'), 'success')
                 return redirect(url_for('auth.verify_email_pending', email=user.email))
             else:
-                flash(_('Error enviando email de verificación. Contacta al soporte.'), 'error')
+                flash(_(f'Error en el registro: {error_message}'), 'error')
         
         except Exception as e:
             logger.error(f"Error during registration: {str(e)}")
@@ -621,48 +502,26 @@ def register():
             flash(_('Ha ocurrido un error durante el registro. Intenta nuevamente.'), 'error')
     
     # Trackear vista de página de registro
-    _track_auth_event('register_page_view')
+    auth_service.track_auth_event('register_page_view', {'ip_address': client_ip, 'user_agent': request.user_agent.string})
     
     return render_template('auth/register.html', form=form)
 
 @auth_bp.route('/verify-email/<token>')
 def verify_email(token):
     """Verificar email con token."""
-    try:
-        verification = EmailVerification.query.filter_by(
-            token=token,
-            is_used=False
-        ).first()
-        
-        if not verification:
-            flash(_('Token de verificación inválido o expirado.'), 'error')
-            return redirect(url_for('auth.login'))
-        
-        if verification.expires_at < datetime.utcnow():
-            flash(_('El token de verificación ha expirado.'), 'error')
-            return redirect(url_for('auth.verify_email_reminder', email=verification.user.email))
-        
-        # Activar usuario
-        user = verification.user
-        user.status = UserStatus.ACTIVE
-        user.email_verified_at = datetime.utcnow()
-        verification.is_used = True
-        verification.verified_at = datetime.utcnow()
-        
-        db.session.commit()
-        
-        # Trackear verificación
-        _track_auth_event('email_verified', {'user_id': user.id})
-        
-        # Enviar email de bienvenida
-        _send_welcome_email(user)
-        
+    success, user, message = auth_service.verify_email_token(token)
+
+    if success:
         flash(_('¡Email verificado exitosamente! Ya puedes iniciar sesión.'), 'success')
         return redirect(url_for('auth.login'))
-    
-    except Exception as e:
-        logger.error(f"Error verifying email: {str(e)}")
-        flash(_('Error verificando email. Intenta nuevamente.'), 'error')
+    else:
+        if "expirado" in message:
+            flash(_('El token de verificación ha expirado.'), 'error')
+            if user:
+                return redirect(url_for('auth.verify_email_reminder', email=user.email))
+        else:
+            flash(_('Token de verificación inválido o ya ha sido utilizado.'), 'error')
+        
         return redirect(url_for('auth.login'))
 
 @auth_bp.route('/verify-email-pending')
@@ -679,7 +538,7 @@ def verify_email_reminder():
     if request.method == 'POST':
         user = User.query.filter_by(email=email).first()
         if user and user.status == UserStatus.PENDING_VERIFICATION:
-            success = _send_verification_email(user)
+            success = auth_service.send_verification_email(user)
             if success:
                 flash(_('Email de verificación reenviado.'), 'success')
             else:
@@ -703,30 +562,12 @@ def forgot_password():
     if form.validate_on_submit():
         try:
             email = form.email.data.lower().strip()
-            user = User.query.filter_by(email=email).first()
-            
-            if user:
-                # Crear token de reseteo
-                reset_token = PasswordReset(
-                    user_id=user.id,
-                    token=generate_secure_token(32),
-                    ip_address=client_ip,
-                    expires_at=datetime.utcnow() + timedelta(hours=1)
-                )
-                db.session.add(reset_token)
-                db.session.commit()
-                
-                # Enviar email
-                success = _send_password_reset_email(user, reset_token.token)
-                
-                if success:
-                    password_reset_limiter.increment(client_ip)
-                    _track_auth_event('password_reset_requested', {'user_id': user.id})
+            success = auth_service.send_password_reset_email(email, client_ip)
             
             # Siempre mostrar el mismo mensaje (seguridad)
             flash(_('Si el email existe, recibirás instrucciones para resetear tu contraseña.'), 'info')
             return redirect(url_for('auth.login'))
-        
+
         except Exception as e:
             logger.error(f"Error in forgot password: {str(e)}")
             flash(_('Ha ocurrido un error. Intenta nuevamente.'), 'error')
@@ -765,7 +606,7 @@ def reset_password(token):
             db.session.commit()
             
             # Trackear cambio de contraseña
-            _track_auth_event('password_reset_completed', {'user_id': user.id})
+            auth_service.track_auth_event('password_reset_completed', {'user_id': user.id})
             
             # Enviar notificación de cambio
             _send_password_changed_notification(user)
@@ -833,13 +674,13 @@ def verify_2fa():
                     status=AttemptStatus.SUCCESS
                 )
                 db.session.add(login_attempt)
-                
-                success = _complete_user_login(user, remember, login_attempt)
+
+                success = auth_service.complete_login(user, remember, get_client_ip(), request.user_agent.string)
                 if success:
                     return _redirect_after_login(user)
             else:
                 flash(_('Código de verificación inválido.'), 'error')
-        
+
         except Exception as e:
             logger.error(f"Error verifying 2FA: {str(e)}")
             flash(_('Error verificando código. Intenta nuevamente.'), 'error')
@@ -929,7 +770,7 @@ def setup_2fa():
                 session.pop('pending_2fa_secret', None)
                 
                 # Trackear configuración
-                _track_auth_event('2fa_enabled', {'user_id': user.id})
+                auth_service.track_auth_event('2fa_enabled', {'user_id': user.id})
                 
                 flash(_('2FA configurado exitosamente.'), 'success')
                 return render_template('auth/2fa_backup_codes.html', 
@@ -974,7 +815,7 @@ def logout():
             db.session.commit()
             
             # Trackear logout
-            _track_auth_event('user_logout', {'user_id': user_id})
+            auth_service.track_auth_event('user_logout', {'user_id': user_id})
             
         except Exception as e:
             logger.error(f"Error during logout: {str(e)}")
@@ -1002,7 +843,7 @@ def oauth_login(provider):
         session[f'oauth_state_{provider}'] = state
         
         # Trackear inicio OAuth
-        _track_auth_event('oauth_started', {'provider': provider})
+        auth_service.track_auth_event('oauth_started', {'provider': provider})
         
         return redirect(auth_url)
     
@@ -1074,7 +915,7 @@ def oauth_callback(provider):
             
             success = _complete_user_login(user, False, login_attempt)
             if success:
-                _track_auth_event('oauth_login_success', {
+                auth_service.track_auth_event('oauth_login_success', {
                     'provider': provider,
                     'user_id': user.id
                 })
@@ -1152,7 +993,7 @@ def oauth_callback(provider):
                 db.session.commit()
                 
                 # Trackear registro OAuth
-                _track_auth_event('oauth_registration', {
+                auth_service.track_auth_event('oauth_registration', {
                     'provider': provider,
                     'user_id': user.id
                 })
@@ -1181,55 +1022,6 @@ def oauth_callback(provider):
         return redirect(url_for('auth.login'))
 
 # Funciones auxiliares
-def _complete_user_login(user: User, remember: bool, login_attempt: LoginAttempt) -> bool:
-    """Completa el proceso de login del usuario."""
-    try:
-        # Actualizar último login
-        user.last_login_at = datetime.utcnow()
-        user.last_login_ip = get_client_ip()
-        
-        # Crear sesión de usuario
-        session_id = generate_secure_token(32)
-        user_session = UserSession(
-            id=session_id,
-            user_id=user.id,
-            ip_address=get_client_ip(),
-            user_agent=request.user_agent.string,
-            expires_at=datetime.utcnow() + (timedelta(days=30) if remember else timedelta(hours=24)),
-            status=SessionStatus.ACTIVE
-        )
-        db.session.add(user_session)
-        
-        # Actualizar intento de login
-        login_attempt.status = AttemptStatus.SUCCESS
-        login_attempt.user_id = user.id
-        
-        # Limpiar intentos fallidos anteriores
-        LoginAttempt.query.filter(
-            LoginAttempt.ip_address == get_client_ip(),
-            LoginAttempt.status == AttemptStatus.FAILED
-        ).delete()
-        
-        db.session.commit()
-        
-        # Establecer contexto de usuario
-        g.current_user = user
-        g.current_user_id = user.id
-        
-        # Trackear login exitoso
-        _track_auth_event('login_success', {
-            'user_id': user.id,
-            'user_type': user.user_type.value,
-            'remember': remember
-        })
-        
-        return True
-        
-    except Exception as e:
-        logger.error(f"Error completing user login: {str(e)}")
-        db.session.rollback()
-        return False
-
 def _get_user_dashboard_url(user: User) -> str:
     """Obtiene la URL del dashboard según el tipo de usuario."""
     dashboard_urls = {
@@ -1253,26 +1045,6 @@ def _redirect_after_login(user: User):
     # Redirigir según tipo de usuario
     return redirect(_get_user_dashboard_url(user))
 
-def _send_verification_email(user: User) -> bool:
-    """Envía email de verificación."""
-    try:
-        # Crear token de verificación
-        verification = EmailVerification(
-            user_id=user.id,
-            token=generate_secure_token(32),
-            expires_at=datetime.utcnow() + timedelta(hours=24)
-        )
-        db.session.add(verification)
-        db.session.commit()
-        
-        # Enviar email
-        email_service = EmailService()
-        return email_service.send_verification_email(user, verification.token)
-        
-    except Exception as e:
-        logger.error(f"Error sending verification email: {str(e)}")
-        return False
-
 def _send_welcome_email(user: User):
     """Envía email de bienvenida."""
     try:
@@ -1280,15 +1052,6 @@ def _send_welcome_email(user: User):
         email_service.send_welcome_email(user)
     except Exception as e:
         logger.error(f"Error sending welcome email: {str(e)}")
-
-def _send_password_reset_email(user: User, token: str) -> bool:
-    """Envía email de reseteo de contraseña."""
-    try:
-        email_service = EmailService()
-        return email_service.send_password_reset_email(user, token)
-    except Exception as e:
-        logger.error(f"Error sending password reset email: {str(e)}")
-        return False
 
 def _send_password_changed_notification(user: User):
     """Envía notificación de cambio de contraseña."""
@@ -1301,30 +1064,12 @@ def _send_password_changed_notification(user: User):
 def _subscribe_to_newsletter(email: str, user_type: str):
     """Suscribe al newsletter."""
     try:
+        # Local import to avoid circular dependency if newsletter service uses other services
         from app.services.newsletter_service import NewsletterService
         newsletter_service = NewsletterService()
         newsletter_service.subscribe(email, interests=user_type)
     except Exception as e:
         logger.error(f"Error subscribing to newsletter: {str(e)}")
-
-def _track_auth_event(event_type: str, additional_data: Dict = None):
-    """Registra eventos de autenticación para analytics."""
-    try:
-        analytics_service = AnalyticsService()
-        data = {
-            'event_type': event_type,
-            'ip': get_client_ip(),
-            'user_agent': request.user_agent.string,
-            'timestamp': datetime.utcnow().isoformat()
-        }
-        
-        if additional_data:
-            data.update(additional_data)
-        
-        analytics_service.track_auth_event(data)
-        
-    except Exception as e:
-        logger.error(f"Error tracking auth event: {str(e)}")
 
 # Procesadores de contexto
 @auth_bp.context_processor

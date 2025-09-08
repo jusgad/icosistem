@@ -626,8 +626,8 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     
     def _log_status_change(self, old_status: ProjectStatus, new_status: ProjectStatus, notes: str = None):
         """Registrar cambio de estado en el log de actividades"""
-        from .activity_log import ActivityLog
-        from .. import db
+        from app.models.activity_log import ActivityLog
+        from app.extensions import db
         
         activity = ActivityLog(
             activity_type='status_change',
@@ -657,7 +657,7 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         if equity_percentage and (equity_percentage < 0 or equity_percentage > 100):
             raise ValidationError("El porcentaje de equity debe estar entre 0 y 100")
         
-        from .. import db
+        from app.extensions import db
         
         cofounder_data = {
             'project_id': self.id,
@@ -681,7 +681,7 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         if existing:
             raise ValidationError("El mentor ya está asignado a este proyecto")
         
-        from .. import db
+        from app.extensions import db
         
         mentor_data = {
             'project_id': self.id,
@@ -711,7 +711,7 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             existing.contacted_at = datetime.utcnow()
             return existing
         
-        from .. import db
+        from app.extensions import db
         
         interest_data = {
             'project_id': self.id,
@@ -727,8 +727,8 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     def create_milestone(self, title: str, description: str = None, 
                         target_date: date = None, priority: str = 'medium'):
         """Crear un hito del proyecto"""
-        from .milestone import ProjectMilestone
-        from .. import db
+        from app.models.milestone import ProjectMilestone
+        from app.extensions import db
         
         milestone = ProjectMilestone(
             project_id=self.id,
@@ -746,7 +746,7 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     
     def complete_milestone(self, milestone_id: int, notes: str = None):
         """Completar un hito"""
-        from .milestone import ProjectMilestone
+        from app.models.milestone import ProjectMilestone
         
         milestone = ProjectMilestone.query.get(milestone_id)
         if not milestone or milestone.project_id != self.id:
@@ -797,8 +797,8 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     def add_funding_round(self, amount: int, funding_type: str, 
                          investors: List[str] = None, notes: str = None):
         """Agregar ronda de financiamiento"""
-        from .funding_round import FundingRound
-        from .. import db
+        from app.models.funding_round import FundingRound
+        from app.extensions import db
         
         funding_round = FundingRound(
             project_id=self.id,
@@ -837,8 +837,8 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     def create_update(self, title: str, content: str, is_public: bool = False,
                      metrics_update: Dict[str, Any] = None):
         """Crear actualización del proyecto"""
-        from .project_update import ProjectUpdate
-        from .. import db
+        from app.models.project_update import ProjectUpdate
+        from app.extensions import db
         
         update = ProjectUpdate(
             project_id=self.id,

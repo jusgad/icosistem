@@ -39,11 +39,11 @@ from app.models import (
 )
 
 # Importaciones de servicios
-from app.services.entrepreneur_service import EntrepreneurService
+# from app.services.entrepreneur_service import EntrepreneurService # Se instancia localmente para evitar importaciones circulares
 # from app.services.mentorship_service import MentorshipService  # Temporalmente comentado por errores de dependencias
-from app.services.project_service import ProjectService
-from app.services.analytics_service import AnalyticsService
-from app.services.notification_service import NotificationService
+# from app.services.project_service import ProjectService
+# from app.services.analytics_service import AnalyticsService
+# from app.services.notification_service import NotificationService
 from app.services.email import EmailService
 
 # Importaciones de formularios
@@ -314,6 +314,7 @@ def edit_entrepreneur(entrepreneur_id):
     
     if form.validate_on_submit():
         try:
+            from app.services.notification_service import NotificationService
             # Almacenar valores anteriores para auditoría
             old_values = {
                 'business_name': entrepreneur.business_name,
@@ -428,6 +429,8 @@ def assign_mentor(entrepreneur_id):
                 return render_template('admin/entrepreneurs/assign_mentor.html', 
                                      form=form, entrepreneur=entrepreneur)
             
+            from app.services.mentorship_service import MentorshipService
+            
             mentorship_service = MentorshipService()
             
             # Crear sesión de mentoría
@@ -456,6 +459,7 @@ def assign_mentor(entrepreneur_id):
             )
             db.session.add(activity)
             
+            from app.services.notification_service import NotificationService
             # Notificar a ambas partes
             notification_service = NotificationService()
             
@@ -565,6 +569,7 @@ def evaluate_entrepreneur(entrepreneur_id):
     
     if form.validate_on_submit():
         try:
+            from app.services.entrepreneur_service import EntrepreneurService
             entrepreneur_service = EntrepreneurService()
             
             # Preparar datos de evaluación
@@ -621,6 +626,7 @@ def evaluate_entrepreneur(entrepreneur_id):
             
             # Notificar al emprendedor si el score es bajo
             if total_score < 50:
+                from app.services.notification_service import NotificationService
                 notification_service = NotificationService()
                 notification_service.send_notification(
                     user_id=entrepreneur.user_id,
@@ -711,6 +717,7 @@ def create_project(entrepreneur_id):
     
     if form.validate_on_submit():
         try:
+            from app.services.project_service import ProjectService
             project_service = ProjectService()
             
             project_data = {
@@ -741,6 +748,7 @@ def create_project(entrepreneur_id):
             db.session.add(activity)
             
             # Notificar al emprendedor
+            from app.services.notification_service import NotificationService
             notification_service = NotificationService()
             notification_service.send_notification(
                 user_id=entrepreneur.user_id,
@@ -780,6 +788,7 @@ def analytics():
     """
     try:
         analytics_service = AnalyticsService()
+        from app.services.analytics_service import AnalyticsService
         
         # Métricas generales
         general_metrics = _get_comprehensive_entrepreneur_metrics()
@@ -847,6 +856,7 @@ def bulk_actions():
             ).options(joinedload(Entrepreneur.user)).all()
             
             success_count = 0
+            from app.services.entrepreneur_service import EntrepreneurService
             entrepreneur_service = EntrepreneurService()
             
             for entrepreneur in entrepreneurs:
@@ -869,6 +879,7 @@ def bulk_actions():
                         success_count += 1
                         
                     elif action == 'send_notification':
+                        from app.services.notification_service import NotificationService
                         notification_service = NotificationService()
                         notification_service.send_notification(
                             user_id=entrepreneur.user_id,
