@@ -42,9 +42,9 @@ import traceback
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps, lru_cache
-from typing import Dict, List, Any, Optional, Callable, Type, Union
+from typing import Any, Optional, Callable, Type, Union
 from weakref import WeakValueDictionary
 
 from flask import current_app, g, request
@@ -55,10 +55,10 @@ from redis.exceptions import RedisError
 logger = logging.getLogger(__name__)
 
 # Registry global de servicios
-_service_registry: Dict[str, Any] = {}
+_service_registry: dict[str, Any] = {}
 _service_instances: WeakValueDictionary = WeakValueDictionary()
-_service_health_status: Dict[str, Dict] = {}
-_service_metrics: Dict[str, Dict] = {}
+_service_health_status: dict[str, Dict] = {}
+_service_metrics: dict[str, Dict] = {}
 
 # Configuraciones globales del módulo de servicios
 SERVICES_CONFIG = {
@@ -124,7 +124,7 @@ class ServiceHealth:
     status: str = 'healthy'  # healthy, degraded, unhealthy
     last_check: Optional[datetime] = None
     message: str = ''
-    dependencies_status: Dict[str, str] = field(default_factory=dict)
+    dependencies_status: dict[str, str] = field(default_factory=dict)
     response_time: Optional[float] = None
 
 
@@ -194,7 +194,7 @@ class BaseService(ABC):
         self.metrics = ServiceMetrics(name=self.name)
         self.health = ServiceHealth(name=self.name)
         self.circuit_breaker = CircuitBreaker(self.name)
-        self.dependencies: List[str] = []
+        self.dependencies: list[str] = []
         self._initialized = False
         
         # Auto-registrar servicio si está habilitado
@@ -236,7 +236,7 @@ class BaseService(ABC):
         if service_name not in self.dependencies:
             self.dependencies.append(service_name)
     
-    def check_dependencies(self) -> Dict[str, str]:
+    def check_dependencies(self) -> dict[str, str]:
         """Verifica el estado de las dependencias."""
         dependencies_status = {}
         
@@ -394,9 +394,9 @@ class ServiceRegistry:
     """Registry centralizado para gestión de servicios."""
     
     def __init__(self):
-        self._services: Dict[str, BaseService] = {}
-        self._factories: Dict[str, Callable] = {}
-        self._singletons: Dict[str, BaseService] = {}
+        self._services: dict[str, BaseService] = {}
+        self._factories: dict[str, Callable] = {}
+        self._singletons: dict[str, BaseService] = {}
         self._lock = threading.Lock()
     
     def register(self, name: str, service: Union[BaseService, Callable], singleton: bool = True):
@@ -456,12 +456,12 @@ class ServiceRegistry:
             self._singletons.pop(name, None)
             logger.info(f"Servicio {name} desregistrado")
     
-    def list_services(self) -> List[str]:
+    def list_services(self) -> list[str]:
         """Lista todos los servicios registrados."""
         with self._lock:
             return list(set(list(self._services.keys()) + list(self._factories.keys())))
     
-    def health_check_all(self) -> Dict[str, ServiceHealth]:
+    def health_check_all(self) -> dict[str, ServiceHealth]:
         """Ejecuta health check en todos los servicios."""
         health_results = {}
         
@@ -474,7 +474,7 @@ class ServiceRegistry:
                     name=service_name,
                     status='unhealthy',
                     message=str(e),
-                    last_check=datetime.utcnow()
+                    last_check=datetime.now(timezone.utc)
                 )
         
         return health_results
@@ -536,7 +536,7 @@ def service_context(*service_names):
                     logger.warning(f"Error en cleanup de {service.name}: {str(e)}")
 
 
-def get_all_service_metrics() -> Dict[str, ServiceMetrics]:
+def get_all_service_metrics() -> dict[str, ServiceMetrics]:
     """Obtiene métricas de todos los servicios."""
     metrics = {}
     for service_name in service_registry.list_services():
@@ -549,7 +549,7 @@ def get_all_service_metrics() -> Dict[str, ServiceMetrics]:
     return metrics
 
 
-def health_check_all_services() -> Dict[str, ServiceHealth]:
+def health_check_all_services() -> dict[str, ServiceHealth]:
     """Ejecuta health check en todos los servicios."""
     return service_registry.health_check_all()
 
@@ -619,7 +619,7 @@ def _update_service_metrics(service: BaseService, method_name: str,
     service.metrics.avg_execution_time = (
         service.metrics.total_execution_time / service.metrics.call_count
     )
-    service.metrics.last_called = datetime.utcnow()
+    service.metrics.last_called = datetime.now(timezone.utc)
     
     if success:
         service.metrics.success_count += 1
@@ -760,14 +760,14 @@ def get_services_status():
                 }
                 for name, m in metrics.items()
             },
-            'last_updated': datetime.utcnow().isoformat()
+            'last_updated': datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Error obteniendo status de servicios: {str(e)}")
         return {
             'status': 'error',
             'error': str(e),
-            'last_updated': datetime.utcnow().isoformat()
+            'last_updated': datetime.now(timezone.utc).isoformat()
         }
 
 

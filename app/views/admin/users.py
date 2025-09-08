@@ -10,7 +10,7 @@ Fecha: 2025
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from flask import (
     Blueprint, render_template, request, jsonify, flash, redirect, 
     url_for, current_app, abort, send_file
@@ -421,7 +421,7 @@ def edit_user(user_id):
             user.phone = form.phone.data.strip() if form.phone.data else None
             user.is_active = form.is_active.data
             user.email_verified = form.email_verified.data
-            user.updated_at = datetime.utcnow()
+            user.updated_at = datetime.now(timezone.utc)
             
             # Cambio de rol si es necesario
             if form.role.data != user.role:
@@ -498,7 +498,7 @@ def change_password(user_id):
             
             # Actualizar contraseña
             user.password = generate_password_hash(form.new_password.data)
-            user.password_changed_at = datetime.utcnow()
+            user.password_changed_at = datetime.now(timezone.utc)
             user.force_password_change = form.force_change_on_login.data
             
             db.session.commit()
@@ -552,7 +552,7 @@ def reset_password(user_id):
         # Generar token de recuperación
         reset_token = generate_secure_token(32)
         user.password_reset_token = reset_token
-        user.password_reset_expires = datetime.utcnow() + timedelta(hours=24)
+        user.password_reset_expires = datetime.now(timezone.utc) + timedelta(hours=24)
         
         db.session.commit()
         
@@ -638,7 +638,7 @@ def bulk_actions():
                     elif action == 'delete':
                         # Soft delete - marcar como eliminado
                         user.is_deleted = True
-                        user.deleted_at = datetime.utcnow()
+                        user.deleted_at = datetime.now(timezone.utc)
                         success_count += 1
                         
                     elif action == 'change_role' and form.new_role.data:
@@ -710,7 +710,7 @@ def statistics():
                 User.is_active == True,
                 or_(
                     User.last_login.is_(None),
-                    User.last_login < datetime.utcnow() - timedelta(days=30)
+                    User.last_login < datetime.now(timezone.utc) - timedelta(days=30)
                 )
             )
         ).count()
@@ -968,7 +968,7 @@ def _get_user_statistics():
         'clients': User.query.filter_by(role='client').count(),
         'admins': User.query.filter_by(role='admin').count(),
         'new_this_month': User.query.filter(
-            User.created_at >= datetime.utcnow().replace(day=1)
+            User.created_at >= datetime.now(timezone.utc).replace(day=1)
         ).count()
     }
 
@@ -977,7 +977,7 @@ def _get_user_detailed_stats(user):
     stats = {
         'login_count': getattr(user, 'login_count', 0),
         'last_activity': user.last_login,
-        'account_age_days': (datetime.utcnow() - user.created_at).days,
+        'account_age_days': (datetime.now(timezone.utc) - user.created_at).days,
         'documents_uploaded': Document.query.filter_by(uploaded_by=user.id).count(),
         'meetings_organized': Meeting.query.filter_by(organizer_id=user.id).count()
     }
@@ -1001,7 +1001,7 @@ def _get_user_detailed_stats(user):
 
 def _get_comprehensive_user_stats():
     """Obtiene estadísticas comprehensivas para la página de analytics."""
-    today = datetime.utcnow().date()
+    today = datetime.now(timezone.utc).date()
     week_ago = today - timedelta(days=7)
     month_ago = today - timedelta(days=30)
     
@@ -1014,7 +1014,7 @@ def _get_comprehensive_user_stats():
         'verified_users': User.query.filter_by(email_verified=True).count(),
         'users_with_profiles': User.query.filter(User.profile_completed == True).count(),
         'average_age': db.session.query(func.avg(
-            func.extract('days', datetime.utcnow() - User.created_at)
+            func.extract('days', datetime.now(timezone.utc) - User.created_at)
         )).scalar() or 0
     }
 

@@ -103,8 +103,8 @@ def handle_socket_authenticated_connect(user: User, sid: str):
         'user_id': str(user.id),
         'username': user.username,
         'role': user.role.value if hasattr(user.role, 'value') else user.role, # Asegurar que role es un string
-        'connected_at': datetime.utcnow(),
-        'last_activity': datetime.utcnow(),
+        'connected_at': datetime.now(timezone.utc),
+        'last_activity': datetime.now(timezone.utc),
         'namespace': request.namespace or '/'
     }
 

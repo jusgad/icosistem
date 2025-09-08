@@ -12,7 +12,7 @@ Version: 1.0.0
 import re
 from datetime import datetime, date, time, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
-from typing import Optional, List, Union
+from typing import Optional, Union
 from flask import current_app
 try:
     from flask import Markup
@@ -353,7 +353,7 @@ def time_ago(timestamp: Optional[datetime],
         return str(timestamp) if timestamp is not None else ''
 
     locale_to_use = locale or current_app.config.get('BABEL_DEFAULT_LOCALE', 'es')
-    now = datetime.utcnow() # Asumir que el timestamp es UTC
+    now = datetime.now(timezone.utc) # Asumir que el timestamp es UTC
     
     # Si el timestamp tiene timezone, convertir now a ese timezone
     if timestamp.tzinfo:
@@ -396,7 +396,7 @@ def get_gravatar_url(email: str, size: int = 80, default: str = 'identicon') -> 
     email_hash = hashlib.md5(email.lower().encode('utf-8')).hexdigest()
     return f"https://www.gravatar.com/avatar/{email_hash}?s={size}&d={default}"
 
-def format_list_as_string(items: Optional[List[str]], limit: int = 3, separator: str = ', ') -> str:
+def format_list_as_string(items: Optional[list[str]], limit: int = 3, separator: str = ', ') -> str:
     """
     Formatea una lista de strings en una cadena, limitando el número de ítems mostrados.
     Ej: ["A", "B", "C", "D"] con limit=2 -> "A, B y 2 más"

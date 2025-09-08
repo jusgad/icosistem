@@ -4,7 +4,7 @@ Este módulo define todas las excepciones específicas del dominio de negocio.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from flask import jsonify, render_template, request, current_app
 from werkzeug.exceptions import HTTPException
 
@@ -26,7 +26,7 @@ class EcosistemaException(Exception):
         self.error_code = error_code or self.__class__.__name__
         self.details = details or {}
         self.user_message = user_message or message
-        self.timestamp = datetime.utcnow()
+        self.timestamp = datetime.now(timezone.utc)
 
 class DuplicateUserError(EcosistemaException):
     """Exception raised when attempting to create a duplicate user."""

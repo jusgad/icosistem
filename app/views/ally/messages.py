@@ -8,7 +8,7 @@ incluyendo chat en tiempo real, gestión de conversaciones y notificaciones.
 import os
 import uuid
 import mimetypes
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 
@@ -132,7 +132,7 @@ def index():
                     MessageThread.participant2_id == current_user.id
                 ),
                 Message.receiver_id == current_user.id,
-                Message.created_at >= datetime.utcnow() - timedelta(hours=24)
+                Message.created_at >= datetime.now(timezone.utc) - timedelta(hours=24)
             )
             .order_by(desc(Message.created_at))
             .limit(10)
@@ -402,8 +402,8 @@ def send_message():
         
         # Actualizar información de la conversación
         thread.last_message_id = message.id
-        thread.last_message_at = datetime.utcnow()
-        thread.updated_at = datetime.utcnow()
+        thread.last_message_at = datetime.now(timezone.utc)
+        thread.updated_at = datetime.now(timezone.utc)
         
         # Incrementar contador de no leídos para el destinatario
         if thread.participant1_id == recipient.id:
@@ -501,7 +501,7 @@ def mark_as_read():
                 )
                 .update({
                     'status': 'read',
-                    'read_at': datetime.utcnow()
+                    'read_at': datetime.now(timezone.utc)
                 }, synchronize_session=False)
             )
         else:
@@ -515,7 +515,7 @@ def mark_as_read():
                 )
                 .update({
                     'status': 'read',
-                    'read_at': datetime.utcnow()
+                    'read_at': datetime.now(timezone.utc)
                 }, synchronize_session=False)
             )
         
@@ -531,7 +531,7 @@ def mark_as_read():
         emit_message_status_update(thread_id, {
             'reader_id': current_user.id,
             'messages_read': messages_updated,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
         
         return jsonify({
@@ -790,7 +790,7 @@ def delete_message(message_id):
         
         # Verificar tiempo límite para eliminación (15 minutos)
         time_limit = current_app.config.get('MESSAGE_DELETE_TIME_LIMIT', 15)
-        time_elapsed = (datetime.utcnow() - message.created_at).total_seconds() / 60
+        time_elapsed = (datetime.now(timezone.utc) - message.created_at).total_seconds() / 60
         
         if time_elapsed > time_limit:
             return jsonify({
@@ -819,7 +819,7 @@ def delete_message(message_id):
         # Marcar mensaje como eliminado en lugar de borrarlo completamente
         message.content = "[Mensaje eliminado]"
         message.is_deleted = True
-        message.deleted_at = datetime.utcnow()
+        message.deleted_at = datetime.now(timezone.utc)
         
         db.session.commit()
         
@@ -828,7 +828,7 @@ def delete_message(message_id):
             'action': 'delete',
             'message_id': message_id,
             'deleted_by': current_user.id,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
         
         return jsonify({'success': True})
@@ -880,7 +880,7 @@ def export_conversation(thread_id):
             thread, messages, current_user, other_participant
         )
         
-        filename = f'conversacion_{thread_id}_{datetime.utcnow().strftime("%Y%m%d")}.pdf'
+        filename = f'conversacion_{thread_id}_{datetime.now(timezone.utc).strftime("%Y%m%d")}.pdf'
         
         return send_file(
             pdf_path,
@@ -1043,7 +1043,7 @@ def api_typing_indicator():
             'user_id': current_user.id,
             'user_name': current_user.name,
             'is_typing': is_typing,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
         
         return jsonify({'success': True})
@@ -1089,7 +1089,7 @@ def _mark_messages_as_read(thread_id, user_id):
             Message.status != 'read'
         ).update({
             'status': 'read',
-            'read_at': datetime.utcnow()
+            'read_at': datetime.now(timezone.utc)
         })
         
         # Actualizar contador en la conversación

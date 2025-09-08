@@ -26,8 +26,8 @@ from flask import (
 )
 from flask_babel import _, get_locale
 from werkzeug.exceptions import HTTPException
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple, Union
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Any, Union
 import traceback
 import logging
 import json
@@ -330,7 +330,7 @@ class ErrorTracker:
                            additional_context: Dict = None) -> Dict:
         """Construye contexto completo del error."""
         context = {
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'endpoint': request.endpoint,
             'args': dict(request.args),
             'form_data': dict(request.form) if request.form else None,
@@ -450,7 +450,7 @@ class ErrorTracker:
 # Instancia global del tracker
 error_tracker = ErrorTracker()
 
-def get_error_alternatives(user: User = None) -> List[Dict[str, str]]:
+def get_error_alternatives(user: User = None) -> list[dict[str, str]]:
     """Obtiene alternativas de navegación según el usuario."""
     alternatives = []
     
@@ -479,7 +479,7 @@ def get_error_alternatives(user: User = None) -> List[Dict[str, str]]:
     
     return alternatives
 
-def get_error_context(error_code: int, error: Exception = None) -> Dict[str, Any]:
+def get_error_context(error_code: int, error: Exception = None) -> dict[str, Any]:
     """Obtiene contexto completo para página de error."""
     error_info = ERROR_MESSAGES.get(error_code, {
         'title': f'Error {error_code}',
@@ -495,7 +495,7 @@ def get_error_context(error_code: int, error: Exception = None) -> Dict[str, Any
         'error_message': error_info['message'],
         'suggestions': error_info['suggestions'],
         'alternatives': get_error_alternatives(current_user),
-        'timestamp': datetime.utcnow(),
+        'timestamp': datetime.now(timezone.utc),
         'request_id': getattr(g, 'request_id', 'unknown'),
         'support_email': current_app.config.get('SUPPORT_EMAIL', 'support@example.com'),
         'show_debug': current_app.debug and current_app.config.get('SHOW_ERROR_DEBUG', False)
@@ -780,7 +780,7 @@ def maintenance():
     return render_template('errors/maintenance.html', **context), 503
 
 # Funciones auxiliares
-def _get_smart_suggestions(path: str) -> List[Dict[str, str]]:
+def _get_smart_suggestions(path: str) -> list[dict[str, str]]:
     """Genera sugerencias inteligentes basadas en la URL solicitada."""
     suggestions = []
     
@@ -861,7 +861,7 @@ def report_error():
                 'stack_trace': data.get('stack'),
                 'user_action': data.get('user_action'),
                 'browser_info': data.get('browser_info'),
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
         )
         
@@ -882,7 +882,7 @@ def report_error():
 def inject_error_context():
     """Inyecta contexto específico para páginas de error."""
     return {
-        'current_year': datetime.utcnow().year,
+        'current_year': datetime.now(timezone.utc).year,
         'app_name': current_app.config.get('APP_NAME', 'Ecosistema Emprendimiento'),
         'support_email': current_app.config.get('SUPPORT_EMAIL', 'support@example.com'),
         'status_page': current_app.config.get('STATUS_PAGE_URL'),
@@ -933,7 +933,7 @@ def analyze_errors_command():
     from datetime import datetime, timedelta
     
     # Análisis de los últimos 7 días
-    week_ago = datetime.utcnow() - timedelta(days=7)
+    week_ago = datetime.now(timezone.utc) - timedelta(days=7)
     
     errors = ErrorLog.query.filter(
         ErrorLog.created_at >= week_ago

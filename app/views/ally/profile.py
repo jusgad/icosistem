@@ -12,7 +12,7 @@ Version: 2.0.0
 import os
 import uuid
 from datetime import datetime, timedelta, date
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Optional, Any
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import BadRequest, RequestEntityTooLarge
 import json
@@ -469,7 +469,7 @@ def upload_profile_image():
         old_image = ally_profile.profile_image_url
         ally_profile.profile_image_url = image_urls['medium']
         ally_profile.profile_image_urls = json.dumps(image_urls)
-        ally_profile.updated_at = datetime.utcnow()
+        ally_profile.updated_at = datetime.now(timezone.utc)
         
         db.session.commit()
         
@@ -852,7 +852,7 @@ def submit_verification():
         
         # Cambiar estado a pendiente de verificación
         ally_profile.verification_status = 'pending_review'
-        ally_profile.verification_submitted_at = datetime.utcnow()
+        ally_profile.verification_submitted_at = datetime.now(timezone.utc)
         ally_profile.verification_token = generate_verification_token()
         
         db.session.commit()
@@ -947,7 +947,7 @@ def export_profile_summary():
 
 # ==================== FUNCIONES AUXILIARES ====================
 
-def _get_complete_profile_data(ally: Ally) -> Dict[str, Any]:
+def _get_complete_profile_data(ally: Ally) -> dict[str, Any]:
     """
     Obtiene todos los datos del perfil del aliado.
     
@@ -1002,7 +1002,7 @@ def _get_complete_profile_data(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _calculate_profile_stats(ally: Ally) -> Dict[str, Any]:
+def _calculate_profile_stats(ally: Ally) -> dict[str, Any]:
     """
     Calcula estadísticas del perfil del aliado.
     
@@ -1029,7 +1029,7 @@ def _calculate_profile_stats(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _get_active_certifications(ally: Ally) -> List[Dict[str, Any]]:
+def _get_active_certifications(ally: Ally) -> list[dict[str, Any]]:
     """
     Obtiene certificaciones activas del aliado.
     
@@ -1055,7 +1055,7 @@ def _get_active_certifications(ally: Ally) -> List[Dict[str, Any]]:
     ]
 
 
-def _organize_specializations(ally: Ally) -> Dict[str, Any]:
+def _organize_specializations(ally: Ally) -> dict[str, Any]:
     """
     Organiza las especializaciones del aliado por categorías.
     
@@ -1074,7 +1074,7 @@ def _organize_specializations(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _get_availability_summary(ally: Ally) -> Dict[str, Any]:
+def _get_availability_summary(ally: Ally) -> dict[str, Any]:
     """
     Obtiene resumen de disponibilidad semanal del aliado.
     
@@ -1090,11 +1090,11 @@ def _get_availability_summary(ally: Ally) -> Dict[str, Any]:
         'days_available': ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
         'preferred_times': ['morning', 'afternoon'],
         'timezone': ally.timezone or 'UTC',
-        'next_available_slot': datetime.utcnow() + timedelta(days=1)
+        'next_available_slot': datetime.now(timezone.utc) + timedelta(days=1)
     }
 
 
-def _get_verification_history(ally: Ally) -> List[Dict[str, Any]]:
+def _get_verification_history(ally: Ally) -> list[dict[str, Any]]:
     """
     Obtiene histórico de verificaciones del aliado.
     
@@ -1114,7 +1114,7 @@ def _get_verification_history(ally: Ally) -> List[Dict[str, Any]]:
     ]
 
 
-def _get_profile_documents(ally: Ally) -> List[Dict[str, Any]]:
+def _get_profile_documents(ally: Ally) -> list[dict[str, Any]]:
     """
     Obtiene documentos del perfil del aliado.
     
@@ -1143,7 +1143,7 @@ def _get_profile_documents(ally: Ally) -> List[Dict[str, Any]]:
     ]
 
 
-def _calculate_profile_completeness(ally: Ally) -> Dict[str, Any]:
+def _calculate_profile_completeness(ally: Ally) -> dict[str, Any]:
     """
     Calcula el score de completitud del perfil.
     
@@ -1220,7 +1220,7 @@ def _calculate_profile_completeness(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _get_recent_profile_activity(ally: Ally, limit: int = 5) -> List[Dict[str, Any]]:
+def _get_recent_profile_activity(ally: Ally, limit: int = 5) -> list[dict[str, Any]]:
     """
     Obtiene actividad reciente relacionada con el perfil.
     
@@ -1250,7 +1250,7 @@ def _get_recent_profile_activity(ally: Ally, limit: int = 5) -> List[Dict[str, A
     ]
 
 
-def _get_privacy_settings(ally: Ally) -> Dict[str, Any]:
+def _get_privacy_settings(ally: Ally) -> dict[str, Any]:
     """
     Obtiene configuraciones de privacidad del aliado.
     
@@ -1306,7 +1306,7 @@ def _populate_edit_forms(ally: Ally, personal_form, professional_form, contact_f
     contact_form.timezone.data = ally.timezone
 
 
-def _get_form_options() -> Dict[str, List[Tuple[str, str]]]:
+def _get_form_options() -> dict[str, list[tuple[str, str]]]:
     """
     Obtiene opciones para los selectores de los formularios.
     
@@ -1343,7 +1343,7 @@ def _get_form_options() -> Dict[str, List[Tuple[str, str]]]:
     }
 
 
-def _get_current_profile_data(ally: Ally) -> Dict[str, Any]:
+def _get_current_profile_data(ally: Ally) -> dict[str, Any]:
     """
     Obtiene datos actuales del perfil para comparación.
     
@@ -1371,7 +1371,7 @@ def _get_current_profile_data(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _process_profile_update(ally: Ally, section: str) -> Dict[str, Any]:
+def _process_profile_update(ally: Ally, section: str) -> dict[str, Any]:
     """
     Procesa la actualización de una sección específica del perfil.
     
@@ -1395,7 +1395,7 @@ def _process_profile_update(ally: Ally, section: str) -> Dict[str, Any]:
             changes = _update_specializations_info(ally)
         
         if changes:
-            ally.updated_at = datetime.utcnow()
+            ally.updated_at = datetime.now(timezone.utc)
             db.session.commit()
             
             return {
@@ -1418,7 +1418,7 @@ def _process_profile_update(ally: Ally, section: str) -> Dict[str, Any]:
         }
 
 
-def _update_personal_info(ally: Ally) -> List[str]:
+def _update_personal_info(ally: Ally) -> list[str]:
     """
     Actualiza información personal del aliado.
     
@@ -1476,7 +1476,7 @@ def _update_personal_info(ally: Ally) -> List[str]:
     return changes
 
 
-def _update_professional_info(ally: Ally) -> List[str]:
+def _update_professional_info(ally: Ally) -> list[str]:
     """
     Actualiza información profesional del aliado.
     
@@ -1533,7 +1533,7 @@ def _update_professional_info(ally: Ally) -> List[str]:
     return changes
 
 
-def _update_contact_info(ally: Ally) -> List[str]:
+def _update_contact_info(ally: Ally) -> list[str]:
     """
     Actualiza información de contacto del aliado.
     
@@ -1577,7 +1577,7 @@ def _update_contact_info(ally: Ally) -> List[str]:
     return changes
 
 
-def _update_specializations_info(ally: Ally) -> List[str]:
+def _update_specializations_info(ally: Ally) -> list[str]:
     """
     Actualiza especializaciones del aliado.
     
@@ -1608,7 +1608,7 @@ def _update_specializations_info(ally: Ally) -> List[str]:
     return changes
 
 
-def _should_notify_admin_of_changes(changes: List[str]) -> bool:
+def _should_notify_admin_of_changes(changes: list[str]) -> bool:
     """
     Determina si se debe notificar a administradores sobre los cambios.
     
@@ -1626,7 +1626,7 @@ def _should_notify_admin_of_changes(changes: List[str]) -> bool:
     return any(field in critical_fields for field in changes)
 
 
-def _log_profile_changes(ally: Ally, section: str, changes: List[str]) -> None:
+def _log_profile_changes(ally: Ally, section: str, changes: list[str]) -> None:
     """
     Registra cambios del perfil en el log de actividades.
     
@@ -1645,7 +1645,7 @@ def _log_profile_changes(ally: Ally, section: str, changes: List[str]) -> None:
             metadata={
                 'section': section,
                 'fields_changed': changes,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
         )
         
@@ -1656,7 +1656,7 @@ def _log_profile_changes(ally: Ally, section: str, changes: List[str]) -> None:
         current_app.logger.error(f"Error registrando cambios de perfil: {str(e)}")
 
 
-def _notify_admin_profile_changes(ally: Ally, changes: List[str]) -> None:
+def _notify_admin_profile_changes(ally: Ally, changes: list[str]) -> None:
     """
     Notifica a administradores sobre cambios importantes del perfil.
     
@@ -1704,7 +1704,7 @@ def _update_profile_completeness(ally: Ally) -> None:
 
 
 # Funciones auxiliares para procesamiento de archivos
-def _process_and_save_profile_image(file, filename: str, ally: Ally) -> Dict[str, str]:
+def _process_and_save_profile_image(file, filename: str, ally: Ally) -> dict[str, str]:
     """
     Procesa y guarda imagen de perfil en múltiples tamaños.
     
@@ -1789,7 +1789,7 @@ def _log_image_change(ally: Ally, old_image: Optional[str], new_image: str) -> N
             metadata={
                 'old_image': old_image,
                 'new_image': new_image,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
         )
         
@@ -1801,7 +1801,7 @@ def _log_image_change(ally: Ally, old_image: Optional[str], new_image: str) -> N
 
 
 # Funciones auxiliares adicionales (implementación básica)
-def _get_current_settings(ally: Ally) -> Dict[str, Any]:
+def _get_current_settings(ally: Ally) -> dict[str, Any]:
     """Obtiene configuraciones actuales del aliado."""
     return {
         'notifications_enabled': ally.notifications_enabled or True,
@@ -1812,7 +1812,7 @@ def _get_current_settings(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _get_settings_options() -> Dict[str, List[Tuple[str, str]]]:
+def _get_settings_options() -> dict[str, list[tuple[str, str]]]:
     """Obtiene opciones para configuraciones."""
     return {
         'timezones': [
@@ -1833,7 +1833,7 @@ def _get_settings_options() -> Dict[str, List[Tuple[str, str]]]:
     }
 
 
-def _get_organized_availability(ally: Ally) -> Dict[str, Any]:
+def _get_organized_availability(ally: Ally) -> dict[str, Any]:
     """Obtiene disponibilidad organizada por días."""
     # Implementación básica - requiere modelo AvailabilitySlot
     return {
@@ -1847,28 +1847,28 @@ def _get_organized_availability(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _get_upcoming_appointments(ally: Ally) -> List[Dict[str, Any]]:
+def _get_upcoming_appointments(ally: Ally) -> list[dict[str, Any]]:
     """Obtiene próximas citas del aliado."""
     # Implementación básica
     return []
 
 
-def _calculate_availability_stats(ally: Ally) -> Dict[str, Any]:
+def _calculate_availability_stats(ally: Ally) -> dict[str, Any]:
     """Calcula estadísticas de disponibilidad."""
     return {
         'total_hours_per_week': 20,
         'available_days': 5,
         'busiest_day': 'Tuesday',
-        'next_free_slot': datetime.utcnow() + timedelta(hours=2)
+        'next_free_slot': datetime.now(timezone.utc) + timedelta(hours=2)
     }
 
 
-def _detect_availability_conflicts(ally: Ally) -> List[Dict[str, Any]]:
+def _detect_availability_conflicts(ally: Ally) -> list[dict[str, Any]]:
     """Detecta conflictos en la disponibilidad."""
     return []
 
 
-def _organize_certifications(ally: Ally) -> Dict[str, Any]:
+def _organize_certifications(ally: Ally) -> dict[str, Any]:
     """Organiza certificaciones por estado."""
     return {
         'active': [],
@@ -1878,7 +1878,7 @@ def _organize_certifications(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _calculate_certification_stats(ally: Ally) -> Dict[str, Any]:
+def _calculate_certification_stats(ally: Ally) -> dict[str, Any]:
     """Calcula estadísticas de certificaciones."""
     return {
         'total_certifications': 0,
@@ -1888,12 +1888,12 @@ def _calculate_certification_stats(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _get_upcoming_renewals(ally: Ally) -> List[Dict[str, Any]]:
+def _get_upcoming_renewals(ally: Ally) -> list[dict[str, Any]]:
     """Obtiene próximas renovaciones de certificaciones."""
     return []
 
 
-def _get_detailed_verification_status(ally: Ally) -> Dict[str, Any]:
+def _get_detailed_verification_status(ally: Ally) -> dict[str, Any]:
     """Obtiene estado detallado de verificación."""
     return {
         'current_status': ally.verification_status,
@@ -1904,7 +1904,7 @@ def _get_detailed_verification_status(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _get_required_verification_documents(ally: Ally) -> List[Dict[str, Any]]:
+def _get_required_verification_documents(ally: Ally) -> list[dict[str, Any]]:
     """Obtiene documentos requeridos para verificación."""
     return [
         {
@@ -1924,7 +1924,7 @@ def _get_required_verification_documents(ally: Ally) -> List[Dict[str, Any]]:
     ]
 
 
-def _get_verification_timeline(ally: Ally) -> List[Dict[str, Any]]:
+def _get_verification_timeline(ally: Ally) -> list[dict[str, Any]]:
     """Obtiene timeline del proceso de verificación."""
     return [
         {
@@ -1936,7 +1936,7 @@ def _get_verification_timeline(ally: Ally) -> List[Dict[str, Any]]:
     ]
 
 
-def _get_verification_next_steps(ally: Ally) -> List[str]:
+def _get_verification_next_steps(ally: Ally) -> list[str]:
     """Obtiene próximos pasos en el proceso de verificación."""
     if ally.verification_status == 'pending':
         return [
@@ -1957,7 +1957,7 @@ def _validate_document_type(document_type: str, ally: Ally) -> bool:
     return document_type in valid_types
 
 
-def _process_and_save_document(file, document_type: str, description: str, ally: Ally) -> Dict[str, Any]:
+def _process_and_save_document(file, document_type: str, description: str, ally: Ally) -> dict[str, Any]:
     """
     Procesa y guarda un documento del aliado.
     
@@ -2092,7 +2092,7 @@ def _log_document_upload(ally: Ally, document: Document) -> None:
 
 # Más funciones auxiliares según necesidades específicas...
 
-def _get_missing_profile_items(ally: Ally, scores: Dict[str, float]) -> List[str]:
+def _get_missing_profile_items(ally: Ally, scores: dict[str, float]) -> list[str]:
     """Obtiene items faltantes del perfil."""
     missing = []
     
@@ -2111,7 +2111,7 @@ def _get_missing_profile_items(ally: Ally, scores: Dict[str, float]) -> List[str
     return missing
 
 
-def _get_profile_improvement_suggestions(scores: Dict[str, float]) -> List[str]:
+def _get_profile_improvement_suggestions(scores: dict[str, float]) -> list[str]:
     """Obtiene sugerencias para mejorar el perfil."""
     suggestions = []
     
@@ -2140,56 +2140,56 @@ def _get_profile_activity_icon(action: str) -> str:
     return icons.get(action, 'info')
 
 
-def _calculate_detailed_completeness(ally: Ally) -> Dict[str, Any]:
+def _calculate_detailed_completeness(ally: Ally) -> dict[str, Any]:
     """Calcula completitud detallada para API."""
     return _calculate_profile_completeness(ally)
 
 
-def _get_api_verification_status(ally: Ally) -> Dict[str, Any]:
+def _get_api_verification_status(ally: Ally) -> dict[str, Any]:
     """Obtiene estado de verificación para API."""
     return _get_detailed_verification_status(ally)
 
 
 # Funciones para validación y procesamiento de APIs
-def _validate_availability_data(data: Dict[str, Any]) -> bool:
+def _validate_availability_data(data: dict[str, Any]) -> bool:
     """Valida datos de disponibilidad."""
     required_fields = ['day', 'start_time', 'end_time']
     return all(field in data for field in required_fields)
 
 
-def _update_ally_availability(ally: Ally, data: Dict[str, Any]) -> Dict[str, Any]:
+def _update_ally_availability(ally: Ally, data: dict[str, Any]) -> dict[str, Any]:
     """Actualiza disponibilidad del aliado."""
     # Implementación básica
     return {'success': True, 'updated_slots': []}
 
 
-def _create_certification(ally: Ally, data: Dict[str, Any]) -> Dict[str, Any]:
+def _create_certification(ally: Ally, data: dict[str, Any]) -> dict[str, Any]:
     """Crea nueva certificación."""
     # Implementación básica
     return {'success': True, 'certification_data': {}}
 
 
-def _validate_specializations(specialization_ids: List[int], custom_specializations: List[str]) -> bool:
+def _validate_specializations(specialization_ids: list[int], custom_specializations: list[str]) -> bool:
     """Valida especializaciones."""
     return True  # Implementación básica
 
 
-def _update_ally_specializations(ally: Ally, specialization_ids: List[int], custom_specializations: List[str]) -> Dict[str, Any]:
+def _update_ally_specializations(ally: Ally, specialization_ids: list[int], custom_specializations: list[str]) -> dict[str, Any]:
     """Actualiza especializaciones del aliado."""
     return {'success': True}
 
 
-def _validate_preferences_data(data: Dict[str, Any]) -> bool:
+def _validate_preferences_data(data: dict[str, Any]) -> bool:
     """Valida datos de preferencias."""
     return True  # Implementación básica
 
 
-def _update_ally_preferences(ally: Ally, data: Dict[str, Any]) -> Dict[str, Any]:
+def _update_ally_preferences(ally: Ally, data: dict[str, Any]) -> dict[str, Any]:
     """Actualiza preferencias del aliado."""
     return {'success': True}
 
 
-def _check_required_documents(ally: Ally) -> List[str]:
+def _check_required_documents(ally: Ally) -> list[str]:
     """Verifica documentos requeridos faltantes."""
     return []  # Implementación básica
 
@@ -2211,15 +2211,15 @@ def _log_verification_submission(ally: Ally) -> None:
 
 def _calculate_estimated_verification_time(ally: Ally) -> datetime:
     """Calcula tiempo estimado de verificación."""
-    return datetime.utcnow() + timedelta(days=5)
+    return datetime.now(timezone.utc) + timedelta(days=5)
 
 
-def _get_documents_in_review(ally: Ally) -> List[Dict[str, Any]]:
+def _get_documents_in_review(ally: Ally) -> list[dict[str, Any]]:
     """Obtiene documentos en revisión."""
     return []
 
 
-def _generate_profile_report_data(ally: Ally) -> Dict[str, Any]:
+def _generate_profile_report_data(ally: Ally) -> dict[str, Any]:
     """Genera datos para reporte del perfil."""
     return {
         'ally': ally,

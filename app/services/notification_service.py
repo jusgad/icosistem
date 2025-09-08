@@ -9,7 +9,7 @@ Version: 1.0.0
 import logging
 import json
 import asyncio
-from typing import Dict, List, Optional, Any, Union, Tuple
+from typing import Optional, Any, Union
 from datetime import datetime, timedelta
 from enum import Enum
 from dataclasses import dataclass, asdict
@@ -133,11 +133,11 @@ class NotificationData:
     message: str
     channel: str = NotificationChannel.IN_APP.value
     priority: str = NotificationPriority.MEDIUM.value
-    data: Optional[Dict[str, Any]] = None
+    data: Optional[dict[str, Any]] = None
     template_id: Optional[int] = None
     scheduled_for: Optional[datetime] = None
     expires_at: Optional[datetime] = None
-    tags: Optional[List[str]] = None
+    tags: Optional[list[str]] = None
 
 
 @dataclass
@@ -147,7 +147,7 @@ class NotificationResult:
     notification_id: Optional[int] = None
     external_id: Optional[str] = None
     error_message: Optional[str] = None
-    channel_results: Optional[Dict[str, bool]] = None
+    channel_results: Optional[dict[str, bool]] = None
 
 
 @dataclass
@@ -156,8 +156,8 @@ class BulkNotificationResult:
     total_sent: int
     successful: int
     failed: int
-    errors: List[str]
-    notification_ids: List[int]
+    errors: list[str]
+    notification_ids: list[int]
 
 
 class NotificationProvider(ABC):
@@ -230,7 +230,7 @@ class EmailNotificationProvider(NotificationProvider):
         """Validar configuración del email"""
         return self.email_service.is_configured()
     
-    def _render_template(self, template: str, data: Dict[str, Any]) -> str:
+    def _render_template(self, template: str, data: dict[str, Any]) -> str:
         """Renderizar plantilla con datos"""
         try:
             return render_template_string(template, **data)
@@ -335,12 +335,12 @@ class PushNotificationProvider(NotificationProvider):
         """Validar configuración push"""
         return bool(self.fcm_key or self.vapid_keys)
     
-    def _get_user_push_tokens(self, user_id: int) -> List[str]:
+    def _get_user_push_tokens(self, user_id: int) -> list[str]:
         """Obtener tokens de push del usuario"""
         # Implementar obtención de tokens desde base de datos
         return []
     
-    async def _send_to_token(self, token: str, payload: Dict[str, Any]) -> bool:
+    async def _send_to_token(self, token: str, payload: dict[str, Any]) -> bool:
         """Enviar notificación a un token específico"""
         # Implementar envío real a FCM/APNS
         return True
@@ -404,13 +404,13 @@ class NotificationService(BaseService):
         self.executor = ThreadPoolExecutor(max_workers=10)
     
     @property
-    def providers(self) -> Dict[str, NotificationProvider]:
+    def providers(self) -> dict[str, NotificationProvider]:
         """Lazy initialization of providers"""
         if self._providers is None:
             self._providers = self._initialize_providers()
         return self._providers
     
-    def _initialize_providers(self) -> Dict[str, NotificationProvider]:
+    def _initialize_providers(self) -> dict[str, NotificationProvider]:
         """Inicializar proveedores de notificación"""
         from app.services.email import EmailService
         from app.services.sms import SMSService
@@ -438,7 +438,7 @@ class NotificationService(BaseService):
         message: str,
         channel: str = NotificationChannel.IN_APP.value,
         priority: str = NotificationPriority.MEDIUM.value,
-        data: Optional[Dict[str, Any]] = None,
+        data: Optional[dict[str, Any]] = None,
         template_id: Optional[int] = None,
         scheduled_for: Optional[datetime] = None,
         auto_channels: bool = True
@@ -483,7 +483,7 @@ class NotificationService(BaseService):
             )
             
             # Si es programada, encolar para más tarde
-            if scheduled_for and scheduled_for > datetime.utcnow():
+            if scheduled_for and scheduled_for > datetime.now(timezone.utc):
                 self._schedule_notification(notification, channels)
                 return NotificationResult(
                     success=True,
@@ -499,11 +499,11 @@ class NotificationService(BaseService):
     
     def send_bulk_notification(
         self,
-        user_ids: List[int],
+        user_ids: list[int],
         type: str,
         title: str,
         message: str,
-        data: Optional[Dict[str, Any]] = None,
+        data: Optional[dict[str, Any]] = None,
         template_id: Optional[int] = None,
         batch_size: int = 100
     ) -> BulkNotificationResult:
@@ -573,10 +573,10 @@ class NotificationService(BaseService):
         self,
         user_id: int,
         unread_only: bool = False,
-        types: Optional[List[str]] = None,
+        types: Optional[list[str]] = None,
         page: int = 1,
         per_page: int = 20
-    ) -> Tuple[List[Notification], int]:
+    ) -> tuple[list[Notification], int]:
         """
         Obtener notificaciones de un usuario
         
@@ -588,7 +588,7 @@ class NotificationService(BaseService):
             per_page: Notificaciones por página
             
         Returns:
-            Tuple[List[Notification], int]: Notificaciones y total
+            tuple[list[Notification], int]: Notificaciones y total
         """
         query = Notification.query.filter_by(recipient_id=user_id)
         
@@ -626,7 +626,7 @@ class NotificationService(BaseService):
                 raise NotFoundError("Notificación no encontrada")
             
             if notification.read_at is None:
-                notification.read_at = datetime.utcnow()
+                notification.read_at = datetime.now(timezone.utc)
                 notification.status = NotificationStatus.READ.value
                 
                 db.session.commit()
@@ -660,7 +660,7 @@ class NotificationService(BaseService):
                 recipient_id=user_id,
                 read_at=None
             ).update({
-                'read_at': datetime.utcnow(),
+                'read_at': datetime.now(timezone.utc),
                 'status': NotificationStatus.READ.value
             })
             
@@ -701,8 +701,8 @@ class NotificationService(BaseService):
         type: str,
         subject_template: str,
         body_template: str,
-        channels: List[str],
-        variables: Optional[List[str]] = None,
+        channels: list[str],
+        variables: Optional[list[str]] = None,
         is_active: bool = True
     ) -> NotificationTemplate:
         """
@@ -729,7 +729,7 @@ class NotificationService(BaseService):
                 channels=channels,
                 variables=variables or [],
                 is_active=is_active,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             
             db.session.add(template)
@@ -746,7 +746,7 @@ class NotificationService(BaseService):
     def update_user_preferences(
         self,
         user_id: int,
-        preferences: Dict[str, Any]
+        preferences: dict[str, Any]
     ) -> NotificationPreference:
         """
         Actualizar preferencias de notificación del usuario
@@ -772,7 +772,7 @@ class NotificationService(BaseService):
                 if hasattr(pref, key):
                     setattr(pref, key, value)
             
-            pref.updated_at = datetime.utcnow()
+            pref.updated_at = datetime.now(timezone.utc)
             db.session.commit()
             
             # Limpiar cache de preferencias
@@ -810,7 +810,7 @@ class NotificationService(BaseService):
         end_date: datetime,
         user_id: Optional[int] = None,
         type: Optional[str] = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Obtener analytics de notificaciones
         
@@ -821,7 +821,7 @@ class NotificationService(BaseService):
             type: Filtrar por tipo específico
             
         Returns:
-            Dict[str, Any]: Datos de analytics
+            dict[str, Any]: Datos de analytics
         """
         query = Notification.query.filter(
             Notification.created_at.between(start_date, end_date)
@@ -880,7 +880,7 @@ class NotificationService(BaseService):
         title: str,
         message: str,
         priority: str,
-        data: Optional[Dict[str, Any]],
+        data: Optional[dict[str, Any]],
         template_id: Optional[int],
         scheduled_for: Optional[datetime]
     ) -> Notification:
@@ -895,7 +895,7 @@ class NotificationService(BaseService):
             template_id=template_id,
             scheduled_for=scheduled_for,
             status=NotificationStatus.PENDING.value,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db.session.add(notification)
@@ -909,7 +909,7 @@ class NotificationService(BaseService):
         type: str,
         default_channel: str,
         auto_channels: bool
-    ) -> List[str]:
+    ) -> list[str]:
         """Determinar canales a usar basado en preferencias"""
         if not auto_channels:
             return [default_channel]
@@ -951,7 +951,7 @@ class NotificationService(BaseService):
     def _send_to_channels(
         self,
         notification: Notification,
-        channels: List[str]
+        channels: list[str]
     ) -> NotificationResult:
         """Enviar notificación a múltiples canales"""
         results = {}
@@ -1011,7 +1011,7 @@ class NotificationService(BaseService):
             template_id=notification.template_id,
             parent_id=notification.id,
             status=NotificationStatus.SENDING.value,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db.session.add(channel_notification)
@@ -1034,9 +1034,9 @@ class NotificationService(BaseService):
             notification.error_message = error_message
             
             if status == NotificationStatus.SENT.value:
-                notification.sent_at = datetime.utcnow()
+                notification.sent_at = datetime.now(timezone.utc)
             elif status == NotificationStatus.DELIVERED.value:
-                notification.delivered_at = datetime.utcnow()
+                notification.delivered_at = datetime.now(timezone.utc)
     
     def _create_default_preferences(self, user_id: int) -> NotificationPreference:
         """Crear preferencias por defecto para usuario"""
@@ -1050,7 +1050,7 @@ class NotificationService(BaseService):
             quiet_hours_end=8,     # 8 AM
             timezone='America/Bogota',
             frequency_limit=10,    # Máximo 10 notificaciones por hora
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db.session.add(pref)
@@ -1068,13 +1068,13 @@ class NotificationService(BaseService):
     def _schedule_notification(
         self,
         notification: Notification,
-        channels: List[str]
+        channels: list[str]
     ) -> None:
         """Programar notificación para envío futuro"""
         from app.tasks.notification_tasks import send_scheduled_notification_task
         
         # Calcular delay hasta la fecha programada
-        delay = (notification.scheduled_for - datetime.utcnow()).total_seconds()
+        delay = (notification.scheduled_for - datetime.now(timezone.utc)).total_seconds()
         
         send_scheduled_notification_task.apply_async(
             args=[notification.id, channels],
@@ -1086,13 +1086,13 @@ class NotificationService(BaseService):
     
     def _create_bulk_notifications(
         self,
-        user_ids: List[int],
+        user_ids: list[int],
         type: str,
         title: str,
         message: str,
-        data: Optional[Dict[str, Any]],
+        data: Optional[dict[str, Any]],
         template_id: Optional[int]
-    ) -> List[Notification]:
+    ) -> list[Notification]:
         """Crear notificaciones en lote"""
         notifications = []
         
@@ -1105,7 +1105,7 @@ class NotificationService(BaseService):
                 data=data,
                 template_id=template_id,
                 status=NotificationStatus.PENDING.value,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             notifications.append(notification)
         
@@ -1125,13 +1125,13 @@ class NotificationService(BaseService):
             logger.error(f"Error initializing notification service: {e}")
             return False
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Check health of notification service."""
         return {
             'service': 'notification_service',
             'status': 'healthy',
             'providers': len(self.providers),
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
 
 
@@ -1160,8 +1160,8 @@ def send_welcome_notification(user_id: int) -> NotificationResult:
 
 def send_project_update_notification(
     project_id: int,
-    users_ids: List[int],
-    changes: List[str]
+    users_ids: list[int],
+    changes: list[str]
 ) -> BulkNotificationResult:
     """Enviar notificación de actualización de proyecto"""
     return get_notification_service().send_bulk_notification(

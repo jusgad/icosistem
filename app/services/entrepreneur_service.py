@@ -10,8 +10,8 @@ Version: 2.0.0
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Any, Union
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Any, Union
 from decimal import Decimal
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import joinedload, selectinload
@@ -88,7 +88,7 @@ class EntrepreneurService(BaseService):
 
     # ==================== GESTIÓN DE PERFIL EMPRENDEDOR ====================
 
-    def complete_entrepreneur_profile(self, user_id: int, profile_data: Dict[str, Any]) -> Entrepreneur:
+    def complete_entrepreneur_profile(self, user_id: int, profile_data: dict[str, Any]) -> Entrepreneur:
         """
         Completa el perfil de un emprendedor después del registro inicial.
         
@@ -116,7 +116,7 @@ class EntrepreneurService(BaseService):
             
             # Marcar perfil como completado
             entrepreneur.profile_completed = True
-            entrepreneur.profile_completion_date = datetime.utcnow()
+            entrepreneur.profile_completion_date = datetime.now(timezone.utc)
             entrepreneur.current_stage = ENTREPRENEUR_STAGES.VALIDATED
             
             db.session.commit()
@@ -178,13 +178,13 @@ class EntrepreneurService(BaseService):
             
             old_stage = entrepreneur.current_stage
             entrepreneur.current_stage = new_stage
-            entrepreneur.stage_updated_at = datetime.utcnow()
+            entrepreneur.stage_updated_at = datetime.now(timezone.utc)
             
             # Crear entrada en historial de etapas
             stage_history = {
                 'from_stage': old_stage,
                 'to_stage': new_stage,
-                'changed_at': datetime.utcnow(),
+                'changed_at': datetime.now(timezone.utc),
                 'changed_by': updated_by,
                 'notes': notes
             }
@@ -226,7 +226,7 @@ class EntrepreneurService(BaseService):
 
     # ==================== GESTIÓN DE PROYECTOS ====================
 
-    def create_project(self, entrepreneur_id: int, project_data: Dict[str, Any]) -> Project:
+    def create_project(self, entrepreneur_id: int, project_data: dict[str, Any]) -> Project:
         """
         Crea un nuevo proyecto para el emprendedor.
         
@@ -258,7 +258,7 @@ class EntrepreneurService(BaseService):
                 funding_required=project_data.get('funding_required'),
                 current_phase=PROJECT_PHASES.IDEATION,
                 status=PROJECT_STATUS.ACTIVE,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             
             db.session.add(project)
@@ -316,7 +316,7 @@ class EntrepreneurService(BaseService):
             
             old_phase = project.current_phase
             project.current_phase = new_phase
-            project.phase_updated_at = datetime.utcnow()
+            project.phase_updated_at = datetime.now(timezone.utc)
             
             if completion_percentage is not None:
                 project.completion_percentage = max(0, min(100, completion_percentage))
@@ -388,7 +388,7 @@ class EntrepreneurService(BaseService):
             
             # Asignar mentor
             entrepreneur.assigned_mentor_id = mentor_id
-            entrepreneur.mentor_assigned_at = datetime.utcnow()
+            entrepreneur.mentor_assigned_at = datetime.now(timezone.utc)
             entrepreneur.mentor_assignment_notes = notes
             
             # Actualizar contador del mentor
@@ -436,7 +436,7 @@ class EntrepreneurService(BaseService):
             logger.error(f"Error asignando mentor: {str(e)}")
             raise ServiceError(f"Error interno asignando mentor: {str(e)}")
 
-    def schedule_mentorship_session(self, entrepreneur_id: int, session_data: Dict[str, Any]) -> MentorshipSession:
+    def schedule_mentorship_session(self, entrepreneur_id: int, session_data: dict[str, Any]) -> MentorshipSession:
         """
         Programa una sesión de mentoría.
         
@@ -476,7 +476,7 @@ class EntrepreneurService(BaseService):
                 scheduled_at=session_data['scheduled_at'],
                 duration_minutes=session_data.get('duration_minutes', 60),
                 status=MENTORSHIP_STATUS.SCHEDULED,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             
             db.session.add(session)
@@ -513,7 +513,7 @@ class EntrepreneurService(BaseService):
 
     # ==================== PROGRESO Y MÉTRICAS ====================
 
-    def calculate_entrepreneur_progress(self, entrepreneur_id: int) -> Dict[str, Any]:
+    def calculate_entrepreneur_progress(self, entrepreneur_id: int) -> dict[str, Any]:
         """
         Calcula el progreso general del emprendedor.
         
@@ -563,14 +563,14 @@ class EntrepreneurService(BaseService):
                 'task_metrics': task_metrics,
                 'document_metrics': document_metrics,
                 'recommendations': recommendations,
-                'last_calculated': datetime.utcnow(),
+                'last_calculated': datetime.now(timezone.utc),
                 'entrepreneur_stage': entrepreneur.current_stage,
-                'days_in_program': (datetime.utcnow() - entrepreneur.created_at).days
+                'days_in_program': (datetime.now(timezone.utc) - entrepreneur.created_at).days
             }
             
             # Guardar métricas en el emprendedor
             entrepreneur.progress_metrics = progress_data
-            entrepreneur.progress_last_calculated = datetime.utcnow()
+            entrepreneur.progress_last_calculated = datetime.now(timezone.utc)
             db.session.commit()
             
             return progress_data
@@ -581,7 +581,7 @@ class EntrepreneurService(BaseService):
             logger.error(f"Error calculando progreso: {str(e)}")
             raise ServiceError(f"Error interno calculando progreso: {str(e)}")
 
-    def get_entrepreneur_kpis(self, entrepreneur_id: int, period_days: int = 30) -> Dict[str, Any]:
+    def get_entrepreneur_kpis(self, entrepreneur_id: int, period_days: int = 30) -> dict[str, Any]:
         """
         Obtiene KPIs del emprendedor para un período específico.
         
@@ -597,7 +597,7 @@ class EntrepreneurService(BaseService):
             if not entrepreneur:
                 raise UserNotFoundError(f"Emprendedor {entrepreneur_id} no encontrado")
             
-            end_date = datetime.utcnow()
+            end_date = datetime.now(timezone.utc)
             start_date = end_date - timedelta(days=period_days)
             
             # KPIs de actividad
@@ -711,7 +711,7 @@ class EntrepreneurService(BaseService):
                            page: int = 1,
                            per_page: int = 20,
                            sort_by: str = 'created_at',
-                           sort_order: str = 'desc') -> Dict[str, Any]:
+                           sort_order: str = 'desc') -> dict[str, Any]:
         """
         Búsqueda avanzada de emprendedores.
         
@@ -809,7 +809,7 @@ class EntrepreneurService(BaseService):
 
     # ==================== REPORTES Y ANALYTICS ====================
 
-    def generate_entrepreneur_report(self, entrepreneur_id: int, report_type: str = 'comprehensive') -> Dict[str, Any]:
+    def generate_entrepreneur_report(self, entrepreneur_id: int, report_type: str = 'comprehensive') -> dict[str, Any]:
         """
         Genera reporte detallado del emprendedor.
         
@@ -834,7 +834,7 @@ class EntrepreneurService(BaseService):
                     'created_at': entrepreneur.created_at,
                     'profile_completed': entrepreneur.profile_completed
                 },
-                'generated_at': datetime.utcnow(),
+                'generated_at': datetime.now(timezone.utc),
                 'report_type': report_type
             }
             
@@ -873,7 +873,7 @@ class EntrepreneurService(BaseService):
             logger.error(f"Error generando reporte: {str(e)}")
             raise ServiceError(f"Error interno generando reporte: {str(e)}")
 
-    def get_entrepreneurs_statistics(self, date_from: datetime = None, date_to: datetime = None) -> Dict[str, Any]:
+    def get_entrepreneurs_statistics(self, date_from: datetime = None, date_to: datetime = None) -> dict[str, Any]:
         """
         Obtiene estadísticas generales de emprendedores.
         
@@ -904,7 +904,7 @@ class EntrepreneurService(BaseService):
                 func.count(Entrepreneur.id).label('count')
             ).filter(
                 Entrepreneur.created_at >= (date_from or datetime(2020, 1, 1)),
-                Entrepreneur.created_at <= (date_to or datetime.utcnow())
+                Entrepreneur.created_at <= (date_to or datetime.now(timezone.utc))
             ).group_by(Entrepreneur.current_stage).all()
             
             # Por industria
@@ -913,7 +913,7 @@ class EntrepreneurService(BaseService):
                 func.count(Entrepreneur.id).label('count')
             ).filter(
                 Entrepreneur.created_at >= (date_from or datetime(2020, 1, 1)),
-                Entrepreneur.created_at <= (date_to or datetime.utcnow()),
+                Entrepreneur.created_at <= (date_to or datetime.now(timezone.utc)),
                 Entrepreneur.industry.isnot(None)
             ).group_by(Entrepreneur.industry).all()
             
@@ -922,7 +922,7 @@ class EntrepreneurService(BaseService):
                 func.avg(Entrepreneur.overall_progress)
             ).filter(
                 Entrepreneur.created_at >= (date_from or datetime(2020, 1, 1)),
-                Entrepreneur.created_at <= (date_to or datetime.utcnow())
+                Entrepreneur.created_at <= (date_to or datetime.now(timezone.utc))
             ).scalar() or 0
             
             return {
@@ -943,7 +943,7 @@ class EntrepreneurService(BaseService):
 
     # ==================== MÉTODOS PRIVADOS DE VALIDACIÓN ====================
 
-    def _validate_profile_data(self, data: Dict[str, Any]) -> None:
+    def _validate_profile_data(self, data: dict[str, Any]) -> None:
         """Valida datos del perfil del emprendedor."""
         required_fields = ['business_idea', 'industry', 'target_market']
         
@@ -959,7 +959,7 @@ class EntrepreneurService(BaseService):
             if not validate_market_size(data['market_size']):
                 raise ValidationError("Tamaño de mercado inválido")
 
-    def _validate_project_data(self, data: Dict[str, Any]) -> None:
+    def _validate_project_data(self, data: dict[str, Any]) -> None:
         """Valida datos del proyecto."""
         required_fields = ['name']
         
@@ -970,7 +970,7 @@ class EntrepreneurService(BaseService):
         if len(data['name'].strip()) < 3:
             raise ValidationError("El nombre del proyecto debe tener al menos 3 caracteres")
 
-    def _validate_session_data(self, data: Dict[str, Any]) -> None:
+    def _validate_session_data(self, data: dict[str, Any]) -> None:
         """Valida datos de sesión de mentoría."""
         required_fields = ['scheduled_at']
         
@@ -979,7 +979,7 @@ class EntrepreneurService(BaseService):
                 raise ValidationError(f"Campo requerido: {field}")
         
         # Verificar que la fecha sea futura
-        if data['scheduled_at'] <= datetime.utcnow():
+        if data['scheduled_at'] <= datetime.now(timezone.utc):
             raise ValidationError("La fecha de la sesión debe ser futura")
         
         # Verificar duración
@@ -989,7 +989,7 @@ class EntrepreneurService(BaseService):
 
     # ==================== MÉTODOS PRIVADOS DE UTILIDAD ====================
 
-    def _update_entrepreneur_profile(self, entrepreneur: Entrepreneur, data: Dict[str, Any]) -> None:
+    def _update_entrepreneur_profile(self, entrepreneur: Entrepreneur, data: dict[str, Any]) -> None:
         """Actualiza el perfil del emprendedor."""
         updatable_fields = [
             'business_idea', 'industry', 'target_market', 'business_model',
@@ -1001,7 +1001,7 @@ class EntrepreneurService(BaseService):
             if field in data:
                 setattr(entrepreneur, field, data[field])
 
-    def _create_initial_project(self, entrepreneur: Entrepreneur, profile_data: Dict[str, Any]) -> None:
+    def _create_initial_project(self, entrepreneur: Entrepreneur, profile_data: dict[str, Any]) -> None:
         """Crea el proyecto inicial basado en el perfil."""
         project_data = {
             'name': profile_data.get('business_idea', 'Mi Emprendimiento'),
@@ -1032,7 +1032,7 @@ class EntrepreneurService(BaseService):
             
             if appropriate_program:
                 entrepreneur.current_program_id = appropriate_program.id
-                entrepreneur.program_joined_at = datetime.utcnow()
+                entrepreneur.program_joined_at = datetime.now(timezone.utc)
                 
         except Exception as e:
             logger.warning(f"No se pudo asignar programa: {str(e)}")
@@ -1044,19 +1044,19 @@ class EntrepreneurService(BaseService):
                 'title': 'Validar idea de negocio',
                 'description': 'Realizar investigación inicial para validar la viabilidad de la idea',
                 'priority': 'high',
-                'due_date': datetime.utcnow() + timedelta(days=7)
+                'due_date': datetime.now(timezone.utc) + timedelta(days=7)
             },
             {
                 'title': 'Analizar mercado objetivo',
                 'description': 'Investigar y definir el mercado objetivo del proyecto',
                 'priority': 'medium',
-                'due_date': datetime.utcnow() + timedelta(days=14)
+                'due_date': datetime.now(timezone.utc) + timedelta(days=14)
             },
             {
                 'title': 'Desarrollar MVP',
                 'description': 'Crear el producto mínimo viable',
                 'priority': 'medium',
-                'due_date': datetime.utcnow() + timedelta(days=30)
+                'due_date': datetime.now(timezone.utc) + timedelta(days=30)
             }
         ]
         
@@ -1069,7 +1069,7 @@ class EntrepreneurService(BaseService):
                 priority=task_data['priority'],
                 due_date=task_data['due_date'],
                 status=TASK_STATUS.PENDING,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             db.session.add(task)
 
@@ -1106,7 +1106,7 @@ class EntrepreneurService(BaseService):
         
         return conflicting_sessions == 0
 
-    def _calculate_profile_completion(self, entrepreneur: Entrepreneur) -> Dict[str, Any]:
+    def _calculate_profile_completion(self, entrepreneur: Entrepreneur) -> dict[str, Any]:
         """Calcula completitud del perfil."""
         required_fields = [
             'business_idea', 'industry', 'target_market', 'business_model',
@@ -1123,7 +1123,7 @@ class EntrepreneurService(BaseService):
             'missing_fields': [field for field in required_fields if not getattr(entrepreneur, field)]
         }
 
-    def _calculate_project_metrics(self, entrepreneur: Entrepreneur) -> Dict[str, Any]:
+    def _calculate_project_metrics(self, entrepreneur: Entrepreneur) -> dict[str, Any]:
         """Calcula métricas de proyectos."""
         projects = entrepreneur.projects
         if not projects:
@@ -1139,7 +1139,7 @@ class EntrepreneurService(BaseService):
             'phases_distribution': self._get_project_phases_distribution(active_projects)
         }
 
-    def _calculate_mentorship_metrics(self, entrepreneur: Entrepreneur) -> Dict[str, Any]:
+    def _calculate_mentorship_metrics(self, entrepreneur: Entrepreneur) -> dict[str, Any]:
         """Calcula métricas de mentoría."""
         has_mentor = entrepreneur.assigned_mentor_id is not None
         sessions = entrepreneur.mentorship_sessions if hasattr(entrepreneur, 'mentorship_sessions') else []
@@ -1163,7 +1163,7 @@ class EntrepreneurService(BaseService):
                 activity_type=activity_type,
                 details=details,
                 performed_by=performed_by or user_id,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             db.session.add(activity)
             db.session.commit()

@@ -17,7 +17,7 @@ Funcionalidades:
 
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, Any, Optional, List, Union
+from typing import Any, Optional, Union
 from decimal import Decimal
 import json
 
@@ -419,11 +419,11 @@ class AnalyticsService:
         name: str,
         frequency: MetricFrequency = MetricFrequency.DAILY,
         unit: Optional[str] = None,
-        dimensions: Optional[Dict[str, Any]] = None,
+        dimensions: Optional[dict[str, Any]] = None,
         organization_id: Optional[int] = None,
         program_id: Optional[int] = None,
         user_id: Optional[int] = None,
-        analytics_metadata: Optional[Dict[str, Any]] = None,
+        analytics_metadata: Optional[dict[str, Any]] = None,
         timestamp: Optional[datetime] = None
     ) -> AnalyticsMetric:
         """
@@ -454,7 +454,7 @@ class AnalyticsService:
             value=value,
             unit=unit,
             dimensions=dimensions or {},
-            timestamp=timestamp or datetime.utcnow(),
+            timestamp=timestamp or datetime.now(timezone.utc),
             organization_id=organization_id,
             program_id=program_id,
             user_id=user_id,
@@ -468,13 +468,13 @@ class AnalyticsService:
     
     @staticmethod
     def get_metrics_summary(
-        metric_types: Optional[List[MetricType]] = None,
+        metric_types: Optional[list[MetricType]] = None,
         category: Optional[MetricCategory] = None,
         organization_id: Optional[int] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         group_by: str = 'day'
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Obtiene resumen de métricas agrupadas
         
@@ -548,7 +548,7 @@ class AnalyticsService:
     def calculate_kpis(
         organization_id: Optional[int] = None,
         period_days: int = 30
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calcula KPIs principales del ecosistema
         
@@ -559,7 +559,7 @@ class AnalyticsService:
         Returns:
             Diccionario con KPIs calculados
         """
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=period_days)
         
         query_filter = and_(
@@ -610,7 +610,7 @@ class AnalyticsService:
             'conversion_rate': float(conversion_rate),
             'retention_rate': float(retention_rate),
             'period_days': period_days,
-            'calculated_at': datetime.utcnow().isoformat()
+            'calculated_at': datetime.now(timezone.utc).isoformat()
         }
     
     @staticmethod
@@ -618,7 +618,7 @@ class AnalyticsService:
         metric_type: MetricType,
         organization_id: Optional[int] = None,
         days: int = 90
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Analiza tendencias de una métrica específica
         
@@ -630,7 +630,7 @@ class AnalyticsService:
         Returns:
             Análisis de tendencia con predicciones básicas
         """
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=days)
         
         query = db.session.query(

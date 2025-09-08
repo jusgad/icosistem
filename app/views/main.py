@@ -27,8 +27,8 @@ from flask_babel import _, get_locale, ngettext
 from wtforms import StringField, TextAreaField, SelectField, EmailField, BooleanField
 from wtforms.validators import DataRequired, Email, Length, Optional, ValidationError
 from sqlalchemy import func, or_, and_, desc
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional as TypingOptional, Any, Tuple
+from datetime import datetime, timedelta, timezone
+from typing import Optional as TypingOptional, Any
 import json
 import logging
 from collections import defaultdict
@@ -570,7 +570,7 @@ def blog():
         # Query de posts publicados
         query = BlogPost.query.filter(
             BlogPost.status == PostStatus.PUBLISHED,
-            BlogPost.published_at <= datetime.utcnow()
+            BlogPost.published_at <= datetime.now(timezone.utc)
         )
         
         if category:
@@ -750,7 +750,7 @@ def sitemap():
                 'loc': url_for(endpoint, _external=True),
                 'changefreq': changefreq,
                 'priority': priority,
-                'lastmod': datetime.utcnow().strftime('%Y-%m-%d')
+                'lastmod': datetime.now(timezone.utc).strftime('%Y-%m-%d')
             })
         
         # Proyectos públicos
@@ -798,7 +798,7 @@ def sitemap():
         abort(500)
 
 # Funciones auxiliares
-def _get_landing_stats() -> Dict[str, Any]:
+def _get_landing_stats() -> dict[str, Any]:
     """Obtiene estadísticas para el landing page."""
     try:
         stats = {
@@ -829,8 +829,8 @@ def _get_landing_stats() -> Dict[str, Any]:
             
             'active_programs': Program.query.filter(
                 Program.is_active == True,
-                Program.start_date <= datetime.utcnow(),
-                Program.end_date >= datetime.utcnow()
+                Program.start_date <= datetime.now(timezone.utc),
+                Program.end_date >= datetime.now(timezone.utc)
             ).count()
         }
         
@@ -840,7 +840,7 @@ def _get_landing_stats() -> Dict[str, Any]:
         logger.error(f"Error getting landing stats: {str(e)}")
         return {}
 
-def _get_featured_projects(limit: int = 6) -> List[Project]:
+def _get_featured_projects(limit: int = 6) -> list[Project]:
     """Obtiene proyectos destacados."""
     try:
         return Project.query.filter(
@@ -852,7 +852,7 @@ def _get_featured_projects(limit: int = 6) -> List[Project]:
         logger.error(f"Error getting featured projects: {str(e)}")
         return []
 
-def _get_recent_testimonials(limit: int = 3) -> List[Testimonial]:
+def _get_recent_testimonials(limit: int = 3) -> list[Testimonial]:
     """Obtiene testimonios recientes."""
     try:
         return Testimonial.query.filter(
@@ -863,18 +863,18 @@ def _get_recent_testimonials(limit: int = 3) -> List[Testimonial]:
         logger.error(f"Error getting testimonials: {str(e)}")
         return []
 
-def _get_recent_blog_posts(limit: int = 3) -> List[BlogPost]:
+def _get_recent_blog_posts(limit: int = 3) -> list[BlogPost]:
     """Obtiene posts recientes del blog."""
     try:
         return BlogPost.query.filter(
             BlogPost.status == PostStatus.PUBLISHED,
-            BlogPost.published_at <= datetime.utcnow()
+            BlogPost.published_at <= datetime.now(timezone.utc)
         ).order_by(desc(BlogPost.published_at)).limit(limit).all()
     except Exception as e:
         logger.error(f"Error getting blog posts: {str(e)}")
         return []
 
-def _get_partner_organizations(limit: int = 8) -> List[Organization]:
+def _get_partner_organizations(limit: int = 8) -> list[Organization]:
     """Obtiene organizaciones aliadas."""
     try:
         return Organization.query.filter(
@@ -899,7 +899,7 @@ def _subscribe_to_newsletter(email: str, interests: str) -> bool:
                 # Reactivar suscripción
                 existing.is_active = True
                 existing.interests = interests
-                existing.subscribed_at = datetime.utcnow()
+                existing.subscribed_at = datetime.now(timezone.utc)
         else:
             # Nueva suscripción
             subscription = NewsletterSubscription(
@@ -1038,7 +1038,7 @@ def inject_main_context():
     return {
         'newsletter_form': NewsletterForm(),
         'search_form': SearchForm(),
-        'current_year': datetime.utcnow().year,
+        'current_year': datetime.now(timezone.utc).year,
         'social_links': {
             'linkedin': current_app.config.get('SOCIAL_LINKEDIN', ''),
             'twitter': current_app.config.get('SOCIAL_TWITTER', ''),

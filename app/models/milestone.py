@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from typing import Optional, Dict, Any, List
+from typing import Optional, Any
 from enum import Enum
 
 from app.extensions import db
@@ -138,7 +138,7 @@ class Milestone(BaseModel, TimestampMixin, UserTrackingMixin):
             self.notes = f"{self.notes}\n{delay_note}" if self.notes else delay_note
     
     @classmethod
-    def get_by_entity(cls, entity_type: str, entity_id: int) -> List['Milestone']:
+    def get_by_entity(cls, entity_type: str, entity_id: int) -> list['Milestone']:
         """Obtener hitos por entidad"""
         return cls.query.filter_by(
             entity_type=entity_type,
@@ -146,7 +146,7 @@ class Milestone(BaseModel, TimestampMixin, UserTrackingMixin):
         ).order_by(cls.target_date.asc()).all()
     
     @classmethod
-    def get_overdue(cls) -> List['Milestone']:
+    def get_overdue(cls) -> list['Milestone']:
         """Obtener hitos vencidos"""
         return cls.query.filter(
             cls.target_date < date.today(),
@@ -154,7 +154,7 @@ class Milestone(BaseModel, TimestampMixin, UserTrackingMixin):
         ).all()
     
     @classmethod
-    def get_upcoming(cls, days: int = 7) -> List['Milestone']:
+    def get_upcoming(cls, days: int = 7) -> list['Milestone']:
         """Obtener hitos próximos"""
         from datetime import timedelta
         future_date = date.today() + timedelta(days=days)
@@ -164,7 +164,7 @@ class Milestone(BaseModel, TimestampMixin, UserTrackingMixin):
             cls.status.in_([MilestoneStatus.PENDING, MilestoneStatus.IN_PROGRESS])
         ).order_by(cls.target_date.asc()).all()
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convertir a diccionario"""
         return {
             'id': self.id,

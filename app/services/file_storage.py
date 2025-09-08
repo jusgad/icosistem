@@ -14,8 +14,8 @@ import magic
 import uuid
 import shutil
 import asyncio
-from typing import Dict, List, Optional, Any, Union, Tuple, BinaryIO
-from datetime import datetime, timedelta
+from typing import Optional, Any, Union, BinaryIO
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from enum import Enum
 from dataclasses import dataclass, asdict
@@ -179,20 +179,20 @@ class FileMetadata:
     mime_type: str
     file_hash: str
     category: str
-    dimensions: Optional[Tuple[int, int]] = None
+    dimensions: Optional[tuple[int, int]] = None
     duration: Optional[float] = None
     encoding: Optional[str] = None
     created_date: Optional[datetime] = None
     modified_date: Optional[datetime] = None
-    exif_data: Optional[Dict[str, Any]] = None
-    custom_metadata: Optional[Dict[str, Any]] = None
+    exif_data: Optional[dict[str, Any]] = None
+    custom_metadata: Optional[dict[str, Any]] = None
 
 
 @dataclass
 class UploadConfig:
     """Configuración de upload"""
     max_file_size: int = 100 * 1024 * 1024  # 100MB default
-    allowed_extensions: Optional[List[str]] = None
+    allowed_extensions: Optional[list[str]] = None
     require_virus_scan: bool = True
     auto_optimize: bool = True
     generate_thumbnails: bool = True
@@ -217,7 +217,7 @@ class FileUploadResult:
     scan_result: Optional[str] = None
     processing_time: float = 0.0
     error_message: Optional[str] = None
-    warnings: Optional[List[str]] = None
+    warnings: Optional[list[str]] = None
 
 
 @dataclass
@@ -225,9 +225,9 @@ class StorageStats:
     """Estadísticas de almacenamiento"""
     total_files: int
     total_size_bytes: int
-    files_by_category: Dict[str, int]
-    size_by_category: Dict[str, int]
-    files_by_provider: Dict[str, int]
+    files_by_category: dict[str, int]
+    size_by_category: dict[str, int]
+    files_by_provider: dict[str, int]
     monthly_uploads: int
     monthly_downloads: int
     quota_used_percentage: float
@@ -236,7 +236,7 @@ class StorageStats:
 class StorageProviderInterface:
     """Interfaz para proveedores de almacenamiento"""
     
-    def upload_file(self, file_path: str, key: str, metadata: Dict[str, Any]) -> str:
+    def upload_file(self, file_path: str, key: str, metadata: dict[str, Any]) -> str:
         """Subir archivo"""
         raise NotImplementedError
     
@@ -269,7 +269,7 @@ class LocalStorageProvider(StorageProviderInterface):
         self.base_path.mkdir(parents=True, exist_ok=True)
         self.base_url = current_app.config.get('UPLOAD_URL', '/uploads')
     
-    def upload_file(self, file_path: str, key: str, metadata: Dict[str, Any]) -> str:
+    def upload_file(self, file_path: str, key: str, metadata: dict[str, Any]) -> str:
         """Subir archivo al almacenamiento local"""
         try:
             dest_path = self.base_path / key
@@ -359,7 +359,7 @@ class S3StorageProvider(StorageProviderInterface):
             logger.error(f"Error inicializando S3: {str(e)}")
             self.s3_client = None
     
-    def upload_file(self, file_path: str, key: str, metadata: Dict[str, Any]) -> str:
+    def upload_file(self, file_path: str, key: str, metadata: dict[str, Any]) -> str:
         """Subir archivo a S3"""
         try:
             if not self.s3_client:
@@ -465,7 +465,7 @@ class GoogleCloudStorageProvider(StorageProviderInterface):
             self.client = None
             self.bucket = None
     
-    def upload_file(self, file_path: str, key: str, metadata: Dict[str, Any]) -> str:
+    def upload_file(self, file_path: str, key: str, metadata: dict[str, Any]) -> str:
         """Subir archivo a Google Cloud Storage"""
         try:
             if not self.bucket:
@@ -517,7 +517,7 @@ class GoogleCloudStorageProvider(StorageProviderInterface):
             
             blob = self.bucket.blob(key)
             url = blob.generate_signed_url(
-                expiration=datetime.utcnow() + timedelta(seconds=expires_in),
+                expiration=datetime.now(timezone.utc) + timedelta(seconds=expires_in),
                 method='GET'
             )
             return url
@@ -581,7 +581,7 @@ class FileStorageService(BaseService):
         self.virus_scanner = self._initialize_virus_scanner()
         self._setup_temp_directory()
     
-    def _initialize_providers(self) -> Dict[str, StorageProviderInterface]:
+    def _initialize_providers(self) -> dict[str, StorageProviderInterface]:
         """Inicializar proveedores de almacenamiento"""
         providers = {}
         
@@ -625,7 +625,7 @@ class FileStorageService(BaseService):
         filename: Optional[str] = None,
         category: str = FileCategory.OTHER.value,
         config: Optional[UploadConfig] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[dict[str, Any]] = None,
         related_entity_type: Optional[str] = None,
         related_entity_id: Optional[int] = None
     ) -> FileUploadResult:
@@ -645,7 +645,7 @@ class FileStorageService(BaseService):
         Returns:
             FileUploadResult: Resultado del upload
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         
         try:
             # Configuración por defecto
@@ -738,7 +738,7 @@ class FileStorageService(BaseService):
             )
             
             # Calcular tiempo de procesamiento
-            processing_time = (datetime.utcnow() - start_time).total_seconds()
+            processing_time = (datetime.now(timezone.utc) - start_time).total_seconds()
             
             result = FileUploadResult(
                 success=True,
@@ -764,7 +764,7 @@ class FileStorageService(BaseService):
             return FileUploadResult(
                 success=False,
                 error_message=str(e),
-                processing_time=(datetime.utcnow() - start_time).total_seconds()
+                processing_time=(datetime.now(timezone.utc) - start_time).total_seconds()
             )
     
     # @rate_limit("1000/hour")  # Rate limiting commented out for compatibility
@@ -774,7 +774,7 @@ class FileStorageService(BaseService):
         user_id: int,
         version: Optional[int] = None,
         track_download: bool = True
-    ) -> Tuple[str, str]:
+    ) -> tuple[str, str]:
         """
         Descargar archivo
         
@@ -785,7 +785,7 @@ class FileStorageService(BaseService):
             track_download: Trackear la descarga
             
         Returns:
-            Tuple[str, str]: (ruta_local, nombre_archivo)
+            tuple[str, str]: (ruta_local, nombre_archivo)
         """
         try:
             # Obtener información del archivo
@@ -907,7 +907,7 @@ class FileStorageService(BaseService):
             if soft_delete:
                 # Eliminación lógica
                 file_upload.status = FileStatus.DELETED.value
-                file_upload.deleted_at = datetime.utcnow()
+                file_upload.deleted_at = datetime.now(timezone.utc)
                 file_upload.deleted_by_id = user_id
                 db.session.commit()
             else:
@@ -1020,7 +1020,7 @@ class FileStorageService(BaseService):
                 storage_key=version_key,
                 storage_provider=original_file.storage_provider,
                 created_by_id=user_id,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
                 version_notes=version_notes
             )
             
@@ -1029,7 +1029,7 @@ class FileStorageService(BaseService):
             # Actualizar archivo principal con la nueva versión
             original_file.current_version = next_version
             original_file.file_size = file_metadata.file_size
-            original_file.updated_at = datetime.utcnow()
+            original_file.updated_at = datetime.now(timezone.utc)
             
             db.session.commit()
             
@@ -1102,7 +1102,7 @@ class FileStorageService(BaseService):
                 access_level=access_level,
                 expires_at=expires_at,
                 password_hash=generate_hash(password) if password else None,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             
             db.session.add(file_share)
@@ -1221,7 +1221,7 @@ class FileStorageService(BaseService):
                 user_id=user_id,
                 quota_bytes=default_quota,
                 used_bytes=0,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             db.session.add(quota)
             db.session.commit()
@@ -1453,14 +1453,14 @@ class FileStorageService(BaseService):
     ) -> str:
         """Generar clave de almacenamiento"""
         # Estructura: año/mes/usuario/categoría/file_id/filename
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         return f"{now.year}/{now.month:02d}/{user_id}/{category}/{file_id}/{filename}"
     
     def _prepare_storage_metadata(
         self, 
         file_metadata: FileMetadata, 
-        custom_metadata: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        custom_metadata: Optional[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Preparar metadata para almacenamiento"""
         metadata = {
             'original_filename': file_metadata.original_filename,
@@ -1468,7 +1468,7 @@ class FileStorageService(BaseService):
             'mime_type': file_metadata.mime_type,
             'file_hash': file_metadata.file_hash,
             'category': file_metadata.category,
-            'upload_timestamp': datetime.utcnow().isoformat()
+            'upload_timestamp': datetime.now(timezone.utc).isoformat()
         }
         
         if file_metadata.dimensions:
@@ -1532,7 +1532,7 @@ class FileStorageService(BaseService):
         thumbnail_url: Optional[str],
         related_entity_type: Optional[str],
         related_entity_id: Optional[int],
-        custom_metadata: Optional[Dict[str, Any]]
+        custom_metadata: Optional[dict[str, Any]]
     ) -> FileUpload:
         """Guardar registro de archivo en base de datos"""
         try:
@@ -1555,7 +1555,7 @@ class FileStorageService(BaseService):
                 metadata=json.dumps(custom_metadata) if custom_metadata else None,
                 dimensions_width=file_metadata.dimensions[0] if file_metadata.dimensions else None,
                 dimensions_height=file_metadata.dimensions[1] if file_metadata.dimensions else None,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
                 current_version=1
             )
             
@@ -1576,14 +1576,14 @@ class FileStorageService(BaseService):
             
             if quota:
                 quota.used_bytes += size_delta
-                quota.updated_at = datetime.utcnow()
+                quota.updated_at = datetime.now(timezone.utc)
                 db.session.commit()
             
         except SQLAlchemyError as e:
             db.session.rollback()
             logger.error(f"Error actualizando cuota: {str(e)}")
     
-    def _cleanup_temp_files(self, file_paths: List[str]):
+    def _cleanup_temp_files(self, file_paths: list[str]):
         """Limpiar archivos temporales"""
         for file_path in file_paths:
             try:
@@ -1632,7 +1632,7 @@ class FileStorageService(BaseService):
         
         return FileCategory.OTHER.value
     
-    def _extract_exif_data(self, img: Image.Image) -> Optional[Dict[str, Any]]:
+    def _extract_exif_data(self, img: Image.Image) -> Optional[dict[str, Any]]:
         """Extraer datos EXIF de imagen"""
         try:
             exif = img._getexif()
@@ -1658,7 +1658,7 @@ class FileStorageService(BaseService):
             shared_with_user_id=user_id
         ).first()
         
-        if share and (not share.expires_at or share.expires_at > datetime.utcnow()):
+        if share and (not share.expires_at or share.expires_at > datetime.now(timezone.utc)):
             return True
         
         # Administradores pueden acceder a todo
@@ -1693,7 +1693,7 @@ class FileStorageService(BaseService):
         try:
             # Incrementar contador de descargas
             file_upload.download_count = (file_upload.download_count or 0) + 1
-            file_upload.last_downloaded_at = datetime.utcnow()
+            file_upload.last_downloaded_at = datetime.now(timezone.utc)
             
             # Registrar en analytics
             self.analytics_service.track_event(
@@ -1843,7 +1843,7 @@ class FileStorageService(BaseService):
             logger.error(f"Error agregando watermark: {str(e)}")
             return file_path
     
-    def cleanup_expired_files(self) -> Dict[str, int]:
+    def cleanup_expired_files(self) -> dict[str, int]:
         """Limpiar archivos expirados y temporales"""
         try:
             stats = {
@@ -1853,7 +1853,7 @@ class FileStorageService(BaseService):
             }
             
             # Limpiar archivos marcados como eliminados hace más de 30 días
-            cutoff_date = datetime.utcnow() - timedelta(days=30)
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
             
             expired_files = FileUpload.query.filter(
                 FileUpload.status == FileStatus.DELETED.value,
@@ -1891,7 +1891,7 @@ class FileStorageService(BaseService):
             temp_files = list(self.temp_dir.glob('*'))
             for temp_file in temp_files:
                 try:
-                    if temp_file.is_file() and temp_file.stat().st_mtime < (datetime.utcnow() - timedelta(hours=1)).timestamp():
+                    if temp_file.is_file() and temp_file.stat().st_mtime < (datetime.now(timezone.utc) - timedelta(hours=1)).timestamp():
                         temp_file.unlink()
                         stats['cleaned_temp'] += 1
                 except Exception as e:
@@ -1911,8 +1911,8 @@ class FileStorageService(BaseService):
         self,
         from_provider: str,
         to_provider: str,
-        file_categories: Optional[List[str]] = None
-    ) -> Dict[str, int]:
+        file_categories: Optional[list[str]] = None
+    ) -> dict[str, int]:
         """Migrar archivos entre proveedores"""
         try:
             if from_provider not in self.providers or to_provider not in self.providers:
@@ -1949,7 +1949,7 @@ class FileStorageService(BaseService):
                         
                         metadata = {
                             'migrated_from': from_provider,
-                            'migration_date': datetime.utcnow().isoformat()
+                            'migration_date': datetime.now(timezone.utc).isoformat()
                         }
                         
                         dest_provider.upload_file(str(temp_file), new_key, metadata)
@@ -1957,7 +1957,7 @@ class FileStorageService(BaseService):
                         # Actualizar registro
                         file_upload.storage_provider = to_provider
                         file_upload.storage_key = new_key
-                        file_upload.updated_at = datetime.utcnow()
+                        file_upload.updated_at = datetime.now(timezone.utc)
                         
                         # Limpiar archivo temporal
                         temp_file.unlink()
@@ -2049,7 +2049,7 @@ def get_user_files(
     user_id: int,
     category: Optional[str] = None,
     related_entity_type: Optional[str] = None
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Obtener archivos del usuario"""
     
     query = FileUpload.query.filter_by(

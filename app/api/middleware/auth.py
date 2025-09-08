@@ -27,7 +27,7 @@ from flask_jwt_extended import (
 )
 from werkzeug.exceptions import Unauthorized, Forbidden
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Union, Set, Callable, Any, Tuple
+from typing import Optional, Union, Callable, Any
 from dataclasses import dataclass, field
 from enum import Enum
 import hashlib
@@ -91,12 +91,12 @@ class AuthenticationResult:
     authenticated: bool
     user: Optional[User] = None
     auth_type: Optional[AuthenticationType] = None
-    permissions: Set[str] = field(default_factory=set)
+    permissions: set[str] = field(default_factory=set)
     session_id: Optional[str] = None
     api_key_id: Optional[str] = None
     oauth_token_id: Optional[str] = None
     expires_at: Optional[datetime] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class AuthenticationConfig:
@@ -165,7 +165,7 @@ class JWTAuthenticator:
         self.config = config
         self.blacklist_manager = TokenBlacklistManager()
     
-    def create_tokens(self, user: User, additional_claims: Dict = None) -> Tuple[str, str]:
+    def create_tokens(self, user: User, additional_claims: Dict = None) -> tuple[str, str]:
         """Crea access y refresh tokens."""
         claims = {
             'user_id': user.id,

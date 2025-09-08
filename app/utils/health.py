@@ -6,8 +6,8 @@ Proporciona monitoreo de salud de componentes críticos del sistema.
 import time
 import psutil
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Callable, Optional
+from datetime import datetime, timedelta, timezone
+from typing import Any, Callable, Optional
 from flask import current_app
 from sqlalchemy import text
 
@@ -15,16 +15,16 @@ from sqlalchemy import text
 class HealthCheckResult:
     """Resultado de un health check."""
     
-    def __init__(self, name: str, healthy: bool, details: Dict[str, Any] = None, 
+    def __init__(self, name: str, healthy: bool, details: dict[str, Any] = None, 
                  response_time: float = 0, error: str = None):
         self.name = name
         self.healthy = healthy
         self.details = details or {}
         self.response_time = response_time
         self.error = error
-        self.timestamp = datetime.utcnow()
+        self.timestamp = datetime.now(timezone.utc)
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convertir resultado a diccionario."""
         result = {
             'name': self.name,
@@ -44,7 +44,7 @@ class HealthChecker:
     """Sistema de health checks."""
     
     def __init__(self):
-        self.checks: Dict[str, Callable[[], HealthCheckResult]] = {}
+        self.checks: dict[str, Callable[[], HealthCheckResult]] = {}
         self.logger = logging.getLogger('ecosistema.health')
     
     def register_check(self, name: str, check_func: Callable[[], HealthCheckResult]):
@@ -76,7 +76,7 @@ class HealthChecker:
                 error=str(e)
             )
     
-    def run_all_checks(self) -> Dict[str, Any]:
+    def run_all_checks(self) -> dict[str, Any]:
         """Ejecutar todos los health checks."""
         results = {}
         overall_healthy = True
@@ -96,11 +96,11 @@ class HealthChecker:
             'total_checks': len(self.checks),
             'healthy_checks': sum(1 for r in results.values() if r['status'] == 'healthy'),
             'total_response_time': total_time,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'checks': results
         }
     
-    def get_check_names(self) -> List[str]:
+    def get_check_names(self) -> list[str]:
         """Obtener nombres de todos los checks registrados."""
         return list(self.checks.keys())
 
@@ -578,7 +578,7 @@ def register_default_health_checks():
 # FUNCIÓN PRINCIPAL
 # ====================================
 
-def perform_health_checks(check_names: Optional[List[str]] = None) -> Dict[str, Any]:
+def perform_health_checks(check_names: Optional[list[str]] = None) -> dict[str, Any]:
     """
     Ejecutar health checks.
     
@@ -607,7 +607,7 @@ def perform_health_checks(check_names: Optional[List[str]] = None) -> Dict[str, 
             'overall': 'healthy' if overall_healthy else 'unhealthy',
             'total_checks': len(check_names),
             'healthy_checks': sum(1 for r in results.values() if r['status'] == 'healthy'),
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'checks': results
         }
     else:
@@ -615,7 +615,7 @@ def perform_health_checks(check_names: Optional[List[str]] = None) -> Dict[str, 
         return health_checker.run_all_checks()
 
 
-def get_health_check_summary() -> Dict[str, Any]:
+def get_health_check_summary() -> dict[str, Any]:
     """Obtener resumen rápido de salud del sistema."""
     try:
         # Health checks críticos
@@ -632,5 +632,5 @@ def get_health_check_summary() -> Dict[str, Any]:
         return {
             'status': 'error',
             'error': str(e),
-            'last_check': datetime.utcnow().isoformat()
+            'last_check': datetime.now(timezone.utc).isoformat()
         }

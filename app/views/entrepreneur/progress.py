@@ -9,8 +9,8 @@ Author: Sistema de Emprendimiento
 Version: 2.0.0
 """
 
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Any
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Any
 
 from flask import (
     Blueprint, render_template, request, redirect, url_for, 
@@ -80,7 +80,7 @@ def dashboard():
         
         # Obtener período de tiempo para análisis (último mes por defecto)
         period = request.args.get('period', '30')
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=int(period))
         
         # Datos principales del dashboard
@@ -253,7 +253,7 @@ def analytics_detail():
         
         # Período de análisis
         period = request.args.get('period', '90')
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=int(period))
         
         # Generar analytics usando el servicio
@@ -485,7 +485,7 @@ def api_get_metrics(period):
         if period not in ['7', '30', '90', '365']:
             return jsonify({'error': 'Período no válido'}), 400
         
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=int(period))
         
         metrics = _calculate_performance_metrics(entrepreneur, start_date, end_date)
@@ -566,10 +566,10 @@ def api_update_task_status():
         
         # Actualizar estado
         task.status = new_status
-        task.updated_at = datetime.utcnow()
+        task.updated_at = datetime.now(timezone.utc)
         
         if new_status == 'completed':
-            task.completed_at = datetime.utcnow()
+            task.completed_at = datetime.now(timezone.utc)
         
         db.session.commit()
         
@@ -657,7 +657,7 @@ def export_progress_excel():
 
 # ==================== FUNCIONES AUXILIARES ====================
 
-def _get_dashboard_data(entrepreneur: Entrepreneur, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _get_dashboard_data(entrepreneur: Entrepreneur, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """
     Obtiene todos los datos necesarios para el dashboard de progreso.
     
@@ -710,7 +710,7 @@ def _get_dashboard_data(entrepreneur: Entrepreneur, start_date: datetime, end_da
     }
 
 
-def _calculate_performance_metrics(entrepreneur: Entrepreneur, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _calculate_performance_metrics(entrepreneur: Entrepreneur, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """
     Calcula métricas de rendimiento del emprendedor.
     
@@ -774,7 +774,7 @@ def _calculate_performance_metrics(entrepreneur: Entrepreneur, start_date: datet
     }
 
 
-def _calculate_project_progress(project: Project) -> Dict[str, Any]:
+def _calculate_project_progress(project: Project) -> dict[str, Any]:
     """
     Calcula el progreso detallado de un proyecto específico.
     
@@ -799,7 +799,7 @@ def _calculate_project_progress(project: Project) -> Dict[str, Any]:
     # Progreso temporal
     if project.start_date and project.target_end_date:
         total_duration = (project.target_end_date - project.start_date).days
-        elapsed_duration = (datetime.utcnow().date() - project.start_date).days
+        elapsed_duration = (datetime.now(timezone.utc).date() - project.start_date).days
         time_progress = min((elapsed_duration / total_duration * 100), 100) if total_duration > 0 else 0
     else:
         time_progress = 0
@@ -834,11 +834,11 @@ def _calculate_project_progress(project: Project) -> Dict[str, Any]:
         'status_label': status_label,
         'status_class': status_class,
         'is_on_track': completion_percentage >= time_progress,
-        'days_remaining': (project.target_end_date - datetime.utcnow().date()).days if project.target_end_date else None
+        'days_remaining': (project.target_end_date - datetime.now(timezone.utc).date()).days if project.target_end_date else None
     }
 
 
-def _get_upcoming_milestones(entrepreneur: Entrepreneur, limit: int = 5) -> List[Dict[str, Any]]:
+def _get_upcoming_milestones(entrepreneur: Entrepreneur, limit: int = 5) -> list[dict[str, Any]]:
     """
     Obtiene los próximos hitos del emprendedor.
     
@@ -855,12 +855,12 @@ def _get_upcoming_milestones(entrepreneur: Entrepreneur, limit: int = 5) -> List
         Project.entrepreneur_id == entrepreneur.id,
         Task.status != 'completed',
         Task.due_date.isnot(None),
-        Task.due_date >= datetime.utcnow().date()
+        Task.due_date >= datetime.now(timezone.utc).date()
     ).order_by(Task.due_date.asc()).limit(limit).all()
     
     milestones = []
     for task in upcoming_tasks:
-        days_until_due = (task.due_date - datetime.utcnow().date()).days
+        days_until_due = (task.due_date - datetime.now(timezone.utc).date()).days
         
         milestones.append({
             'id': task.id,
@@ -876,7 +876,7 @@ def _get_upcoming_milestones(entrepreneur: Entrepreneur, limit: int = 5) -> List
     return milestones
 
 
-def _get_recent_activities(entrepreneur: Entrepreneur, limit: int = 10) -> List[Dict[str, Any]]:
+def _get_recent_activities(entrepreneur: Entrepreneur, limit: int = 10) -> list[dict[str, Any]]:
     """
     Obtiene las actividades recientes del emprendedor.
     
@@ -904,7 +904,7 @@ def _get_recent_activities(entrepreneur: Entrepreneur, limit: int = 10) -> List[
     ]
 
 
-def _generate_progress_recommendations(entrepreneur: Entrepreneur) -> List[Dict[str, str]]:
+def _generate_progress_recommendations(entrepreneur: Entrepreneur) -> list[dict[str, str]]:
     """
     Genera recomendaciones basadas en el progreso del emprendedor.
     
@@ -919,7 +919,7 @@ def _generate_progress_recommendations(entrepreneur: Entrepreneur) -> List[Dict[
     # Analizar proyectos atrasados
     delayed_projects = Project.query.filter(
         Project.entrepreneur_id == entrepreneur.id,
-        Project.target_end_date < datetime.utcnow().date(),
+        Project.target_end_date < datetime.now(timezone.utc).date(),
         Project.status == 'active'
     ).count()
     
@@ -934,7 +934,7 @@ def _generate_progress_recommendations(entrepreneur: Entrepreneur) -> List[Dict[
     # Analizar tareas pendientes
     overdue_tasks = Task.query.join(Project).filter(
         Project.entrepreneur_id == entrepreneur.id,
-        Task.due_date < datetime.utcnow().date(),
+        Task.due_date < datetime.now(timezone.utc).date(),
         Task.status != 'completed'
     ).count()
     
@@ -952,7 +952,7 @@ def _generate_progress_recommendations(entrepreneur: Entrepreneur) -> List[Dict[
     ).order_by(desc(MentorshipSession.session_date)).first()
     
     if last_mentorship:
-        days_since_mentorship = (datetime.utcnow().date() - last_mentorship.session_date).days
+        days_since_mentorship = (datetime.now(timezone.utc).date() - last_mentorship.session_date).days
         if days_since_mentorship > 30:
             recommendations.append({
                 'type': 'info',
@@ -1000,7 +1000,7 @@ def _calculate_productivity_score(task_completion_rate: float, avg_completion_da
     return round(productivity_score, 2)
 
 
-def _log_progress_update(entrepreneur: Entrepreneur, update_data: Dict[str, Any]) -> None:
+def _log_progress_update(entrepreneur: Entrepreneur, update_data: dict[str, Any]) -> None:
     """
     Registra una actualización de progreso en el log de actividades.
     
@@ -1028,7 +1028,7 @@ def _log_progress_update(entrepreneur: Entrepreneur, update_data: Dict[str, Any]
         db.session.rollback()
 
 
-def _notify_mentors_of_progress(entrepreneur: Entrepreneur, update_data: Dict[str, Any]) -> None:
+def _notify_mentors_of_progress(entrepreneur: Entrepreneur, update_data: dict[str, Any]) -> None:
     """
     Notifica a los mentores sobre actualizaciones importantes de progreso.
     
@@ -1060,49 +1060,49 @@ def _notify_mentors_of_progress(entrepreneur: Entrepreneur, update_data: Dict[st
 
 
 # Funciones adicionales que se referencian pero no están implementadas
-def _get_goals_by_timeframe(entrepreneur: Entrepreneur, timeframe: str) -> List[Dict[str, Any]]:
+def _get_goals_by_timeframe(entrepreneur: Entrepreneur, timeframe: str) -> list[dict[str, Any]]:
     """Obtiene objetivos por marco temporal."""
     # Implementación pendiente - requiere modelo Goal
     return []
 
 
-def _calculate_overall_goals_progress(entrepreneur: Entrepreneur) -> Dict[str, Any]:
+def _calculate_overall_goals_progress(entrepreneur: Entrepreneur) -> dict[str, Any]:
     """Calcula progreso general de objetivos."""
     # Implementación pendiente - requiere modelo Goal
     return {'overall_progress': 0, 'completed_goals': 0, 'total_goals': 0}
 
 
-def _get_urgent_goals(entrepreneur: Entrepreneur) -> List[Dict[str, Any]]:
+def _get_urgent_goals(entrepreneur: Entrepreneur) -> list[dict[str, Any]]:
     """Obtiene objetivos urgentes."""
     # Implementación pendiente - requiere modelo Goal
     return []
 
 
-def _get_completed_goals(entrepreneur: Entrepreneur, limit: int = 5) -> List[Dict[str, Any]]:
+def _get_completed_goals(entrepreneur: Entrepreneur, limit: int = 5) -> list[dict[str, Any]]:
     """Obtiene objetivos completados."""
     # Implementación pendiente - requiere modelo Goal
     return []
 
 
-def _get_mentorship_engagement_metrics(entrepreneur: Entrepreneur) -> Dict[str, Any]:
+def _get_mentorship_engagement_metrics(entrepreneur: Entrepreneur) -> dict[str, Any]:
     """Obtiene métricas de engagement con mentores."""
     # Implementación pendiente
     return {}
 
 
-def _log_goal_creation(entrepreneur: Entrepreneur, goal_data: Dict[str, Any]) -> None:
+def _log_goal_creation(entrepreneur: Entrepreneur, goal_data: dict[str, Any]) -> None:
     """Registra creación de objetivo."""
     # Implementación pendiente
     pass
 
 
-def _generate_progress_report_data(entrepreneur: Entrepreneur) -> Dict[str, Any]:
+def _generate_progress_report_data(entrepreneur: Entrepreneur) -> dict[str, Any]:
     """Genera datos para reporte de progreso."""
     # Implementación pendiente
     return {}
 
 
-def _generate_excel_export_data(entrepreneur: Entrepreneur) -> Dict[str, Any]:
+def _generate_excel_export_data(entrepreneur: Entrepreneur) -> dict[str, Any]:
     """Genera datos para exportación Excel."""
     # Implementación pendiente
     return {}

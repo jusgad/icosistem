@@ -2,7 +2,7 @@
 Modern Pydantic schemas for user-related operations.
 """
 
-from typing import Optional, List, Dict, Any
+from typing import Optional, Any
 from datetime import datetime
 from pydantic import Field, EmailStr, validator
 from enum import Enum
@@ -210,7 +210,7 @@ class UserResponse(UserBase):
     audit_info: AuditInfo = Field(description="Audit information")
     
     # Relationships count (optional, for performance)
-    relationships_count: Optional[Dict[str, int]] = Field(
+    relationships_count: Optional[dict[str, int]] = Field(
         default=None,
         description="Count of related entities"
     )
@@ -224,30 +224,30 @@ class UserProfile(UserResponse):
     """Extended user profile with additional details"""
     
     bio: Optional[str] = Field(default=None, description="User biography")
-    skills: Optional[List[str]] = Field(default=None, description="User skills")
-    interests: Optional[List[str]] = Field(default=None, description="User interests")
-    certifications: Optional[List[str]] = Field(default=None, description="Professional certifications")
-    education: Optional[List[Dict[str, Any]]] = Field(
+    skills: Optional[list[str]] = Field(default=None, description="User skills")
+    interests: Optional[list[str]] = Field(default=None, description="User interests")
+    certifications: Optional[list[str]] = Field(default=None, description="Professional certifications")
+    education: Optional[list[dict[str, Any]]] = Field(
         default=None,
         description="Educational background"
     )
-    experience: Optional[List[Dict[str, Any]]] = Field(
+    experience: Optional[list[dict[str, Any]]] = Field(
         default=None,
         description="Professional experience"
     )
-    achievements: Optional[List[Dict[str, Any]]] = Field(
+    achievements: Optional[list[dict[str, Any]]] = Field(
         default=None,
         description="Achievements and awards"
     )
     
     # Social media links
-    social_media: Optional[Dict[str, str]] = Field(
+    social_media: Optional[dict[str, str]] = Field(
         default=None,
         description="Social media profiles"
     )
     
     # Privacy settings
-    privacy_settings: Optional[Dict[str, Any]] = Field(
+    privacy_settings: Optional[dict[str, Any]] = Field(
         default=None,
         description="Privacy settings"
     )
@@ -291,7 +291,7 @@ class UserActivity(BaseSchema):
     activity_type: str = Field(description="Type of activity")
     description: str = Field(description="Activity description")
     timestamp: datetime = Field(description="Activity timestamp")
-    metadata: Optional[Dict[str, Any]] = Field(
+    metadata: Optional[dict[str, Any]] = Field(
         default=None,
         description="Additional activity metadata"
     )
@@ -337,11 +337,11 @@ class UserStats(BaseSchema):
 class UserSearchFilters(BaseSchema):
     """User search filters"""
     
-    user_type: Optional[List[UserType]] = Field(default=None, description="User types to filter")
-    status: Optional[List[UserStatus]] = Field(default=None, description="User statuses to filter")
+    user_type: Optional[list[UserType]] = Field(default=None, description="User types to filter")
+    status: Optional[list[UserStatus]] = Field(default=None, description="User statuses to filter")
     location: Optional[str] = Field(default=None, description="Location filter")
-    skills: Optional[List[str]] = Field(default=None, description="Skills filter")
-    interests: Optional[List[str]] = Field(default=None, description="Interests filter")
+    skills: Optional[list[str]] = Field(default=None, description="Skills filter")
+    interests: Optional[list[str]] = Field(default=None, description="Interests filter")
     verified_only: Optional[bool] = Field(default=None, description="Show only verified users")
     has_projects: Optional[bool] = Field(default=None, description="Has active projects")
     
@@ -382,8 +382,8 @@ class BulkUserOperation(BaseSchema):
     """Bulk user operation schema"""
     
     operation: str = Field(description="Operation to perform (activate, deactivate, delete, etc.)")
-    user_ids: List[str] = Field(min_length=1, description="List of user IDs")
-    parameters: Optional[Dict[str, Any]] = Field(
+    user_ids: list[str] = Field(min_length=1, description="List of user IDs")
+    parameters: Optional[dict[str, Any]] = Field(
         default=None,
         description="Operation parameters"
     )
@@ -393,8 +393,8 @@ class BulkUserOperation(BaseSchema):
 class UserImport(BaseSchema):
     """User import schema"""
     
-    users: List[UserCreate] = Field(min_length=1, description="List of users to import")
-    import_options: Optional[Dict[str, Any]] = Field(
+    users: list[UserCreate] = Field(min_length=1, description="List of users to import")
+    import_options: Optional[dict[str, Any]] = Field(
         default=None,
         description="Import options"
     )
@@ -427,7 +427,7 @@ class UserRoleAssignment(BaseSchema):
         default=None,
         description="Organization ID for role scope"
     )
-    permissions: Optional[List[str]] = Field(
+    permissions: Optional[list[str]] = Field(
         default=None,
         description="Additional permissions"
     )

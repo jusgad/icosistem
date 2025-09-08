@@ -38,8 +38,8 @@ import string
 import secrets
 import hashlib
 import logging
-from typing import List, Dict, Optional, Union, Tuple, Any, Pattern
-from datetime import datetime
+from typing import Optional, Union, Any, Pattern
+from datetime import datetime, timezone
 import html
 import json
 import base64
@@ -654,7 +654,7 @@ def highlight_text(text: str,
     return highlighted
 
 def replace_variables(template: str, 
-                     variables: Dict[str, str],
+                     variables: dict[str, str],
                      bracket_style: str = "curly") -> str:
     """
     Reemplaza variables en un template.
@@ -701,7 +701,7 @@ def replace_variables(template: str,
     
     return result
 
-def extract_mentions(text: str) -> List[str]:
+def extract_mentions(text: str) -> list[str]:
     """
     Extrae menciones (@usuario) del texto.
     
@@ -721,7 +721,7 @@ def extract_mentions(text: str) -> List[str]:
     matches = REGEX_PATTERNS['mention'].findall(text)
     return list(set(matches))  # Remover duplicados
 
-def extract_hashtags(text: str) -> List[str]:
+def extract_hashtags(text: str) -> list[str]:
     """
     Extrae hashtags (#tag) del texto.
     
@@ -741,7 +741,7 @@ def extract_hashtags(text: str) -> List[str]:
     matches = REGEX_PATTERNS['hashtag'].findall(text)
     return list(set(matches))  # Remover duplicados
 
-def extract_emails(text: str) -> List[str]:
+def extract_emails(text: str) -> list[str]:
     """
     Extrae direcciones de email del texto.
     
@@ -757,7 +757,7 @@ def extract_emails(text: str) -> List[str]:
     matches = REGEX_PATTERNS['email'].findall(text)
     return list(set(matches))
 
-def extract_urls(text: str) -> List[str]:
+def extract_urls(text: str) -> list[str]:
     """
     Extrae URLs del texto.
     
@@ -773,7 +773,7 @@ def extract_urls(text: str) -> List[str]:
     matches = REGEX_PATTERNS['url'].findall(text)
     return list(set(matches))
 
-def extract_phones(text: str) -> List[str]:
+def extract_phones(text: str) -> list[str]:
     """
     Extrae números de teléfono del texto.
     
@@ -1256,7 +1256,7 @@ def count_characters(text: str, include_spaces: bool = True) -> int:
     else:
         return len(text.replace(' ', ''))
 
-def analyze_text(text: str) -> Dict[str, Any]:
+def analyze_text(text: str) -> dict[str, Any]:
     """
     Analiza texto y retorna estadísticas completas.
     
@@ -1426,7 +1426,7 @@ class StringUtils:
         return generate_unique_id(**kwargs)
     
     # Métodos de análisis
-    def analyze(self, text: str) -> Dict[str, Any]:
+    def analyze(self, text: str) -> dict[str, Any]:
         """Analiza texto."""
         return analyze_text(text)
     
@@ -1455,7 +1455,7 @@ class StringUtils:
 string_utils = StringUtils()
 
 # Funciones de conveniencia que usan la instancia global
-def get_string_config() -> Dict[str, Any]:
+def get_string_config() -> dict[str, Any]:
     """Obtiene configuración actual de strings."""
     return string_utils.config.copy()
 

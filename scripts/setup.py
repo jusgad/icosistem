@@ -36,7 +36,7 @@ import logging
 import shutil
 import urllib.parse
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Optional, Any
 from dataclasses import dataclass
 from datetime import datetime
 import tempfile
@@ -477,7 +477,7 @@ class EcosistemaSetup:
         
         self.logger.success("Variables de entorno configuradas")
     
-    def _collect_external_service_config(self, env_vars: Dict[str, str]):
+    def _collect_external_service_config(self, env_vars: dict[str, str]):
         """
         Recolecta configuración de servicios externos del usuario.
         
@@ -532,7 +532,7 @@ class EcosistemaSetup:
         """
         return secrets.token_hex(32)
     
-    def _write_env_file(self, env_vars: Dict[str, str]):
+    def _write_env_file(self, env_vars: dict[str, str]):
         """
         Escribre el archivo .env con las variables.
         

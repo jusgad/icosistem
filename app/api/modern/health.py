@@ -6,7 +6,7 @@ from flask_restx import Namespace, Resource, fields
 from flask import current_app
 import time
 import psutil
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Create health namespace
 health_ns = Namespace(
@@ -73,7 +73,7 @@ class HealthCheck(Resource):
                 'healthy': True,
                 'service': 'ecosistema-emprendimiento-api',
                 'version': current_app.config.get('APP_VERSION', '2.0.0'),
-                'timestamp': datetime.utcnow(),
+                'timestamp': datetime.now(timezone.utc),
                 'uptime_seconds': uptime,
                 'environment': current_app.config.get('ENVIRONMENT', 'development')
             }
@@ -85,7 +85,7 @@ class HealthCheck(Resource):
                 'healthy': False,
                 'service': 'ecosistema-emprendimiento-api',
                 'error': str(e),
-                'timestamp': datetime.utcnow()
+                'timestamp': datetime.now(timezone.utc)
             }, 503
 
 
@@ -353,7 +353,7 @@ class LivenessProbe(Resource):
         """
         try:
             # Basic liveness check - just verify the process is running
-            return {'status': 'alive', 'timestamp': datetime.utcnow().isoformat()}, 200
+            return {'status': 'alive', 'timestamp': datetime.now(timezone.utc).isoformat()}, 200
         except Exception:
             return {'status': 'dead'}, 503
 
@@ -386,12 +386,12 @@ class ReadinessProbe(Resource):
             
             return {
                 'status': 'ready', 
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, 200
             
         except Exception as e:
             return {
                 'status': 'not_ready',
                 'error': str(e),
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }, 503

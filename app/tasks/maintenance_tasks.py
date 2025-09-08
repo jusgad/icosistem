@@ -29,8 +29,8 @@ import psutil
 import subprocess
 import glob
 import gzip
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union, Tuple
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Any, Union
 from dataclasses import dataclass, asdict
 from enum import Enum
 import tempfile
@@ -120,11 +120,11 @@ class HealthCheckResult:
     service: str
     status: HealthStatus
     response_time: float
-    details: Dict[str, Any]
+    details: dict[str, Any]
     timestamp: datetime
     error_message: str = None
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             **asdict(self),
             'timestamp': self.timestamp.isoformat(),
@@ -138,11 +138,11 @@ class MaintenanceResult:
     operation: MaintenanceOperation
     success: bool
     duration: float
-    details: Dict[str, Any]
+    details: dict[str, Any]
     items_processed: int = 0
     space_freed: int = 0
     error_message: str = None
-    recommendations: List[str] = None
+    recommendations: list[str] = None
     
     def __post_init__(self):
         if self.recommendations is None:
@@ -156,7 +156,7 @@ class SystemMonitor:
         self.notification_service = NotificationService()
         self.analytics_service = AnalyticsService()
     
-    def get_system_health(self) -> Dict[str, HealthCheckResult]:
+    def get_system_health(self) -> dict[str, HealthCheckResult]:
         """Obtiene el estado completo del sistema"""
         health_results = {}
         
@@ -182,7 +182,7 @@ class SystemMonitor:
                     status=result['status'],
                     response_time=response_time,
                     details=result['details'],
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(timezone.utc),
                     error_message=result.get('error')
                 )
                 
@@ -192,13 +192,13 @@ class SystemMonitor:
                     status=HealthStatus.CRITICAL,
                     response_time=0.0,
                     details={},
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(timezone.utc),
                     error_message=str(e)
                 )
         
         return health_results
     
-    def _check_database_health(self) -> Dict[str, Any]:
+    def _check_database_health(self) -> dict[str, Any]:
         """Verifica el estado de la base de datos"""
         try:
             from app import db
@@ -269,7 +269,7 @@ class SystemMonitor:
                 'error': str(e)
             }
     
-    def _check_redis_health(self) -> Dict[str, Any]:
+    def _check_redis_health(self) -> dict[str, Any]:
         """Verifica el estado de Redis"""
         try:
             r = redis.from_url(REDIS_URL)
@@ -314,7 +314,7 @@ class SystemMonitor:
                 'error': str(e)
             }
     
-    def _check_filesystem_health(self) -> Dict[str, Any]:
+    def _check_filesystem_health(self) -> dict[str, Any]:
         """Verifica el estado del sistema de archivos"""
         try:
             disk_usage = psutil.disk_usage('/')
@@ -361,7 +361,7 @@ class SystemMonitor:
                 'error': str(e)
             }
     
-    def _check_system_resources(self) -> Dict[str, Any]:
+    def _check_system_resources(self) -> dict[str, Any]:
         """Verifica recursos del sistema (CPU, memoria, etc.)"""
         try:
             # CPU
@@ -410,7 +410,7 @@ class SystemMonitor:
                 'error': str(e)
             }
     
-    def _check_external_services(self) -> Dict[str, Any]:
+    def _check_external_services(self) -> dict[str, Any]:
         """Verifica servicios externos"""
         external_services = {}
         overall_status = HealthStatus.HEALTHY
@@ -455,7 +455,7 @@ class SystemMonitor:
             'details': external_services
         }
     
-    def _check_application_health(self) -> Dict[str, Any]:
+    def _check_application_health(self) -> dict[str, Any]:
         """Verifica el estado de la aplicación"""
         try:
             from app import db
@@ -520,7 +520,7 @@ class SystemMonitor:
                 'error': str(e)
             }
     
-    def _check_security_status(self) -> Dict[str, Any]:
+    def _check_security_status(self) -> dict[str, Any]:
         """Verifica el estado de seguridad"""
         try:
             from app import db
@@ -544,7 +544,7 @@ class SystemMonitor:
             # Verificar tokens de dispositivo inválidos
             invalid_tokens = DeviceToken.query.filter(
                 DeviceToken.is_active == False,
-                DeviceToken.updated_at > datetime.utcnow() - timedelta(hours=24)
+                DeviceToken.updated_at > datetime.now(timezone.utc) - timedelta(hours=24)
             ).count()
             
             # Verificar permisos de archivos críticos
@@ -642,7 +642,7 @@ def system_health_check(self):
         # Guardar métricas en cache para acceso rápido
         health_summary = {
             'overall_status': overall_status.value,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'critical_issues': len(critical_issues),
             'warning_issues': len(warning_issues),
             'healthy_services': len(healthy_services),
@@ -660,7 +660,7 @@ def system_health_check(self):
                 message=f"CRÍTICO: {len(critical_issues)} servicios con problemas críticos",
                 details={
                     'critical_issues': critical_issues,
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 },
                 recipients=['admin', 'tech_team']
             )
@@ -877,7 +877,7 @@ def monthly_data_archive(self):
         logger.info("Iniciando archivado mensual de datos")
         
         # Fecha de corte (datos más antiguos de 6 meses)
-        cutoff_date = datetime.utcnow() - timedelta(days=180)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=180)
         
         archive_results = []
         
@@ -958,7 +958,7 @@ def optimize_database_performance(self):
         from app import db
         
         optimization_results = []
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         
         # 1. VACUUM ANALYZE para limpiar y actualizar estadísticas
         logger.info("Ejecutando VACUUM ANALYZE")
@@ -1047,7 +1047,7 @@ def optimize_database_performance(self):
         except Exception as e:
             logger.warning(f"No se pudo verificar fragmentación: {str(e)}")
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         # Generar recomendaciones
         recommendations = []
@@ -1102,7 +1102,7 @@ def optimize_database_performance(self):
 
 # === FUNCIONES AUXILIARES PRIVADAS ===
 
-def _save_health_metrics(health_results: Dict[str, HealthCheckResult], overall_status: HealthStatus):
+def _save_health_metrics(health_results: dict[str, HealthCheckResult], overall_status: HealthStatus):
     """Guarda métricas de health check en la base de datos"""
     try:
         # Compilar métricas para guardar
@@ -1116,14 +1116,14 @@ def _save_health_metrics(health_results: Dict[str, HealthCheckResult], overall_s
                 }
                 for service, result in health_results.items()
             },
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
         
         # Guardar en tabla de métricas del sistema
         metric = SystemMetric(
             metric_type='health_check',
             metric_data=metrics_data,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.now(timezone.utc)
         )
         
         from app import db
@@ -1136,13 +1136,13 @@ def _save_health_metrics(health_results: Dict[str, HealthCheckResult], overall_s
 
 def _cleanup_temp_files() -> MaintenanceResult:
     """Limpia archivos temporales antiguos"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     items_processed = 0
     space_freed = 0
     errors = []
     
     try:
-        cutoff_time = datetime.utcnow() - timedelta(hours=MAX_TEMP_FILE_AGE_HOURS)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=MAX_TEMP_FILE_AGE_HOURS)
         
         for temp_dir in TEMP_DIRS:
             if not os.path.exists(temp_dir):
@@ -1162,7 +1162,7 @@ def _cleanup_temp_files() -> MaintenanceResult:
                     except Exception as e:
                         errors.append(f"Error eliminando {file_path}: {str(e)}")
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
@@ -1180,7 +1180,7 @@ def _cleanup_temp_files() -> MaintenanceResult:
         )
         
     except Exception as e:
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
             success=False,
@@ -1192,12 +1192,12 @@ def _cleanup_temp_files() -> MaintenanceResult:
 
 def _cleanup_old_logs() -> MaintenanceResult:
     """Limpia logs antiguos"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     items_processed = 0
     space_freed = 0
     
     try:
-        cutoff_date = datetime.utcnow() - timedelta(days=MAX_LOG_AGE_DAYS)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=MAX_LOG_AGE_DAYS)
         
         for log_dir in LOG_DIRS:
             if not os.path.exists(log_dir):
@@ -1220,7 +1220,7 @@ def _cleanup_old_logs() -> MaintenanceResult:
                     except Exception as e:
                         logger.error(f"Error eliminando log {log_file}: {str(e)}")
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
@@ -1235,7 +1235,7 @@ def _cleanup_old_logs() -> MaintenanceResult:
         )
         
     except Exception as e:
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
             success=False,
@@ -1246,13 +1246,13 @@ def _cleanup_old_logs() -> MaintenanceResult:
 
 def _cleanup_expired_sessions() -> MaintenanceResult:
     """Limpia sesiones caducadas"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     try:
         from app import db
         
         # Limpiar sesiones Flask caducadas (si se usan sesiones de BD)
-        cutoff_date = datetime.utcnow() - timedelta(days=7)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=7)
         
         # Aquí se limpiarían las sesiones según tu implementación
         # Por ejemplo, si usas Flask-Session con BD:
@@ -1264,7 +1264,7 @@ def _cleanup_expired_sessions() -> MaintenanceResult:
         # items_processed = expired_sessions.rowcount
         
         # Para este ejemplo, limpiamos usuarios inactivos hace mucho
-        inactive_threshold = datetime.utcnow() - timedelta(days=90)
+        inactive_threshold = datetime.now(timezone.utc) - timedelta(days=90)
         inactive_users = User.query.filter(
             User.last_activity < inactive_threshold,
             User.is_active == True
@@ -1278,7 +1278,7 @@ def _cleanup_expired_sessions() -> MaintenanceResult:
             ).update({'is_active': False})
             db.session.commit()
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
@@ -1292,7 +1292,7 @@ def _cleanup_expired_sessions() -> MaintenanceResult:
         )
         
     except Exception as e:
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
             success=False,
@@ -1303,13 +1303,13 @@ def _cleanup_expired_sessions() -> MaintenanceResult:
 
 def _cleanup_old_notifications() -> MaintenanceResult:
     """Limpia notificaciones antiguas leídas"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     try:
         from app import db
         
         # Eliminar notificaciones leídas más antiguas de 30 días
-        cutoff_date = datetime.utcnow() - timedelta(days=30)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
         
         old_notifications = Notification.query.filter(
             Notification.status == NotificationStatus.READ,
@@ -1320,7 +1320,7 @@ def _cleanup_old_notifications() -> MaintenanceResult:
         old_notifications.delete(synchronize_session=False)
         
         # Eliminar notificaciones no leídas más antiguas de 90 días
-        very_old_cutoff = datetime.utcnow() - timedelta(days=90)
+        very_old_cutoff = datetime.now(timezone.utc) - timedelta(days=90)
         very_old_notifications = Notification.query.filter(
             Notification.created_at < very_old_cutoff
         )
@@ -1330,7 +1330,7 @@ def _cleanup_old_notifications() -> MaintenanceResult:
         
         db.session.commit()
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
@@ -1344,7 +1344,7 @@ def _cleanup_old_notifications() -> MaintenanceResult:
         )
         
     except Exception as e:
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
             success=False,
@@ -1355,13 +1355,13 @@ def _cleanup_old_notifications() -> MaintenanceResult:
 
 def _cleanup_invalid_device_tokens() -> MaintenanceResult:
     """Limpia tokens de dispositivo inválidos"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     try:
         from app import db
         
         # Eliminar tokens marcados como inválidos hace más de 7 días
-        cutoff_date = datetime.utcnow() - timedelta(days=7)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=7)
         
         invalid_tokens = DeviceToken.query.filter(
             DeviceToken.is_active == False,
@@ -1372,7 +1372,7 @@ def _cleanup_invalid_device_tokens() -> MaintenanceResult:
         invalid_tokens.delete(synchronize_session=False)
         
         # Marcar como inactivos tokens muy antiguos (más de 180 días sin uso)
-        very_old_cutoff = datetime.utcnow() - timedelta(days=180)
+        very_old_cutoff = datetime.now(timezone.utc) - timedelta(days=180)
         very_old_tokens = DeviceToken.query.filter(
             DeviceToken.last_used < very_old_cutoff,
             DeviceToken.is_active == True
@@ -1383,7 +1383,7 @@ def _cleanup_invalid_device_tokens() -> MaintenanceResult:
         
         db.session.commit()
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
@@ -1397,7 +1397,7 @@ def _cleanup_invalid_device_tokens() -> MaintenanceResult:
         )
         
     except Exception as e:
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
             success=False,
@@ -1408,13 +1408,13 @@ def _cleanup_invalid_device_tokens() -> MaintenanceResult:
 
 def _cleanup_old_analytics_events() -> MaintenanceResult:
     """Limpia eventos de analytics antiguos"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     try:
         from app import db
         
         # Mantener solo eventos de los últimos 90 días
-        cutoff_date = datetime.utcnow() - timedelta(days=90)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=90)
         
         old_events = AnalyticsEvent.query.filter(
             AnalyticsEvent.timestamp < cutoff_date
@@ -1425,7 +1425,7 @@ def _cleanup_old_analytics_events() -> MaintenanceResult:
         
         db.session.commit()
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
@@ -1439,7 +1439,7 @@ def _cleanup_old_analytics_events() -> MaintenanceResult:
         )
         
     except Exception as e:
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
             success=False,
@@ -1450,7 +1450,7 @@ def _cleanup_old_analytics_events() -> MaintenanceResult:
 
 def _cleanup_expired_cache() -> MaintenanceResult:
     """Limpia cache caducado de Redis"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     try:
         r = redis.from_url(REDIS_URL)
@@ -1472,7 +1472,7 @@ def _cleanup_expired_cache() -> MaintenanceResult:
         keys_cleaned = keys_before - keys_after
         memory_freed = memory_before - memory_after
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
@@ -1488,7 +1488,7 @@ def _cleanup_expired_cache() -> MaintenanceResult:
         )
         
     except Exception as e:
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
             success=False,
@@ -1501,7 +1501,7 @@ def _cleanup_expired_cache() -> MaintenanceResult:
 def _optimize_database() -> MaintenanceResult:
     """Optimización general de base de datos"""
     # Implementación básica - se puede expandir
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     try:
         from app import db
@@ -1510,7 +1510,7 @@ def _optimize_database() -> MaintenanceResult:
         db.session.execute(text('VACUUM'))
         db.session.commit()
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return MaintenanceResult(
             operation=MaintenanceOperation.OPTIMIZATION,
@@ -1521,7 +1521,7 @@ def _optimize_database() -> MaintenanceResult:
         )
         
     except Exception as e:
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         return MaintenanceResult(
             operation=MaintenanceOperation.OPTIMIZATION,
             success=False,
@@ -1532,7 +1532,7 @@ def _optimize_database() -> MaintenanceResult:
 
 def _deep_file_cleanup() -> MaintenanceResult:
     """Limpieza profunda de archivos"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     space_freed = 0
     items_processed = 0
     
@@ -1550,7 +1550,7 @@ def _deep_file_cleanup() -> MaintenanceResult:
                         space_freed += file_size
                         items_processed += 1
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
@@ -1562,7 +1562,7 @@ def _deep_file_cleanup() -> MaintenanceResult:
         )
         
     except Exception as e:
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
             success=False,
@@ -1573,7 +1573,7 @@ def _deep_file_cleanup() -> MaintenanceResult:
 
 def _optimize_database_indexes() -> MaintenanceResult:
     """Optimización de índices de base de datos"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     try:
         from app import db
@@ -1582,7 +1582,7 @@ def _optimize_database_indexes() -> MaintenanceResult:
         db.session.execute(text('ANALYZE'))
         db.session.commit()
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return MaintenanceResult(
             operation=MaintenanceOperation.OPTIMIZATION,
@@ -1592,7 +1592,7 @@ def _optimize_database_indexes() -> MaintenanceResult:
         )
         
     except Exception as e:
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         return MaintenanceResult(
             operation=MaintenanceOperation.OPTIMIZATION,
             success=False,
@@ -1603,7 +1603,7 @@ def _optimize_database_indexes() -> MaintenanceResult:
 
 def _verify_data_integrity() -> MaintenanceResult:
     """Verificación de integridad de datos"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     try:
         from app import db
@@ -1629,7 +1629,7 @@ def _verify_data_integrity() -> MaintenanceResult:
         if orphaned_projects > 0:
             integrity_checks.append(f"{orphaned_projects} proyectos huérfanos")
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return MaintenanceResult(
             operation=MaintenanceOperation.HEALTH_CHECK,
@@ -1645,7 +1645,7 @@ def _verify_data_integrity() -> MaintenanceResult:
         )
         
     except Exception as e:
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         return MaintenanceResult(
             operation=MaintenanceOperation.HEALTH_CHECK,
             success=False,
@@ -1656,12 +1656,12 @@ def _verify_data_integrity() -> MaintenanceResult:
 
 def _update_system_statistics() -> MaintenanceResult:
     """Actualización de estadísticas del sistema"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     try:
         # Actualizar estadísticas en cache
         stats = {
-            'last_updated': datetime.utcnow().isoformat(),
+            'last_updated': datetime.now(timezone.utc).isoformat(),
             'uptime': _get_system_uptime(),
             'total_users': User.query.count(),
             'active_users': User.query.filter(User.is_active == True).count()
@@ -1669,7 +1669,7 @@ def _update_system_statistics() -> MaintenanceResult:
         
         cache_set('system_statistics', stats, timeout=86400)  # 24 horas
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return MaintenanceResult(
             operation=MaintenanceOperation.MONITORING,
@@ -1679,7 +1679,7 @@ def _update_system_statistics() -> MaintenanceResult:
         )
         
     except Exception as e:
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         return MaintenanceResult(
             operation=MaintenanceOperation.MONITORING,
             success=False,
@@ -1690,13 +1690,13 @@ def _update_system_statistics() -> MaintenanceResult:
 
 def _cleanup_obsolete_backups() -> MaintenanceResult:
     """Limpieza de backups obsoletos"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     try:
         from app import db
         
         # Marcar backups fallidos antiguos como obsoletos
-        cutoff_date = datetime.utcnow() - timedelta(days=7)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=7)
         
         obsolete_backups = BackupRecord.query.filter(
             BackupRecord.status == 'failed',
@@ -1708,7 +1708,7 @@ def _cleanup_obsolete_backups() -> MaintenanceResult:
         
         db.session.commit()
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
@@ -1719,7 +1719,7 @@ def _cleanup_obsolete_backups() -> MaintenanceResult:
         )
         
     except Exception as e:
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
             success=False,
@@ -1731,7 +1731,7 @@ def _cleanup_obsolete_backups() -> MaintenanceResult:
 # Funciones auxiliares para archivado mensual
 def _archive_old_activity_logs(cutoff_date: datetime) -> MaintenanceResult:
     """Archiva logs de actividad antiguos"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     try:
         from app import db
@@ -1750,7 +1750,7 @@ def _archive_old_activity_logs(cutoff_date: datetime) -> MaintenanceResult:
         # old_logs.delete(synchronize_session=False)
         # db.session.commit()
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
@@ -1761,7 +1761,7 @@ def _archive_old_activity_logs(cutoff_date: datetime) -> MaintenanceResult:
         )
         
     except Exception as e:
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
             success=False,
@@ -1772,7 +1772,7 @@ def _archive_old_activity_logs(cutoff_date: datetime) -> MaintenanceResult:
 
 def _archive_old_analytics_events(cutoff_date: datetime) -> MaintenanceResult:
     """Archiva eventos de analytics antiguos"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     try:
         # Similar a activity logs
@@ -1780,7 +1780,7 @@ def _archive_old_analytics_events(cutoff_date: datetime) -> MaintenanceResult:
             AnalyticsEvent.timestamp < cutoff_date
         ).count()
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
@@ -1791,7 +1791,7 @@ def _archive_old_analytics_events(cutoff_date: datetime) -> MaintenanceResult:
         )
         
     except Exception as e:
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
             success=False,
@@ -1802,14 +1802,14 @@ def _archive_old_analytics_events(cutoff_date: datetime) -> MaintenanceResult:
 
 def _archive_old_notifications(cutoff_date: datetime) -> MaintenanceResult:
     """Archiva notificaciones antiguas"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     try:
         items_to_archive = Notification.query.filter(
             Notification.created_at < cutoff_date
         ).count()
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
@@ -1820,7 +1820,7 @@ def _archive_old_notifications(cutoff_date: datetime) -> MaintenanceResult:
         )
         
     except Exception as e:
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
             success=False,
@@ -1831,14 +1831,14 @@ def _archive_old_notifications(cutoff_date: datetime) -> MaintenanceResult:
 
 def _archive_old_system_metrics(cutoff_date: datetime) -> MaintenanceResult:
     """Archiva métricas del sistema antiguas"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     try:
         items_to_archive = SystemMetric.query.filter(
             SystemMetric.timestamp < cutoff_date
         ).count()
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
@@ -1849,7 +1849,7 @@ def _archive_old_system_metrics(cutoff_date: datetime) -> MaintenanceResult:
         )
         
     except Exception as e:
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         return MaintenanceResult(
             operation=MaintenanceOperation.CLEANUP,
             success=False,
@@ -1860,7 +1860,7 @@ def _archive_old_system_metrics(cutoff_date: datetime) -> MaintenanceResult:
 
 def _compress_old_log_files() -> MaintenanceResult:
     """Comprime archivos de log antiguos"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     items_processed = 0
     space_freed = 0
     
@@ -1875,7 +1875,7 @@ def _compress_old_log_files() -> MaintenanceResult:
             for log_file in log_files:
                 # Solo comprimir archivos más antiguos de 7 días
                 file_time = datetime.fromtimestamp(os.path.getmtime(log_file))
-                if file_time < datetime.utcnow() - timedelta(days=7):
+                if file_time < datetime.now(timezone.utc) - timedelta(days=7):
                     try:
                         original_size = os.path.getsize(log_file)
                         
@@ -1894,7 +1894,7 @@ def _compress_old_log_files() -> MaintenanceResult:
                     except Exception as e:
                         logger.error(f"Error comprimiendo {log_file}: {str(e)}")
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return MaintenanceResult(
             operation=MaintenanceOperation.OPTIMIZATION,
@@ -1906,7 +1906,7 @@ def _compress_old_log_files() -> MaintenanceResult:
         )
         
     except Exception as e:
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         return MaintenanceResult(
             operation=MaintenanceOperation.OPTIMIZATION,
             success=False,

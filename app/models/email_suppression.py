@@ -91,8 +91,8 @@ class EmailSuppression(CompleteBaseModel):
         
         # Set suppressed_at if not provided
         if self.is_active and not self.suppressed_at:
-            from datetime import datetime
-            self.suppressed_at = datetime.utcnow()
+            from datetime import datetime, timezone
+            self.suppressed_at = datetime.now(timezone.utc)
     
     def __repr__(self):
         return f"<EmailSuppression(email='{self.email}', source='{self.source}', active={self.is_active})>"
@@ -107,7 +107,7 @@ class EmailSuppression(CompleteBaseModel):
             return False
         
         from datetime import datetime
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
     
     @property
     def is_global_suppression(self):
@@ -171,7 +171,7 @@ class EmailSuppression(CompleteBaseModel):
         self.removal_reason = reason
         
         from datetime import datetime
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
     
     def reactivate(self):
         """Reactivate the suppression."""
@@ -179,13 +179,13 @@ class EmailSuppression(CompleteBaseModel):
         self.removal_reason = None
         
         from datetime import datetime
-        self.suppressed_at = datetime.utcnow()
-        self.updated_at = datetime.utcnow()
+        self.suppressed_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(timezone.utc)
     
     def record_send_attempt(self):
         """Record that we attempted to send to this email."""
         from datetime import datetime
-        self.last_attempt = datetime.utcnow()
+        self.last_attempt = datetime.now(timezone.utc)
     
     @classmethod
     def is_email_suppressed(cls, email, category=None):
@@ -303,7 +303,7 @@ class EmailSuppression(CompleteBaseModel):
         from datetime import datetime, timedelta
         from sqlalchemy import func
         
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
         
         # Total active suppressions
         total_active = cls.query.filter_by(is_active=True).count()
@@ -328,7 +328,7 @@ class EmailSuppression(CompleteBaseModel):
         """Deactivate expired suppressions."""
         from datetime import datetime
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         expired_count = cls.query.filter(
             cls.is_active == True,

@@ -21,8 +21,8 @@ from flask import Blueprint, request, jsonify, current_app, g
 from flask_restful import Resource, Api
 from sqlalchemy import or_, and_, func, desc, asc, case
 from sqlalchemy.orm import joinedload
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Tuple
+from datetime import datetime, timedelta, timezone
+from typing import Any, Optional
 from decimal import Decimal
 import json
 
@@ -719,7 +719,7 @@ class EntrepreneurPortfolioResource(Resource):
                 'testimonials': portfolio['testimonials'],
                 'metrics': portfolio['public_metrics'],
                 'contact_info': portfolio['contact_info'],
-                'generated_at': datetime.utcnow().isoformat()
+                'generated_at': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -866,7 +866,7 @@ class EntrepreneurStatsResource(Resource):
                     'organization_id': organization_id,
                     'program_id': program_id
                 },
-                'generated_at': datetime.utcnow().isoformat()
+                'generated_at': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -1091,7 +1091,7 @@ def get_dashboard_insights():
         
         return jsonify({
             'insights': insights,
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:
@@ -1100,7 +1100,7 @@ def get_dashboard_insights():
 
 
 # Funciones auxiliares para otros módulos
-def get_entrepreneur_summary(entrepreneur_id: int) -> Optional[Dict[str, Any]]:
+def get_entrepreneur_summary(entrepreneur_id: int) -> Optional[dict[str, Any]]:
     """
     Obtiene resumen de un emprendedor
     
@@ -1379,7 +1379,7 @@ class EntrepreneurMetricsResource(Resource):
                 'entrepreneur_id': entrepreneur_id,
                 'period': period,
                 'metrics': metrics,
-                'generated_at': datetime.utcnow().isoformat()
+                'generated_at': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:

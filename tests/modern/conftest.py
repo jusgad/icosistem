@@ -12,8 +12,8 @@ This module provides comprehensive fixtures and utilities for testing with:
 
 import pytest
 import asyncio
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, Generator
+from datetime import datetime, timedelta, timezone
+from typing import Any, Optional, Generator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 # Flask and SQLAlchemy
@@ -309,7 +309,7 @@ def admin_user(clean_db) -> User:
 
 
 @pytest.fixture
-def auth_headers(test_user, client) -> Dict[str, str]:
+def auth_headers(test_user, client) -> dict[str, str]:
     """Generate authentication headers for test user."""
     from flask_jwt_extended import create_access_token
     
@@ -323,7 +323,7 @@ def auth_headers(test_user, client) -> Dict[str, str]:
 
 
 @pytest.fixture
-def admin_auth_headers(admin_user, client) -> Dict[str, str]:
+def admin_auth_headers(admin_user, client) -> dict[str, str]:
     """Generate authentication headers for admin user."""
     from flask_jwt_extended import create_access_token
     
@@ -487,7 +487,7 @@ def time_machine():
     """Time machine for testing time-dependent code."""
     class TimeMachine:
         def __init__(self):
-            self._current_time = datetime.utcnow()
+            self._current_time = datetime.now(timezone.utc)
             
         def travel_to(self, target_time: datetime):
             self._current_time = target_time

@@ -3,7 +3,7 @@ Modern Flask extensions initialization for the entrepreneurship ecosystem.
 This module centralizes all modern extensions using latest patterns and libraries.
 """
 
-from typing import Optional, Dict, Any
+from typing import Optional, Any
 import redis.asyncio as redis
 from datetime import timedelta
 
@@ -152,7 +152,7 @@ class ModernExtensions:
         # Configure JWT
         self._configure_jwt()
 
-    def _init_metrics(self) -> Dict[str, Any]:
+    def _init_metrics(self) -> dict[str, Any]:
         """Initialize Prometheus metrics"""
         return {
             'request_count': Counter(

@@ -6,7 +6,7 @@ incluyendo incubadoras, aceleradoras, universidades, corporaciones, etc.
 """
 
 from datetime import datetime, date
-from typing import List, Optional, Dict, Any, Union
+from typing import Optional, Any, Union
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Enum as SQLEnum, Float, Date, Table
 from app.extensions import db
 from sqlalchemy.orm import relationship, validates, backref
@@ -542,7 +542,7 @@ class Organization(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin, Conta
         
         self.jobs_created = successful_projects * 5  # Estimación promedio
     
-    def get_dashboard_data(self) -> Dict[str, Any]:
+    def get_dashboard_data(self) -> dict[str, Any]:
         """Generar datos para el dashboard"""
         active_programs = self.get_active_programs()
         current_entrepreneurs = self.get_current_entrepreneurs()
@@ -585,7 +585,7 @@ class Organization(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin, Conta
             'recent_activities': self._get_recent_activities(limit=20)
         }
     
-    def get_public_profile(self) -> Dict[str, Any]:
+    def get_public_profile(self) -> dict[str, Any]:
         """Obtener perfil público de la organización"""
         if not self.is_public or not self.show_in_directory:
             return None
@@ -613,7 +613,7 @@ class Organization(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin, Conta
             'founded': self.founding_date.year if self.founding_date else None
         }
     
-    def _get_recent_activities(self, limit: int = 20) -> List[Dict[str, Any]]:
+    def _get_recent_activities(self, limit: int = 20) -> list[dict[str, Any]]:
         """Obtener actividades recientes"""
         activities = (self.activities
                      .order_by(self.activities.property.mapper.class_.created_at.desc())
@@ -631,7 +631,7 @@ class Organization(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin, Conta
             for activity in activities
         ]
     
-    def update_settings(self, settings: Dict[str, Any]):
+    def update_settings(self, settings: dict[str, Any]):
         """Actualizar configuraciones"""
         allowed_settings = [
             'notification_settings', 'custom_fields', 'branding_config',
@@ -679,7 +679,7 @@ class Organization(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin, Conta
         return query.order_by(cls.featured.desc(), cls.name).all()
     
     @classmethod
-    def search_organizations(cls, query_text: str, filters: Dict[str, Any] = None):
+    def search_organizations(cls, query_text: str, filters: dict[str, Any] = None):
         """Buscar organizaciones"""
         search = cls.query.filter(cls.is_deleted == False)
         
@@ -712,7 +712,7 @@ class Organization(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin, Conta
         
         return search.order_by(cls.name).all()
     
-    def to_dict(self, include_sensitive=False, include_relations=False) -> Dict[str, Any]:
+    def to_dict(self, include_sensitive=False, include_relations=False) -> dict[str, Any]:
         """Convertir a diccionario"""
         data = {
             'id': self.id,

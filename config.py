@@ -1,11 +1,12 @@
 import os
+import secrets
 from datetime import timedelta
 
 class Config:
     """Clase base de configuración con valores compartidos entre entornos."""
     
     # Configuración general
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'clave-secreta-por-defecto-insegura'
+    SECRET_KEY = os.environ.get('SECRET_KEY') or secrets.token_urlsafe(32)
     APP_NAME = 'Plataforma de Emprendimiento'
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'admin@emprendimiento-app.com'
     
@@ -13,7 +14,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Configuración de Flask-JWT-Extended
-    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'jwt-clave-secreta-por-defecto'
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or secrets.token_urlsafe(32)
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
     
@@ -96,6 +97,31 @@ class ProductionConfig(Config):
     REMEMBER_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     REMEMBER_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_SAMESITE = 'Lax'
+    
+    # Configuración de headers de seguridad
+    SECURITY_HEADERS = {
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'SAMEORIGIN',
+        'X-XSS-Protection': '1; mode=block',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Content-Security-Policy': (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: https:; "
+            "font-src 'self' data:; "
+            "connect-src 'self'; "
+            "frame-ancestors 'self';"
+        )
+    }
+    
+    # Configuración de rate limiting
+    RATELIMIT_STORAGE_URL = "memory://"
+    RATELIMIT_DEFAULT = "100 per hour"
+    RATELIMIT_HEADERS_ENABLED = True
     
     @classmethod
     def init_app(cls, app):

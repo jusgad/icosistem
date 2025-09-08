@@ -10,7 +10,7 @@ Version: 2.0.0
 """
 
 from datetime import datetime, timedelta, date, time
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Optional, Any
 from collections import defaultdict
 import json
 from enum import Enum
@@ -108,7 +108,7 @@ def sessions_overview():
         period = request.args.get('period', '30')  # días
         
         # Calcular período
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=int(period))
         
         # Sesiones del período
@@ -412,7 +412,7 @@ def conduct_session(session_id):
         # Marcar sesión como en progreso si no lo está
         if session.status == 'confirmed':
             session.status = 'in_progress'
-            session.actual_start_time = datetime.utcnow()
+            session.actual_start_time = datetime.now(timezone.utc)
             db.session.commit()
         
         # Objetivos de la sesión
@@ -552,7 +552,7 @@ def mentorship_analytics():
         analysis_type = request.args.get('type', 'overview')
         
         # Calcular fechas
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=int(period))
         
         # Usar servicio de analytics
@@ -772,7 +772,7 @@ def save_session_preparation(session_id):
             session.resources_prepared = form.resources.data
             session.estimated_duration = form.estimated_duration.data
             session.preparation_completed = True
-            session.prepared_at = datetime.utcnow()
+            session.prepared_at = datetime.now(timezone.utc)
             session.prepared_by = ally_profile.user_id
             
             # Crear objetivos específicos si se proporcionan
@@ -822,7 +822,7 @@ def finalize_session(session_id):
         if evaluation_form.validate_on_submit():
             # Completar sesión
             session.status = 'completed'
-            session.actual_end_time = datetime.utcnow()
+            session.actual_end_time = datetime.now(timezone.utc)
             session.actual_duration = (session.actual_end_time - session.actual_start_time).total_seconds() / 3600
             
             # Guardar evaluación
@@ -898,7 +898,7 @@ def api_sessions_stats():
         
         # Calcular estadísticas
         period = request.args.get('period', '30')
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=int(period))
         
         stats = _calculate_mentorship_overview_stats(ally_profile, start_date, end_date)
@@ -943,7 +943,7 @@ def api_start_session(session_id):
         
         # Iniciar sesión
         session.status = 'in_progress'
-        session.actual_start_time = datetime.utcnow()
+        session.actual_start_time = datetime.now(timezone.utc)
         
         db.session.commit()
         
@@ -989,7 +989,7 @@ def api_add_session_note(session_id):
         
         note_content = data.get('content', '').strip()
         note_type = data.get('type', 'general')  # general, insight, concern, action
-        timestamp = data.get('timestamp', datetime.utcnow().isoformat())
+        timestamp = data.get('timestamp', datetime.now(timezone.utc).isoformat())
         
         if not note_content:
             return jsonify({'error': 'Contenido de la nota es requerido'}), 400
@@ -1064,7 +1064,7 @@ def api_update_session_objective(session_id):
         objective.status = new_status
         objective.progress_percentage = progress_percentage
         objective.notes = notes
-        objective.updated_at = datetime.utcnow()
+        objective.updated_at = datetime.now(timezone.utc)
         
         db.session.commit()
         
@@ -1241,7 +1241,7 @@ def api_reschedule_session(session_id):
         session.start_time = new_start_time
         session.status = 'rescheduled'
         session.reschedule_reason = reason
-        session.rescheduled_at = datetime.utcnow()
+        session.rescheduled_at = datetime.now(timezone.utc)
         session.rescheduled_by = ally_profile.user_id
         
         db.session.commit()
@@ -1295,7 +1295,7 @@ def export_sessions_report():
         include_details = request.args.get('details', 'summary')  # summary, detailed, complete
         
         # Calcular período
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=int(period))
         
         # Generar datos del reporte
@@ -1433,7 +1433,7 @@ def _build_sessions_query(ally: Ally, search_form: SessionSearchForm, start_date
     return query.order_by(desc(MentorshipSession.session_date))
 
 
-def _calculate_mentorship_overview_stats(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _calculate_mentorship_overview_stats(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """
     Calcula estadísticas generales de mentoría del aliado.
     
@@ -1499,7 +1499,7 @@ def _calculate_mentorship_overview_stats(ally: Ally, start_date: datetime, end_d
     # Próximas sesiones programadas
     upcoming_sessions = MentorshipSession.query.filter(
         MentorshipSession.ally_id == ally.id,
-        MentorshipSession.session_date > datetime.utcnow().date(),
+        MentorshipSession.session_date > datetime.now(timezone.utc).date(),
         MentorshipSession.status.in_(['scheduled', 'confirmed'])
     ).count()
     
@@ -1518,7 +1518,7 @@ def _calculate_mentorship_overview_stats(ally: Ally, start_date: datetime, end_d
     }
 
 
-def _get_upcoming_sessions_detailed(ally: Ally, limit: int = 10) -> List[Dict[str, Any]]:
+def _get_upcoming_sessions_detailed(ally: Ally, limit: int = 10) -> list[dict[str, Any]]:
     """
     Obtiene próximas sesiones con información detallada.
     
@@ -1531,7 +1531,7 @@ def _get_upcoming_sessions_detailed(ally: Ally, limit: int = 10) -> List[Dict[st
     """
     upcoming_sessions = MentorshipSession.query.filter(
         MentorshipSession.ally_id == ally.id,
-        MentorshipSession.session_date >= datetime.utcnow().date(),
+        MentorshipSession.session_date >= datetime.now(timezone.utc).date(),
         MentorshipSession.status.in_(['scheduled', 'confirmed'])
     ).options(
         joinedload(MentorshipSession.entrepreneur).joinedload(Entrepreneur.user)
@@ -1541,7 +1541,7 @@ def _get_upcoming_sessions_detailed(ally: Ally, limit: int = 10) -> List[Dict[st
     for session in upcoming_sessions:
         # Tiempo hasta la sesión
         session_datetime = datetime.combine(session.session_date, session.start_time or datetime.min.time())
-        time_until_session = session_datetime - datetime.utcnow()
+        time_until_session = session_datetime - datetime.now(timezone.utc)
         
         # Estado de preparación
         preparation_status = _get_session_preparation_status(session)
@@ -1552,7 +1552,7 @@ def _get_upcoming_sessions_detailed(ally: Ally, limit: int = 10) -> List[Dict[st
             'time_until_session': time_until_session,
             'time_until_formatted': format_relative_time(session_datetime),
             'preparation_status': preparation_status,
-            'is_today': session.session_date == datetime.utcnow().date(),
+            'is_today': session.session_date == datetime.now(timezone.utc).date(),
             'is_urgent': time_until_session.total_seconds() < 3600,  # menos de 1 hora
             'meeting_link': _get_session_meeting_link(session)
         })
@@ -1560,7 +1560,7 @@ def _get_upcoming_sessions_detailed(ally: Ally, limit: int = 10) -> List[Dict[st
     return sessions_detailed
 
 
-def _get_sessions_requiring_action(ally: Ally) -> List[Dict[str, Any]]:
+def _get_sessions_requiring_action(ally: Ally) -> list[dict[str, Any]]:
     """
     Obtiene sesiones que requieren alguna acción del aliado.
     
@@ -1573,7 +1573,7 @@ def _get_sessions_requiring_action(ally: Ally) -> List[Dict[str, Any]]:
     sessions_requiring_action = []
     
     # Sesiones sin preparar próximas a ocurrir (dentro de 24 horas)
-    tomorrow = datetime.utcnow().date() + timedelta(days=1)
+    tomorrow = datetime.now(timezone.utc).date() + timedelta(days=1)
     unprepared_sessions = MentorshipSession.query.filter(
         MentorshipSession.ally_id == ally.id,
         MentorshipSession.session_date <= tomorrow,
@@ -1595,7 +1595,7 @@ def _get_sessions_requiring_action(ally: Ally) -> List[Dict[str, Any]]:
         MentorshipSession.ally_id == ally.id,
         MentorshipSession.status == 'completed',
         MentorshipSession.session_effectiveness.is_(None),
-        MentorshipSession.actual_end_time >= datetime.utcnow() - timedelta(days=7)
+        MentorshipSession.actual_end_time >= datetime.now(timezone.utc) - timedelta(days=7)
     ).all()
     
     for session in completed_sessions_no_feedback:
@@ -1612,7 +1612,7 @@ def _get_sessions_requiring_action(ally: Ally) -> List[Dict[str, Any]]:
         MentorshipSession.ally_id == ally.id,
         MentorshipSession.follow_up_required == True,
         MentorshipSession.follow_up_completed == False,
-        MentorshipSession.follow_up_date <= datetime.utcnow().date()
+        MentorshipSession.follow_up_date <= datetime.now(timezone.utc).date()
     ).all()
     
     for session in sessions_needing_followup:
@@ -1627,7 +1627,7 @@ def _get_sessions_requiring_action(ally: Ally) -> List[Dict[str, Any]]:
     return sorted(sessions_requiring_action, key=lambda x: {'high': 3, 'medium': 2, 'low': 1}[x['urgency']], reverse=True)
 
 
-def _analyze_mentorship_effectiveness(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _analyze_mentorship_effectiveness(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """
     Analiza la efectividad general de la mentoría del aliado.
     
@@ -1699,7 +1699,7 @@ def _analyze_mentorship_effectiveness(ally: Ally, start_date: datetime, end_date
     }
 
 
-def _get_popular_session_templates(ally: Ally, limit: int = 5) -> List[Dict[str, Any]]:
+def _get_popular_session_templates(ally: Ally, limit: int = 5) -> list[dict[str, Any]]:
     """
     Obtiene templates de sesiones más utilizados por el aliado.
     
@@ -1737,7 +1737,7 @@ def _get_popular_session_templates(ally: Ally, limit: int = 5) -> List[Dict[str,
     ]
 
 
-def _calculate_time_analytics(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _calculate_time_analytics(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """
     Calcula analytics de tiempo y productividad.
     
@@ -1802,7 +1802,7 @@ def _calculate_time_analytics(ally: Ally, start_date: datetime, end_date: dateti
     }
 
 
-def _get_recent_session_feedback(ally: Ally, limit: int = 5) -> List[Dict[str, Any]]:
+def _get_recent_session_feedback(ally: Ally, limit: int = 5) -> list[dict[str, Any]]:
     """
     Obtiene feedback reciente de emprendedores sobre sesiones.
     
@@ -1821,19 +1821,19 @@ def _get_recent_session_feedback(ally: Ally, limit: int = 5) -> List[Dict[str, A
             'entrepreneur_name': 'Ana García',
             'rating': 5,
             'comment': 'Excelente sesión, muy útil para clarificar mi estrategia de marketing',
-            'created_at': datetime.utcnow() - timedelta(days=2)
+            'created_at': datetime.now(timezone.utc) - timedelta(days=2)
         },
         {
             'session_id': 2,
             'entrepreneur_name': 'Carlos López',
             'rating': 4,
             'comment': 'Buena orientación sobre finanzas, me ayudó mucho',
-            'created_at': datetime.utcnow() - timedelta(days=5)
+            'created_at': datetime.now(timezone.utc) - timedelta(days=5)
         }
     ]
 
 
-def _generate_availability_calendar(ally: Ally) -> Dict[str, Any]:
+def _generate_availability_calendar(ally: Ally) -> dict[str, Any]:
     """
     Genera calendario de disponibilidad del aliado.
     
@@ -1852,7 +1852,7 @@ def _generate_availability_calendar(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _generate_session_optimization_recommendations(ally: Ally, effectiveness_analysis: Dict[str, Any]) -> List[Dict[str, str]]:
+def _generate_session_optimization_recommendations(ally: Ally, effectiveness_analysis: dict[str, Any]) -> list[dict[str, str]]:
     """
     Genera recomendaciones para optimizar sesiones.
     
@@ -1886,7 +1886,7 @@ def _generate_session_optimization_recommendations(ally: Ally, effectiveness_ana
 
 # Funciones auxiliares adicionales (implementación básica)
 
-def _get_complete_session_data(session: MentorshipSession, ally: Ally) -> Dict[str, Any]:
+def _get_complete_session_data(session: MentorshipSession, ally: Ally) -> dict[str, Any]:
     """Obtiene datos completos de una sesión."""
     return {
         'basic_info': {
@@ -1916,31 +1916,31 @@ def _get_complete_session_data(session: MentorshipSession, ally: Ally) -> Dict[s
     }
 
 
-def _get_session_objectives(session: MentorshipSession) -> List[Dict[str, Any]]:
+def _get_session_objectives(session: MentorshipSession) -> list[dict[str, Any]]:
     """Obtiene objetivos de la sesión."""
     # Implementación requiere modelo SessionObjective
     return []
 
 
-def _get_session_notes(session: MentorshipSession) -> List[Dict[str, Any]]:
+def _get_session_notes(session: MentorshipSession) -> list[dict[str, Any]]:
     """Obtiene notas de la sesión."""
     # Implementación requiere modelo SessionNote
     return []
 
 
-def _get_session_action_items(session: MentorshipSession) -> List[Dict[str, Any]]:
+def _get_session_action_items(session: MentorshipSession) -> list[dict[str, Any]]:
     """Obtiene items de acción de la sesión."""
     # Implementación requiere modelo ActionItem
     return []
 
 
-def _get_entrepreneur_session_feedback(session: MentorshipSession) -> Optional[Dict[str, Any]]:
+def _get_entrepreneur_session_feedback(session: MentorshipSession) -> Optional[dict[str, Any]]:
     """Obtiene feedback del emprendedor sobre la sesión."""
     # Implementación requiere modelo SessionFeedback
     return None
 
 
-def _calculate_session_metrics(session: MentorshipSession) -> Dict[str, Any]:
+def _calculate_session_metrics(session: MentorshipSession) -> dict[str, Any]:
     """Calcula métricas específicas de la sesión."""
     return {
         'duration_variance': 0,
@@ -1950,32 +1950,32 @@ def _calculate_session_metrics(session: MentorshipSession) -> Dict[str, Any]:
     }
 
 
-def _get_session_documents(session: MentorshipSession) -> List[Dict[str, Any]]:
+def _get_session_documents(session: MentorshipSession) -> list[dict[str, Any]]:
     """Obtiene documentos compartidos en la sesión."""
     return []
 
 
-def _track_objective_progress(session: MentorshipSession) -> Dict[str, Any]:
+def _track_objective_progress(session: MentorshipSession) -> dict[str, Any]:
     """Hace seguimiento del progreso hacia objetivos."""
     return {'progress_percentage': 0, 'objectives_met': 0, 'total_objectives': 0}
 
 
-def _get_related_sessions(session: MentorshipSession) -> Dict[str, Any]:
+def _get_related_sessions(session: MentorshipSession) -> dict[str, Any]:
     """Obtiene sesiones relacionadas (anteriores y siguientes)."""
     return {'previous_sessions': [], 'next_sessions': []}
 
 
-def _generate_next_session_recommendations(session: MentorshipSession) -> List[str]:
+def _generate_next_session_recommendations(session: MentorshipSession) -> list[str]:
     """Genera recomendaciones para la próxima sesión."""
     return []
 
 
-def _get_available_session_tools(session: MentorshipSession) -> List[Dict[str, Any]]:
+def _get_available_session_tools(session: MentorshipSession) -> list[dict[str, Any]]:
     """Obtiene herramientas disponibles para la sesión."""
     return []
 
 
-def _analyze_session_effectiveness(session: MentorshipSession) -> Dict[str, Any]:
+def _analyze_session_effectiveness(session: MentorshipSession) -> dict[str, Any]:
     """Analiza la efectividad específica de una sesión."""
     return {'effectiveness_score': session.session_effectiveness or 0, 'factors': []}
 
@@ -1983,7 +1983,7 @@ def _analyze_session_effectiveness(session: MentorshipSession) -> Dict[str, Any]
 # Más funciones auxiliares para completar la funcionalidad...
 # (Implementaciones específicas según necesidades del negocio)
 
-def _get_available_entrepreneurs(ally: Ally) -> List[Tuple[int, str]]:
+def _get_available_entrepreneurs(ally: Ally) -> list[tuple[int, str]]:
     """Obtiene lista de emprendedores disponibles para programar sesión."""
     entrepreneurs = db.session.query(Entrepreneur).join(MentorshipSession).filter(
         MentorshipSession.ally_id == ally.id,
@@ -1993,13 +1993,13 @@ def _get_available_entrepreneurs(ally: Ally) -> List[Tuple[int, str]]:
     return [(e.id, e.user.full_name) for e in entrepreneurs]
 
 
-def _get_session_templates(ally: Ally) -> List[Dict[str, Any]]:
+def _get_session_templates(ally: Ally) -> list[dict[str, Any]]:
     """Obtiene templates de sesiones disponibles."""
     # Implementación básica
     return []
 
 
-def _get_available_methodologies() -> List[Tuple[str, str]]:
+def _get_available_methodologies() -> list[tuple[str, str]]:
     """Obtiene metodologías de mentoría disponibles."""
     return [
         ('coaching', 'Coaching'),
@@ -2010,13 +2010,13 @@ def _get_available_methodologies() -> List[Tuple[str, str]]:
     ]
 
 
-def _get_ally_availability_slots(ally: Ally) -> List[Dict[str, Any]]:
+def _get_ally_availability_slots(ally: Ally) -> list[dict[str, Any]]:
     """Obtiene slots de disponibilidad del aliado."""
     # Implementación básica
     return []
 
 
-def _get_default_session_settings(ally: Ally) -> Dict[str, Any]:
+def _get_default_session_settings(ally: Ally) -> dict[str, Any]:
     """Obtiene configuraciones predeterminadas de sesión."""
     return {
         'default_duration': DEFAULT_SESSION_DURATION,
@@ -2026,7 +2026,7 @@ def _get_default_session_settings(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _get_upcoming_sessions_calendar(ally: Ally) -> List[Dict[str, Any]]:
+def _get_upcoming_sessions_calendar(ally: Ally) -> list[dict[str, Any]]:
     """Obtiene próximas sesiones para el calendario."""
     return []
 
@@ -2186,7 +2186,7 @@ def _request_entrepreneur_feedback(session: MentorshipSession) -> None:
 
 # Funciones auxiliares para cálculos y análisis
 
-def _get_session_preparation_status(session: MentorshipSession) -> Dict[str, Any]:
+def _get_session_preparation_status(session: MentorshipSession) -> dict[str, Any]:
     """Obtiene estado de preparación de la sesión."""
     return {
         'is_prepared': session.preparation_completed or False,
@@ -2213,18 +2213,18 @@ def _calculate_period_effectiveness(ally: Ally, start_date: datetime, end_date: 
     return float(avg_effectiveness) if avg_effectiveness else 0
 
 
-def _identify_top_performing_session_types(ally: Ally, start_date: datetime, end_date: datetime) -> List[Dict[str, Any]]:
+def _identify_top_performing_session_types(ally: Ally, start_date: datetime, end_date: datetime) -> list[dict[str, Any]]:
     """Identifica tipos de sesiones con mejor rendimiento."""
     # Implementación básica
     return []
 
 
-def _identify_improvement_areas_sessions(ally: Ally, start_date: datetime, end_date: datetime) -> List[str]:
+def _identify_improvement_areas_sessions(ally: Ally, start_date: datetime, end_date: datetime) -> list[str]:
     """Identifica áreas de mejora en las sesiones."""
     return []
 
 
-def _calculate_availability_slots(ally: Ally, start: datetime, end: datetime, duration: int) -> List[Dict[str, Any]]:
+def _calculate_availability_slots(ally: Ally, start: datetime, end: datetime, duration: int) -> list[dict[str, Any]]:
     """Calcula slots de disponibilidad para un período."""
     # Implementación básica
     return []
@@ -2238,22 +2238,22 @@ def _check_availability_for_reschedule(ally: Ally, new_datetime: datetime, durat
 
 # Funciones para reportes y exportación
 
-def _generate_sessions_report_data(ally: Ally, start_date: datetime, end_date: datetime, include_details: str) -> Dict[str, Any]:
+def _generate_sessions_report_data(ally: Ally, start_date: datetime, end_date: datetime, include_details: str) -> dict[str, Any]:
     """Genera datos para reporte de sesiones."""
     return {
         'ally': ally,
         'period': {'start': start_date, 'end': end_date},
         'stats': _calculate_mentorship_overview_stats(ally, start_date, end_date),
         'sessions': [],
-        'generated_at': datetime.utcnow()
+        'generated_at': datetime.now(timezone.utc)
     }
 
 
-def _generate_session_summary_report(session: MentorshipSession, ally: Ally) -> Dict[str, Any]:
+def _generate_session_summary_report(session: MentorshipSession, ally: Ally) -> dict[str, Any]:
     """Genera datos para resumen de sesión específica."""
     return {
         'session': session,
         'ally': ally,
         'session_data': _get_complete_session_data(session, ally),
-        'generated_at': datetime.utcnow()
+        'generated_at': datetime.now(timezone.utc)
     }

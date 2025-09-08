@@ -5,8 +5,8 @@ Este módulo define los modelos para gestión de documentos y archivos,
 incluyendo almacenamiento, versioning, permisos, colaboración y templates.
 """
 
-from datetime import datetime, date, timedelta
-from typing import List, Optional, Dict, Any, Union
+from datetime import datetime, date, timedelta, timezone
+from typing import Optional, Any, Union
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Enum as SQLEnum, Float, Date, Table, BigInteger
 from sqlalchemy.orm import relationship, validates, backref
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -412,7 +412,7 @@ class Document(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     @hybrid_property
     def is_expired(self):
         """Verificar si el documento está vencido"""
-        return self.expires_at and self.expires_at < datetime.utcnow()
+        return self.expires_at and self.expires_at < datetime.now(timezone.utc)
     
     @hybrid_property
     def is_public(self):
@@ -441,13 +441,13 @@ class Document(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     def days_since_modified(self):
         """Días desde la última modificación"""
         if self.last_modified_at:
-            return (datetime.utcnow() - self.last_modified_at).days
-        return (datetime.utcnow() - self.created_at).days if self.created_at else 0
+            return (datetime.now(timezone.utc) - self.last_modified_at).days
+        return (datetime.now(timezone.utc) - self.created_at).days if self.created_at else 0
     
     # Métodos de negocio
     def add_collaborator(self, user, permission_level: str = 'read', 
                         invited_by_user_id: int = None, 
-                        notification_settings: Dict[str, Any] = None) -> bool:
+                        notification_settings: dict[str, Any] = None) -> bool:
         """Agregar colaborador al documento"""
         # Verificar permisos válidos
         valid_permissions = ['read', 'comment', 'edit', 'admin']
@@ -476,7 +476,7 @@ class Document(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
                     ).values(
                         is_active=True,
                         permission_level=permission_level,
-                        invited_at=datetime.utcnow(),
+                        invited_at=datetime.now(timezone.utc),
                         notification_settings=notification_settings or {
                             'document_changes': True,
                             'comments': True,
@@ -652,7 +652,7 @@ class Document(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     def increment_view_count(self, user_id: int = None):
         """Incrementar contador de visualizaciones"""
         self.view_count = (self.view_count or 0) + 1
-        self.last_accessed_at = datetime.utcnow()
+        self.last_accessed_at = datetime.now(timezone.utc)
         
         if user_id:
             self._update_collaborator_access(user_id)
@@ -685,7 +685,7 @@ class Document(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             document_collaborators.update().where(
                 document_collaborators.c.document_id == self.id,
                 document_collaborators.c.user_id == user_id
-            ).values(last_accessed_at=datetime.utcnow())
+            ).values(last_accessed_at=datetime.now(timezone.utc))
         )
     
     def _should_log_view(self, user_id: int) -> bool:
@@ -724,7 +724,7 @@ class Document(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             return False
         
         self.status = DocumentStatus.PUBLISHED
-        self.published_at = datetime.utcnow()
+        self.published_at = datetime.now(timezone.utc)
         
         self._log_activity('document_published', "Documento publicado", published_by_user_id)
         return True
@@ -741,7 +741,7 @@ class Document(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     
     def set_expiration_date(self, expires_at: datetime, set_by_user_id: int):
         """Establecer fecha de vencimiento"""
-        if expires_at <= datetime.utcnow():
+        if expires_at <= datetime.now(timezone.utc):
             raise ValidationError("La fecha de vencimiento debe ser futura")
         
         self.expires_at = expires_at
@@ -817,7 +817,7 @@ class Document(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         import uuid
         
         share_token = str(uuid.uuid4())
-        expires_at = datetime.utcnow() + timedelta(hours=expires_in_hours)
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=expires_in_hours)
         
         share = DocumentShare(
             document_id=self.id,
@@ -841,7 +841,7 @@ class Document(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         return share_url
     
-    def get_version_history(self) -> List['Document']:
+    def get_version_history(self) -> list['Document']:
         """Obtener historial de versiones"""
         if self.parent_document_id:
             # Este es una versión, obtener desde el documento padre
@@ -864,7 +864,7 @@ class Document(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         versions = self.get_version_history()
         return next((v for v in versions if v.is_latest_version), self)
     
-    def get_document_analytics(self) -> Dict[str, Any]:
+    def get_document_analytics(self) -> dict[str, Any]:
         """Obtener analytics del documento"""
         collaborator_stats = self._get_collaborator_stats()
         
@@ -907,14 +907,14 @@ class Document(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
                 'download_enabled': self.download_enabled
             },
             'lifecycle': {
-                'days_since_created': (datetime.utcnow() - self.created_at).days if self.created_at else 0,
+                'days_since_created': (datetime.now(timezone.utc) - self.created_at).days if self.created_at else 0,
                 'days_since_modified': self.days_since_modified,
                 'is_expired': self.is_expired,
                 'expires_at': self.expires_at.isoformat() if self.expires_at else None
             }
         }
     
-    def _get_collaborator_stats(self) -> Dict[str, Any]:
+    def _get_collaborator_stats(self) -> dict[str, Any]:
         """Obtener estadísticas de colaboradores"""
         from .. import db
         
@@ -933,7 +933,7 @@ class Document(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             }
         
         # Contar actividad reciente (última semana)
-        week_ago = datetime.utcnow() - timedelta(days=7)
+        week_ago = datetime.now(timezone.utc) - timedelta(days=7)
         recent_activity = len([
             c for c in collaborators_data 
             if c.last_accessed_at and c.last_accessed_at >= week_ago
@@ -951,7 +951,7 @@ class Document(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             'permission_distribution': permission_dist
         }
     
-    def get_recent_activity(self, limit: int = 10) -> List[Dict[str, Any]]:
+    def get_recent_activity(self, limit: int = 10) -> list[dict[str, Any]]:
         """Obtener actividad reciente del documento"""
         recent_activities = (self.activities
                            .order_by(ActivityLog.created_at.desc())
@@ -971,12 +971,12 @@ class Document(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         ]
     
     def create_backup(self, backup_type: str = 'manual', 
-                     created_by_user_id: int = None) -> Dict[str, Any]:
+                     created_by_user_id: int = None) -> dict[str, Any]:
         """Crear backup del documento"""
         import uuid
         
         backup_id = str(uuid.uuid4())
-        backup_timestamp = datetime.utcnow()
+        backup_timestamp = datetime.now(timezone.utc)
         
         backup_metadata = {
             'backup_id': backup_id,
@@ -999,7 +999,7 @@ class Document(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     
     # Métodos de búsqueda y filtrado
     @classmethod
-    def search_documents(cls, query: str = None, filters: Dict[str, Any] = None,
+    def search_documents(cls, query: str = None, filters: dict[str, Any] = None,
                         user_id: int = None, limit: int = 50, offset: int = 0):
         """Buscar documentos"""
         search = cls.query.filter(cls.is_deleted == False)
@@ -1108,7 +1108,7 @@ class Document(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     @classmethod
     def get_recent_documents(cls, user_id: int, days: int = 7, limit: int = 10):
         """Obtener documentos recientes del usuario"""
-        since_date = datetime.utcnow() - timedelta(days=days)
+        since_date = datetime.now(timezone.utc) - timedelta(days=days)
         
         return cls.query.filter(
             (cls.owner_id == user_id) |
@@ -1134,17 +1134,17 @@ class Document(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     @classmethod
     def get_expiring_documents(cls, days_ahead: int = 30):
         """Obtener documentos que vencen próximamente"""
-        expiry_date = datetime.utcnow() + timedelta(days=days_ahead)
+        expiry_date = datetime.now(timezone.utc) + timedelta(days=days_ahead)
         
         return cls.query.filter(
             cls.expires_at.isnot(None),
             cls.expires_at <= expiry_date,
-            cls.expires_at > datetime.utcnow(),
+            cls.expires_at > datetime.now(timezone.utc),
             cls.is_deleted == False
         ).order_by(cls.expires_at.asc()).all()
     
     def to_dict(self, include_content=False, include_collaborators=False, 
-               include_analytics=False, user_id: int = None) -> Dict[str, Any]:
+               include_analytics=False, user_id: int = None) -> dict[str, Any]:
         """Convertir a diccionario"""
         data = {
             'id': self.id,
@@ -1281,7 +1281,7 @@ class DocumentComment(BaseModel, TimestampMixin, AuditMixin):
         """Resolver comentario"""
         self.is_resolved = True
         self.resolved_by_id = resolved_by_user_id
-        self.resolved_at = datetime.utcnow()
+        self.resolved_at = datetime.now(timezone.utc)
 
 
 class DocumentShare(BaseModel, TimestampMixin):
@@ -1321,12 +1321,12 @@ class DocumentShare(BaseModel, TimestampMixin):
     @hybrid_property
     def is_expired(self):
         """Verificar si el enlace está vencido"""
-        return (self.expires_at and self.expires_at < datetime.utcnow()) or not self.is_active
+        return (self.expires_at and self.expires_at < datetime.now(timezone.utc)) or not self.is_active
     
     def increment_access(self):
         """Incrementar contador de accesos"""
         self.access_count += 1
-        self.last_accessed_at = datetime.utcnow()
+        self.last_accessed_at = datetime.now(timezone.utc)
 
 
 class Tag(BaseModel, TimestampMixin):
@@ -1354,7 +1354,7 @@ class Tag(BaseModel, TimestampMixin):
 
 # Funciones de utilidad para el módulo
 def get_document_statistics(organization_id: int = None, user_id: int = None,
-                          date_from: date = None, date_to: date = None) -> Dict[str, Any]:
+                          date_from: date = None, date_to: date = None) -> dict[str, Any]:
     """Obtener estadísticas de documentos"""
     query = Document.query.filter(Document.is_deleted == False)
     
@@ -1450,7 +1450,7 @@ def get_document_statistics(organization_id: int = None, user_id: int = None,
 def cleanup_expired_shares():
     """Limpiar enlaces de compartir vencidos"""
     expired_shares = DocumentShare.query.filter(
-        DocumentShare.expires_at < datetime.utcnow(),
+        DocumentShare.expires_at < datetime.now(timezone.utc),
         DocumentShare.is_active == True
     ).all()
     

@@ -19,7 +19,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.exceptions import HTTPException
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Callable, Any, Union
+from typing import Optional, Callable, Any, Union
 import time
 import json
 import logging
@@ -78,10 +78,10 @@ class MiddlewareConfig:
     """Configuración base para middlewares."""
     enabled: bool = True
     priority: MiddlewarePriority = MiddlewarePriority.NORMAL
-    environments: List[str] = None
-    exclude_paths: List[str] = None
-    include_paths: List[str] = None
-    config: Dict[str, Any] = None
+    environments: list[str] = None
+    exclude_paths: list[str] = None
+    include_paths: list[str] = None
+    config: dict[str, Any] = None
 
 @dataclass
 class RequestMetrics:
@@ -97,15 +97,15 @@ class RequestMetrics:
     duration_ms: Optional[float] = None
     status_code: Optional[int] = None
     response_size: Optional[int] = None
-    errors: List[str] = None
+    errors: list[str] = None
 
 class MiddlewareRegistry:
     """Registro centralizado de middlewares."""
     
     def __init__(self):
-        self.middlewares: Dict[str, Dict] = {}
-        self.execution_order: List[str] = []
-        self.metrics: Dict[str, Any] = {}
+        self.middlewares: dict[str, Dict] = {}
+        self.execution_order: list[str] = []
+        self.metrics: dict[str, Any] = {}
         
     def register(
         self, 
@@ -146,7 +146,7 @@ class MiddlewareRegistry:
             
         return middleware_info['instance']
     
-    def list_enabled(self, environment: str = None) -> List[str]:
+    def list_enabled(self, environment: str = None) -> list[str]:
         """Lista middlewares habilitados para un entorno."""
         enabled = []
         for name, info in self.middlewares.items():
@@ -433,7 +433,7 @@ class ErrorHandlingMiddleware:
                 'type': 'internal_error'
             }, 500
 
-def create_middleware_pipeline(app: Flask, config: Dict[str, Any] = None) -> None:
+def create_middleware_pipeline(app: Flask, config: dict[str, Any] = None) -> None:
     """
     Crea y configura el pipeline completo de middlewares.
     
@@ -509,7 +509,7 @@ def create_middleware_pipeline(app: Flask, config: Dict[str, Any] = None) -> Non
         logger.error(f"Error no manejado: {str(error)}", exc_info=True)
         return {'error': 'Error interno del servidor'}, 500
 
-def _register_default_middlewares(config: Dict[str, Any], environment: str):
+def _register_default_middlewares(config: dict[str, Any], environment: str):
     """Registra los middlewares por defecto del sistema."""
     
     # Security Middleware
@@ -611,7 +611,7 @@ def _register_default_middlewares(config: Dict[str, Any], environment: str):
         MiddlewareType.ERROR_HANDLING
     )
 
-def get_middleware_stats() -> Dict[str, Any]:
+def get_middleware_stats() -> dict[str, Any]:
     """Obtiene estadísticas de los middlewares."""
     return {
         'total_registered': len(middleware_registry.middlewares),

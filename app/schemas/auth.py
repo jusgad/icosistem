@@ -2,7 +2,7 @@
 Esquemas Pydantic modernos para operaciones de autenticación.
 """
 
-from typing import Optional, List, Dict, Any
+from typing import Optional, Any
 from datetime import datetime, timedelta
 from pydantic import Field, EmailStr, validator
 from enum import Enum
@@ -68,7 +68,7 @@ class LoginResponse(BaseSchema):
     token_type: str = Field(default="bearer", description="Token type")
     expires_in: int = Field(description="Token expiration time in seconds")
     user: UserResponse = Field(description="Authenticated user information")
-    permissions: List[str] = Field(description="User permissions")
+    permissions: list[str] = Field(description="User permissions")
     two_factor_required: bool = Field(
         default=False,
         description="Whether 2FA is required"
@@ -311,7 +311,7 @@ class TwoFactorSetupResponse(BaseSchema):
         default=None,
         description="Secret key for TOTP setup"
     )
-    backup_codes: Optional[List[str]] = Field(
+    backup_codes: Optional[list[str]] = Field(
         default=None,
         description="Backup codes for recovery"
     )
@@ -362,7 +362,7 @@ class TwoFactorDisableRequest(BaseSchema):
         default=True,
         description="Disable all 2FA methods"
     )
-    methods_to_disable: Optional[List[TwoFactorMethod]] = Field(
+    methods_to_disable: Optional[list[TwoFactorMethod]] = Field(
         default=None,
         description="Specific methods to disable"
     )
@@ -403,7 +403,7 @@ class TokenValidationResponse(BaseSchema):
         default=None,
         description="Token expiration timestamp"
     )
-    permissions: Optional[List[str]] = Field(
+    permissions: Optional[list[str]] = Field(
         default=None,
         description="User permissions"
     )
@@ -422,7 +422,7 @@ class OAuthAuthorizationRequest(BaseSchema):
         default=None,
         description="State parameter for CSRF protection"
     )
-    scopes: Optional[List[str]] = Field(
+    scopes: Optional[list[str]] = Field(
         default=None,
         description="Requested OAuth scopes"
     )
@@ -444,7 +444,7 @@ class OAuthUserInfo(BaseSchema):
     first_name: Optional[str] = Field(default=None, description="First name")
     last_name: Optional[str] = Field(default=None, description="Last name")
     picture: Optional[str] = Field(default=None, description="Profile picture URL")
-    provider_data: Dict[str, Any] = Field(
+    provider_data: dict[str, Any] = Field(
         description="Additional data from OAuth provider"
     )
 
@@ -477,7 +477,7 @@ class SessionInfo(BaseSchema):
 class SessionListResponse(BaseSchema):
     """Active sessions list response"""
     
-    sessions: List[SessionInfo] = Field(description="List of active sessions")
+    sessions: list[SessionInfo] = Field(description="List of active sessions")
     total_sessions: int = Field(description="Total number of active sessions")
 
 
@@ -519,7 +519,7 @@ class SecurityEvent(BaseSchema):
     ip_address: Optional[str] = Field(default=None, description="IP address")
     user_agent: Optional[str] = Field(default=None, description="User agent")
     location: Optional[str] = Field(default=None, description="Approximate location")
-    details: Optional[Dict[str, Any]] = Field(
+    details: Optional[dict[str, Any]] = Field(
         default=None,
         description="Additional event details"
     )
@@ -534,7 +534,7 @@ class SecurityEvent(BaseSchema):
 class SecurityEventListResponse(BaseSchema):
     """Security events list response"""
     
-    events: List[SecurityEvent] = Field(description="List of security events")
+    events: list[SecurityEvent] = Field(description="List of security events")
     total_events: int = Field(description="Total number of events")
     high_risk_events: int = Field(description="Number of high-risk events")
 
@@ -592,12 +592,12 @@ class ApiKeyCreateRequest(BaseSchema):
         max_length=500,
         description="API key description"
     )
-    scopes: List[str] = Field(description="API key scopes/permissions")
+    scopes: list[str] = Field(description="API key scopes/permissions")
     expires_at: Optional[datetime] = Field(
         default=None,
         description="API key expiration date"
     )
-    ip_whitelist: Optional[List[str]] = Field(
+    ip_whitelist: Optional[list[str]] = Field(
         default=None,
         description="IP addresses allowed to use this key"
     )
@@ -613,7 +613,7 @@ class ApiKeyResponse(BaseSchema):
         default=None,
         description="API key value (only shown once during creation)"
     )
-    scopes: List[str] = Field(description="API key scopes")
+    scopes: list[str] = Field(description="API key scopes")
     created_at: datetime = Field(description="Creation timestamp")
     expires_at: Optional[datetime] = Field(
         default=None,

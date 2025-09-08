@@ -34,7 +34,7 @@ import uuid
 from abc import ABC, abstractmethod
 from contextlib import contextmanager, asynccontextmanager
 from dataclasses import dataclass, field, asdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from functools import wraps, lru_cache
 from typing import (
@@ -91,7 +91,7 @@ class ServiceEvent:
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     service_name: str = ""
     event_type: str = ""
-    data: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.utcnow)
     correlation_id: Optional[str] = None
     user_id: Optional[str] = None
@@ -117,7 +117,7 @@ class ServiceConfiguration:
     async_enabled: bool = False
     database_transactions: bool = True
     event_publishing: bool = True
-    custom_config: Dict[str, Any] = field(default_factory=dict)
+    custom_config: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -125,7 +125,7 @@ class ServiceValidationRule:
     """Regla de validación para servicios."""
     field: str
     rule_type: str  # required, type, range, regex, custom
-    rule_config: Dict[str, Any] = field(default_factory=dict)
+    rule_config: dict[str, Any] = field(default_factory=dict)
     error_message: str = ""
 
 
@@ -133,8 +133,8 @@ class ServiceValidator:
     """Validador de datos para servicios."""
     
     def __init__(self):
-        self.rules: List[ServiceValidationRule] = []
-        self.custom_validators: Dict[str, Callable] = {}
+        self.rules: list[ServiceValidationRule] = []
+        self.custom_validators: dict[str, Callable] = {}
     
     def add_rule(self, field: str, rule_type: str, **config):
         """Añade una regla de validación."""
@@ -177,7 +177,7 @@ class ServiceValidator:
             message=message or f'{field} failed custom validation'
         )
     
-    def validate(self, data: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    def validate(self, data: dict[str, Any]) -> tuple[bool, list[str]]:
         """Ejecuta validación de datos."""
         errors = []
         
@@ -217,7 +217,7 @@ class ServiceCache:
     def __init__(self, strategy: CacheStrategy = CacheStrategy.MEMORY, ttl: int = 300):
         self.strategy = strategy
         self.ttl = ttl
-        self._memory_cache: Dict[str, Tuple[Any, datetime]] = {}
+        self._memory_cache: dict[str, tuple[Any, datetime]] = {}
         self._redis_client = None
         self._lock = threading.Lock()
     
@@ -239,7 +239,7 @@ class ServiceCache:
     
     def _is_expired(self, timestamp: datetime) -> bool:
         """Verifica si un item ha expirado."""
-        return datetime.utcnow() - timestamp > timedelta(seconds=self.ttl)
+        return datetime.now(timezone.utc) - timestamp > timedelta(seconds=self.ttl)
     
     def _generate_key(self, service_name: str, method_name: str, *args, **kwargs) -> str:
         """Genera clave de cache."""
@@ -306,7 +306,7 @@ class ServiceCache:
     def _set_in_memory(self, key: str, value: Any):
         """Guarda valor en cache en memoria."""
         with self._lock:
-            self._memory_cache[key] = (value, datetime.utcnow())
+            self._memory_cache[key] = (value, datetime.now(timezone.utc))
     
     def _get_from_redis(self, key: str) -> Optional[Any]:
         """Obtiene valor de Redis."""
@@ -434,8 +434,8 @@ class ServiceMetrics:
         self.max_execution_time = 0.0
         self.last_called = None
         self.last_error = None
-        self.error_types: Dict[str, int] = {}
-        self.method_metrics: Dict[str, Dict] = {}
+        self.error_types: dict[str, int] = {}
+        self.method_metrics: dict[str, Dict] = {}
         self._lock = threading.Lock()
     
     def record_call(self, method_name: str, execution_time: float, 
@@ -447,7 +447,7 @@ class ServiceMetrics:
             self.total_execution_time += execution_time
             self.min_execution_time = min(self.min_execution_time, execution_time)
             self.max_execution_time = max(self.max_execution_time, execution_time)
-            self.last_called = datetime.utcnow()
+            self.last_called = datetime.now(timezone.utc)
             
             if success:
                 self.success_count += 1
@@ -491,7 +491,7 @@ class ServiceMetrics:
             return 0.0
         return self.total_execution_time / self.call_count
     
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """Obtiene resumen de métricas."""
         return {
             'service_name': self.service_name,
@@ -517,10 +517,10 @@ class ServiceContext:
         self.correlation_id = str(uuid.uuid4())
         self.user_id = None
         self.session_id = None
-        self.start_time = datetime.utcnow()
-        self.metadata: Dict[str, Any] = {}
+        self.start_time = datetime.now(timezone.utc)
+        self.metadata: dict[str, Any] = {}
         self._db_session = None
-        self._events: List[ServiceEvent] = []
+        self._events: list[ServiceEvent] = []
     
     @property
     def db_session(self) -> Optional[Session]:
@@ -532,7 +532,7 @@ class ServiceContext:
         """Establece sesión de base de datos."""
         self._db_session = session
     
-    def add_event(self, event_type: str, data: Dict[str, Any] = None):
+    def add_event(self, event_type: str, data: dict[str, Any] = None):
         """Añade evento al contexto."""
         event = ServiceEvent(
             service_name=self.service_name,
@@ -544,7 +544,7 @@ class ServiceContext:
         )
         self._events.append(event)
     
-    def get_events(self) -> List[ServiceEvent]:
+    def get_events(self) -> list[ServiceEvent]:
         """Obtiene todos los eventos del contexto."""
         return self._events.copy()
     
@@ -571,7 +571,7 @@ class BaseService(ABC):
     
     # Class variables
     _instances: ClassVar[WeakValueDictionary] = WeakValueDictionary()
-    _global_config: ClassVar[Dict[str, Any]] = {}
+    _global_config: ClassVar[dict[str, Any]] = {}
     
     def __init__(self, name: str = None, config: ServiceConfiguration = None):
         self.name = name or self.__class__.__name__.replace('Service', '').lower()
@@ -586,16 +586,16 @@ class BaseService(ABC):
         
         # Contexto y eventos
         self._context = ServiceContext(self.name)
-        self._event_handlers: Dict[str, List[Callable]] = {}
+        self._event_handlers: dict[str, list[Callable]] = {}
         
         # Dependencies y recursos
-        self.dependencies: List[str] = []
-        self._resources: Dict[str, Any] = {}
-        self._cleanup_callbacks: List[Callable] = []
+        self.dependencies: list[str] = []
+        self._resources: dict[str, Any] = {}
+        self._cleanup_callbacks: list[Callable] = []
         
         # Threading y async
         self._lock = threading.Lock()
-        self._async_tasks: List[asyncio.Task] = []
+        self._async_tasks: list[asyncio.Task] = []
         
         # Almacenar instancia
         BaseService._instances[id(self)] = self
@@ -710,7 +710,7 @@ class BaseService(ABC):
     # Health check methods
     
     @abstractmethod
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """
         Verifica el estado de salud del servicio.
         Debe ser implementado por cada servicio específico.
@@ -801,7 +801,7 @@ class BaseService(ABC):
             except ValueError:
                 pass
     
-    def _emit_event(self, event_type: str, data: Dict[str, Any] = None):
+    def _emit_event(self, event_type: str, data: dict[str, Any] = None):
         """Emite un evento."""
         if not self.config.event_publishing:
             return
@@ -825,7 +825,7 @@ class BaseService(ABC):
     
     # Caching methods
     
-    def cached(self, ttl: int = None, invalidate_on: List[str] = None):
+    def cached(self, ttl: int = None, invalidate_on: list[str] = None):
         """
         Decorador para cache automático de métodos.
         
@@ -867,12 +867,12 @@ class BaseService(ABC):
     
     # Validation methods
     
-    def validate(self, data: Dict[str, Any], rules: ServiceValidator = None) -> Tuple[bool, List[str]]:
+    def validate(self, data: dict[str, Any], rules: ServiceValidator = None) -> tuple[bool, list[str]]:
         """Valida datos usando reglas del servicio."""
         validator = rules or self.validator
         return validator.validate(data)
     
-    def require_valid(self, data: Dict[str, Any], rules: ServiceValidator = None):
+    def require_valid(self, data: dict[str, Any], rules: ServiceValidator = None):
         """Requiere que los datos sean válidos, lanza excepción si no."""
         is_valid, errors = self.validate(data, rules)
         if not is_valid:
@@ -991,17 +991,17 @@ class BaseService(ABC):
     @property
     def uptime(self) -> timedelta:
         """Tiempo que lleva el servicio ejecutándose."""
-        return datetime.utcnow() - self._context.start_time
+        return datetime.now(timezone.utc) - self._context.start_time
     
     # Class methods
     
     @classmethod
-    def get_all_instances(cls) -> List['BaseService']:
+    def get_all_instances(cls) -> list['BaseService']:
         """Obtiene todas las instancias activas de servicios."""
         return list(cls._instances.values())
     
     @classmethod
-    def set_global_config(cls, config: Dict[str, Any]):
+    def set_global_config(cls, config: dict[str, Any]):
         """Establece configuración global para todos los servicios."""
         cls._global_config.update(config)
     

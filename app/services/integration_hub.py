@@ -14,8 +14,8 @@ import hashlib
 import logging
 import asyncio
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Union, Any, Callable, Type
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Union, Any, Callable, Type
 from enum import Enum
 from dataclasses import dataclass, asdict, field
 from functools import wraps
@@ -108,17 +108,17 @@ class IntegrationConfig:
     client_id: Optional[str] = None
     client_secret: Optional[str] = None
     api_key: Optional[str] = None
-    scopes: List[str] = field(default_factory=list)
+    scopes: list[str] = field(default_factory=list)
     webhook_secret: Optional[str] = None
-    rate_limit: Optional[Dict[str, int]] = field(default_factory=dict)
+    rate_limit: Optional[dict[str, int]] = field(default_factory=dict)
     timeout: int = 30
-    retry_config: Dict[str, int] = field(default_factory=lambda: {
+    retry_config: dict[str, int] = field(default_factory=lambda: {
         'max_retries': 3,
         'backoff_factor': 1,
         'retry_statuses': [500, 502, 503, 504]
     })
     enabled: bool = True
-    settings: Dict[str, Any] = field(default_factory=dict)
+    settings: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -129,7 +129,7 @@ class IntegrationCredentials:
     access_token: Optional[str] = None
     refresh_token: Optional[str] = None
     token_expires_at: Optional[datetime] = None
-    additional_data: Dict[str, Any] = field(default_factory=dict)
+    additional_data: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
 
@@ -138,7 +138,7 @@ class IntegrationCredentials:
 class WebhookPayload:
     """Estructura de payload webhook"""
     event: WebhookEvent
-    data: Dict[str, Any]
+    data: dict[str, Any]
     timestamp: datetime = field(default_factory=datetime.utcnow)
     user_id: Optional[int] = None
     source: str = "ecosystem"
@@ -150,9 +150,9 @@ class APIRequest:
     """Estructura de request a API externa"""
     method: str
     endpoint: str
-    headers: Dict[str, str] = field(default_factory=dict)
-    params: Dict[str, Any] = field(default_factory=dict)
-    data: Dict[str, Any] = field(default_factory=dict)
+    headers: dict[str, str] = field(default_factory=dict)
+    params: dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
     timeout: int = 30
 
 
@@ -160,8 +160,8 @@ class APIRequest:
 class APIResponse:
     """Estructura de response de API externa"""
     status_code: int
-    data: Dict[str, Any]
-    headers: Dict[str, str] = field(default_factory=dict)
+    data: dict[str, Any]
+    headers: dict[str, str] = field(default_factory=dict)
     success: bool = True
     error_message: Optional[str] = None
     rate_limit_remaining: Optional[int] = None
@@ -181,7 +181,7 @@ class CircuitBreaker:
     def call(self, func: Callable, *args, **kwargs):
         """Ejecuta función con circuit breaker"""
         if self.state == 'OPEN':
-            if datetime.utcnow() - self.last_failure_time > timedelta(seconds=self.recovery_timeout):
+            if datetime.now(timezone.utc) - self.last_failure_time > timedelta(seconds=self.recovery_timeout):
                 self.state = 'HALF_OPEN'
             else:
                 raise IntegrationError("Circuit breaker is OPEN")
@@ -194,7 +194,7 @@ class CircuitBreaker:
             return result
         except Exception as e:
             self.failure_count += 1
-            self.last_failure_time = datetime.utcnow()
+            self.last_failure_time = datetime.now(timezone.utc)
             
             if self.failure_count >= self.failure_threshold:
                 self.state = 'OPEN'
@@ -248,7 +248,7 @@ class BaseIntegration(ABC):
         if not credentials:
             return False
             
-        if credentials.token_expires_at and datetime.utcnow() >= credentials.token_expires_at:
+        if credentials.token_expires_at and datetime.now(timezone.utc) >= credentials.token_expires_at:
             try:
                 self.refresh_token(credentials)
                 return True
@@ -283,7 +283,7 @@ class OAuth2Integration(BaseIntegration):
     def get_auth_url(self, user_id: int, state: str = None) -> str:
         """Genera URL de autorización OAuth"""
         if not state:
-            state = f"{user_id}_{datetime.utcnow().timestamp()}"
+            state = f"{user_id}_{datetime.now(timezone.utc).timestamp()}"
         
         params = {
             'client_id': self.config.client_id,
@@ -310,7 +310,7 @@ class OAuth2Integration(BaseIntegration):
             integration_name=self.config.name,
             access_token=token_data['access_token'],
             refresh_token=token_data.get('refresh_token'),
-            token_expires_at=datetime.utcnow() + timedelta(
+            token_expires_at=datetime.now(timezone.utc) + timedelta(
                 seconds=token_data.get('expires_in', 3600)
             ),
             additional_data=token_data
@@ -343,10 +343,10 @@ class OAuth2Integration(BaseIntegration):
         token_data = response.json()
         
         credentials.access_token = token_data['access_token']
-        credentials.token_expires_at = datetime.utcnow() + timedelta(
+        credentials.token_expires_at = datetime.now(timezone.utc) + timedelta(
             seconds=token_data.get('expires_in', 3600)
         )
-        credentials.updated_at = datetime.utcnow()
+        credentials.updated_at = datetime.now(timezone.utc)
         
         if 'refresh_token' in token_data:
             credentials.refresh_token = token_data['refresh_token']
@@ -361,7 +361,7 @@ class OAuth2Integration(BaseIntegration):
             raise AuthenticationError("User not authenticated")
         
         # Verificar y refrescar token si es necesario
-        if credentials.token_expires_at and datetime.utcnow() >= credentials.token_expires_at:
+        if credentials.token_expires_at and datetime.now(timezone.utc) >= credentials.token_expires_at:
             credentials = self.refresh_token(credentials)
         
         # Agregar token de autenticación
@@ -369,7 +369,7 @@ class OAuth2Integration(BaseIntegration):
         
         return self.circuit_breaker.call(self._execute_request, request)
     
-    def _exchange_code_for_token(self, auth_code: str) -> Dict[str, Any]:
+    def _exchange_code_for_token(self, auth_code: str) -> dict[str, Any]:
         """Intercambia código por token"""
         data = {
             'grant_type': 'authorization_code',
@@ -457,7 +457,7 @@ class GoogleIntegration(OAuth2Integration):
         )
         super().__init__(config)
     
-    def create_calendar_event(self, user_id: int, event_data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_calendar_event(self, user_id: int, event_data: dict[str, Any]) -> dict[str, Any]:
         """Crea evento en Google Calendar"""
         request = APIRequest(
             method='POST',
@@ -479,7 +479,7 @@ class GoogleIntegration(OAuth2Integration):
             self.config.base_url = original_base_url
     
     def list_calendar_events(self, user_id: int, start_date: datetime, 
-                           end_date: datetime) -> List[Dict[str, Any]]:
+                           end_date: datetime) -> list[dict[str, Any]]:
         """Lista eventos de calendario"""
         request = APIRequest(
             method='GET',
@@ -540,7 +540,7 @@ class StripeIntegration(BaseIntegration):
         return self.circuit_breaker.call(self._execute_request, request)
     
     def create_payment_intent(self, amount: int, currency: str, 
-                            customer_id: str = None) -> Dict[str, Any]:
+                            customer_id: str = None) -> dict[str, Any]:
         """Crea Payment Intent"""
         data = {
             'amount': amount,
@@ -569,8 +569,8 @@ class WebhookManager:
     
     def __init__(self):
         self.cache = CacheManager()
-        self.registered_handlers: Dict[WebhookEvent, List[Callable]] = {}
-        self.outbound_webhooks: Dict[str, Dict[str, Any]] = {}
+        self.registered_handlers: dict[WebhookEvent, list[Callable]] = {}
+        self.outbound_webhooks: dict[str, dict[str, Any]] = {}
     
     def register_handler(self, event: WebhookEvent, handler: Callable) -> None:
         """Registra handler para evento webhook"""
@@ -579,8 +579,8 @@ class WebhookManager:
         self.registered_handlers[event].append(handler)
         logger.info(f"Registered webhook handler for {event.value}")
     
-    def register_outbound_webhook(self, name: str, url: str, events: List[WebhookEvent],
-                                secret: str = None, headers: Dict[str, str] = None) -> None:
+    def register_outbound_webhook(self, name: str, url: str, events: list[WebhookEvent],
+                                secret: str = None, headers: dict[str, str] = None) -> None:
         """Registra webhook saliente"""
         self.outbound_webhooks[name] = {
             'url': url,
@@ -596,7 +596,7 @@ class WebhookManager:
         }
         logger.info(f"Registered outbound webhook: {name}")
     
-    def handle_incoming_webhook(self, integration_name: str, payload: Dict[str, Any],
+    def handle_incoming_webhook(self, integration_name: str, payload: dict[str, Any],
                               signature: str = None) -> bool:
         """Procesa webhook entrante"""
         try:
@@ -618,7 +618,7 @@ class WebhookManager:
             logger.error(f"Error processing webhook from {integration_name}: {e}")
             return False
     
-    def trigger_outbound_webhook(self, event: WebhookEvent, data: Dict[str, Any],
+    def trigger_outbound_webhook(self, event: WebhookEvent, data: dict[str, Any],
                                user_id: int = None) -> None:
         """Dispara webhooks salientes"""
         payload = WebhookPayload(
@@ -633,7 +633,7 @@ class WebhookManager:
         # Enviar webhooks externos
         self._send_outbound_webhooks(payload)
     
-    def _verify_webhook_signature(self, integration_name: str, payload: Dict[str, Any],
+    def _verify_webhook_signature(self, integration_name: str, payload: dict[str, Any],
                                 signature: str) -> bool:
         """Verifica firma de webhook"""
         # Implementación específica según la integración
@@ -641,7 +641,7 @@ class WebhookManager:
             return self._verify_stripe_signature(payload, signature)
         return True
     
-    def _verify_stripe_signature(self, payload: Dict[str, Any], signature: str) -> bool:
+    def _verify_stripe_signature(self, payload: dict[str, Any], signature: str) -> bool:
         """Verifica firma de Stripe"""
         webhook_secret = current_app.config.get('STRIPE_WEBHOOK_SECRET')
         if not webhook_secret:
@@ -658,7 +658,7 @@ class WebhookManager:
         except Exception:
             return False
     
-    def _handle_stripe_webhook(self, payload: Dict[str, Any]) -> bool:
+    def _handle_stripe_webhook(self, payload: dict[str, Any]) -> bool:
         """Procesa webhook de Stripe"""
         event_type = payload.get('type')
         
@@ -675,7 +675,7 @@ class WebhookManager:
         
         return True
     
-    def _handle_google_webhook(self, payload: Dict[str, Any]) -> bool:
+    def _handle_google_webhook(self, payload: dict[str, Any]) -> bool:
         """Procesa webhook de Google"""
         # Implementar según necesidades específicas
         return True
@@ -704,7 +704,7 @@ class IntegrationHub:
     """Hub principal para gestionar todas las integraciones"""
     
     def __init__(self):
-        self.integrations: Dict[str, BaseIntegration] = {}
+        self.integrations: dict[str, BaseIntegration] = {}
         self.webhook_manager = WebhookManager()
         self.cache = CacheManager()
         self._initialize_integrations()
@@ -726,7 +726,7 @@ class IntegrationHub:
         """Obtiene integración por nombre"""
         return self.integrations.get(name)
     
-    def get_available_integrations(self, user_id: int = None) -> List[Dict[str, Any]]:
+    def get_available_integrations(self, user_id: int = None) -> list[dict[str, Any]]:
         """Lista integraciones disponibles"""
         integrations = []
         
@@ -746,7 +746,7 @@ class IntegrationHub:
         
         return integrations
     
-    def get_user_integrations(self, user_id: int) -> List[Dict[str, Any]]:
+    def get_user_integrations(self, user_id: int) -> list[dict[str, Any]]:
         """Obtiene integraciones activas del usuario"""
         user_integrations = []
         
@@ -776,12 +776,12 @@ class IntegrationHub:
             return False
     
     def get_integration_analytics(self, start_date: datetime = None,
-                                end_date: datetime = None) -> Dict[str, Any]:
+                                end_date: datetime = None) -> dict[str, Any]:
         """Obtiene analytics de integraciones"""
         if not start_date:
-            start_date = datetime.utcnow() - timedelta(days=30)
+            start_date = datetime.now(timezone.utc) - timedelta(days=30)
         if not end_date:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(timezone.utc)
         
         # En producción, consultar base de datos
         return {
@@ -807,7 +807,7 @@ class IntegrationHub:
             }
         }
     
-    def test_integration(self, integration_name: str, user_id: int = None) -> Dict[str, Any]:
+    def test_integration(self, integration_name: str, user_id: int = None) -> dict[str, Any]:
         """Prueba conectividad de integración"""
         integration = self.integrations.get(integration_name)
         if not integration:
@@ -838,7 +838,7 @@ class IntegrationHub:
         except Exception as e:
             return {'success': False, 'error': str(e)}
     
-    def handle_webhook(self, integration_name: str, payload: Dict[str, Any],
+    def handle_webhook(self, integration_name: str, payload: dict[str, Any],
                       signature: str = None) -> bool:
         """Maneja webhook entrante"""
         return self.webhook_manager.handle_incoming_webhook(
@@ -849,7 +849,7 @@ class IntegrationHub:
         """Registra handler de webhook"""
         self.webhook_manager.register_handler(event, handler)
     
-    def trigger_webhook(self, event: WebhookEvent, data: Dict[str, Any],
+    def trigger_webhook(self, event: WebhookEvent, data: dict[str, Any],
                        user_id: int = None) -> None:
         """Dispara webhook"""
         self.webhook_manager.trigger_outbound_webhook(event, data, user_id)

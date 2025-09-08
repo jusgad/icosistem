@@ -11,7 +11,7 @@ Fecha: 2025
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from flask import (
     Blueprint, render_template, request, jsonify, flash, redirect, 
@@ -436,7 +436,7 @@ def edit_organization(organization_id):
             organization.linkedin_profile = form.linkedin_profile.data.strip() if form.linkedin_profile.data else None
             organization.twitter_handle = form.twitter_handle.data.strip() if form.twitter_handle.data else None
             organization.logo_url = form.logo_url.data.strip() if form.logo_url.data else None
-            organization.updated_at = datetime.utcnow()
+            organization.updated_at = datetime.now(timezone.utc)
             
             db.session.commit()
             
@@ -742,7 +742,7 @@ def create_investment(organization_id):
                 amount=form.amount.data,
                 currency=form.currency.data or 'USD',
                 equity_percentage=form.equity_percentage.data,
-                investment_date=form.investment_date.data or datetime.utcnow().date(),
+                investment_date=form.investment_date.data or datetime.now(timezone.utc).date(),
                 valuation=form.valuation.data,
                 terms=form.terms.data.strip() if form.terms.data else None,
                 notes=form.notes.data.strip() if form.notes.data else None,
@@ -920,7 +920,7 @@ def evaluate_organization(organization_id):
                 'notes': form.notes.data.strip() if form.notes.data else None,
                 'recommendations': form.recommendations.data.strip() if form.recommendations.data else None,
                 'evaluator_id': current_user.id,
-                'evaluation_date': datetime.utcnow()
+                'evaluation_date': datetime.now(timezone.utc)
             }
             
             # Calcular score promedio
@@ -933,7 +933,7 @@ def evaluate_organization(organization_id):
             
             # Actualizar organización
             organization.evaluation_data = evaluation_data  # JSON field
-            organization.last_evaluation_at = datetime.utcnow()
+            organization.last_evaluation_at = datetime.now(timezone.utc)
             organization.impact_score = total_score
             
             # Determinar nivel de partnership
@@ -1297,7 +1297,7 @@ def _get_organization_statistics():
 def _get_organization_detailed_metrics(organization):
     """Obtiene métricas detalladas de una organización."""
     return {
-        'age_days': (datetime.utcnow() - organization.created_at).days,
+        'age_days': (datetime.now(timezone.utc) - organization.created_at).days,
         'programs_count': len(organization.programs),
         'active_programs': len([p for p in organization.programs if p.status == 'active']),
         'partnerships_count': len(organization.partnerships),
@@ -1574,7 +1574,7 @@ def _get_organizations_needing_attention(limit=10):
     return Organization.query.filter(
         or_(
             Organization.impact_score < 2.0,
-            Organization.updated_at < datetime.utcnow() - timedelta(days=90),
+            Organization.updated_at < datetime.now(timezone.utc) - timedelta(days=90),
             and_(
                 Organization.type.in_(['incubator', 'accelerator']),
                 Organization.entrepreneurs_supported == 0

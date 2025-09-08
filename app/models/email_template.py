@@ -95,10 +95,10 @@ class EmailTemplate(CompleteBaseModel):
     
     def increment_usage(self):
         """Increment usage count and update last used timestamp."""
-        from datetime import datetime
+        from datetime import datetime, timezone
         
         self.usage_count += 1
-        self.last_used_at = datetime.utcnow()
+        self.last_used_at = datetime.now(timezone.utc)
         
         try:
             db.session.commit()

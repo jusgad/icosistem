@@ -12,7 +12,7 @@ Version: 1.0.0
 import logging
 from io import BytesIO
 from datetime import datetime
-from typing import List, Dict, Any, Optional, Union
+from typing import Any, Optional, Union
 
 import pandas as pd
 from openpyxl import Workbook
@@ -74,9 +74,9 @@ class ExcelBuilder:
     def add_sheet_from_list_of_dicts(
         self,
         sheet_name: str,
-        data: List[Dict[str, Any]],
-        headers: Optional[List[str]] = None,
-        column_styles: Optional[Dict[str, str]] = None,
+        data: list[dict[str, Any]],
+        headers: Optional[list[str]] = None,
+        column_styles: Optional[dict[str, str]] = None,
         auto_adjust_column_widths: bool = True
     ) -> Worksheet:
         """
@@ -142,7 +142,7 @@ class ExcelBuilder:
         df: pd.DataFrame,
         index: bool = False,
         header: bool = True,
-        column_styles: Optional[Dict[str, str]] = None,
+        column_styles: Optional[dict[str, str]] = None,
         auto_adjust_column_widths: bool = True
     ) -> Worksheet:
         """
@@ -193,7 +193,7 @@ class ExcelBuilder:
             
         return ws
 
-    def auto_adjust_column_widths(self, ws: Worksheet, headers: List[str], data: List[Dict[str, Any]]):
+    def auto_adjust_column_widths(self, ws: Worksheet, headers: list[str], data: list[dict[str, Any]]):
         """Ajusta automáticamente el ancho de las columnas basado en el contenido."""
         column_widths = {}
         for col_idx, header in enumerate(headers, 1):
@@ -307,7 +307,7 @@ class ExcelReader:
             logger.error(f"Error cargando workbook Excel: {e}")
             raise ValueError(f"No se pudo cargar el archivo Excel: {e}")
 
-    def get_sheet_names(self) -> List[str]:
+    def get_sheet_names(self) -> list[str]:
         """Retorna los nombres de todas las hojas en el workbook."""
         return self.workbook.sheetnames
 
@@ -315,7 +315,7 @@ class ExcelReader:
         self,
         sheet_name: Optional[str] = None,
         header_row: int = 1
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Lee una hoja específica y la convierte en una lista de diccionarios.
 
@@ -394,9 +394,9 @@ class ExcelReader:
 
 
 def generate_excel_response(
-    data_sheets: Dict[str, List[Dict[str, Any]]],
+    data_sheets: dict[str, list[dict[str, Any]]],
     filename_base: str,
-    sheet_styles: Optional[Dict[str, Dict[str, str]]] = None
+    sheet_styles: Optional[dict[str, dict[str, str]]] = None
 ) -> Response:
     """
     Genera una respuesta Flask con un archivo Excel.

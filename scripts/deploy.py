@@ -49,7 +49,7 @@ import tarfile
 import time
 import requests
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Optional, Any
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from urllib.parse import urlparse
@@ -98,7 +98,7 @@ class DeploymentContext:
     git_branch: Optional[str] = None
     version: Optional[str] = None
     previous_version: Optional[str] = None
-    build_artifacts: List[str] = field(default_factory=list)
+    build_artifacts: list[str] = field(default_factory=list)
     backup_created: bool = False
     backup_location: Optional[str] = None
     deployment_url: Optional[str] = None

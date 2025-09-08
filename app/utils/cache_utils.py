@@ -19,7 +19,7 @@ Version: 1.0.0
 import logging
 import json
 import hashlib
-from typing import Any, Optional, Callable, List, Dict, Union
+from typing import Any, Optional, Callable, Union
 from functools import wraps
 
 from flask import current_app
@@ -42,7 +42,7 @@ class CacheManager:
         self.redis = redis_instance or redis_client
         self.prefix = current_app.config.get('CACHE_KEY_PREFIX', 'ecosistema_cache:')
 
-    def _make_key(self, key_parts: Union[str, List[str]]) -> str:
+    def _make_key(self, key_parts: Union[str, list[str]]) -> str:
         """
         Genera una clave de cache estandarizada.
         
@@ -161,7 +161,7 @@ class CacheManager:
             logger.warning(f"Backend de cache no soporta 'has', usando 'get' para {full_key}: {e}")
             return self.cache.get(full_key) is not None
 
-    def get_many(self, keys: List[str]) -> Dict[str, Optional[Any]]:
+    def get_many(self, keys: list[str]) -> dict[str, Optional[Any]]:
         """
         Obtiene múltiples valores del cache.
         
@@ -187,7 +187,7 @@ class CacheManager:
             # Fallback a gets individuales
             return {key: self.get(key) for key in keys}
 
-    def set_many(self, mapping: Dict[str, Any], timeout: Optional[int] = None) -> bool:
+    def set_many(self, mapping: dict[str, Any], timeout: Optional[int] = None) -> bool:
         """
         Guarda múltiples valores en el cache.
         
@@ -213,7 +213,7 @@ class CacheManager:
                     success = False
             return success
 
-    def delete_many(self, keys: List[str]) -> bool:
+    def delete_many(self, keys: list[str]) -> bool:
         """
         Elimina múltiples valores del cache.
         
@@ -295,7 +295,7 @@ class CacheManager:
             return wrapper
         return decorator
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         Obtiene estadísticas básicas del cache (si el backend lo soporta).
         Principalmente para Redis.

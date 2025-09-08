@@ -22,8 +22,8 @@ Funcionalidades principales:
 import logging
 import json
 import uuid
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union, Set
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Any, Union
 from dataclasses import dataclass, asdict
 from enum import Enum
 
@@ -124,29 +124,29 @@ class NotificationPayload:
     """Payload para notificaciones"""
     title: str
     body: str
-    data: Dict[str, Any] = None
+    data: dict[str, Any] = None
     icon: str = "default"
     sound: str = "default"
     badge: int = 1
     click_action: str = None
     image_url: str = None
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 @dataclass
 class NotificationContext:
     """Contexto para generar notificaciones"""
-    user: Dict[str, Any]
-    trigger_user: Dict[str, Any] = None
-    entity: Dict[str, Any] = None
-    metadata: Dict[str, Any] = None
+    user: dict[str, Any]
+    trigger_user: dict[str, Any] = None
+    entity: dict[str, Any] = None
+    metadata: dict[str, Any] = None
     timestamp: str = None
     
     def __post_init__(self):
         if self.timestamp is None:
-            self.timestamp = format_datetime(datetime.utcnow())
+            self.timestamp = format_datetime(datetime.now(timezone.utc))
 
 
 # === TAREAS DE NOTIFICACIONES INMEDIATAS ===
@@ -158,7 +158,7 @@ class NotificationContext:
     queue='notifications',
     priority=NotificationPriority.HIGH.value
 )
-def send_push_notification(self, user_id: int, payload: Dict[str, Any], channels: List[str] = None):
+def send_push_notification(self, user_id: int, payload: dict[str, Any], channels: list[str] = None):
     """
     Envía notificación push a un usuario específico
     
@@ -264,7 +264,7 @@ def send_push_notification(self, user_id: int, payload: Dict[str, Any], channels
     queue='notifications',
     priority=NotificationPriority.HIGH.value
 )
-def send_websocket_notification(self, user_id: int, event_type: str, data: Dict[str, Any]):
+def send_websocket_notification(self, user_id: int, event_type: str, data: dict[str, Any]):
     """
     Envía notificación en tiempo real vía WebSocket
     
@@ -296,7 +296,7 @@ def send_websocket_notification(self, user_id: int, event_type: str, data: Dict[
         notification_data = {
             'type': event_type,
             'data': data,
-            'timestamp': format_datetime(datetime.utcnow()),
+            'timestamp': format_datetime(datetime.now(timezone.utc)),
             'user_id': user_id
         }
         
@@ -444,7 +444,7 @@ def send_sms_notification(self, user_id: int, message: str, urgent: bool = False
     queue='notifications',
     priority=NotificationPriority.NORMAL.value
 )
-def send_in_app_notification(self, user_id: int, notification_data: Dict[str, Any]):
+def send_in_app_notification(self, user_id: int, notification_data: dict[str, Any]):
     """
     Crea notificación in-app en la base de datos
     
@@ -519,7 +519,7 @@ def send_in_app_notification(self, user_id: int, notification_data: Dict[str, An
     queue='notifications',
     priority=NotificationPriority.HIGH.value
 )
-def send_meeting_notification(self, meeting_id: int, notification_type: str, users: List[int] = None):
+def send_meeting_notification(self, meeting_id: int, notification_type: str, users: list[int] = None):
     """
     Envía notificaciones relacionadas con reuniones
     
@@ -798,7 +798,7 @@ def send_mentorship_notification(self, session_id: int, notification_type: str):
     queue='notifications',
     priority=NotificationPriority.NORMAL.value
 )
-def send_project_notification(self, project_id: int, notification_type: str, metadata: Dict[str, Any] = None):
+def send_project_notification(self, project_id: int, notification_type: str, metadata: dict[str, Any] = None):
     """
     Envía notificaciones relacionadas con proyectos
     
@@ -928,7 +928,7 @@ def send_daily_notification_digest(self, user_id: int = None):
                 continue
             
             # Obtener notificaciones del día
-            today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+            today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
             notifications = Notification.query.filter(
                 Notification.user_id == user.id,
                 Notification.created_at >= today_start,
@@ -1010,7 +1010,7 @@ def send_weekly_notification_summary(self, user_id: int = None):
             ).all()
         
         results = []
-        week_start = datetime.utcnow() - timedelta(days=7)
+        week_start = datetime.now(timezone.utc) - timedelta(days=7)
         
         for user in users:
             if not user:
@@ -1083,7 +1083,7 @@ def process_notification_queue(self):
         logger.info("Procesando cola de notificaciones pendientes")
         
         # Obtener notificaciones pendientes de los últimos 3 días
-        cutoff_date = datetime.utcnow() - timedelta(days=3)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=3)
         pending_notifications = Notification.query.filter(
             Notification.status == NotificationStatus.PENDING,
             Notification.created_at >= cutoff_date
@@ -1126,7 +1126,7 @@ def process_notification_queue(self):
                 # Actualizar estado
                 if success:
                     notification.status = NotificationStatus.SENT
-                    notification.sent_at = datetime.utcnow()
+                    notification.sent_at = datetime.now(timezone.utc)
                     processed += 1
                 else:
                     notification.retry_count += 1
@@ -1172,7 +1172,7 @@ def cleanup_old_notifications(self):
         logger.info("Iniciando limpieza de notificaciones antiguas")
         
         # Limpiar notificaciones leídas mayores a 30 días
-        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
         old_read_notifications = Notification.query.filter(
             Notification.status == NotificationStatus.READ,
             Notification.created_at < thirty_days_ago
@@ -1184,7 +1184,7 @@ def cleanup_old_notifications(self):
         # Limpiar notificaciones caducadas
         expired_notifications = Notification.query.filter(
             Notification.expires_at.isnot(None),
-            Notification.expires_at < datetime.utcnow(),
+            Notification.expires_at < datetime.now(timezone.utc),
             Notification.status != NotificationStatus.DELETED
         )
         
@@ -1195,7 +1195,7 @@ def cleanup_old_notifications(self):
         )
         
         # Limpiar notificaciones fallidas mayores a 7 días
-        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
         failed_notifications = Notification.query.filter(
             Notification.status == NotificationStatus.FAILED,
             Notification.created_at < seven_days_ago
@@ -1242,7 +1242,7 @@ def cleanup_old_notifications(self):
     queue='notifications',
     priority=NotificationPriority.NORMAL.value
 )
-def send_slack_notification(self, channel: str, message: str, attachments: List[Dict] = None):
+def send_slack_notification(self, channel: str, message: str, attachments: list[Dict] = None):
     """
     Envía notificación a Slack
     
@@ -1291,7 +1291,7 @@ def send_slack_notification(self, channel: str, message: str, attachments: List[
 
 # === FUNCIONES AUXILIARES PRIVADAS ===
 
-def _send_firebase_notification(token: DeviceToken, payload: NotificationPayload) -> Dict[str, Any]:
+def _send_firebase_notification(token: DeviceToken, payload: NotificationPayload) -> dict[str, Any]:
     """Envía notificación push vía Firebase"""
     try:
         # Preparar mensaje FCM
@@ -1376,8 +1376,8 @@ def _should_send_notification(user: User, channel: NotificationChannel) -> bool:
 def _save_notification_log(
     user_id: int,
     channel: NotificationChannel,
-    payload: Dict[str, Any],
-    results: List[Dict[str, Any]],
+    payload: dict[str, Any],
+    results: list[dict[str, Any]],
     status: NotificationStatus
 ):
     """Guarda log de notificación en base de datos"""
@@ -1391,7 +1391,7 @@ def _save_notification_log(
             payload=payload,
             results=results,
             status=status,
-            sent_at=datetime.utcnow() if status == NotificationStatus.SENT else None
+            sent_at=datetime.now(timezone.utc) if status == NotificationStatus.SENT else None
         )
         
         db.session.add(log)
@@ -1401,7 +1401,7 @@ def _save_notification_log(
         logger.error(f"Error guardando log de notificación: {str(e)}")
 
 
-def _save_pending_websocket_notification(user_id: int, notification_data: Dict[str, Any]):
+def _save_pending_websocket_notification(user_id: int, notification_data: dict[str, Any]):
     """Guarda notificación WebSocket para entrega posterior"""
     try:
         cache_key = f"pending_websocket_{user_id}"
@@ -1409,7 +1409,7 @@ def _save_pending_websocket_notification(user_id: int, notification_data: Dict[s
         
         pending_notifications.append({
             **notification_data,
-            'queued_at': datetime.utcnow().isoformat()
+            'queued_at': datetime.now(timezone.utc).isoformat()
         })
         
         # Mantener solo las últimas 10 notificaciones pendientes
@@ -1447,7 +1447,7 @@ def _update_sms_rate_limit(user_id: int):
         logger.error(f"Error actualizando rate limit SMS: {str(e)}")
 
 
-def _send_multi_channel_notification(user_id: int, payload: Dict[str, Any], channels: List[NotificationChannel]) -> List[Dict[str, Any]]:
+def _send_multi_channel_notification(user_id: int, payload: dict[str, Any], channels: list[NotificationChannel]) -> list[dict[str, Any]]:
     """Envía notificación por múltiples canales"""
     results = []
     
@@ -1486,7 +1486,7 @@ def _send_multi_channel_notification(user_id: int, payload: Dict[str, Any], chan
     return results
 
 
-def _group_notifications_for_digest(notifications: List[Notification]) -> Dict[str, List[Dict[str, Any]]]:
+def _group_notifications_for_digest(notifications: list[Notification]) -> dict[str, list[dict[str, Any]]]:
     """Agrupa notificaciones para digest"""
     grouped = {}
     
@@ -1506,7 +1506,7 @@ def _group_notifications_for_digest(notifications: List[Notification]) -> Dict[s
     return grouped
 
 
-def _get_weekly_user_stats(user_id: int, week_start: datetime) -> Dict[str, Any]:
+def _get_weekly_user_stats(user_id: int, week_start: datetime) -> dict[str, Any]:
     """Obtiene estadísticas semanales del usuario"""
     # Implementar lógica para obtener estadísticas
     return {
@@ -1518,13 +1518,13 @@ def _get_weekly_user_stats(user_id: int, week_start: datetime) -> Dict[str, Any]
     }
 
 
-def _has_significant_weekly_activity(stats: Dict[str, Any]) -> bool:
+def _has_significant_weekly_activity(stats: dict[str, Any]) -> bool:
     """Verifica si hay actividad significativa en la semana"""
     total_activity = sum(stats.values())
     return total_activity > 2  # Umbral mínimo de actividad
 
 
-def _generate_weekly_summary_message(stats: Dict[str, Any]) -> str:
+def _generate_weekly_summary_message(stats: dict[str, Any]) -> str:
     """Genera mensaje de resumen semanal"""
     activities = []
     
@@ -1541,7 +1541,7 @@ def _generate_weekly_summary_message(stats: Dict[str, Any]) -> str:
         return "Semana tranquila. ¡La próxima será más activa!"
 
 
-def _get_user_preferred_channels(user_id: int) -> List[NotificationChannel]:
+def _get_user_preferred_channels(user_id: int) -> list[NotificationChannel]:
     """Obtiene canales preferidos del usuario en orden de prioridad"""
     user = User.query.get(user_id)
     if not user:
@@ -1561,19 +1561,19 @@ def _get_user_preferred_channels(user_id: int) -> List[NotificationChannel]:
 
 
 # Funciones auxiliares para notificaciones pendientes
-def _send_firebase_notification_for_pending(notification: Notification) -> Dict[str, Any]:
+def _send_firebase_notification_for_pending(notification: Notification) -> dict[str, Any]:
     """Envía notificación Firebase para notificación pendiente"""
     # Implementar lógica específica
     return {'success': False, 'error': 'Not implemented'}
 
 
-def _send_websocket_notification_for_pending(notification: Notification) -> Dict[str, Any]:
+def _send_websocket_notification_for_pending(notification: Notification) -> dict[str, Any]:
     """Envía notificación WebSocket para notificación pendiente"""
     # Implementar lógica específica
     return {'success': False, 'error': 'Not implemented'}
 
 
-def _send_sms_notification_for_pending(notification: Notification) -> Dict[str, Any]:
+def _send_sms_notification_for_pending(notification: Notification) -> dict[str, Any]:
     """Envía notificación SMS para notificación pendiente"""
     # Implementar lógica específica
     return {'success': False, 'error': 'Not implemented'}

@@ -21,14 +21,14 @@ Funcionalidades:
 from flask import Blueprint, request, jsonify, current_app, g
 from flask_restful import Resource, Api
 from werkzeug.security import check_password_hash, generate_password_hash
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import jwt
 import secrets
 import pyotp
 import qrcode
 import io
 import base64
-from typing import Dict, Any, Optional, Tuple
+from typing import Any, Optional
 import re
 from email_validator import validate_email, EmailNotValidError
 
@@ -163,12 +163,12 @@ class LoginResource(Resource):
         refresh_token = self._generate_refresh_token(user)
         
         # Actualizar información de login
-        user.last_login = datetime.utcnow()
+        user.last_login = datetime.now(timezone.utc)
         user.login_count = (user.login_count or 0) + 1
         
         # Guardar refresh token
         user.refresh_token = refresh_token
-        user.refresh_token_expires = datetime.utcnow() + AuthConfig.REFRESH_TOKEN_EXPIRES
+        user.refresh_token_expires = datetime.now(timezone.utc) + AuthConfig.REFRESH_TOKEN_EXPIRES
         
         db.session.commit()
         
@@ -210,8 +210,8 @@ class LoginResource(Resource):
             'user_id': user.id,
             'email': user.email,
             'user_type': user.user_type,
-            'iat': datetime.utcnow(),
-            'exp': datetime.utcnow() + AuthConfig.ACCESS_TOKEN_EXPIRES,
+            'iat': datetime.now(timezone.utc),
+            'exp': datetime.now(timezone.utc) + AuthConfig.ACCESS_TOKEN_EXPIRES,
             'type': 'access'
         }
         
@@ -225,8 +225,8 @@ class LoginResource(Resource):
         """Genera token de refresh JWT"""
         payload = {
             'user_id': user.id,
-            'iat': datetime.utcnow(),
-            'exp': datetime.utcnow() + AuthConfig.REFRESH_TOKEN_EXPIRES,
+            'iat': datetime.now(timezone.utc),
+            'exp': datetime.now(timezone.utc) + AuthConfig.REFRESH_TOKEN_EXPIRES,
             'type': 'refresh',
             'jti': secrets.token_urlsafe(32)  # Unique token ID
         }
@@ -409,8 +409,8 @@ class RegisterResource(Resource):
         payload = {
             'user_id': user.id,
             'email': user.email,
-            'iat': datetime.utcnow(),
-            'exp': datetime.utcnow() + AuthConfig.EMAIL_VERIFICATION_EXPIRES,
+            'iat': datetime.now(timezone.utc),
+            'exp': datetime.now(timezone.utc) + AuthConfig.EMAIL_VERIFICATION_EXPIRES,
             'type': 'email_verification'
         }
         
@@ -500,7 +500,7 @@ class RefreshTokenResource(Resource):
                 raise AuthenticationError("Refresh token inválido")
             
             # Verificar expiración
-            if user.refresh_token_expires and user.refresh_token_expires < datetime.utcnow():
+            if user.refresh_token_expires and user.refresh_token_expires < datetime.now(timezone.utc):
                 raise AuthenticationError("Refresh token expirado")
             
             # Generar nuevo access token
@@ -554,7 +554,7 @@ class EmailVerificationResource(Resource):
             
             # Marcar email como verificado
             user.email_verified = True
-            user.email_verified_at = datetime.utcnow()
+            user.email_verified_at = datetime.now(timezone.utc)
             db.session.commit()
             
             # Log verificación
@@ -685,8 +685,8 @@ class ForgotPasswordResource(Resource):
         payload = {
             'user_id': user.id,
             'email': user.email,
-            'iat': datetime.utcnow(),
-            'exp': datetime.utcnow() + AuthConfig.PASSWORD_RESET_EXPIRES,
+            'iat': datetime.now(timezone.utc),
+            'exp': datetime.now(timezone.utc) + AuthConfig.PASSWORD_RESET_EXPIRES,
             'type': 'password_reset'
         }
         
@@ -1081,14 +1081,14 @@ class OAuthLoginResource(Resource):
                 # Marcar email como verificado si viene de OAuth
                 if not user.email_verified:
                     user.email_verified = True
-                    user.email_verified_at = datetime.utcnow()
+                    user.email_verified_at = datetime.now(timezone.utc)
                 
             else:
                 # Crear nuevo usuario desde OAuth
                 user = self._create_oauth_user(user_info, provider)
             
             # Actualizar último login
-            user.last_login = datetime.utcnow()
+            user.last_login = datetime.now(timezone.utc)
             user.login_count = (user.login_count or 0) + 1
             
             db.session.commit()
@@ -1099,7 +1099,7 @@ class OAuthLoginResource(Resource):
             
             # Guardar refresh token
             user.refresh_token = refresh_token
-            user.refresh_token_expires = datetime.utcnow() + AuthConfig.REFRESH_TOKEN_EXPIRES
+            user.refresh_token_expires = datetime.now(timezone.utc) + AuthConfig.REFRESH_TOKEN_EXPIRES
             db.session.commit()
             
             # Log login OAuth
@@ -1144,7 +1144,7 @@ class OAuthLoginResource(Resource):
             user_type='entrepreneur',  # Tipo por defecto
             is_active=True,
             email_verified=True,  # OAuth emails están verificados
-            email_verified_at=datetime.utcnow()
+            email_verified_at=datetime.now(timezone.utc)
         )
         
         if provider == 'google':
@@ -1325,7 +1325,7 @@ def auth_health():
         'status': 'healthy',
         'module': 'auth',
         'endpoints': len(api.resources),
-        'timestamp': datetime.utcnow().isoformat()
+        'timestamp': datetime.now(timezone.utc).isoformat()
     })
 
 
@@ -1347,7 +1347,7 @@ def get_oauth_providers():
     
     return jsonify({
         'providers': providers,
-        'timestamp': datetime.utcnow().isoformat()
+        'timestamp': datetime.now(timezone.utc).isoformat()
     })
 
 
@@ -1375,7 +1375,7 @@ def handle_auth_error(error):
         'error': 'Authentication Failed',
         'message': str(error),
         'code': 'AUTH_FAILED',
-        'timestamp': datetime.utcnow().isoformat()
+        'timestamp': datetime.now(timezone.utc).isoformat()
     }), 401
 
 
@@ -1386,7 +1386,7 @@ def handle_validation_error(error):
         'error': 'Validation Error',
         'message': str(error),
         'code': 'VALIDATION_FAILED',
-        'timestamp': datetime.utcnow().isoformat()
+        'timestamp': datetime.now(timezone.utc).isoformat()
     }), 400
 
 
@@ -1418,7 +1418,7 @@ def get_user_from_token(token: str) -> Optional[User]:
         return None
 
 
-def generate_api_token(user: User, permissions: List[str] = None) -> str:
+def generate_api_token(user: User, permissions: list[str] = None) -> str:
     """
     Genera token de API para servicios
     
@@ -1434,8 +1434,8 @@ def generate_api_token(user: User, permissions: List[str] = None) -> str:
         'email': user.email,
         'user_type': user.user_type,
         'permissions': permissions or user.get_permissions(),
-        'iat': datetime.utcnow(),
-        'exp': datetime.utcnow() + timedelta(days=365),  # Token de larga duración
+        'iat': datetime.now(timezone.utc),
+        'exp': datetime.now(timezone.utc) + timedelta(days=365),  # Token de larga duración
         'type': 'api'
     }
     

@@ -21,7 +21,7 @@ import os
 import ssl
 import logging
 from datetime import timedelta
-from typing import Dict, List, Optional, Any, Union
+from typing import Optional, Any, Union
 from functools import lru_cache
 
 from celery import Celery, __version__ as celery_version
@@ -327,7 +327,7 @@ class CeleryConfig:
         
         return RESULT_BACKEND
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convierte la configuración a diccionario"""
         config = {}
         for attr in dir(self):
@@ -884,7 +884,7 @@ def get_celery_app() -> EcosistemaEmprendimientoCelery:
     return create_celery_app()
 
 
-def get_celery_info() -> Dict[str, Any]:
+def get_celery_info() -> dict[str, Any]:
     """
     Obtiene información completa de la configuración de Celery
     

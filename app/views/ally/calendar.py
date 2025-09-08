@@ -10,7 +10,7 @@ Version: 2.0.0
 """
 
 from datetime import datetime, timedelta, date, time
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Optional, Any
 from collections import defaultdict
 import json
 from enum import Enum
@@ -359,7 +359,7 @@ def calendar_analytics():
         analysis_type = request.args.get('type', 'overview')
         
         # Calcular fechas
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=int(period))
         
         # Usar servicio de analytics
@@ -897,7 +897,7 @@ def api_move_event(event_id):
         
         event.start_datetime = new_start
         event.end_datetime = new_end
-        event.updated_at = datetime.utcnow()
+        event.updated_at = datetime.now(timezone.utc)
         
         db.session.commit()
         
@@ -1041,7 +1041,7 @@ def connect_calendar_integration(provider):
             session[f'calendar_auth_state_{provider}'] = {
                 'user_id': ally_profile.user_id,
                 'provider': provider,
-                'initiated_at': datetime.utcnow().isoformat()
+                'initiated_at': datetime.now(timezone.utc).isoformat()
             }
             
             return redirect(auth_url)
@@ -1166,7 +1166,7 @@ def disconnect_calendar_integration(integration_id):
         
         # Desactivar integración
         integration.is_active = False
-        integration.disconnected_at = datetime.utcnow()
+        integration.disconnected_at = datetime.now(timezone.utc)
         
         db.session.commit()
         
@@ -1208,8 +1208,8 @@ def export_calendar_ical():
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
         else:
-            start_date = datetime.utcnow() - timedelta(days=30)
-            end_date = datetime.utcnow() + timedelta(days=180)
+            start_date = datetime.now(timezone.utc) - timedelta(days=30)
+            end_date = datetime.now(timezone.utc) + timedelta(days=180)
         
         # Obtener eventos para exportación
         events = _get_events_for_export(ally_profile, start_date, end_date, include_availability)
@@ -1281,7 +1281,7 @@ def export_calendar_pdf():
 
 # ==================== FUNCIONES AUXILIARES ====================
 
-def _get_calendar_settings(ally: Ally) -> Dict[str, Any]:
+def _get_calendar_settings(ally: Ally) -> dict[str, Any]:
     """
     Obtiene configuraciones del calendario del aliado.
     
@@ -1305,7 +1305,7 @@ def _get_calendar_settings(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _calculate_view_date_range(target_date: date, view_type: str) -> Dict[str, date]:
+def _calculate_view_date_range(target_date: date, view_type: str) -> dict[str, date]:
     """
     Calcula el rango de fechas para una vista específica.
     
@@ -1349,7 +1349,7 @@ def _calculate_view_date_range(target_date: date, view_type: str) -> Dict[str, d
     }
 
 
-def _get_calendar_events(ally: Ally, start_date: date, end_date: date, include_availability: bool = False) -> List[Dict[str, Any]]:
+def _get_calendar_events(ally: Ally, start_date: date, end_date: date, include_availability: bool = False) -> list[dict[str, Any]]:
     """
     Obtiene eventos del calendario para un rango de fechas.
     
@@ -1452,7 +1452,7 @@ def _get_calendar_events(ally: Ally, start_date: date, end_date: date, include_a
     return sorted(events, key=lambda x: x['start'])
 
 
-def _get_availability_slots(ally: Ally, start_date: date, end_date: date) -> List[Dict[str, Any]]:
+def _get_availability_slots(ally: Ally, start_date: date, end_date: date) -> list[dict[str, Any]]:
     """
     Obtiene slots de disponibilidad para un rango de fechas.
     
@@ -1488,7 +1488,7 @@ def _get_availability_slots(ally: Ally, start_date: date, end_date: date) -> Lis
     return slots_data
 
 
-def _detect_calendar_conflicts(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _detect_calendar_conflicts(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
     Detecta conflictos entre eventos del calendario.
     
@@ -1520,7 +1520,7 @@ def _detect_calendar_conflicts(events: List[Dict[str, Any]]) -> List[Dict[str, A
     return conflicts
 
 
-def _calculate_period_statistics(ally: Ally, start_date: date, end_date: date) -> Dict[str, Any]:
+def _calculate_period_statistics(ally: Ally, start_date: date, end_date: date) -> dict[str, Any]:
     """
     Calcula estadísticas del período para el calendario.
     
@@ -1591,7 +1591,7 @@ def _calculate_period_statistics(ally: Ally, start_date: date, end_date: date) -
     }
 
 
-def _get_upcoming_important_events(ally: Ally, limit: int = 5) -> List[Dict[str, Any]]:
+def _get_upcoming_important_events(ally: Ally, limit: int = 5) -> list[dict[str, Any]]:
     """
     Obtiene próximos eventos importantes del aliado.
     
@@ -1613,7 +1613,7 @@ def _get_upcoming_important_events(ally: Ally, limit: int = 5) -> List[Dict[str,
     
     for session in upcoming_sessions:
         session_datetime = datetime.combine(session.session_date, session.start_time or time(9, 0))
-        time_until = session_datetime - datetime.utcnow()
+        time_until = session_datetime - datetime.now(timezone.utc)
         
         upcoming_events.append({
             'title': f'Mentoría: {session.entrepreneur.user.full_name}',
@@ -1627,12 +1627,12 @@ def _get_upcoming_important_events(ally: Ally, limit: int = 5) -> List[Dict[str,
     # Próximas reuniones
     upcoming_meetings = Meeting.query.filter(
         Meeting.ally_id == ally.id,
-        Meeting.scheduled_at >= datetime.utcnow(),
+        Meeting.scheduled_at >= datetime.now(timezone.utc),
         Meeting.status.in_(['scheduled', 'confirmed'])
     ).order_by(Meeting.scheduled_at).limit(limit).all()
     
     for meeting in upcoming_meetings:
-        time_until = meeting.scheduled_at - datetime.utcnow()
+        time_until = meeting.scheduled_at - datetime.now(timezone.utc)
         
         upcoming_events.append({
             'title': f'Reunión: {meeting.title}',
@@ -1648,7 +1648,7 @@ def _get_upcoming_important_events(ally: Ally, limit: int = 5) -> List[Dict[str,
     return upcoming_events[:limit]
 
 
-def _generate_time_optimization_suggestions(ally: Ally, events: List[Dict[str, Any]], availability: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+def _generate_time_optimization_suggestions(ally: Ally, events: list[dict[str, Any]], availability: list[dict[str, Any]]) -> list[dict[str, str]]:
     """
     Genera sugerencias para optimizar el uso del tiempo.
     
@@ -1693,7 +1693,7 @@ def _generate_time_optimization_suggestions(ally: Ally, events: List[Dict[str, A
     return suggestions
 
 
-def _prepare_calendar_data(events: List[Dict[str, Any]], availability: List[Dict[str, Any]], view_type: str, settings: Dict[str, Any]) -> Dict[str, Any]:
+def _prepare_calendar_data(events: list[dict[str, Any]], availability: list[dict[str, Any]], view_type: str, settings: dict[str, Any]) -> dict[str, Any]:
     """
     Prepara datos para el calendario interactivo.
     
@@ -1760,7 +1760,7 @@ def _prepare_calendar_data(events: List[Dict[str, Any]], availability: List[Dict
     }
 
 
-def _get_active_calendar_integrations(ally: Ally) -> List[Dict[str, Any]]:
+def _get_active_calendar_integrations(ally: Ally) -> list[dict[str, Any]]:
     """
     Obtiene integraciones de calendario activas.
     
@@ -1793,7 +1793,7 @@ def _get_active_calendar_integrations(ally: Ally) -> List[Dict[str, Any]]:
     return integrations_data
 
 
-def _calculate_navigation_dates(target_date: date, view_type: str) -> Dict[str, date]:
+def _calculate_navigation_dates(target_date: date, view_type: str) -> dict[str, date]:
     """
     Calcula fechas de navegación para el calendario.
     
@@ -1836,7 +1836,7 @@ def _calculate_navigation_dates(target_date: date, view_type: str) -> Dict[str, 
 
 # Funciones auxiliares adicionales (implementación básica)
 
-def _get_organized_availability(ally: Ally) -> Dict[str, List[Dict[str, Any]]]:
+def _get_organized_availability(ally: Ally) -> dict[str, list[dict[str, Any]]]:
     """Obtiene disponibilidad organizada por días de la semana."""
     # Implementación básica
     return {
@@ -1850,13 +1850,13 @@ def _get_organized_availability(ally: Ally) -> Dict[str, List[Dict[str, Any]]]:
     }
 
 
-def _get_availability_templates(ally: Ally) -> List[Dict[str, Any]]:
+def _get_availability_templates(ally: Ally) -> list[dict[str, Any]]:
     """Obtiene plantillas de disponibilidad del aliado."""
     # Implementación básica
     return []
 
 
-def _calculate_availability_utilization(ally: Ally) -> Dict[str, Any]:
+def _calculate_availability_utilization(ally: Ally) -> dict[str, Any]:
     """Calcula estadísticas de utilización de disponibilidad."""
     return {
         'utilization_rate': 65.5,
@@ -1866,12 +1866,12 @@ def _calculate_availability_utilization(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _get_upcoming_availability_bookings(ally: Ally) -> List[Dict[str, Any]]:
+def _get_upcoming_availability_bookings(ally: Ally) -> list[dict[str, Any]]:
     """Obtiene próximas reservas de disponibilidad."""
     return []
 
 
-def _analyze_availability_patterns(ally: Ally) -> Dict[str, Any]:
+def _analyze_availability_patterns(ally: Ally) -> dict[str, Any]:
     """Analiza patrones de disponibilidad y uso."""
     return {
         'peak_hours': ['14:00', '16:00'],
@@ -1880,7 +1880,7 @@ def _analyze_availability_patterns(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _get_availability_settings(ally: Ally) -> Dict[str, Any]:
+def _get_availability_settings(ally: Ally) -> dict[str, Any]:
     """Obtiene configuraciones de disponibilidad."""
     return {
         'default_duration': 60,
@@ -1890,12 +1890,12 @@ def _get_availability_settings(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _detect_availability_conflicts(ally: Ally) -> List[Dict[str, Any]]:
+def _detect_availability_conflicts(ally: Ally) -> list[dict[str, Any]]:
     """Detecta conflictos en la disponibilidad."""
     return []
 
 
-def _generate_availability_optimization_suggestions(ally: Ally, utilization_stats: Dict[str, Any]) -> List[Dict[str, str]]:
+def _generate_availability_optimization_suggestions(ally: Ally, utilization_stats: dict[str, Any]) -> list[dict[str, str]]:
     """Genera sugerencias para optimizar disponibilidad."""
     suggestions = []
     
@@ -1931,13 +1931,13 @@ def _count_busy_days(ally: Ally, start_date: date, end_date: date) -> int:
     return busy_days + busy_meeting_days
 
 
-def _detect_time_fragmentation(events: List[Dict[str, Any]]) -> bool:
+def _detect_time_fragmentation(events: list[dict[str, Any]]) -> bool:
     """Detecta si hay fragmentación excesiva en el horario."""
     # Implementación básica - verificar gaps pequeños entre eventos
     return False
 
 
-def _calculate_unused_availability(availability: List[Dict[str, Any]], events: List[Dict[str, Any]]) -> float:
+def _calculate_unused_availability(availability: list[dict[str, Any]], events: list[dict[str, Any]]) -> float:
     """Calcula porcentaje de disponibilidad no utilizada."""
     if not availability:
         return 0
@@ -1951,7 +1951,7 @@ def _calculate_unused_availability(availability: List[Dict[str, Any]], events: L
     return ((total_slots - booked_slots) / total_slots) * 100
 
 
-def _detect_schedule_overload(events: List[Dict[str, Any]]) -> bool:
+def _detect_schedule_overload(events: list[dict[str, Any]]) -> bool:
     """Detecta si el horario está sobrecargado."""
     # Implementación básica - más de 8 horas de eventos por día
     daily_hours = defaultdict(float)
@@ -1966,7 +1966,7 @@ def _detect_schedule_overload(events: List[Dict[str, Any]]) -> bool:
 
 # Funciones para APIs
 
-def _get_calendar_events_api_format(ally: Ally, start_date: datetime, end_date: datetime, event_types: List[str], include_availability: bool) -> List[Dict[str, Any]]:
+def _get_calendar_events_api_format(ally: Ally, start_date: datetime, end_date: datetime, event_types: list[str], include_availability: bool) -> list[dict[str, Any]]:
     """Obtiene eventos en formato para API."""
     events = _get_calendar_events(
         ally, start_date.date(), end_date.date(), include_availability
@@ -1998,7 +1998,7 @@ def _get_calendar_events_api_format(ally: Ally, start_date: datetime, end_date: 
     return api_events
 
 
-def _check_specific_availability(ally: Ally, check_datetime: datetime, duration: int) -> Dict[str, Any]:
+def _check_specific_availability(ally: Ally, check_datetime: datetime, duration: int) -> dict[str, Any]:
     """Verifica disponibilidad específica para una fecha/hora."""
     check_date = check_datetime.date()
     check_time = check_datetime.time()
@@ -2062,7 +2062,7 @@ def _check_specific_availability(ally: Ally, check_datetime: datetime, duration:
     }
 
 
-def _find_alternative_slots(ally: Ally, preferred_datetime: datetime, duration: int, limit: int = 5) -> List[Dict[str, Any]]:
+def _find_alternative_slots(ally: Ally, preferred_datetime: datetime, duration: int, limit: int = 5) -> list[dict[str, Any]]:
     """Encuentra slots alternativos cercanos a la fecha preferida."""
     alternatives = []
     search_date = preferred_datetime.date()
@@ -2100,7 +2100,7 @@ def _find_alternative_slots(ally: Ally, preferred_datetime: datetime, duration: 
     return alternatives
 
 
-def _check_event_conflicts(ally: Ally, event_data: Dict[str, Any]) -> List[str]:
+def _check_event_conflicts(ally: Ally, event_data: dict[str, Any]) -> list[str]:
     """Verifica conflictos para un nuevo evento."""
     conflicts = []
     
@@ -2136,7 +2136,7 @@ def _check_event_conflicts(ally: Ally, event_data: Dict[str, Any]) -> List[str]:
     return conflicts
 
 
-def _check_event_move_conflicts(ally: Ally, event: CalendarEvent, new_start: datetime, new_end: datetime) -> List[str]:
+def _check_event_move_conflicts(ally: Ally, event: CalendarEvent, new_start: datetime, new_end: datetime) -> list[str]:
     """Verifica conflictos al mover un evento."""
     conflicts = []
     new_date = new_start.date()
@@ -2155,7 +2155,7 @@ def _check_event_move_conflicts(ally: Ally, event: CalendarEvent, new_start: dat
     return conflicts
 
 
-def _get_time_blocks_for_date(ally: Ally, target_date: date) -> List[Dict[str, Any]]:
+def _get_time_blocks_for_date(ally: Ally, target_date: date) -> list[dict[str, Any]]:
     """Obtiene bloques de tiempo para una fecha específica."""
     # Esto requeriría un modelo TimeBlock
     return []
@@ -2163,13 +2163,13 @@ def _get_time_blocks_for_date(ally: Ally, target_date: date) -> List[Dict[str, A
 
 # Funciones para sincronización
 
-def _sync_availability_to_external_calendars(ally: Ally, slots: List[Any]) -> None:
+def _sync_availability_to_external_calendars(ally: Ally, slots: list[Any]) -> None:
     """Sincroniza disponibilidad con calendarios externos."""
     # Implementación de sincronización
     pass
 
 
-def _sync_bulk_availability_to_external_calendars(ally: Ally, slots: List[Any]) -> None:
+def _sync_bulk_availability_to_external_calendars(ally: Ally, slots: list[Any]) -> None:
     """Sincroniza disponibilidad masiva con calendarios externos."""
     pass
 
@@ -2191,7 +2191,7 @@ def _sync_event_move_to_external_calendars(ally: Ally, event: Any, old_start: da
 
 # Funciones para logging
 
-def _log_availability_added(ally: Ally, availability_data: Dict[str, Any]) -> None:
+def _log_availability_added(ally: Ally, availability_data: dict[str, Any]) -> None:
     """Registra adición de disponibilidad."""
     activity = ActivityLog(
         user_id=ally.user_id,
@@ -2204,7 +2204,7 @@ def _log_availability_added(ally: Ally, availability_data: Dict[str, Any]) -> No
     db.session.commit()
 
 
-def _log_bulk_availability_added(ally: Ally, bulk_data: Dict[str, Any], slots_created: int) -> None:
+def _log_bulk_availability_added(ally: Ally, bulk_data: dict[str, Any], slots_created: int) -> None:
     """Registra adición masiva de disponibilidad."""
     activity = ActivityLog(
         user_id=ally.user_id,
@@ -2260,7 +2260,7 @@ def _log_event_moved(ally: Ally, event: Any, old_start: datetime, new_start: dat
     db.session.commit()
 
 
-def _log_calendar_sync(ally: Ally, provider: str, result: Dict[str, Any]) -> None:
+def _log_calendar_sync(ally: Ally, provider: str, result: dict[str, Any]) -> None:
     """Registra sincronización de calendario."""
     activity = ActivityLog(
         user_id=ally.user_id,
@@ -2308,12 +2308,12 @@ def _has_confirmed_bookings(slot: AvailabilitySlot) -> bool:
 
 # Funciones para integraciones específicas
 
-def _get_configured_integrations(ally: Ally) -> List[Dict[str, Any]]:
+def _get_configured_integrations(ally: Ally) -> list[dict[str, Any]]:
     """Obtiene integraciones configuradas."""
     return []
 
 
-def _get_available_integrations() -> List[Dict[str, str]]:
+def _get_available_integrations() -> list[dict[str, str]]:
     """Obtiene integraciones disponibles."""
     return [
         {'provider': 'google', 'name': 'Google Calendar', 'status': 'available'},
@@ -2322,27 +2322,27 @@ def _get_available_integrations() -> List[Dict[str, str]]:
     ]
 
 
-def _get_sync_status(ally: Ally) -> Dict[str, Any]:
+def _get_sync_status(ally: Ally) -> dict[str, Any]:
     """Obtiene estado de sincronización."""
     return {'last_sync': None, 'status': 'never', 'next_sync': None}
 
 
-def _get_sync_history(ally: Ally) -> List[Dict[str, Any]]:
+def _get_sync_history(ally: Ally) -> list[dict[str, Any]]:
     """Obtiene historial de sincronización."""
     return []
 
 
-def _get_sync_settings(ally: Ally) -> Dict[str, Any]:
+def _get_sync_settings(ally: Ally) -> dict[str, Any]:
     """Obtiene configuraciones de sincronización."""
     return {'auto_sync': False, 'sync_frequency': 'manual'}
 
 
-def _calculate_integration_statistics(ally: Ally) -> Dict[str, Any]:
+def _calculate_integration_statistics(ally: Ally) -> dict[str, Any]:
     """Calcula estadísticas de integración."""
     return {'events_synced': 0, 'last_sync': None}
 
 
-def _get_recent_sync_errors(ally: Ally) -> List[Dict[str, Any]]:
+def _get_recent_sync_errors(ally: Ally) -> list[dict[str, Any]]:
     """Obtiene errores recientes de sincronización."""
     return []
 
@@ -2354,12 +2354,12 @@ def _perform_initial_sync(ally: Ally, integration: CalendarIntegration) -> None:
 
 # Funciones para configuraciones
 
-def _get_current_calendar_settings(ally: Ally) -> Dict[str, Any]:
+def _get_current_calendar_settings(ally: Ally) -> dict[str, Any]:
     """Obtiene configuraciones actuales del calendario."""
     return _get_calendar_settings(ally)
 
 
-def _get_calendar_settings_options() -> Dict[str, List[Tuple[str, str]]]:
+def _get_calendar_settings_options() -> dict[str, list[tuple[str, str]]]:
     """Obtiene opciones para configuraciones del calendario."""
     return {
         'timezones': [
@@ -2400,7 +2400,7 @@ def _get_calendar_settings_options() -> Dict[str, List[Tuple[str, str]]]:
     }
 
 
-def _get_calendar_notification_settings(ally: Ally) -> Dict[str, Any]:
+def _get_calendar_notification_settings(ally: Ally) -> dict[str, Any]:
     """Obtiene configuraciones de notificaciones del calendario."""
     return {
         'email_reminders': getattr(ally, 'email_reminders_enabled', True),
@@ -2412,7 +2412,7 @@ def _get_calendar_notification_settings(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _get_available_timezones() -> List[Tuple[str, str]]:
+def _get_available_timezones() -> list[tuple[str, str]]:
     """Obtiene lista de zonas horarias disponibles."""
     return [
         ('America/Bogota', 'Bogotá (UTC-5)'),
@@ -2431,7 +2431,7 @@ def _get_available_timezones() -> List[Tuple[str, str]]:
 
 # ==================== ANALYTICS AVANZADOS ====================
 
-def _analyze_availability_effectiveness(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _analyze_availability_effectiveness(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """
     Analiza la efectividad de la disponibilidad ofrecida.
     
@@ -2507,7 +2507,7 @@ def _analyze_availability_effectiveness(ally: Ally, start_date: datetime, end_da
     }
 
 
-def _identify_temporal_patterns(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _identify_temporal_patterns(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """
     Identifica patrones temporales en el uso del calendario.
     
@@ -2558,7 +2558,7 @@ def _identify_temporal_patterns(ally: Ally, start_date: datetime, end_date: date
     }
 
 
-def _calculate_scheduling_efficiency(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _calculate_scheduling_efficiency(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """
     Calcula eficiencia en la programación y gestión del tiempo.
     
@@ -2619,7 +2619,7 @@ def _calculate_scheduling_efficiency(ally: Ally, start_date: datetime, end_date:
     }
 
 
-def _analyze_calendar_conflicts_trends(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _analyze_calendar_conflicts_trends(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """
     Analiza tendencias en conflictos del calendario.
     
@@ -2664,7 +2664,7 @@ def _analyze_calendar_conflicts_trends(ally: Ally, start_date: datetime, end_dat
     }
 
 
-def _calculate_availability_roi(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _calculate_availability_roi(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """
     Calcula ROI del tiempo de disponibilidad ofrecido.
     
@@ -2717,7 +2717,7 @@ def _calculate_availability_roi(ally: Ally, start_date: datetime, end_date: date
     }
 
 
-def _get_calendar_benchmarks(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _get_calendar_benchmarks(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """
     Obtiene benchmarks del calendario comparado con otros aliados.
     
@@ -2761,7 +2761,7 @@ def _get_calendar_benchmarks(ally: Ally, start_date: datetime, end_date: datetim
     }
 
 
-def _generate_calendar_optimization_insights(ally: Ally, time_usage: Dict[str, Any], availability: Dict[str, Any]) -> List[Dict[str, str]]:
+def _generate_calendar_optimization_insights(ally: Ally, time_usage: dict[str, Any], availability: dict[str, Any]) -> list[dict[str, str]]:
     """
     Genera insights de optimización para el calendario.
     
@@ -2819,7 +2819,7 @@ def _generate_calendar_optimization_insights(ally: Ally, time_usage: Dict[str, A
     return insights
 
 
-def _prepare_calendar_charts_data(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _prepare_calendar_charts_data(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """
     Prepara datos para gráficos del calendario.
     
@@ -2876,7 +2876,7 @@ def _prepare_calendar_charts_data(ally: Ally, start_date: datetime, end_date: da
     return charts_data
 
 
-def _predict_availability_demand(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _predict_availability_demand(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """
     Predice demanda futura de disponibilidad basada en patrones históricos.
     
@@ -2918,7 +2918,7 @@ def _predict_availability_demand(ally: Ally, start_date: datetime, end_date: dat
 
 # ==================== FUNCIONES AUXILIARES ESPECÍFICAS ====================
 
-def _identify_peak_utilization_hours(ally: Ally, start_date: datetime, end_date: datetime) -> List[Dict[str, Any]]:
+def _identify_peak_utilization_hours(ally: Ally, start_date: datetime, end_date: datetime) -> list[dict[str, Any]]:
     """Identifica horas de mayor utilización."""
     hourly_sessions = defaultdict(int)
     
@@ -2939,7 +2939,7 @@ def _identify_peak_utilization_hours(ally: Ally, start_date: datetime, end_date:
     return [{'hour': f"{hour:02d}:00", 'sessions': count} for hour, count in top_hours]
 
 
-def _identify_low_utilization_hours(ally: Ally, start_date: datetime, end_date: datetime) -> List[Dict[str, Any]]:
+def _identify_low_utilization_hours(ally: Ally, start_date: datetime, end_date: datetime) -> list[dict[str, Any]]:
     """Identifica horas de menor utilización."""
     # Obtener todas las horas con disponibilidad
     availability_hours = set()
@@ -2975,7 +2975,7 @@ def _identify_low_utilization_hours(ally: Ally, start_date: datetime, end_date: 
     return sorted(low_hours, key=lambda x: x['sessions'])[:3]
 
 
-def _calculate_availability_efficiency_score(utilization_rate: float, weekday_utilization: Dict[str, float]) -> float:
+def _calculate_availability_efficiency_score(utilization_rate: float, weekday_utilization: dict[str, float]) -> float:
     """Calcula score de eficiencia de disponibilidad."""
     # Score base de utilización
     utilization_score = min(utilization_rate / 80 * 100, 100)  # 80% es considerado óptimo
@@ -2994,7 +2994,7 @@ def _calculate_availability_efficiency_score(utilization_rate: float, weekday_ut
     return round(efficiency_score, 1)
 
 
-def _identify_usage_trends(sessions: List[MentorshipSession], start_date: datetime, end_date: datetime) -> Dict[str, str]:
+def _identify_usage_trends(sessions: list[MentorshipSession], start_date: datetime, end_date: datetime) -> dict[str, str]:
     """Identifica tendencias en el uso del calendario."""
     if len(sessions) < 4:  # Necesitamos datos suficientes
         return {'overall': 'insufficient_data'}
@@ -3022,7 +3022,7 @@ def _identify_usage_trends(sessions: List[MentorshipSession], start_date: dateti
     }
 
 
-def _calculate_conflict_trend(conflicts: List[Dict[str, Any]], start_date: datetime, end_date: datetime) -> str:
+def _calculate_conflict_trend(conflicts: list[dict[str, Any]], start_date: datetime, end_date: datetime) -> str:
     """Calcula tendencia en conflictos del calendario."""
     if len(conflicts) < 2:
         return 'stable'
@@ -3137,7 +3137,7 @@ def _calculate_weekday_utilization(ally: Ally, weekday: int, start_date: datetim
     return (float(weekday_utilized) / float(weekday_availability) * 100) if weekday_availability > 0 else 0
 
 
-def _get_daily_sessions_count(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, int]:
+def _get_daily_sessions_count(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, int]:
     """Obtiene conteo de sesiones por día."""
     daily_counts = {}
     
@@ -3155,7 +3155,7 @@ def _get_daily_sessions_count(ally: Ally, start_date: datetime, end_date: dateti
     return daily_counts
 
 
-def _get_event_type_distribution(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, int]:
+def _get_event_type_distribution(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, int]:
     """Obtiene distribución de tipos de eventos."""
     distribution = {
         'Sesiones de Mentoría': 0,
@@ -3188,7 +3188,7 @@ def _get_event_type_distribution(ally: Ally, start_date: datetime, end_date: dat
     return distribution
 
 
-def _get_weekly_efficiency_data(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, float]:
+def _get_weekly_efficiency_data(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, float]:
     """Obtiene datos de eficiencia semanal."""
     weekly_data = {}
     
@@ -3207,10 +3207,10 @@ def _get_weekly_efficiency_data(ally: Ally, start_date: datetime, end_date: date
 
 
 # Funciones para predicciones de demanda
-def _analyze_historical_booking_patterns(ally: Ally) -> Dict[str, Any]:
+def _analyze_historical_booking_patterns(ally: Ally) -> dict[str, Any]:
     """Analiza patrones históricos de reservas."""
     # Obtener datos de los últimos 6 meses
-    six_months_ago = datetime.utcnow() - timedelta(days=180)
+    six_months_ago = datetime.now(timezone.utc) - timedelta(days=180)
     
     sessions = MentorshipSession.query.filter(
         MentorshipSession.ally_id == ally.id,
@@ -3228,7 +3228,7 @@ def _analyze_historical_booking_patterns(ally: Ally) -> Dict[str, Any]:
     return patterns
 
 
-def _predict_weekday_demand(ally: Ally, weekday: int, patterns: Dict[str, Any]) -> Dict[str, Any]:
+def _predict_weekday_demand(ally: Ally, weekday: int, patterns: dict[str, Any]) -> dict[str, Any]:
     """Predice demanda para un día específico de la semana."""
     historical_weekday_rate = patterns.get('weekday_preferences', {}).get(weekday, 0)
     growth_rate = patterns.get('monthly_growth', 0)
@@ -3243,7 +3243,7 @@ def _predict_weekday_demand(ally: Ally, weekday: int, patterns: Dict[str, Any]) 
     }
 
 
-def _predict_hourly_demand(ally: Ally, hour: int, patterns: Dict[str, Any]) -> Dict[str, Any]:
+def _predict_hourly_demand(ally: Ally, hour: int, patterns: dict[str, Any]) -> dict[str, Any]:
     """Predice demanda para una hora específica."""
     historical_hourly_rate = patterns.get('hourly_preferences', {}).get(hour, 0)
     
@@ -3254,7 +3254,7 @@ def _predict_hourly_demand(ally: Ally, hour: int, patterns: Dict[str, Any]) -> D
     }
 
 
-def _predict_demand_growth(ally: Ally, patterns: Dict[str, Any]) -> Dict[str, Any]:
+def _predict_demand_growth(ally: Ally, patterns: dict[str, Any]) -> dict[str, Any]:
     """Predice crecimiento general de demanda."""
     monthly_growth = patterns.get('monthly_growth', 0)
     
@@ -3274,7 +3274,7 @@ def _predict_demand_growth(ally: Ally, patterns: Dict[str, Any]) -> Dict[str, An
     }
 
 
-def _calculate_prediction_confidence(patterns: Dict[str, Any]) -> float:
+def _calculate_prediction_confidence(patterns: dict[str, Any]) -> float:
     """Calcula score de confianza para las predicciones."""
     total_sessions = patterns.get('total_sessions', 0)
     
@@ -3288,7 +3288,7 @@ def _calculate_prediction_confidence(patterns: Dict[str, Any]) -> float:
         return 0.30
 
 
-def _forecast_next_month_demand(ally: Ally, patterns: Dict[str, Any]) -> Dict[str, Any]:
+def _forecast_next_month_demand(ally: Ally, patterns: dict[str, Any]) -> dict[str, Any]:
     """Hace forecast de demanda para el próximo mes."""
     avg_monthly_sessions = patterns.get('total_sessions', 0) / 6  # Últimos 6 meses
     growth_rate = patterns.get('monthly_growth', 0)
@@ -3304,7 +3304,7 @@ def _forecast_next_month_demand(ally: Ally, patterns: Dict[str, Any]) -> Dict[st
 
 
 # Funciones auxiliares para análisis de patrones
-def _calculate_monthly_growth(sessions: List[MentorshipSession]) -> float:
+def _calculate_monthly_growth(sessions: list[MentorshipSession]) -> float:
     """Calcula tasa de crecimiento mensual."""
     if len(sessions) < 2:
         return 0
@@ -3332,7 +3332,7 @@ def _calculate_monthly_growth(sessions: List[MentorshipSession]) -> float:
     return round(growth_rate, 2)
 
 
-def _identify_seasonal_patterns(sessions: List[MentorshipSession]) -> Dict[str, Any]:
+def _identify_seasonal_patterns(sessions: list[MentorshipSession]) -> dict[str, Any]:
     """Identifica patrones estacionales."""
     quarterly_counts = defaultdict(int)
     
@@ -3343,7 +3343,7 @@ def _identify_seasonal_patterns(sessions: List[MentorshipSession]) -> Dict[str, 
     return dict(quarterly_counts)
 
 
-def _analyze_weekday_preferences(sessions: List[MentorshipSession]) -> Dict[int, float]:
+def _analyze_weekday_preferences(sessions: list[MentorshipSession]) -> dict[int, float]:
     """Analiza preferencias por día de la semana."""
     weekday_counts = defaultdict(int)
     
@@ -3363,7 +3363,7 @@ def _analyze_weekday_preferences(sessions: List[MentorshipSession]) -> Dict[int,
     return weekday_averages
 
 
-def _analyze_hourly_preferences(sessions: List[MentorshipSession]) -> Dict[int, float]:
+def _analyze_hourly_preferences(sessions: list[MentorshipSession]) -> dict[int, float]:
     """Analiza preferencias por hora del día."""
     hourly_counts = defaultdict(int)
     
@@ -3375,7 +3375,7 @@ def _analyze_hourly_preferences(sessions: List[MentorshipSession]) -> Dict[int, 
     return dict(hourly_counts)
 
 
-def _calculate_standard_deviation(values: List[float]) -> float:
+def _calculate_standard_deviation(values: list[float]) -> float:
     """Calcula desviación estándar de una lista de valores."""
     if len(values) < 2:
         return 0
@@ -3386,7 +3386,7 @@ def _calculate_standard_deviation(values: List[float]) -> float:
 
 
 # Funciones para exportación
-def _get_events_for_export(ally: Ally, start_date: datetime, end_date: datetime, include_availability: bool) -> List[Dict[str, Any]]:
+def _get_events_for_export(ally: Ally, start_date: datetime, end_date: datetime, include_availability: bool) -> list[dict[str, Any]]:
     """Obtiene eventos formateados para exportación."""
     events = _get_calendar_events(ally, start_date.date(), end_date.date(), include_availability)
     
@@ -3405,7 +3405,7 @@ def _get_events_for_export(ally: Ally, start_date: datetime, end_date: datetime,
     return export_events
 
 
-def _generate_calendar_pdf_data(ally: Ally, date_range: Dict[str, date], view_type: str) -> Dict[str, Any]:
+def _generate_calendar_pdf_data(ally: Ally, date_range: dict[str, date], view_type: str) -> dict[str, Any]:
     """Genera datos para exportación PDF del calendario."""
     events = _get_calendar_events(ally, date_range['start'], date_range['end'])
     availability = _get_availability_slots(ally, date_range['start'], date_range['end'])
@@ -3422,7 +3422,7 @@ def _generate_calendar_pdf_data(ally: Ally, date_range: Dict[str, date], view_ty
              datetime.combine(date.today(), slot['start_time'])).total_seconds() / 3600
             for slot in availability
         ),
-        'generated_at': datetime.utcnow()
+        'generated_at': datetime.now(timezone.utc)
     }
 
 

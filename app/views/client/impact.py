@@ -18,7 +18,7 @@ Tipos de impacto medidos:
 
 import json
 import math
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from collections import defaultdict, OrderedDict
 
@@ -598,18 +598,18 @@ def export():
             'end_date': end_date,
             'include_charts': include_charts,
             'include_analysis': include_analysis,
-            'generated_at': datetime.utcnow(),
+            'generated_at': datetime.now(timezone.utc),
             'generated_by': current_user.name if current_user.is_authenticated else 'Cliente'
         }
         
         # Generar archivo según formato
         if format_type == 'excel':
             file_path = generate_impact_report_excel(report_data, report_config)
-            filename = f'reporte_impacto_{report_type}_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.xlsx'
+            filename = f'reporte_impacto_{report_type}_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.xlsx'
             mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         else:  # PDF por defecto
             file_path = generate_impact_report_pdf(report_data, report_config)
-            filename = f'reporte_impacto_{report_type}_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.pdf'
+            filename = f'reporte_impacto_{report_type}_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.pdf'
             mimetype = 'application/pdf'
         
         # Registrar exportación
@@ -673,7 +673,7 @@ def api_metrics(category):
             'category': category,
             'metrics': metrics,
             'period': period,
-            'last_updated': datetime.utcnow().isoformat()
+            'last_updated': datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:

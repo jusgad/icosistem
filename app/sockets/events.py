@@ -18,8 +18,8 @@ Funcionalidades principales:
 import logging
 import json
 import asyncio
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union, Callable
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Any, Union, Callable
 from functools import wraps
 from collections import defaultdict, deque
 
@@ -87,17 +87,17 @@ class EventRegistry:
     """
     
     def __init__(self):
-        self._events: Dict[str, Dict[str, Any]] = {}
-        self._middlewares: List[Callable] = []
-        self._global_handlers: Dict[str, List[Callable]] = defaultdict(list)
+        self._events: dict[str, dict[str, Any]] = {}
+        self._middlewares: list[Callable] = []
+        self._global_handlers: dict[str, list[Callable]] = defaultdict(list)
     
     def register_event(self, event_name: str, handler: Callable, 
-                      metadata: Dict[str, Any] = None):
+                      metadata: dict[str, Any] = None):
         """Registra un nuevo evento en el sistema"""
         self._events[event_name] = {
             'handler': handler,
             'metadata': metadata or {},
-            'registered_at': datetime.utcnow(),
+            'registered_at': datetime.now(timezone.utc),
             'call_count': 0,
             'error_count': 0
         }
@@ -111,11 +111,11 @@ class EventRegistry:
         """Añade handler global para patrones de eventos"""
         self._global_handlers[event_pattern].append(handler)
     
-    def get_event_info(self, event_name: str) -> Optional[Dict[str, Any]]:
+    def get_event_info(self, event_name: str) -> Optional[dict[str, Any]]:
         """Obtiene información de un evento registrado"""
         return self._events.get(event_name)
     
-    def get_all_events(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_events(self) -> dict[str, dict[str, Any]]:
         """Obtiene todos los eventos registrados"""
         return self._events.copy()
 
@@ -169,7 +169,7 @@ def socket_event(event_name: str, **metadata):
                 emit('error', {
                     'event': event_name,
                     'message': str(e),
-                    'timestamp': format_datetime(datetime.utcnow())
+                    'timestamp': format_datetime(datetime.now(timezone.utc))
                 })
                 raise
         
@@ -231,7 +231,7 @@ def check_rate_limit(event_name: str, user_id: str,
         if rate is None:
             rate = RATE_LIMIT_DEFAULTS.get(event_name, 60)
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         cutoff = now - timedelta(seconds=window)
         
         # Limpiar eventos antiguos
@@ -262,7 +262,7 @@ def handle_heartbeat(data=None, current_user=None):
     mantener la conexión activa y actualizar métricas.
     """
     try:
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc)
         
         # Responder con pong
         emit('pong', {
@@ -289,7 +289,7 @@ def handle_heartbeat(data=None, current_user=None):
 def handle_ping(data=None):
     """Maneja ping básico del sistema"""
     emit('pong', {
-        'timestamp': format_datetime(datetime.utcnow()),
+        'timestamp': format_datetime(datetime.now(timezone.utc)),
         'latency': data.get('timestamp') if data else None
     })
 
@@ -318,7 +318,7 @@ def handle_get_server_status(data=None, current_user=None):
         # Responder con estado completo
         emit('server_status', {
             'status': 'healthy' if all(health_checks.values()) else 'degraded',
-            'timestamp': format_datetime(datetime.utcnow()),
+            'timestamp': format_datetime(datetime.now(timezone.utc)),
             'services': health_checks,
             'metrics': system_metrics,
             'uptime': _get_server_uptime(),
@@ -373,7 +373,7 @@ def handle_subscribe_to_system_events(data, current_user=None):
         
         emit('subscribed_to_system_events', {
             'event_types': event_types,
-            'timestamp': format_datetime(datetime.utcnow())
+            'timestamp': format_datetime(datetime.now(timezone.utc))
         })
         
         logger.info(f"Usuario {current_user.username} suscrito a eventos del sistema: {event_types}")
@@ -401,7 +401,7 @@ def handle_get_connection_info(data=None, current_user=None):
             'user_id': str(current_user.id),
             'username': current_user.username,
             'role': current_user.role.value,
-            'connected_at': format_datetime(datetime.utcnow()),
+            'connected_at': format_datetime(datetime.now(timezone.utc)),
             'rooms': list(user_rooms),
             'namespace': request.namespace,
             'transport': getattr(request, 'transport', 'unknown'),
@@ -456,8 +456,8 @@ def handle_broadcast_message(data, current_user=None):
             'message': message,
             'priority': priority,
             'from': format_user_info(current_user),
-            'timestamp': format_datetime(datetime.utcnow()),
-            'id': f"broadcast_{datetime.utcnow().timestamp()}"
+            'timestamp': format_datetime(datetime.now(timezone.utc)),
+            'id': f"broadcast_{datetime.now(timezone.utc).timestamp()}"
         }
         
         # Determinar destinatarios y enviar
@@ -468,7 +468,7 @@ def handle_broadcast_message(data, current_user=None):
             'target_type': target_type,
             'targets': targets,
             'sent_count': sent_count,
-            'timestamp': format_datetime(datetime.utcnow())
+            'timestamp': format_datetime(datetime.now(timezone.utc))
         })
         
         # Log de actividad
@@ -525,7 +525,7 @@ def handle_get_system_metrics(data, current_user=None):
         emit('system_metrics', {
             'metrics': metrics,
             'time_range': time_range,
-            'timestamp': format_datetime(datetime.utcnow())
+            'timestamp': format_datetime(datetime.now(timezone.utc))
         })
         
         logger.debug(f"Métricas del sistema enviadas a {current_user.username}")
@@ -565,8 +565,8 @@ def handle_emergency_alert(data, current_user=None):
             'message': alert_message,
             'action_required': action_required,
             'from': format_user_info(current_user),
-            'timestamp': format_datetime(datetime.utcnow()),
-            'id': f"emergency_{datetime.utcnow().timestamp()}"
+            'timestamp': format_datetime(datetime.now(timezone.utc)),
+            'id': f"emergency_{datetime.now(timezone.utc).timestamp()}"
         }
         
         # Enviar a todos los usuarios conectados
@@ -619,7 +619,7 @@ def handle_maintenance_mode(data, current_user=None):
             'message': message,
             'estimated_duration': estimated_duration,
             'started_by': format_user_info(current_user),
-            'timestamp': format_datetime(datetime.utcnow())
+            'timestamp': format_datetime(datetime.now(timezone.utc))
         }
         
         # Guardar en cache
@@ -632,7 +632,7 @@ def handle_maintenance_mode(data, current_user=None):
         # Confirmar al administrador
         emit('maintenance_mode_updated', {
             'enabled': enable,
-            'timestamp': format_datetime(datetime.utcnow())
+            'timestamp': format_datetime(datetime.now(timezone.utc))
         })
         
         logger.warning(f"Modo mantenimiento {'activado' if enable else 'desactivado'} por {current_user.username}")
@@ -706,7 +706,7 @@ def handle_connect(auth=None):
         # Emitir confirmación de conexión
         emit('connection_established', {
             'session_id': session_id,
-            'timestamp': format_datetime(datetime.utcnow()),
+            'timestamp': format_datetime(datetime.now(timezone.utc)),
             'server_version': current_app.config.get('APP_VERSION', '1.0.0')
         })
         
@@ -778,7 +778,7 @@ def _perform_health_checks():
         health_checks['email'] = False
 
 
-def _get_system_metrics() -> Dict[str, Any]:
+def _get_system_metrics() -> dict[str, Any]:
     """Obtiene métricas básicas del sistema"""
     return {
         'total_connections': connection_stats['total_connections'],
@@ -790,7 +790,7 @@ def _get_system_metrics() -> Dict[str, Any]:
     }
 
 
-def _get_basic_metrics() -> Dict[str, Any]:
+def _get_basic_metrics() -> dict[str, Any]:
     """Obtiene métricas básicas del sistema"""
     from app.models.user import User
     from app.models.project import Project
@@ -803,12 +803,12 @@ def _get_basic_metrics() -> Dict[str, Any]:
         'active_projects': Project.query.filter_by(status='active').count(),
         'total_meetings': Meeting.query.count(),
         'meetings_today': Meeting.query.filter(
-            Meeting.start_time >= datetime.utcnow().date()
+            Meeting.start_time >= datetime.now(timezone.utc).date()
         ).count()
     }
 
 
-def _get_performance_metrics() -> Dict[str, Any]:
+def _get_performance_metrics() -> dict[str, Any]:
     """Obtiene métricas de rendimiento"""
     return {
         'response_time_avg': metrics_cache.get('response_time_avg', 0),
@@ -820,7 +820,7 @@ def _get_performance_metrics() -> Dict[str, Any]:
     }
 
 
-def _get_websocket_metrics() -> Dict[str, Any]:
+def _get_websocket_metrics() -> dict[str, Any]:
     """Obtiene métricas específicas de WebSockets"""
     return {
         'total_connections': connection_stats['total_connections'],
@@ -832,13 +832,13 @@ def _get_websocket_metrics() -> Dict[str, Any]:
     }
 
 
-def _get_user_metrics(time_range: str) -> Dict[str, Any]:
+def _get_user_metrics(time_range: str) -> dict[str, Any]:
     """Obtiene métricas de usuarios"""
     from app.models.user import User
     from app.models.activity_log import ActivityLog
     
     # Calcular rango de tiempo
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     if time_range == '1h':
         start_time = now - timedelta(hours=1)
     elif time_range == '24h':
@@ -861,10 +861,10 @@ def _get_user_metrics(time_range: str) -> Dict[str, Any]:
     }
 
 
-def _get_error_metrics(time_range: str) -> Dict[str, Any]:
+def _get_error_metrics(time_range: str) -> dict[str, Any]:
     """Obtiene métricas de errores"""
     # Filtrar errores por rango de tiempo
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     if time_range == '1h':
         cutoff = now - timedelta(hours=1)
     elif time_range == '24h':
@@ -891,7 +891,7 @@ def _update_user_activity(user: User, activity_type: str, metadata: Dict = None)
     """Actualiza la actividad del usuario"""
     try:
         # Actualizar timestamp de última actividad
-        user.last_activity = datetime.utcnow()
+        user.last_activity = datetime.now(timezone.utc)
         
         # Registrar actividad en log si es significativa
         significant_activities = [
@@ -929,7 +929,7 @@ def _update_realtime_metrics(user: User, activity_type: str):
         event_queue.append({
             'user_id': str(user.id),
             'activity_type': activity_type,
-            'timestamp': datetime.utcnow(),
+            'timestamp': datetime.now(timezone.utc),
             'session_id': request.sid
         })
         
@@ -954,7 +954,7 @@ def _can_subscribe_to_event(user: User, event_type: str) -> bool:
     return False
 
 
-def _send_broadcast(target_type: str, targets: List[str], data: Dict[str, Any]) -> int:
+def _send_broadcast(target_type: str, targets: list[str], data: dict[str, Any]) -> int:
     """Envía un mensaje de broadcast y retorna el número de destinatarios"""
     from app.sockets import socketio
     
@@ -1006,7 +1006,7 @@ def _log_user_activity(user: User, activity_type: ActivityType, description: str
         logger.error(f"Error en log de actividad: {str(e)}")
 
 
-def _get_active_users() -> List[str]:
+def _get_active_users() -> list[str]:
     """Obtiene lista de usuarios activos"""
     active_users = cache_get('active_users')
     return list(active_users) if active_users else []
@@ -1048,7 +1048,7 @@ def _get_server_uptime() -> str:
     try:
         uptime_start = cache_get('server_start_time')
         if uptime_start:
-            uptime = datetime.utcnow() - uptime_start
+            uptime = datetime.now(timezone.utc) - uptime_start
             return str(uptime)
         return "Unknown"
     except Exception:
@@ -1098,7 +1098,7 @@ def _calculate_error_rate() -> float:
         return 0.0
 
 
-def _get_namespace_usage() -> Dict[str, int]:
+def _get_namespace_usage() -> dict[str, int]:
     """Obtiene uso por namespace"""
     # Implementar lógica para contar conexiones por namespace
     return {
@@ -1121,7 +1121,7 @@ def _is_user_connected(user_id: str) -> bool:
     return user_id in active_users
 
 
-def _group_errors_by_type(errors: List[Dict]) -> Dict[str, int]:
+def _group_errors_by_type(errors: list[Dict]) -> dict[str, int]:
     """Agrupa errores por tipo"""
     error_counts = defaultdict(int)
     for error in errors:
@@ -1135,7 +1135,7 @@ def _get_uptime_seconds() -> int:
     try:
         start_time = cache_get('server_start_time')
         if start_time:
-            return int((datetime.utcnow() - start_time).total_seconds())
+            return int((datetime.now(timezone.utc) - start_time).total_seconds())
         return 0
     except Exception:
         return 0
@@ -1146,7 +1146,7 @@ def initialize_events():
     """Inicializa el sistema de eventos"""
     try:
         # Establecer tiempo de inicio del servidor
-        cache_set('server_start_time', datetime.utcnow(), timeout=None)
+        cache_set('server_start_time', datetime.now(timezone.utc), timeout=None)
         
         # Configurar middlewares globales
         event_registry.add_middleware(_auth_middleware)
@@ -1219,7 +1219,7 @@ def _error_handler(event_name: str, args: tuple, kwargs: dict, result: Any):
     if event_name.startswith('error') or 'error' in event_name:
         error_info = {
             'event': event_name,
-            'timestamp': datetime.utcnow(),
+            'timestamp': datetime.now(timezone.utc),
             'user': kwargs.get('current_user').username if kwargs.get('current_user') else None,
             'args': str(args),
             'kwargs': str(kwargs)

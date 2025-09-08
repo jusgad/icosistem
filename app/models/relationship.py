@@ -17,7 +17,7 @@ Funcionalidades:
 
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, Any, Optional, List, Union, Tuple
+from typing import Any, Optional, Union
 import json
 
 from sqlalchemy import Index, event, and_, or_, func, case
@@ -384,7 +384,7 @@ class Relationship(BaseModel, TimestampMixin, SoftDeleteMixin):
         """Verifica si la relación ha expirado"""
         if not self.expires_at:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
     
     @hybrid_property
     def duration_days(self):
@@ -392,7 +392,7 @@ class Relationship(BaseModel, TimestampMixin, SoftDeleteMixin):
         if not self.started_at:
             return None
         
-        end_date = self.ended_at or datetime.utcnow()
+        end_date = self.ended_at or datetime.now(timezone.utc)
         return (end_date - self.started_at).days
     
     @hybrid_property
@@ -452,7 +452,7 @@ class Relationship(BaseModel, TimestampMixin, SoftDeleteMixin):
     def activate(self, approved_by_user_id: Optional[int] = None):
         """Activa la relación"""
         self.status = RelationshipStatus.ACTIVE
-        self.started_at = datetime.utcnow()
+        self.started_at = datetime.now(timezone.utc)
         self.approved_by = approved_by_user_id
         
         # Crear relación inversa si es bidireccional
@@ -462,7 +462,7 @@ class Relationship(BaseModel, TimestampMixin, SoftDeleteMixin):
     def deactivate(self, reason: Optional[str] = None):
         """Desactiva la relación"""
         self.status = RelationshipStatus.INACTIVE
-        self.ended_at = datetime.utcnow()
+        self.ended_at = datetime.now(timezone.utc)
         
         if reason:
             self.notes = f"{self.notes or ''}\nDesactivada: {reason}".strip()
@@ -470,15 +470,15 @@ class Relationship(BaseModel, TimestampMixin, SoftDeleteMixin):
     def complete(self, satisfaction_score: Optional[float] = None):
         """Marca la relación como completada"""
         self.status = RelationshipStatus.COMPLETED
-        self.ended_at = datetime.utcnow()
+        self.ended_at = datetime.now(timezone.utc)
         
         if satisfaction_score:
             self.satisfaction_score = satisfaction_score
     
-    def record_interaction(self, interaction_metadata: Optional[Dict[str, Any]] = None):
+    def record_interaction(self, interaction_metadata: Optional[dict[str, Any]] = None):
         """Registra una interacción en la relación"""
         self.interaction_count += 1
-        self.last_interaction_at = datetime.utcnow()
+        self.last_interaction_at = datetime.now(timezone.utc)
         
         # Actualizar fuerza basada en frecuencia de interacciones
         self._update_strength_from_interactions()
@@ -486,7 +486,7 @@ class Relationship(BaseModel, TimestampMixin, SoftDeleteMixin):
         if interaction_metadata:
             interactions = self.metadata.get('interactions', [])
             interactions.append({
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 **interaction_metadata
             })
             self.metadata = {**self.metadata, 'interactions': interactions}
@@ -496,7 +496,7 @@ class Relationship(BaseModel, TimestampMixin, SoftDeleteMixin):
         if not self.started_at:
             return
         
-        days_active = (datetime.utcnow() - self.started_at).days or 1
+        days_active = (datetime.now(timezone.utc) - self.started_at).days or 1
         interaction_frequency = self.interaction_count / days_active
         
         # Lógica simple: más interacciones = mayor fuerza
@@ -720,11 +720,11 @@ class RelationshipManager:
     def get_relationships_for_entity(
         entity_type: str,
         entity_id: int,
-        relationship_types: Optional[List[RelationshipType]] = None,
+        relationship_types: Optional[list[RelationshipType]] = None,
         status_filter: Optional[RelationshipStatus] = None,
         as_source: bool = True,
         as_target: bool = True
-    ) -> List[Relationship]:
+    ) -> list[Relationship]:
         """
         Obtiene todas las relaciones de una entidad
         
@@ -777,7 +777,7 @@ class RelationshipManager:
         as_mentor: bool = True,
         as_mentee: bool = True,
         active_only: bool = True
-    ) -> Dict[str, List[Relationship]]:
+    ) -> dict[str, list[Relationship]]:
         """
         Obtiene relaciones de mentoría específicas
         
@@ -825,7 +825,7 @@ class RelationshipManager:
     @staticmethod
     def expire_old_relationships(days_inactive: int = 180):
         """Marca como expiradas las relaciones inactivas por mucho tiempo"""
-        cutoff_date = datetime.utcnow() - timedelta(days=days_inactive)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_inactive)
         
         old_relationships = Relationship.query.filter(
             Relationship.status == RelationshipStatus.ACTIVE,
@@ -850,7 +850,7 @@ class RelationshipManager:
     def get_relationship_analytics(
         organization_id: Optional[int] = None,
         relationship_type: Optional[RelationshipType] = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Genera analytics básicas de relaciones
         
@@ -1049,7 +1049,7 @@ class RelationshipRecommendation(BaseModel, TimestampMixin):
     
     def mark_as_presented(self):
         """Marca la recomendación como presentada"""
-        self.presented_at = datetime.utcnow()
+        self.presented_at = datetime.now(timezone.utc)
         self.status = 'presented'
     
     def record_feedback(self, feedback: str, reason: Optional[str] = None):
@@ -1067,7 +1067,7 @@ class RelationshipRecommendationEngine:
         user_id: int,
         user_type: str = 'user',
         limit: int = 10
-    ) -> List[RelationshipRecommendation]:
+    ) -> list[RelationshipRecommendation]:
         """
         Genera recomendaciones de mentoría para un usuario
         
@@ -1123,7 +1123,7 @@ class RelationshipRecommendationEngine:
                             user_entity, mentor
                         )
                     },
-                    expires_at=datetime.utcnow() + timedelta(days=30)
+                    expires_at=datetime.now(timezone.utc) + timedelta(days=30)
                 )
                 
                 recommendations.append(recommendation)
@@ -1137,7 +1137,7 @@ class RelationshipRecommendationEngine:
     def generate_collaboration_recommendations(
         project_id: int,
         limit: int = 10
-    ) -> List[RelationshipRecommendation]:
+    ) -> list[RelationshipRecommendation]:
         """
         Genera recomendaciones de colaboración para un proyecto
         
@@ -1184,7 +1184,7 @@ class RelationshipRecommendationEngine:
                             project, entrepreneur
                         )
                     },
-                    expires_at=datetime.utcnow() + timedelta(days=14)
+                    expires_at=datetime.now(timezone.utc) + timedelta(days=14)
                 )
                 
                 recommendations.append(recommendation)
@@ -1247,7 +1247,7 @@ class RelationshipRecommendationEngine:
         return min(100, confidence)
     
     @staticmethod
-    def _find_common_interests(entity1, entity2) -> List[str]:
+    def _find_common_interests(entity1, entity2) -> list[str]:
         """Encuentra intereses comunes entre dos entidades"""
         interests1 = set(getattr(entity1, 'interests', []) or [])
         interests2 = set(getattr(entity2, 'interests', []) or [])
@@ -1384,9 +1384,9 @@ def create_collaboration_relationship(
 
 def get_user_network(
     user_id: int,
-    relationship_types: Optional[List[RelationshipType]] = None,
+    relationship_types: Optional[list[RelationshipType]] = None,
     max_depth: int = 2
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Obtiene la red de relaciones de un usuario
     

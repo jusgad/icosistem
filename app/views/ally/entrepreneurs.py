@@ -10,7 +10,7 @@ Version: 2.0.0
 """
 
 from datetime import datetime, timedelta, date
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Optional, Any
 from collections import defaultdict
 import json
 
@@ -702,7 +702,7 @@ def api_update_entrepreneur_status(entrepreneur_id):
         # Actualizar estado
         old_status = entrepreneur.status
         entrepreneur.status = new_status
-        entrepreneur.updated_at = datetime.utcnow()
+        entrepreneur.updated_at = datetime.now(timezone.utc)
         
         # Crear registro de cambio de estado
         _create_status_change_record(entrepreneur, ally_profile, old_status, new_status, notes)
@@ -885,7 +885,7 @@ def api_schedule_quick_meeting(entrepreneur_id):
         meeting_datetime = datetime.combine(meeting_date, meeting_time)
         
         # Validar que la fecha sea futura
-        if meeting_datetime <= datetime.utcnow():
+        if meeting_datetime <= datetime.now(timezone.utc):
             return jsonify({'error': 'La reunión debe ser programada para una fecha futura'}), 400
         
         # Crear reunión
@@ -1158,7 +1158,7 @@ def _build_entrepreneurs_query(ally: Ally, filter_form: EntrepreneurFilterForm):
             'year': 365
         }
         days = days_map.get(filter_form.date_range.data, 30)
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
         
         query = query.filter(MentorshipSession.created_at >= cutoff_date)
     
@@ -1204,7 +1204,7 @@ def _apply_sorting(query, sort_by: str, order: str):
     return query
 
 
-def _enrich_entrepreneur_data(entrepreneur: Entrepreneur, ally: Ally) -> Dict[str, Any]:
+def _enrich_entrepreneur_data(entrepreneur: Entrepreneur, ally: Ally) -> dict[str, Any]:
     """
     Enriquece datos de un emprendedor con información adicional.
     
@@ -1244,13 +1244,13 @@ def _enrich_entrepreneur_data(entrepreneur: Entrepreneur, ally: Ally) -> Dict[st
         'relationship_health': relationship_health,
         'active_projects_count': active_projects_count,
         'important_alerts': important_alerts,
-        'days_since_last_contact': (datetime.utcnow().date() - last_interaction).days if last_interaction else None,
+        'days_since_last_contact': (datetime.now(timezone.utc).date() - last_interaction).days if last_interaction else None,
         'mentorship_duration': _calculate_mentorship_duration(entrepreneur, ally),
         'satisfaction_score': _get_entrepreneur_satisfaction_score(entrepreneur, ally)
     }
 
 
-def _calculate_entrepreneurs_overview_stats(ally: Ally) -> Dict[str, Any]:
+def _calculate_entrepreneurs_overview_stats(ally: Ally) -> dict[str, Any]:
     """
     Calcula estadísticas generales de emprendedores del aliado.
     
@@ -1292,7 +1292,7 @@ def _calculate_entrepreneurs_overview_stats(ally: Ally) -> Dict[str, Any]:
     avg_progress = (total_progress / len(entrepreneurs)) if entrepreneurs else 0
     
     # Sesiones este mes
-    this_month = datetime.utcnow().replace(day=1)
+    this_month = datetime.now(timezone.utc).replace(day=1)
     sessions_this_month = MentorshipSession.query.filter(
         MentorshipSession.ally_id == ally.id,
         MentorshipSession.session_date >= this_month.date()
@@ -1314,7 +1314,7 @@ def _calculate_entrepreneurs_overview_stats(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _get_important_alerts(ally: Ally) -> List[Dict[str, Any]]:
+def _get_important_alerts(ally: Ally) -> list[dict[str, Any]]:
     """
     Obtiene alertas importantes relacionadas con emprendedores.
     
@@ -1331,7 +1331,7 @@ def _get_important_alerts(ally: Ally) -> List[Dict[str, Any]]:
         MentorshipSession.ally_id == ally.id
     ).distinct().all()
     
-    cutoff_date = datetime.utcnow().date() - timedelta(days=14)
+    cutoff_date = datetime.now(timezone.utc).date() - timedelta(days=14)
     
     for entrepreneur in entrepreneurs_no_contact:
         last_contact = _get_last_interaction_date(entrepreneur, ally)
@@ -1341,7 +1341,7 @@ def _get_important_alerts(ally: Ally) -> List[Dict[str, Any]]:
                 'severity': 'medium',
                 'entrepreneur_id': entrepreneur.id,
                 'entrepreneur_name': entrepreneur.user.full_name,
-                'message': f'Sin contacto hace {(datetime.utcnow().date() - last_contact).days} días',
+                'message': f'Sin contacto hace {(datetime.now(timezone.utc).date() - last_contact).days} días',
                 'action_url': url_for('ally_entrepreneurs.entrepreneur_detail', 
                                     entrepreneur_id=entrepreneur.id)
             })
@@ -1349,7 +1349,7 @@ def _get_important_alerts(ally: Ally) -> List[Dict[str, Any]]:
     # Proyectos atrasados
     overdue_projects = Project.query.join(Entrepreneur).join(MentorshipSession).filter(
         MentorshipSession.ally_id == ally.id,
-        Project.target_end_date < datetime.utcnow().date(),
+        Project.target_end_date < datetime.now(timezone.utc).date(),
         Project.status == 'active'
     ).all()
     
@@ -1367,7 +1367,7 @@ def _get_important_alerts(ally: Ally) -> List[Dict[str, Any]]:
     # Sesiones perdidas
     missed_sessions = MentorshipSession.query.filter(
         MentorshipSession.ally_id == ally.id,
-        MentorshipSession.session_date < datetime.utcnow().date(),
+        MentorshipSession.session_date < datetime.now(timezone.utc).date(),
         MentorshipSession.status == 'scheduled'
     ).all()
     
@@ -1385,7 +1385,7 @@ def _get_important_alerts(ally: Ally) -> List[Dict[str, Any]]:
     return sorted(alerts, key=lambda x: {'high': 3, 'medium': 2, 'low': 1}[x['severity']], reverse=True)
 
 
-def _get_upcoming_activities_grouped(ally: Ally) -> Dict[str, List[Dict[str, Any]]]:
+def _get_upcoming_activities_grouped(ally: Ally) -> dict[str, list[dict[str, Any]]]:
     """
     Obtiene próximas actividades agrupadas por tipo.
     
@@ -1405,7 +1405,7 @@ def _get_upcoming_activities_grouped(ally: Ally) -> Dict[str, List[Dict[str, Any
     # Próximas reuniones
     upcoming_meetings = Meeting.query.filter(
         Meeting.ally_id == ally.id,
-        Meeting.scheduled_at > datetime.utcnow(),
+        Meeting.scheduled_at > datetime.now(timezone.utc),
         Meeting.status.in_(['scheduled', 'confirmed'])
     ).order_by(Meeting.scheduled_at).limit(10).all()
     
@@ -1421,7 +1421,7 @@ def _get_upcoming_activities_grouped(ally: Ally) -> Dict[str, List[Dict[str, Any
     # Próximas sesiones de mentoría
     upcoming_sessions = MentorshipSession.query.filter(
         MentorshipSession.ally_id == ally.id,
-        MentorshipSession.session_date > datetime.utcnow().date(),
+        MentorshipSession.session_date > datetime.now(timezone.utc).date(),
         MentorshipSession.status == 'scheduled'
     ).order_by(MentorshipSession.session_date).limit(10).all()
     
@@ -1437,8 +1437,8 @@ def _get_upcoming_activities_grouped(ally: Ally) -> Dict[str, List[Dict[str, Any
     # Próximos deadlines de proyectos
     upcoming_deadlines = Project.query.join(Entrepreneur).join(MentorshipSession).filter(
         MentorshipSession.ally_id == ally.id,
-        Project.target_end_date > datetime.utcnow().date(),
-        Project.target_end_date <= datetime.utcnow().date() + timedelta(days=30),
+        Project.target_end_date > datetime.now(timezone.utc).date(),
+        Project.target_end_date <= datetime.now(timezone.utc).date() + timedelta(days=30),
         Project.status == 'active'
     ).order_by(Project.target_end_date).limit(10).all()
     
@@ -1454,7 +1454,7 @@ def _get_upcoming_activities_grouped(ally: Ally) -> Dict[str, List[Dict[str, Any
     return activities
 
 
-def _get_complete_entrepreneur_data(entrepreneur: Entrepreneur, ally: Ally) -> Dict[str, Any]:
+def _get_complete_entrepreneur_data(entrepreneur: Entrepreneur, ally: Ally) -> dict[str, Any]:
     """
     Obtiene datos completos de un emprendedor específico.
     
@@ -1504,7 +1504,7 @@ def _get_complete_entrepreneur_data(entrepreneur: Entrepreneur, ally: Ally) -> D
     }
 
 
-def _analyze_entrepreneur_progress(entrepreneur: Entrepreneur, ally: Ally) -> Dict[str, Any]:
+def _analyze_entrepreneur_progress(entrepreneur: Entrepreneur, ally: Ally) -> dict[str, Any]:
     """
     Analiza el progreso detallado de un emprendedor.
     
@@ -1546,11 +1546,11 @@ def _analyze_entrepreneur_progress(entrepreneur: Entrepreneur, ally: Ally) -> Di
         'milestones_status': milestones_status,
         'engagement_score': engagement_score,
         'predictions': predictions,
-        'last_updated': datetime.utcnow().isoformat()
+        'last_updated': datetime.now(timezone.utc).isoformat()
     }
 
 
-def _get_entrepreneur_projects_detailed(entrepreneur: Entrepreneur) -> List[Dict[str, Any]]:
+def _get_entrepreneur_projects_detailed(entrepreneur: Entrepreneur) -> list[dict[str, Any]]:
     """
     Obtiene proyectos detallados del emprendedor.
     
@@ -1588,15 +1588,15 @@ def _get_entrepreneur_projects_detailed(entrepreneur: Entrepreneur) -> List[Dict
             'completed_tasks': completed_tasks,
             'pending_tasks': total_tasks - completed_tasks,
             'project_health': project_health,
-            'days_until_deadline': (project.target_end_date - datetime.utcnow().date()).days if project.target_end_date else None,
-            'is_overdue': project.target_end_date < datetime.utcnow().date() if project.target_end_date else False,
+            'days_until_deadline': (project.target_end_date - datetime.now(timezone.utc).date()).days if project.target_end_date else None,
+            'is_overdue': project.target_end_date < datetime.now(timezone.utc).date() if project.target_end_date else False,
             'last_activity': project.updated_at
         })
     
     return projects_detailed
 
 
-def _get_mentorship_history(entrepreneur: Entrepreneur, ally: Ally) -> List[Dict[str, Any]]:
+def _get_mentorship_history(entrepreneur: Entrepreneur, ally: Ally) -> list[dict[str, Any]]:
     """
     Obtiene historial detallado de sesiones de mentoría.
     
@@ -1630,7 +1630,7 @@ def _get_mentorship_history(entrepreneur: Entrepreneur, ally: Ally) -> List[Dict
     return sessions_detailed
 
 
-def _get_recent_communications(entrepreneur: Entrepreneur, ally: Ally) -> List[Dict[str, Any]]:
+def _get_recent_communications(entrepreneur: Entrepreneur, ally: Ally) -> list[dict[str, Any]]:
     """
     Obtiene comunicaciones recientes con el emprendedor.
     
@@ -1669,7 +1669,7 @@ def _get_recent_communications(entrepreneur: Entrepreneur, ally: Ally) -> List[D
 
 # Funciones auxiliares adicionales (implementación básica para mantener funcionalidad)
 
-def _calculate_entrepreneur_overall_progress(entrepreneur: Entrepreneur) -> Dict[str, Any]:
+def _calculate_entrepreneur_overall_progress(entrepreneur: Entrepreneur) -> dict[str, Any]:
     """Calcula progreso general del emprendedor."""
     # Implementación básica - en la realidad sería más compleja
     return {
@@ -1704,12 +1704,12 @@ def _get_last_interaction_date(entrepreneur: Entrepreneur, ally: Ally) -> Option
     return max(dates) if dates else None
 
 
-def _get_next_activity_with_entrepreneur(entrepreneur: Entrepreneur, ally: Ally) -> Optional[Dict[str, Any]]:
+def _get_next_activity_with_entrepreneur(entrepreneur: Entrepreneur, ally: Ally) -> Optional[dict[str, Any]]:
     """Obtiene próxima actividad con el emprendedor."""
     next_meeting = Meeting.query.filter(
         Meeting.ally_id == ally.id,
         Meeting.entrepreneur_id == entrepreneur.id,
-        Meeting.scheduled_at > datetime.utcnow()
+        Meeting.scheduled_at > datetime.now(timezone.utc)
     ).order_by(Meeting.scheduled_at).first()
     
     if next_meeting:
@@ -1723,7 +1723,7 @@ def _get_next_activity_with_entrepreneur(entrepreneur: Entrepreneur, ally: Ally)
     next_session = MentorshipSession.query.filter(
         MentorshipSession.ally_id == ally.id,
         MentorshipSession.entrepreneur_id == entrepreneur.id,
-        MentorshipSession.session_date > datetime.utcnow().date()
+        MentorshipSession.session_date > datetime.now(timezone.utc).date()
     ).order_by(MentorshipSession.session_date).first()
     
     if next_session:
@@ -1737,7 +1737,7 @@ def _get_next_activity_with_entrepreneur(entrepreneur: Entrepreneur, ally: Ally)
     return None
 
 
-def _assess_relationship_health(entrepreneur: Entrepreneur, ally: Ally) -> Dict[str, Any]:
+def _assess_relationship_health(entrepreneur: Entrepreneur, ally: Ally) -> dict[str, Any]:
     """Evalúa la salud de la relación de mentoría."""
     # Implementación básica
     return {
@@ -1749,14 +1749,14 @@ def _assess_relationship_health(entrepreneur: Entrepreneur, ally: Ally) -> Dict[
     }
 
 
-def _get_entrepreneur_alerts(entrepreneur: Entrepreneur, ally: Ally) -> List[str]:
+def _get_entrepreneur_alerts(entrepreneur: Entrepreneur, ally: Ally) -> list[str]:
     """Obtiene alertas específicas del emprendedor."""
     alerts = []
     
     # Verificar si hay proyectos atrasados
     overdue_projects = Project.query.filter(
         Project.entrepreneur_id == entrepreneur.id,
-        Project.target_end_date < datetime.utcnow().date(),
+        Project.target_end_date < datetime.now(timezone.utc).date(),
         Project.status == 'active'
     ).count()
     
@@ -1766,7 +1766,7 @@ def _get_entrepreneur_alerts(entrepreneur: Entrepreneur, ally: Ally) -> List[str
     # Verificar última comunicación
     last_contact = _get_last_interaction_date(entrepreneur, ally)
     if last_contact:
-        days_since_contact = (datetime.utcnow().date() - last_contact).days
+        days_since_contact = (datetime.now(timezone.utc).date() - last_contact).days
         if days_since_contact > 14:
             alerts.append(f'Sin contacto hace {days_since_contact} días')
     
@@ -1781,7 +1781,7 @@ def _calculate_mentorship_duration(entrepreneur: Entrepreneur, ally: Ally) -> in
     ).order_by(MentorshipSession.session_date).first()
     
     if first_session:
-        return (datetime.utcnow().date() - first_session.session_date).days
+        return (datetime.now(timezone.utc).date() - first_session.session_date).days
     
     return 0
 
@@ -1957,25 +1957,25 @@ def _log_evaluation_created(entrepreneur: Entrepreneur, ally: Ally) -> None:
 
 
 # Funciones para reportes y exportación
-def _generate_entrepreneurs_report_data(ally: Ally, include_details: str, date_range: str) -> Dict[str, Any]:
+def _generate_entrepreneurs_report_data(ally: Ally, include_details: str, date_range: str) -> dict[str, Any]:
     """Genera datos para reporte de emprendedores."""
     # Implementación básica
     return {
         'ally': ally,
         'entrepreneurs': [],
         'stats': _calculate_entrepreneurs_overview_stats(ally),
-        'generated_at': datetime.utcnow()
+        'generated_at': datetime.now(timezone.utc)
     }
 
 
-def _generate_entrepreneur_profile_report(entrepreneur: Entrepreneur, ally: Ally) -> Dict[str, Any]:
+def _generate_entrepreneur_profile_report(entrepreneur: Entrepreneur, ally: Ally) -> dict[str, Any]:
     """Genera datos para reporte de perfil de emprendedor."""
     return {
         'entrepreneur': entrepreneur,
         'ally': ally,
         'entrepreneur_data': _get_complete_entrepreneur_data(entrepreneur, ally),
         'progress_analysis': _analyze_entrepreneur_progress(entrepreneur, ally),
-        'generated_at': datetime.utcnow()
+        'generated_at': datetime.now(timezone.utc)
     }
 
 
@@ -1990,32 +1990,32 @@ def _build_projects_query(entrepreneur: Entrepreneur, status_filter: str, priori
     return query.order_by(desc(Project.updated_at))
 
 
-def _enrich_project_data(project: Project, ally: Ally) -> Dict[str, Any]:
+def _enrich_project_data(project: Project, ally: Ally) -> dict[str, Any]:
     """Enriquece datos de proyecto."""
     return {'project': project, 'health_score': 85}
 
 
-def _calculate_projects_stats(entrepreneur: Entrepreneur) -> Dict[str, Any]:
+def _calculate_projects_stats(entrepreneur: Entrepreneur) -> dict[str, Any]:
     """Calcula estadísticas de proyectos."""
     return {'total': 5, 'active': 3, 'completed': 2}
 
 
-def _identify_critical_projects(entrepreneur: Entrepreneur) -> List[Dict[str, Any]]:
+def _identify_critical_projects(entrepreneur: Entrepreneur) -> list[dict[str, Any]]:
     """Identifica proyectos críticos."""
     return []
 
 
-def _get_upcoming_project_milestones(entrepreneur: Entrepreneur) -> List[Dict[str, Any]]:
+def _get_upcoming_project_milestones(entrepreneur: Entrepreneur) -> list[dict[str, Any]]:
     """Obtiene próximos hitos de proyectos."""
     return []
 
 
-def _analyze_projects_progress_trends(entrepreneur: Entrepreneur) -> Dict[str, Any]:
+def _analyze_projects_progress_trends(entrepreneur: Entrepreneur) -> dict[str, Any]:
     """Analiza tendencias de progreso de proyectos."""
     return {'trend': 'positive', 'velocity': 1.2}
 
 
-def _assess_project_health(project: Project) -> Dict[str, str]:
+def _assess_project_health(project: Project) -> dict[str, str]:
     """Evalúa salud del proyecto."""
     return {'score': 85, 'status': 'healthy', 'concerns': []}
 

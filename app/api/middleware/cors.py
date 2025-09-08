@@ -22,7 +22,7 @@ from flask_cors import CORS as FlaskCORS
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from werkzeug.exceptions import Forbidden
 from urllib.parse import urlparse
-from typing import Dict, List, Optional, Union, Set, Callable, Any, Tuple
+from typing import Optional, Union, Callable, Any
 from dataclasses import dataclass, field
 from enum import Enum
 import re
@@ -89,22 +89,22 @@ class CORSOriginPattern:
 class CORSConfiguration:
     """Configuración completa de CORS."""
     # Orígenes permitidos
-    allowed_origins: List[CORSOriginPattern] = field(default_factory=list)
-    allowed_origin_regex: List[str] = field(default_factory=list)
+    allowed_origins: list[CORSOriginPattern] = field(default_factory=list)
+    allowed_origin_regex: list[str] = field(default_factory=list)
     
     # Métodos HTTP permitidos
-    allowed_methods: Set[str] = field(default_factory=lambda: {
+    allowed_methods: set[str] = field(default_factory=lambda: {
         'GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD', 'PATCH'
     })
     
     # Headers permitidos
-    allowed_headers: Set[str] = field(default_factory=lambda: {
+    allowed_headers: set[str] = field(default_factory=lambda: {
         'Accept', 'Authorization', 'Content-Type', 'X-Requested-With',
         'X-CSRF-Token', 'X-Request-ID', 'Cache-Control'
     })
     
     # Headers expuestos al cliente
-    exposed_headers: Set[str] = field(default_factory=lambda: {
+    exposed_headers: set[str] = field(default_factory=lambda: {
         'X-Total-Count', 'X-Rate-Limit-Limit', 'X-Rate-Limit-Remaining',
         'X-Rate-Limit-Reset', 'Location', 'Content-Length'
     })
@@ -116,16 +116,16 @@ class CORSConfiguration:
     preflight_max_age: int = 86400  # 24 horas
     
     # Configuraciones específicas por endpoint
-    endpoint_configs: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    endpoint_configs: dict[str, dict[str, Any]] = field(default_factory=dict)
     
     # Configuraciones por método HTTP
-    method_configs: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    method_configs: dict[str, dict[str, Any]] = field(default_factory=dict)
     
     # Configuraciones por tipo de usuario
-    user_type_configs: Dict[UserType, Dict[str, Any]] = field(default_factory=dict)
+    user_type_configs: dict[UserType, dict[str, Any]] = field(default_factory=dict)
     
     # Lista negra de orígenes
-    blocked_origins: Set[str] = field(default_factory=set)
+    blocked_origins: set[str] = field(default_factory=set)
     
     # Configuración de seguridad
     security_level: CORSSecurityLevel = CORSSecurityLevel.HIGH
@@ -184,7 +184,7 @@ class CORSValidator:
         
         return False
     
-    def validate_request_origin(self, origin: str, referer: str = None) -> Tuple[bool, str]:
+    def validate_request_origin(self, origin: str, referer: str = None) -> tuple[bool, str]:
         """Valida el origen de un request con verificaciones adicionales."""
         if not origin:
             return False, "Missing origin header"
@@ -208,7 +208,7 @@ class CORSValidator:
         
         return True, "Origin validated"
     
-    def get_allowed_methods_for_endpoint(self, endpoint: str) -> Set[str]:
+    def get_allowed_methods_for_endpoint(self, endpoint: str) -> set[str]:
         """Obtiene métodos permitidos para un endpoint específico."""
         if endpoint in self.config.endpoint_configs:
             endpoint_methods = self.config.endpoint_configs[endpoint].get('methods')
@@ -217,7 +217,7 @@ class CORSValidator:
         
         return self.config.allowed_methods
     
-    def get_allowed_headers_for_request(self, method: str, endpoint: str) -> Set[str]:
+    def get_allowed_headers_for_request(self, method: str, endpoint: str) -> set[str]:
         """Obtiene headers permitidos para un request específico."""
         headers = self.config.allowed_headers.copy()
         
@@ -263,7 +263,7 @@ class CORSMiddleware:
                  supports_credentials=self.config.supports_credentials,
                  max_age=self.config.preflight_max_age)
     
-    def _get_flask_cors_origins(self) -> List[str]:
+    def _get_flask_cors_origins(self) -> list[str]:
         """Convierte configuración a formato Flask-CORS."""
         origins = []
         for pattern in self.config.allowed_origins:
@@ -318,7 +318,7 @@ class CORSMiddleware:
         except Exception as e:
             logger.error(f"Error logging CORS request: {e}")
     
-    def _handle_preflight_request(self, origin: str) -> Tuple[bool, Dict[str, str]]:
+    def _handle_preflight_request(self, origin: str) -> tuple[bool, dict[str, str]]:
         """Maneja request de preflight OPTIONS."""
         headers = {}
         
@@ -375,7 +375,7 @@ class CORSMiddleware:
         self._log_cors_request(origin, 'OPTIONS', True, "Preflight allowed")
         return True, headers
     
-    def _handle_actual_request(self, origin: str) -> Tuple[bool, Dict[str, str]]:
+    def _handle_actual_request(self, origin: str) -> tuple[bool, dict[str, str]]:
         """Maneja request real (no preflight)."""
         headers = {}
         
@@ -492,7 +492,7 @@ class CustomCORS:
         )
     
     @staticmethod
-    def create_production_config(allowed_domains: List[str]) -> CORSConfiguration:
+    def create_production_config(allowed_domains: list[str]) -> CORSConfiguration:
         """Configuración estricta para producción."""
         origins = []
         for domain in allowed_domains:
@@ -522,7 +522,7 @@ class CustomCORS:
         )
     
     @staticmethod
-    def create_api_only_config(api_domains: List[str]) -> CORSConfiguration:
+    def create_api_only_config(api_domains: list[str]) -> CORSConfiguration:
         """Configuración específica para APIs."""
         origins = [
             CORSOriginPattern(domain, secure_only=True)
@@ -567,7 +567,7 @@ def configure_development_cors(app: Flask) -> CORSMiddleware:
     middleware.init_app(app)
     return middleware
 
-def configure_staging_cors(app: Flask, staging_domains: List[str]) -> CORSMiddleware:
+def configure_staging_cors(app: Flask, staging_domains: list[str]) -> CORSMiddleware:
     """Configura CORS para staging."""
     config = CustomCORS.create_production_config(staging_domains)
     config.security_level = CORSSecurityLevel.HIGH
@@ -577,7 +577,7 @@ def configure_staging_cors(app: Flask, staging_domains: List[str]) -> CORSMiddle
     middleware.init_app(app)
     return middleware
 
-def configure_production_cors(app: Flask, production_domains: List[str]) -> CORSMiddleware:
+def configure_production_cors(app: Flask, production_domains: list[str]) -> CORSMiddleware:
     """Configura CORS para producción."""
     config = CustomCORS.create_production_config(production_domains)
     
@@ -617,8 +617,8 @@ def configure_production_cors(app: Flask, production_domains: List[str]) -> CORS
     return middleware
 
 # Decorador para configuraciones CORS específicas
-def cors_config(origins: List[str] = None, methods: List[str] = None, 
-                headers: List[str] = None, credentials: bool = None):
+def cors_config(origins: list[str] = None, methods: list[str] = None, 
+                headers: list[str] = None, credentials: bool = None):
     """
     Decorador para aplicar configuración CORS específica a endpoints.
     
@@ -660,7 +660,7 @@ def block_cors_origin(middleware: CORSMiddleware, origin: str):
     """Bloquea un origen específico."""
     middleware.config.blocked_origins.add(origin)
 
-def get_cors_stats(middleware: CORSMiddleware) -> Dict[str, Any]:
+def get_cors_stats(middleware: CORSMiddleware) -> dict[str, Any]:
     """Obtiene estadísticas de requests CORS."""
     return {
         'total_requests': sum(middleware.request_stats.values()),

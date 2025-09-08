@@ -33,11 +33,27 @@ from flask import Flask, jsonify, request
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+# Add parent directory to Python path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 # Import application factory
 from app import create_app
-# from app.core.exceptions import ApplicationError  # Not found, using Exception instead
-# from app.utils.logging import setup_logging  # Causing app context issues
-# from app.utils.monitoring import setup_monitoring  # Comentado temporalmente
+
+# Import utilities with error handling
+try:
+    from app.core.exceptions import register_error_handlers
+except ImportError:
+    register_error_handlers = None
+
+try:
+    from app.utils.logging import configure_logging
+except ImportError:
+    configure_logging = None
+
+try:
+    from app.utils.monitoring import setup_monitoring
+except ImportError:
+    setup_monitoring = None
 
 # ============================================================================
 # CONFIGURATION AND CONSTANTS

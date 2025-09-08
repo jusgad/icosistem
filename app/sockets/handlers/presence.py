@@ -13,8 +13,8 @@ Funcionalidades:
 """
 
 import logging
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Set
+from datetime import datetime, timezone
+from typing import Optional, Any
 
 from flask import request
 from flask_socketio import emit, join_room, leave_room
@@ -97,7 +97,7 @@ class PresenceNamespace(BaseNamespace):
     @socket_auth_required()
     @socket_log_activity(ActivityType.PRESENCE_UPDATE, "User updated presence status")
     @socket_validate_data(required_fields=['status'])
-    def on_update_my_status(self, data: Dict[str, Any], current_user: User):
+    def on_update_my_status(self, data: dict[str, Any], current_user: User):
         """
         Permite al usuario actualizar su estado de presencia detallado.
         
@@ -125,14 +125,14 @@ class PresenceNamespace(BaseNamespace):
             # Actualizar estado en active_connections
             socket_manager.active_connections[user_id_str]['presence_status'] = new_status
             socket_manager.active_connections[user_id_str]['custom_status_message'] = custom_message
-            socket_manager.active_connections[user_id_str]['last_activity'] = datetime.utcnow()
+            socket_manager.active_connections[user_id_str]['last_activity'] = datetime.now(timezone.utc)
 
             payload = {
                 'user_id': user_id_str,
                 'username': current_user.username,
                 'status': new_status,
                 'custom_message': custom_message,
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             }
 
             # Emitir a la sala personal del usuario (para sus otras sesiones/dispositivos)
@@ -152,12 +152,12 @@ class PresenceNamespace(BaseNamespace):
 
     @socket_auth_required()
     @socket_validate_data(required_fields=['user_ids'])
-    def on_get_users_status(self, data: Dict[str, Any], current_user: User):
+    def on_get_users_status(self, data: dict[str, Any], current_user: User):
         """
         Permite a un cliente solicitar el estado de presencia de una lista de usuarios.
         
         Args:
-            data (dict): {'user_ids': List[str]}
+            data (dict): {'user_ids': list[str]}
             current_user (User): Usuario autenticado.
         """
         user_ids_to_query = data.get('user_ids')
@@ -188,7 +188,7 @@ class PresenceNamespace(BaseNamespace):
         
         emit('users_status_data', {
             'statuses': statuses,
-            'timestamp': format_datetime(datetime.utcnow())
+            'timestamp': format_datetime(datetime.now(timezone.utc))
         })
 
 # Función helper que podría ser llamada desde otros servicios para emitir cambios de presencia
@@ -212,7 +212,7 @@ def broadcast_user_presence_update(user_id: str, status: str, custom_message: st
         'username': user.username,
         'status': status,
         'custom_message': custom_message,
-        'timestamp': format_datetime(datetime.utcnow())
+        'timestamp': format_datetime(datetime.now(timezone.utc))
     }
     
     # Emitir al namespace de presencia

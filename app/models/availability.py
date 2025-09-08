@@ -10,7 +10,7 @@ Date: 2025
 
 import logging
 from datetime import datetime, time
-from typing import Dict, List, Any, Optional
+from typing import Any, Optional
 from sqlalchemy import Column, String, Boolean, DateTime, Integer, Text, ForeignKey, Time
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -115,7 +115,7 @@ class Availability(BaseModel, AuditMixin, db.Model):
         """Verifica si el slot está disponible a una hora específica."""
         return self.start_time <= target_time <= self.end_time
     
-    def get_time_slots(self, session_duration: int = None) -> List[Dict[str, Any]]:
+    def get_time_slots(self, session_duration: int = None) -> list[dict[str, Any]]:
         """
         Retorna una lista de slots de tiempo disponibles dentro de este horario.
         
@@ -155,7 +155,7 @@ class Availability(BaseModel, AuditMixin, db.Model):
         
         return slots
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convierte el objeto a diccionario para serialización."""
         return {
             'id': str(self.id),

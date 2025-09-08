@@ -19,7 +19,7 @@ El acceso está diferenciado por tipo de cliente:
 import re
 import csv
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from urllib.parse import quote_plus
 from collections import defaultdict
 
@@ -557,15 +557,15 @@ def export_directory():
         # Generar archivo según formato
         if format_type == 'excel':
             file_path = generate_directory_excel(export_data)
-            filename = f'directorio_emprendedores_{datetime.utcnow().strftime("%Y%m%d")}.xlsx'
+            filename = f'directorio_emprendedores_{datetime.now(timezone.utc).strftime("%Y%m%d")}.xlsx'
             mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         elif format_type == 'csv':
             file_path = _generate_directory_csv(export_data)
-            filename = f'directorio_emprendedores_{datetime.utcnow().strftime("%Y%m%d")}.csv'
+            filename = f'directorio_emprendedores_{datetime.now(timezone.utc).strftime("%Y%m%d")}.csv'
             mimetype = 'text/csv'
         else:  # PDF
             file_path = generate_directory_pdf(export_data)
-            filename = f'directorio_emprendedores_{datetime.utcnow().strftime("%Y%m%d")}.pdf'
+            filename = f'directorio_emprendedores_{datetime.now(timezone.utc).strftime("%Y%m%d")}.pdf'
             mimetype = 'application/pdf'
         
         # Registrar exportación
@@ -1303,7 +1303,7 @@ def _get_export_data(permissions, include_projects, include_contact, filter_indu
         'entrepreneurs': entrepreneurs,
         'include_projects': include_projects,
         'include_contact': include_contact and _has_contact_access(permissions),
-        'generated_at': datetime.utcnow(),
+        'generated_at': datetime.now(timezone.utc),
         'permissions': permissions
     }
     

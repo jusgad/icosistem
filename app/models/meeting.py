@@ -6,7 +6,7 @@ seguimiento, participantes, agenda, actas y seguimiento de compromisos.
 """
 
 from datetime import datetime, date, timedelta
-from typing import List, Optional, Dict, Any, Union
+from typing import Optional, Any, Union
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Enum as SQLEnum, Float, Date, Time, Table
 from sqlalchemy.orm import relationship, validates, backref
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -319,7 +319,7 @@ class Meeting(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         # Generar series_id para reuniones recurrentes
         if self.recurrence_pattern != RecurrencePattern.NONE and not self.series_id:
-            self.series_id = f"series_{int(datetime.utcnow().timestamp())}"
+            self.series_id = f"series_{int(datetime.now(timezone.utc).timestamp())}"
     
     def __repr__(self):
         return f'<Meeting {self.title} - {self.scheduled_start}>'
@@ -346,7 +346,7 @@ class Meeting(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
                     raise ValidationError("La hora de fin debe ser posterior al inicio")
             
             # Solo validar fechas futuras para nuevas reuniones
-            if not self.id and datetime_value < datetime.utcnow():
+            if not self.id and datetime_value < datetime.now(timezone.utc):
                 raise ValidationError("No se pueden programar reuniones en el pasado")
         
         return datetime_value
@@ -396,7 +396,7 @@ class Meeting(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     @hybrid_property
     def is_upcoming(self):
         """Verificar si la reunión es próxima"""
-        return (self.scheduled_start > datetime.utcnow() and 
+        return (self.scheduled_start > datetime.now(timezone.utc) and 
                 self.status in [MeetingStatus.SCHEDULED, MeetingStatus.CONFIRMED])
     
     @hybrid_property
@@ -407,12 +407,12 @@ class Meeting(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     @hybrid_property
     def is_past(self):
         """Verificar si la reunión ya pasó"""
-        return self.scheduled_start < datetime.utcnow()
+        return self.scheduled_start < datetime.now(timezone.utc)
     
     @hybrid_property
     def is_overdue(self):
         """Verificar si la reunión está vencida (pasó sin completarse)"""
-        return (self.scheduled_end < datetime.utcnow() and 
+        return (self.scheduled_end < datetime.now(timezone.utc) and 
                 self.status == MeetingStatus.SCHEDULED)
     
     @hybrid_property
@@ -428,15 +428,15 @@ class Meeting(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     @hybrid_property
     def days_until_meeting(self):
         """Días hasta la reunión"""
-        if self.scheduled_start > datetime.utcnow():
+        if self.scheduled_start > datetime.now(timezone.utc):
             return (self.scheduled_start.date() - date.today()).days
         return 0
     
     @hybrid_property
     def hours_until_meeting(self):
         """Horas hasta la reunión"""
-        if self.scheduled_start > datetime.utcnow():
-            return (self.scheduled_start - datetime.utcnow()).total_seconds() / 3600
+        if self.scheduled_start > datetime.now(timezone.utc):
+            return (self.scheduled_start - datetime.now(timezone.utc)).total_seconds() / 3600
         return 0
     
     @hybrid_property
@@ -509,7 +509,7 @@ class Meeting(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
                 meeting_participants.c.user_id == user.id
             ).values(
                 attendance_status=status.value,
-                response_datetime=datetime.utcnow(),
+                response_datetime=datetime.now(timezone.utc),
                 notes=notes
             )
         )
@@ -520,19 +520,19 @@ class Meeting(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             raise ValidationError("Solo se pueden iniciar reuniones programadas o confirmadas")
         
         self.status = MeetingStatus.IN_PROGRESS
-        self.actual_start = datetime.utcnow()
+        self.actual_start = datetime.now(timezone.utc)
         
         # Log de inicio
         self._log_status_change('started')
     
-    def end_meeting(self, meeting_notes: str = None, key_decisions: List[str] = None,
-                   action_items: List[Dict[str, Any]] = None, meeting_rating: float = None):
+    def end_meeting(self, meeting_notes: str = None, key_decisions: list[str] = None,
+                   action_items: list[dict[str, Any]] = None, meeting_rating: float = None):
         """Finalizar la reunión"""
         if self.status != MeetingStatus.IN_PROGRESS:
             raise ValidationError("Solo se pueden finalizar reuniones en progreso")
         
         self.status = MeetingStatus.COMPLETED
-        self.actual_end = datetime.utcnow()
+        self.actual_end = datetime.now(timezone.utc)
         
         if self.actual_start:
             duration = (self.actual_end - self.actual_start).total_seconds() / 60
@@ -627,12 +627,12 @@ class Meeting(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             'due_date': due_date.isoformat() if due_date else None,
             'priority': priority,
             'status': 'pending',
-            'created_at': datetime.utcnow().isoformat()
+            'created_at': datetime.now(timezone.utc).isoformat()
         }
         
         self.action_items.append(action_item)
     
-    def _create_action_item_tasks(self, action_items: List[Dict[str, Any]]):
+    def _create_action_item_tasks(self, action_items: list[dict[str, Any]]):
         """Crear tareas para elementos de acción"""
         from .task import Task
         from .. import db
@@ -694,7 +694,7 @@ class Meeting(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         # Por ahora, solo log
         self._log_activity('calendar_invite_sent', f"Invitación enviada a {user.full_name}")
     
-    def _notify_participants(self, notification_type: str, data: Dict[str, Any] = None):
+    def _notify_participants(self, notification_type: str, data: dict[str, Any] = None):
         """Notificar a participantes"""
         # Implementar sistema de notificaciones
         self._log_activity(notification_type, f"Notificación enviada: {notification_type}")
@@ -703,7 +703,7 @@ class Meeting(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         """Registrar cambio de estado"""
         self._log_activity('status_change', f"Reunión {action}", {'notes': notes})
     
-    def _log_activity(self, activity_type: str, description: str, metadata: Dict[str, Any] = None):
+    def _log_activity(self, activity_type: str, description: str, metadata: dict[str, Any] = None):
         """Registrar actividad"""
         from .activity_log import ActivityLog
         from .. import db
@@ -718,7 +718,7 @@ class Meeting(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         db.session.add(activity)
     
-    def get_meeting_analytics(self) -> Dict[str, Any]:
+    def get_meeting_analytics(self) -> dict[str, Any]:
         """Obtener analytics de la reunión"""
         attendance_summary = self.get_attendance_summary()
         
@@ -764,7 +764,7 @@ class Meeting(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             }
         }
     
-    def get_dashboard_data(self) -> Dict[str, Any]:
+    def get_dashboard_data(self) -> dict[str, Any]:
         """Generar datos para dashboard"""
         return {
             'meeting_info': {
@@ -860,7 +860,7 @@ class Meeting(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         return self.effectiveness_score
     
-    def generate_meeting_summary(self) -> Dict[str, Any]:
+    def generate_meeting_summary(self) -> dict[str, Any]:
         """Generar resumen de la reunión"""
         if self.status != MeetingStatus.COMPLETED:
             return {'error': 'La reunión debe estar completada para generar resumen'}
@@ -917,7 +917,7 @@ class Meeting(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         completed = len([item for item in self.agenda if item.get('completed', False)])
         return (completed / len(self.agenda)) * 100
     
-    def create_recurring_meetings(self, end_date: date, max_occurrences: int = 52) -> List['Meeting']:
+    def create_recurring_meetings(self, end_date: date, max_occurrences: int = 52) -> list['Meeting']:
         """Crear reuniones recurrentes"""
         if self.recurrence_pattern == RecurrencePattern.NONE:
             return []
@@ -1037,9 +1037,9 @@ class Meeting(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     @classmethod
     def get_upcoming_meetings(cls, user_id: int = None, days_ahead: int = 7):
         """Obtener reuniones próximas"""
-        end_date = datetime.utcnow() + timedelta(days=days_ahead)
+        end_date = datetime.now(timezone.utc) + timedelta(days=days_ahead)
         query = cls.query.filter(
-            cls.scheduled_start.between(datetime.utcnow(), end_date),
+            cls.scheduled_start.between(datetime.now(timezone.utc), end_date),
             cls.status.in_([MeetingStatus.SCHEDULED, MeetingStatus.CONFIRMED]),
             cls.is_deleted == False
         )
@@ -1079,13 +1079,13 @@ class Meeting(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     def get_overdue_meetings(cls):
         """Obtener reuniones vencidas"""
         return cls.query.filter(
-            cls.scheduled_end < datetime.utcnow(),
+            cls.scheduled_end < datetime.now(timezone.utc),
             cls.status == MeetingStatus.SCHEDULED,
             cls.is_deleted == False
         ).all()
     
     @classmethod
-    def search_meetings(cls, query_text: str = None, filters: Dict[str, Any] = None):
+    def search_meetings(cls, query_text: str = None, filters: dict[str, Any] = None):
         """Buscar reuniones"""
         search = cls.query.filter(cls.is_deleted == False)
         
@@ -1130,7 +1130,7 @@ class Meeting(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         return search.order_by(cls.scheduled_start.desc()).all()
     
-    def to_dict(self, include_sensitive=False, include_participants=False) -> Dict[str, Any]:
+    def to_dict(self, include_sensitive=False, include_participants=False) -> dict[str, Any]:
         """Convertir a diccionario"""
         data = {
             'id': self.id,
@@ -1206,7 +1206,7 @@ class Meeting(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
 def get_meeting_statistics(organization_id: int = None, 
                           date_from: date = None, 
                           date_to: date = None,
-                          user_id: int = None) -> Dict[str, Any]:
+                          user_id: int = None) -> dict[str, Any]:
     """Obtener estadísticas de reuniones"""
     query = Meeting.query.filter(Meeting.is_deleted == False)
     
@@ -1299,7 +1299,7 @@ def get_meeting_statistics(organization_id: int = None,
     }
 
 
-def get_user_meeting_metrics(user_id: int, date_from: date = None, date_to: date = None) -> Dict[str, Any]:
+def get_user_meeting_metrics(user_id: int, date_from: date = None, date_to: date = None) -> dict[str, Any]:
     """Obtener métricas de reuniones para un usuario"""
     query = Meeting.query.filter(
         (Meeting.organizer_id == user_id) | (Meeting.participants.any(id=user_id)),

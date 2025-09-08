@@ -8,7 +8,7 @@ import json
 import hashlib
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Union, Callable
+from typing import Any, Optional, Union, Callable
 from enum import Enum
 from flask import current_app, url_for
 from sqlalchemy import Column, String, Integer, Boolean, DateTime, Text, event, func
@@ -53,7 +53,7 @@ class SoftDeleteMixin:
     def soft_delete(self):
         """Marca el objeto como eliminado."""
         self.is_deleted = True
-        self.deleted_at = datetime.utcnow()
+        self.deleted_at = datetime.now(timezone.utc)
     
     def restore(self):
         """Restaura el objeto eliminado."""
@@ -123,7 +123,7 @@ class SearchableMixin:
     
     @classmethod
     def search(cls, expression: str, page: int = 1, per_page: int = 20, 
-               fields: List[str] = None, exact_match: bool = False):
+               fields: list[str] = None, exact_match: bool = False):
         """
         Realizar búsqueda de texto completo.
         
@@ -157,7 +157,7 @@ class SearchableMixin:
         return search_query.paginate(page=page, per_page=per_page, error_out=False)
     
     @classmethod
-    def _build_search_query(cls, expression: str, fields: List[str], exact_match: bool):
+    def _build_search_query(cls, expression: str, fields: list[str], exact_match: bool):
         """Construir query de búsqueda según el tipo de base de datos."""
         
         # Limpiar expresión de búsqueda
@@ -172,7 +172,7 @@ class SearchableMixin:
             return cls._sqlite_search(clean_expression, fields, exact_match)
     
     @classmethod
-    def _postgresql_search(cls, expression: str, fields: List[str], exact_match: bool):
+    def _postgresql_search(cls, expression: str, fields: list[str], exact_match: bool):
         """Búsqueda optimizada para PostgreSQL usando texto completo."""
         from sqlalchemy import text
         
@@ -198,7 +198,7 @@ class SearchableMixin:
         return query
     
     @classmethod
-    def _sqlite_search(cls, expression: str, fields: List[str], exact_match: bool):
+    def _sqlite_search(cls, expression: str, fields: list[str], exact_match: bool):
         """Búsqueda para SQLite usando LIKE."""
         query = cls.query
         
@@ -231,7 +231,7 @@ class SearchableMixin:
         return query
     
     @classmethod
-    def search_count(cls, expression: str, fields: List[str] = None) -> int:
+    def search_count(cls, expression: str, fields: list[str] = None) -> int:
         """Contar resultados de búsqueda sin paginación."""
         if not expression:
             return cls.query.count()
@@ -356,7 +356,7 @@ class ExportableMixin:
     
     @classmethod
     def export_to_csv(cls, query=None, filename: str = None, 
-                      fields: List[str] = None) -> str:
+                      fields: list[str] = None) -> str:
         """Exportar a CSV."""
         import csv
         from io import StringIO
@@ -410,7 +410,7 @@ class ExportableMixin:
     
     @classmethod  
     def export_to_excel(cls, query=None, filename: str = None, 
-                        fields: List[str] = None, sheet_name: str = None):
+                        fields: list[str] = None, sheet_name: str = None):
         """Exportar a Excel."""
         try:
             import pandas as pd
@@ -444,7 +444,7 @@ class ExportableMixin:
         return df
     
     def export_instance_to_pdf(self, template_path: str, filename: str = None, 
-                               context: Dict[str, Any] = None):
+                               context: dict[str, Any] = None):
         """Exportar instancia individual a PDF."""
         try:
             from weasyprint import HTML, CSS
@@ -456,7 +456,7 @@ class ExportableMixin:
         pdf_context = {
             'instance': self,
             'data': self.to_dict(include_relationships=True),
-            'generated_at': datetime.utcnow()
+            'generated_at': datetime.now(timezone.utc)
         }
         
         if context:
@@ -494,8 +494,8 @@ class NotifiableMixin:
         'status_changed': {'template': 'status_changed', 'enabled': True}
     }
     
-    def send_notification(self, event_type: str, recipients: List[str] = None, 
-                         context: Dict[str, Any] = None, method: str = 'email'):
+    def send_notification(self, event_type: str, recipients: list[str] = None, 
+                         context: dict[str, Any] = None, method: str = 'email'):
         """
         Enviar notificación por evento.
         
@@ -517,7 +517,7 @@ class NotifiableMixin:
                 'model_id': str(self.id),
                 'model_data': self.to_dict(),
                 'event_type': event_type,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
             if context:
@@ -548,7 +548,7 @@ class NotifiableMixin:
         event_config = self._notification_events.get(event_type, {})
         return event_config.get('enabled', False)
     
-    def _get_default_recipients(self, event_type: str) -> List[str]:
+    def _get_default_recipients(self, event_type: str) -> list[str]:
         """Obtener destinatarios por defecto según el evento."""
         # Implementar lógica específica en cada modelo
         return []
@@ -579,7 +579,7 @@ class ValidatableMixin:
     _validation_rules = {}
     _validation_messages = {}
     
-    def validate_all(self) -> Dict[str, List[str]]:
+    def validate_all(self) -> dict[str, list[str]]:
         """
         Ejecutar todas las validaciones del modelo.
         
@@ -601,7 +601,7 @@ class ValidatableMixin:
         
         return errors
     
-    def _validate_field(self, column) -> List[str]:
+    def _validate_field(self, column) -> list[str]:
         """Validar campo individual según su tipo y restricciones."""
         errors = []
         field_name = column.name
@@ -629,7 +629,7 @@ class ValidatableMixin:
         
         return errors
     
-    def _validate_custom_rules(self) -> Dict[str, List[str]]:
+    def _validate_custom_rules(self) -> dict[str, list[str]]:
         """Ejecutar reglas de validación personalizadas."""
         errors = {}
         
@@ -663,7 +663,7 @@ class ValidatableMixin:
         
         return errors
     
-    def _execute_validation_rule(self, rule_type: str, value: Any, params: Dict[str, Any]) -> bool:
+    def _execute_validation_rule(self, rule_type: str, value: Any, params: dict[str, Any]) -> bool:
         """Ejecutar regla de validación específica."""
         if rule_type == 'min_length':
             return value and len(str(value)) >= params.get('length', 0)
@@ -684,7 +684,7 @@ class ValidatableMixin:
         return True
     
     @classmethod
-    def add_validation_rule(cls, field: str, rule: Union[Callable, Dict[str, Any]], 
+    def add_validation_rule(cls, field: str, rule: Union[Callable, dict[str, Any]], 
                            message: str = None):
         """Añadir regla de validación personalizada."""
         if field not in cls._validation_rules:
@@ -701,7 +701,7 @@ class ValidatableMixin:
         errors = self.validate_all()
         return len(errors) == 0
     
-    def get_validation_errors(self) -> List[str]:
+    def get_validation_errors(self) -> list[str]:
         """Obtener lista plana de errores de validación."""
         errors = self.validate_all()
         flat_errors = []
@@ -778,7 +778,7 @@ class StateMachineMixin:
             # Cambiar estado
             self.previous_state = old_state
             self.state = new_state
-            self.state_changed_at = datetime.utcnow()
+            self.state_changed_at = datetime.now(timezone.utc)
             
             # Ejecutar callback de entrada al nuevo estado
             self._execute_state_callback(new_state, 'on_enter', context)
@@ -806,7 +806,7 @@ class StateMachineMixin:
             self.state_changed_at = None
             raise e
     
-    def _execute_state_callback(self, state: str, callback_type: str, context: Dict[str, Any]):
+    def _execute_state_callback(self, state: str, callback_type: str, context: dict[str, Any]):
         """Ejecutar callback de estado."""
         state_config = self._states.get(state, {})
         callback = state_config.get(callback_type)
@@ -818,7 +818,7 @@ class StateMachineMixin:
                 mixins_logger.error(f"Error in state callback {callback_type} for {state}: {str(e)}")
                 raise
     
-    def get_available_transitions(self) -> List[str]:
+    def get_available_transitions(self) -> list[str]:
         """Obtener lista de transiciones disponibles desde el estado actual."""
         if not self.state:
             return [self._initial_state] if self._initial_state else []
@@ -826,7 +826,7 @@ class StateMachineMixin:
         current_state_config = self._states.get(self.state, {})
         return current_state_config.get('transitions', [])
     
-    def get_state_history(self, limit: int = 10) -> List[Dict[str, Any]]:
+    def get_state_history(self, limit: int = 10) -> list[dict[str, Any]]:
         """Obtener historial de cambios de estado (requiere ActivityLog)."""
         try:
             from .activity_log import ActivityLog
@@ -850,7 +850,7 @@ class StateMachineMixin:
         return state_config.get('display_name', self.state)
     
     @classmethod
-    def configure_states(cls, states_config: Dict[str, Dict[str, Any]], initial_state: str):
+    def configure_states(cls, states_config: dict[str, dict[str, Any]], initial_state: str):
         """Configurar estados de la máquina."""
         cls._states = states_config
         cls._initial_state = initial_state

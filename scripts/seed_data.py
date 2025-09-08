@@ -45,7 +45,7 @@ import random
 import argparse
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Optional, Any
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 import secrets
@@ -93,8 +93,8 @@ class SeedConfig:
     size: str = 'medium'                    # minimal, small, medium, large, enterprise
     environment: str = 'development'
     clean: bool = False
-    only: List[str] = field(default_factory=list)
-    exclude: List[str] = field(default_factory=list)
+    only: list[str] = field(default_factory=list)
+    exclude: list[str] = field(default_factory=list)
     locale: str = 'es_CO'
     seed: Optional[int] = None
     validate: bool = True
@@ -504,7 +504,7 @@ class DataGenerator:
             self.logger.error(f"Error en limpieza: {e}")
             raise
     
-    def _get_sections_to_generate(self) -> List[Tuple[str, callable]]:
+    def _get_sections_to_generate(self) -> list[tuple[str, callable]]:
         """
         Obtiene la lista de secciones a generar.
         

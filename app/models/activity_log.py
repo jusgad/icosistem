@@ -16,7 +16,7 @@ Funcionalidades:
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, Any, Optional, List
+from typing import Any, Optional
 import json
 
 from sqlalchemy import Index, text
@@ -280,7 +280,7 @@ class ActivityLog(BaseModel, TimestampMixin, SoftDeleteMixin):
         description: str,
         user_id: Optional[int] = None,
         severity: ActivitySeverity = ActivitySeverity.LOW,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[dict[str, Any]] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
         target_type: Optional[str] = None,
@@ -331,7 +331,7 @@ class ActivityLog(BaseModel, TimestampMixin, SoftDeleteMixin):
         cls,
         user_id: int,
         limit: int = 50,
-        activity_types: Optional[List[ActivityType]] = None,
+        activity_types: Optional[list[ActivityType]] = None,
         severity_filter: Optional[ActivitySeverity] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None
@@ -444,7 +444,7 @@ class ActivityLog(BaseModel, TimestampMixin, SoftDeleteMixin):
         organization_id: Optional[int] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None
-    ) -> Dict[str, int]:
+    ) -> dict[str, int]:
         """
         Genera un resumen de actividades por tipo
         

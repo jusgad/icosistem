@@ -9,8 +9,8 @@ Author: Sistema de Emprendimiento
 Version: 2.0.0
 """
 
-from datetime import datetime, timedelta, date
-from typing import Dict, List, Optional, Any, Tuple
+from datetime import datetime, timedelta, date, timezone
+from typing import Optional, Any
 from collections import defaultdict
 import json
 
@@ -77,7 +77,7 @@ def index():
         view_mode = request.args.get('view', 'overview')  # overview, detailed, analytics
         
         # Calcular fechas del período
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=int(period))
         
         # Datos principales del dashboard
@@ -158,7 +158,7 @@ def detailed_metrics():
         comparison = request.args.get('comparison', 'none')  # none, peers, historical
         
         # Calcular período
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=int(period))
         
         # Generar métricas usando el servicio de analytics
@@ -385,7 +385,7 @@ def api_real_time_metrics():
                 'success': True,
                 'data': cached_data,
                 'cached': True,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
         
         # Calcular métricas en tiempo real
@@ -407,7 +407,7 @@ def api_real_time_metrics():
             'success': True,
             'data': real_time_data,
             'cached': False,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:
@@ -447,7 +447,7 @@ def api_chart_data(chart_type):
             return jsonify({'error': 'Tipo de gráfico no válido'}), 400
         
         # Calcular período
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=int(period))
         
         # Generar datos según el tipo de gráfico
@@ -458,7 +458,7 @@ def api_chart_data(chart_type):
             'chart_type': chart_type,
             'data': chart_data,
             'period': period,
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:
@@ -603,7 +603,7 @@ def api_notifications_summary():
         return jsonify({
             'success': True,
             'data': notifications_summary,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:
@@ -635,7 +635,7 @@ def export_dashboard_report():
         format_type = request.args.get('format', 'pdf')  # pdf, excel
         
         # Calcular fechas
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=int(period))
         
         # Generar datos del reporte
@@ -680,7 +680,7 @@ def export_dashboard_report():
 
 # ==================== FUNCIONES AUXILIARES ====================
 
-def _get_dashboard_overview(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _get_dashboard_overview(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """
     Obtiene datos generales del dashboard del aliado.
     
@@ -757,7 +757,7 @@ def _get_dashboard_overview(ally: Ally, start_date: datetime, end_date: datetime
     }
 
 
-def _calculate_ally_performance_metrics(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _calculate_ally_performance_metrics(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """
     Calcula métricas de rendimiento específicas del aliado.
     
@@ -822,7 +822,7 @@ def _calculate_ally_performance_metrics(ally: Ally, start_date: datetime, end_da
     }
 
 
-def _get_entrepreneurs_summary(ally: Ally) -> Dict[str, Any]:
+def _get_entrepreneurs_summary(ally: Ally) -> dict[str, Any]:
     """
     Obtiene resumen de emprendedores asignados al aliado.
     
@@ -877,7 +877,7 @@ def _get_entrepreneurs_summary(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _get_upcoming_activities(ally: Ally) -> List[Dict[str, Any]]:
+def _get_upcoming_activities(ally: Ally) -> list[dict[str, Any]]:
     """
     Obtiene próximas actividades del aliado.
     
@@ -892,7 +892,7 @@ def _get_upcoming_activities(ally: Ally) -> List[Dict[str, Any]]:
     # Próximas reuniones
     upcoming_meetings = Meeting.query.filter(
         Meeting.ally_id == ally.id,
-        Meeting.scheduled_at > datetime.utcnow(),
+        Meeting.scheduled_at > datetime.now(timezone.utc),
         Meeting.status.in_(['scheduled', 'confirmed'])
     ).order_by(Meeting.scheduled_at.asc()).limit(10).all()
     
@@ -903,14 +903,14 @@ def _get_upcoming_activities(ally: Ally) -> List[Dict[str, Any]]:
             'datetime': meeting.scheduled_at,
             'duration': meeting.duration_minutes,
             'participant': meeting.entrepreneur.user.full_name if meeting.entrepreneur else 'N/A',
-            'priority': 'high' if meeting.scheduled_at <= datetime.utcnow() + timedelta(hours=24) else 'normal',
+            'priority': 'high' if meeting.scheduled_at <= datetime.now(timezone.utc) + timedelta(hours=24) else 'normal',
             'url': url_for('ally.meetings.detail', meeting_id=meeting.id)
         })
     
     # Próximas sesiones de mentoría
     upcoming_sessions = MentorshipSession.query.filter(
         MentorshipSession.ally_id == ally.id,
-        MentorshipSession.session_date > datetime.utcnow().date(),
+        MentorshipSession.session_date > datetime.now(timezone.utc).date(),
         MentorshipSession.status == 'scheduled'
     ).order_by(MentorshipSession.session_date.asc()).limit(10).all()
     
@@ -933,7 +933,7 @@ def _get_upcoming_activities(ally: Ally) -> List[Dict[str, Any]]:
     return activities[:15]
 
 
-def _get_notifications_summary(ally: Ally) -> Dict[str, Any]:
+def _get_notifications_summary(ally: Ally) -> dict[str, Any]:
     """
     Obtiene resumen de notificaciones del aliado.
     
@@ -982,7 +982,7 @@ def _get_notifications_summary(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _get_monthly_goals_progress(ally: Ally) -> Dict[str, Any]:
+def _get_monthly_goals_progress(ally: Ally) -> dict[str, Any]:
     """
     Obtiene progreso de objetivos mensuales del aliado.
     
@@ -995,7 +995,7 @@ def _get_monthly_goals_progress(ally: Ally) -> Dict[str, Any]:
     # Esto requeriría un modelo de Goals específico para aliados
     # Por ahora retornamos datos simulados basados en métricas reales
     
-    current_month = datetime.utcnow().replace(day=1).date()
+    current_month = datetime.now(timezone.utc).replace(day=1).date()
     next_month = (current_month + timedelta(days=32)).replace(day=1)
     
     # Sesiones de mentoría este mes
@@ -1033,9 +1033,9 @@ def _get_monthly_goals_progress(ally: Ally) -> Dict[str, Any]:
         {
             'name': 'Tasa de satisfacción',
             'target': 4.5,
-            'current': _get_average_satisfaction_score(ally, current_month, datetime.utcnow()),
+            'current': _get_average_satisfaction_score(ally, current_month, datetime.now(timezone.utc)),
             'unit': 'puntos',
-            'progress_percentage': min((_get_average_satisfaction_score(ally, current_month, datetime.utcnow()) / 4.5) * 100, 100)
+            'progress_percentage': min((_get_average_satisfaction_score(ally, current_month, datetime.now(timezone.utc)) / 4.5) * 100, 100)
         }
     ]
     
@@ -1051,7 +1051,7 @@ def _get_monthly_goals_progress(ally: Ally) -> Dict[str, Any]:
     }
 
 
-def _get_user_widgets_configuration(ally: Ally) -> Dict[str, Any]:
+def _get_user_widgets_configuration(ally: Ally) -> dict[str, Any]:
     """
     Obtiene configuración de widgets personalizables del usuario.
     
@@ -1095,7 +1095,7 @@ def _get_user_widgets_configuration(ally: Ally) -> Dict[str, Any]:
     return default_widgets
 
 
-def _prepare_charts_data(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _prepare_charts_data(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """
     Prepara datos para gráficos del dashboard.
     
@@ -1124,7 +1124,7 @@ def _prepare_charts_data(ally: Ally, start_date: datetime, end_date: datetime) -
     return charts_data
 
 
-def _get_recent_activity_feed(ally: Ally, limit: int = 10) -> List[Dict[str, Any]]:
+def _get_recent_activity_feed(ally: Ally, limit: int = 10) -> list[dict[str, Any]]:
     """
     Obtiene feed de actividad reciente del aliado.
     
@@ -1155,7 +1155,7 @@ def _get_recent_activity_feed(ally: Ally, limit: int = 10) -> List[Dict[str, Any
 
 
 # Funciones auxiliares adicionales (implementación básica)
-def _get_comparative_metrics(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _get_comparative_metrics(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """Obtiene métricas comparativas con otros aliados."""
     # Implementación pendiente
     return {'available': False, 'message': 'Datos comparativos en desarrollo'}
@@ -1247,7 +1247,7 @@ def _calculate_productivity_score(ally: Ally, start_date: datetime, end_date: da
     return 82.1
 
 
-def _calculate_entrepreneur_overall_progress(entrepreneur: Entrepreneur) -> Dict[str, Any]:
+def _calculate_entrepreneur_overall_progress(entrepreneur: Entrepreneur) -> dict[str, Any]:
     """Calcula progreso general de un emprendedor."""
     # Implementación simplificada
     return {
@@ -1258,12 +1258,12 @@ def _calculate_entrepreneur_overall_progress(entrepreneur: Entrepreneur) -> Dict
     }
 
 
-def _get_next_activity_with_entrepreneur(ally: Ally, entrepreneur: Entrepreneur) -> Optional[Dict[str, Any]]:
+def _get_next_activity_with_entrepreneur(ally: Ally, entrepreneur: Entrepreneur) -> Optional[dict[str, Any]]:
     """Obtiene próxima actividad con un emprendedor específico."""
     next_meeting = Meeting.query.filter(
         Meeting.ally_id == ally.id,
         Meeting.entrepreneur_id == entrepreneur.id,
-        Meeting.scheduled_at > datetime.utcnow()
+        Meeting.scheduled_at > datetime.now(timezone.utc)
     ).order_by(Meeting.scheduled_at.asc()).first()
     
     if next_meeting:
@@ -1276,7 +1276,7 @@ def _get_next_activity_with_entrepreneur(ally: Ally, entrepreneur: Entrepreneur)
     return None
 
 
-def _get_relationship_status(ally: Ally, entrepreneur: Entrepreneur) -> Dict[str, Any]:
+def _get_relationship_status(ally: Ally, entrepreneur: Entrepreneur) -> dict[str, Any]:
     """Obtiene estado de la relación con el emprendedor."""
     # Implementación simplificada
     return {
@@ -1290,10 +1290,10 @@ def _get_relationship_status(ally: Ally, entrepreneur: Entrepreneur) -> Dict[str
 def _get_last_interaction_date(ally: Ally, entrepreneur: Entrepreneur) -> datetime:
     """Obtiene fecha de última interacción."""
     # Implementación simplificada
-    return datetime.utcnow() - timedelta(days=2)
+    return datetime.now(timezone.utc) - timedelta(days=2)
 
 
-def _get_urgent_items_for_entrepreneur(entrepreneur: Entrepreneur) -> List[str]:
+def _get_urgent_items_for_entrepreneur(entrepreneur: Entrepreneur) -> list[str]:
     """Obtiene items urgentes para un emprendedor."""
     # Implementación simplificada
     return []
@@ -1326,70 +1326,70 @@ def _get_activity_color(action: str) -> str:
 # Funciones para manejo de widgets, charts, acciones rápidas, etc.
 # Se implementarían según los requirements específicos del proyecto...
 
-def _generate_chart_data(ally: Ally, chart_type: str, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _generate_chart_data(ally: Ally, chart_type: str, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """Genera datos para un tipo de gráfico específico."""
     # Implementación según tipo de gráfico
     return {'labels': [], 'data': [], 'chart_type': chart_type}
 
 
-def _execute_quick_action(ally: Ally, action_type: str, action_data: Dict[str, Any]) -> Dict[str, Any]:
+def _execute_quick_action(ally: Ally, action_type: str, action_data: dict[str, Any]) -> dict[str, Any]:
     """Ejecuta una acción rápida específica."""
     # Implementación según tipo de acción
     return {'success': True, 'message': 'Acción ejecutada exitosamente'}
 
 
-def _log_quick_action(ally: Ally, action_type: str, action_data: Dict[str, Any], result: Dict[str, Any]) -> None:
+def _log_quick_action(ally: Ally, action_type: str, action_data: dict[str, Any], result: dict[str, Any]) -> None:
     """Registra una acción rápida en el log."""
     # Implementación del logging
     pass
 
 
-def _get_widget_configuration(ally: Ally) -> Dict[str, Any]:
+def _get_widget_configuration(ally: Ally) -> dict[str, Any]:
     """Obtiene configuración actual de widgets."""
     # Implementación pendiente
     return {}
 
 
-def _validate_widget_config(config: Dict[str, Any]) -> bool:
+def _validate_widget_config(config: dict[str, Any]) -> bool:
     """Valida configuración de widgets."""
     # Implementación pendiente
     return True
 
 
-def _save_widget_configuration(ally: Ally, config: Dict[str, Any]) -> Dict[str, Any]:
+def _save_widget_configuration(ally: Ally, config: dict[str, Any]) -> dict[str, Any]:
     """Guarda configuración de widgets."""
     # Implementación pendiente
     return {'success': True}
 
 
-def _get_notifications_api_summary(ally: Ally) -> Dict[str, Any]:
+def _get_notifications_api_summary(ally: Ally) -> dict[str, Any]:
     """Obtiene resumen de notificaciones para API."""
     # Implementación pendiente
     return {}
 
 
-def _generate_dashboard_report_data(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _generate_dashboard_report_data(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """Genera datos para reporte del dashboard."""
     # Implementación pendiente
     return {}
 
 
 # Funciones adicionales para manejo de gráficos específicos
-def _generate_sessions_timeline(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _generate_sessions_timeline(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """Genera timeline de sesiones."""
     return {'type': 'line', 'data': []}
 
 
-def _generate_time_distribution_chart(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _generate_time_distribution_chart(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """Genera gráfico de distribución de tiempo."""
     return {'type': 'pie', 'data': []}
 
 
-def _generate_entrepreneurs_progress_chart(ally: Ally) -> Dict[str, Any]:
+def _generate_entrepreneurs_progress_chart(ally: Ally) -> dict[str, Any]:
     """Genera gráfico de progreso de emprendedores."""
     return {'type': 'bar', 'data': []}
 
 
-def _generate_satisfaction_trend_chart(ally: Ally, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _generate_satisfaction_trend_chart(ally: Ally, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """Genera gráfico de tendencia de satisfacción."""
     return {'type': 'line', 'data': []}

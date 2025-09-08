@@ -10,7 +10,7 @@ Date: 2025
 
 import logging
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Any, Optional
 from sqlalchemy import Column, String, Boolean, DateTime, Integer, Text, ForeignKey, Float
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -144,7 +144,7 @@ class Evaluation(BaseModel, AuditMixin, db.Model):
         """Retorna el nombre del evaluado."""
         return self.evaluated.full_name if self.evaluated else 'Usuario Desconocido'
     
-    def get_rating_summary(self) -> Dict[str, Any]:
+    def get_rating_summary(self) -> dict[str, Any]:
         """Retorna un resumen de las calificaciones."""
         return {
             'overall': self.overall_rating,
@@ -155,7 +155,7 @@ class Evaluation(BaseModel, AuditMixin, db.Model):
             'average': self.average_rating
         }
     
-    def to_dict(self, include_sensitive=False) -> Dict[str, Any]:
+    def to_dict(self, include_sensitive=False) -> dict[str, Any]:
         """Convierte la evaluación a diccionario para serialización."""
         data = {
             'id': str(self.id),

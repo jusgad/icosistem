@@ -5,8 +5,8 @@ Este módulo define el modelo para proyectos/emprendimientos desarrollados por e
 incluyendo seguimiento completo desde la idea hasta la implementación y escalamiento.
 """
 
-from datetime import datetime, date, timedelta
-from typing import List, Optional, Dict, Any, Union
+from datetime import datetime, date, timedelta, timezone
+from typing import Optional, Any, Union
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Enum as SQLEnum, Float, Date, Table
 from app.extensions import db
 from sqlalchemy.orm import relationship, validates, backref
@@ -584,7 +584,7 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         # Actualizar progreso basado en estado
         self._update_progress_by_status()
     
-    def _get_valid_status_transitions(self) -> Dict[ProjectStatus, List[ProjectStatus]]:
+    def _get_valid_status_transitions(self) -> dict[ProjectStatus, list[ProjectStatus]]:
         """Obtener transiciones de estado válidas"""
         return {
             ProjectStatus.IDEA: [ProjectStatus.CONCEPT, ProjectStatus.CANCELLED],
@@ -708,7 +708,7 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             existing.interest_level = interest_level
             existing.investment_amount = investment_amount
             existing.notes = notes
-            existing.contacted_at = datetime.utcnow()
+            existing.contacted_at = datetime.now(timezone.utc)
             return existing
         
         from app.extensions import db
@@ -759,7 +759,7 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         # Recalcular progreso
         self._update_progress_by_status()
     
-    def update_metrics(self, metrics: Dict[str, Any]):
+    def update_metrics(self, metrics: dict[str, Any]):
         """Actualizar métricas del proyecto"""
         allowed_metrics = [
             'current_revenue', 'monthly_revenue', 'annual_revenue',
@@ -795,7 +795,7 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
                 self.runway_months = 0
     
     def add_funding_round(self, amount: int, funding_type: str, 
-                         investors: List[str] = None, notes: str = None):
+                         investors: list[str] = None, notes: str = None):
         """Agregar ronda de financiamiento"""
         from app.models.funding_round import FundingRound
         from app.extensions import db
@@ -806,7 +806,7 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             funding_type=funding_type,
             investors=investors or [],
             notes=notes,
-            closed_at=datetime.utcnow()
+            closed_at=datetime.now(timezone.utc)
         )
         
         db.session.add(funding_round)
@@ -835,7 +835,7 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             self.funding_stage = FundingStage.PRE_SEED
     
     def create_update(self, title: str, content: str, is_public: bool = False,
-                     metrics_update: Dict[str, Any] = None):
+                     metrics_update: dict[str, Any] = None):
         """Crear actualización del proyecto"""
         from app.models.project_update import ProjectUpdate
         from app.extensions import db
@@ -852,7 +852,7 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         db.session.add(update)
         return update
     
-    def _get_current_metrics(self) -> Dict[str, Any]:
+    def _get_current_metrics(self) -> dict[str, Any]:
         """Obtener snapshot de métricas actuales"""
         return {
             'revenue': self.current_revenue / 100 if self.current_revenue else 0,
@@ -865,7 +865,7 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             'progress': self.progress_percentage
         }
     
-    def get_investment_summary(self) -> Dict[str, Any]:
+    def get_investment_summary(self) -> dict[str, Any]:
         """Obtener resumen de inversión"""
         return {
             'seeking_funding': self.seeking_funding,
@@ -890,7 +890,7 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             }
         }
     
-    def get_dashboard_data(self) -> Dict[str, Any]:
+    def get_dashboard_data(self) -> dict[str, Any]:
         """Generar datos para dashboard del proyecto"""
         recent_milestones = (self.milestones
                            .order_by(ProjectMilestone.created_at.desc())
@@ -965,7 +965,7 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             ]
         }
     
-    def get_public_profile(self) -> Dict[str, Any]:
+    def get_public_profile(self) -> dict[str, Any]:
         """Obtener perfil público del proyecto"""
         if not self.is_public:
             return None
@@ -1009,7 +1009,7 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             'sdg_alignment': self.sdg_alignment
         }
     
-    def calculate_health_score(self) -> Dict[str, Any]:
+    def calculate_health_score(self) -> dict[str, Any]:
         """Calcular puntuación de salud del proyecto"""
         scores = {}
         total_score = 0
@@ -1089,7 +1089,7 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             'recommendations': self._get_health_recommendations(scores)
         }
     
-    def _get_health_recommendations(self, scores: Dict[str, float]) -> List[str]:
+    def _get_health_recommendations(self, scores: dict[str, float]) -> list[str]:
         """Obtener recomendaciones basadas en puntuaciones"""
         recommendations = []
         
@@ -1157,7 +1157,7 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         ).all()
     
     @classmethod
-    def search_projects(cls, query_text: str = None, filters: Dict[str, Any] = None):
+    def search_projects(cls, query_text: str = None, filters: dict[str, Any] = None):
         """Buscar proyectos"""
         search = cls.query.filter(cls.is_deleted == False)
         
@@ -1206,7 +1206,7 @@ class Project(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         return search.order_by(cls.created_at.desc()).all()
     
-    def to_dict(self, include_sensitive=False, include_relations=False) -> Dict[str, Any]:
+    def to_dict(self, include_sensitive=False, include_relations=False) -> dict[str, Any]:
         """Convertir a diccionario"""
         data = {
             'id': self.id,
@@ -1346,19 +1346,19 @@ class ProjectMilestone(BaseModel, TimestampMixin, AuditMixin):
             return (self.target_date - date.today()).days
         return None
     
-    def complete(self, completion_notes: str = None, actual_metrics: Dict[str, Any] = None):
+    def complete(self, completion_notes: str = None, actual_metrics: dict[str, Any] = None):
         """Completar el hito"""
         if self.status == 'completed':
             raise ValidationError("El hito ya está completado")
         
         self.status = 'completed'
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(timezone.utc)
         self.completion_notes = completion_notes
         
         if actual_metrics:
             self.actual_metrics = actual_metrics
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convertir a diccionario"""
         return {
             'id': self.id,

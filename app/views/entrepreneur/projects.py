@@ -8,7 +8,7 @@ colaboradores, métricas y análisis de progreso.
 
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, current_app, g, send_file
 from flask_login import login_required, current_user
 from sqlalchemy import and_, or_, desc, asc, func, case
@@ -468,18 +468,18 @@ def change_status(project_id):
         
         # Actualizar estado
         project.status = new_status_enum
-        project.updated_at = datetime.utcnow()
+        project.updated_at = datetime.now(timezone.utc)
         
         # Lógica específica por estado
         if new_status_enum == ProjectStatus.COMPLETED:
-            project.completed_at = datetime.utcnow()
+            project.completed_at = datetime.now(timezone.utc)
             project.progress_percentage = 100.0
         elif new_status_enum == ProjectStatus.ACTIVE and old_status == ProjectStatus.PAUSED:
-            project.resumed_at = datetime.utcnow()
+            project.resumed_at = datetime.now(timezone.utc)
         elif new_status_enum == ProjectStatus.PAUSED:
-            project.paused_at = datetime.utcnow()
+            project.paused_at = datetime.now(timezone.utc)
         elif new_status_enum == ProjectStatus.CANCELLED:
-            project.cancelled_at = datetime.utcnow()
+            project.cancelled_at = datetime.now(timezone.utc)
         
         project.save()
         

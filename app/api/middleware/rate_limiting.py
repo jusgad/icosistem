@@ -20,8 +20,8 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from werkzeug.exceptions import TooManyRequests
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Union, Callable, Any
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Union, Callable, Any
 from dataclasses import dataclass, field
 from enum import Enum
 import time
@@ -81,8 +81,8 @@ class RateLimitRule:
     grace_period: int = 0
     priority: int = 100
     enabled: bool = True
-    conditions: Dict[str, Any] = field(default_factory=dict)
-    exemptions: List[str] = field(default_factory=list)
+    conditions: dict[str, Any] = field(default_factory=dict)
+    exemptions: list[str] = field(default_factory=list)
 
 @dataclass
 class RateLimitResult:
@@ -172,7 +172,7 @@ class MemoryRateLimitBackend(RateLimitBackend):
     """Backend en memoria para rate limiting."""
     
     def __init__(self):
-        self.storage: Dict[str, deque] = defaultdict(deque)
+        self.storage: dict[str, deque] = defaultdict(deque)
         self.lock = threading.RLock()
         
     def _cleanup_window(self, key: str, window_size: int):
@@ -447,7 +447,7 @@ class RateLimitManager:
     
     def __init__(self, backend: RateLimitBackend = None):
         self.backend = backend or self._create_default_backend()
-        self.rules: Dict[str, RateLimitRule] = {}
+        self.rules: dict[str, RateLimitRule] = {}
         self.algorithms = {
             RateLimitAlgorithm.TOKEN_BUCKET: TokenBucketLimiter(self.backend),
             RateLimitAlgorithm.SLIDING_WINDOW: SlidingWindowLimiter(self.backend),
@@ -497,7 +497,7 @@ class RateLimitManager:
         """Remueve de blacklist."""
         self.blacklist.discard(identifier)
     
-    def _generate_key(self, rule: RateLimitRule, context: Dict[str, Any]) -> str:
+    def _generate_key(self, rule: RateLimitRule, context: dict[str, Any]) -> str:
         """Genera key única para rate limiting."""
         key_parts = [rule.scope.value]
         
@@ -519,7 +519,7 @@ class RateLimitManager:
         
         return ':'.join(key_parts)
     
-    def _matches_conditions(self, rule: RateLimitRule, context: Dict[str, Any]) -> bool:
+    def _matches_conditions(self, rule: RateLimitRule, context: dict[str, Any]) -> bool:
         """Verifica si el contexto cumple las condiciones de la regla."""
         if not rule.conditions:
             return True
@@ -535,7 +535,7 @@ class RateLimitManager:
                 
         return True
     
-    def _is_exempt(self, rule: RateLimitRule, context: Dict[str, Any]) -> bool:
+    def _is_exempt(self, rule: RateLimitRule, context: dict[str, Any]) -> bool:
         """Verifica si el contexto está exento de la regla."""
         user_id = context.get('user_id')
         ip = context.get('ip')
@@ -551,7 +551,7 @@ class RateLimitManager:
                 
         return False
     
-    def check_rate_limit(self, context: Dict[str, Any]) -> List[RateLimitResult]:
+    def check_rate_limit(self, context: dict[str, Any]) -> list[RateLimitResult]:
         """Verifica todas las reglas aplicables."""
         results = []
         
@@ -563,7 +563,7 @@ class RateLimitManager:
             return [RateLimitResult(
                 allowed=False,
                 remaining=0,
-                reset_time=datetime.utcnow() + timedelta(hours=24),
+                reset_time=datetime.now(timezone.utc) + timedelta(hours=24),
                 retry_after=86400,
                 rule_name="blacklist"
             )]
@@ -599,7 +599,7 @@ class RateLimitManager:
 class RateLimitMiddleware:
     """Middleware principal de rate limiting."""
     
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: dict[str, Any] = None):
         self.config = config or {}
         self.manager = RateLimitManager()
         self.analytics_service = None
@@ -669,7 +669,7 @@ class RateLimitMiddleware:
         for item in blacklist:
             self.manager.add_to_blacklist(item)
     
-    def _get_request_context(self) -> Dict[str, Any]:
+    def _get_request_context(self) -> dict[str, Any]:
         """Extrae contexto del request actual."""
         context = {
             'ip': get_client_ip(),
@@ -764,7 +764,7 @@ class RateLimitMiddleware:
         
         return response
     
-    def _track_rate_limit_exceeded(self, context: Dict[str, Any], result: RateLimitResult):
+    def _track_rate_limit_exceeded(self, context: dict[str, Any], result: RateLimitResult):
         """Registra evento de rate limit excedido."""
         try:
             analytics_service = self._get_analytics_service()
@@ -839,7 +839,7 @@ def rate_limit(limit: str, scope: RateLimitScope = RateLimitScope.IP,
     return decorator
 
 # Configuraciones predefinidas
-def configure_development_rate_limits() -> Dict[str, Any]:
+def configure_development_rate_limits() -> dict[str, Any]:
     """Configuración para desarrollo."""
     return {
         'backend': 'memory',
@@ -855,7 +855,7 @@ def configure_development_rate_limits() -> Dict[str, Any]:
         'whitelist': ['127.0.0.1', '::1']
     }
 
-def configure_production_rate_limits() -> Dict[str, Any]:
+def configure_production_rate_limits() -> dict[str, Any]:
     """Configuración para producción."""
     return {
         'backend': 'redis',

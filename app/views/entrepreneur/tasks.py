@@ -7,7 +7,7 @@ colaboración, analytics de productividad y gamificación.
 """
 
 import json
-from datetime import datetime, timedelta, date, time
+from datetime import datetime, timedelta, date, time, timezone
 from collections import defaultdict
 from flask import (
     Blueprint, render_template, request, jsonify, flash, redirect, 
@@ -562,7 +562,7 @@ def edit(task_id):
         task.estimated_hours = form.estimated_hours.data
         task.project_id = form.project_id.data if form.project_id.data else None
         task.assigned_to_id = form.assigned_to_id.data if form.assigned_to_id.data else None
-        task.updated_at = datetime.utcnow()
+        task.updated_at = datetime.now(timezone.utc)
         task.save()
         
         # Detectar cambios significativos
@@ -659,13 +659,13 @@ def change_status(task_id):
         
         # Actualizar estado
         task.status = new_status_enum
-        task.updated_at = datetime.utcnow()
+        task.updated_at = datetime.now(timezone.utc)
         
         # Lógica específica por estado
         if new_status_enum == TaskStatus.IN_PROGRESS:
-            task.started_at = datetime.utcnow()
+            task.started_at = datetime.now(timezone.utc)
         elif new_status_enum == TaskStatus.COMPLETED:
-            task.completed_at = datetime.utcnow()
+            task.completed_at = datetime.now(timezone.utc)
             task.actual_hours = _calculate_actual_hours(task)
             
             # Calcular puntos de gamificación
@@ -673,7 +673,7 @@ def change_status(task_id):
             if points > 0:
                 _award_points(g.entrepreneur.id, points, 'task_completed')
         elif new_status_enum == TaskStatus.CANCELLED:
-            task.cancelled_at = datetime.utcnow()
+            task.cancelled_at = datetime.now(timezone.utc)
         
         task.save()
         
@@ -901,7 +901,7 @@ def delete(task_id):
         # Eliminar tarea (soft delete)
         task_title = task.title
         task.is_deleted = True
-        task.deleted_at = datetime.utcnow()
+        task.deleted_at = datetime.now(timezone.utc)
         task.save()
         
         # Eliminar evento de calendario
@@ -2142,7 +2142,7 @@ def _bulk_complete_tasks(tasks):
     for task in tasks:
         if task.status != TaskStatus.COMPLETED:
             task.status = TaskStatus.COMPLETED
-            task.completed_at = datetime.utcnow()
+            task.completed_at = datetime.now(timezone.utc)
             task.save()
             count += 1
     
@@ -2153,7 +2153,7 @@ def _bulk_delete_tasks(tasks):
     count = 0
     for task in tasks:
         task.is_deleted = True
-        task.deleted_at = datetime.utcnow()
+        task.deleted_at = datetime.now(timezone.utc)
         task.save()
         count += 1
     

@@ -15,8 +15,8 @@ Funcionalidades:
 """
 
 import logging
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Set
+from datetime import datetime, timezone
+from typing import Optional, Any
 
 from flask import request
 from flask_socketio import emit, join_room, leave_room
@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 # Esto podría moverse a app.sockets.__init__.py si se necesita acceso global
 # o usar el socket_manager si ya tiene esta funcionalidad.
 # Por ahora, lo mantenemos local al namespace para encapsulación.
-active_chat_rooms: Dict[str, Set[str]] = {} # room_name -> set of user_ids
+active_chat_rooms: dict[str, set[str]] = {} # room_name -> set of user_ids
 
 class ChatNamespace(BaseNamespace):
     """
@@ -64,7 +64,7 @@ class ChatNamespace(BaseNamespace):
     @socket_auth_required()
     @socket_log_activity(ActivityType.CHAT_JOIN_ROOM, "User joined chat room")
     @socket_validate_data(required_fields=['room_name'])
-    def on_join_chat_room(self, data: Dict[str, Any], current_user: User):
+    def on_join_chat_room(self, data: dict[str, Any], current_user: User):
         """
         Maneja la unión de un usuario a una sala de chat.
         
@@ -97,7 +97,7 @@ class ChatNamespace(BaseNamespace):
             self.emit('user_joined_chat', {
                 'user': format_user_info(current_user),
                 'room_name': room_name,
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             }, room=room_name, include_self=False)
 
             # Enviar confirmación al usuario
@@ -115,7 +115,7 @@ class ChatNamespace(BaseNamespace):
     @socket_auth_required()
     @socket_log_activity(ActivityType.CHAT_LEAVE_ROOM, "User left chat room")
     @socket_validate_data(required_fields=['room_name'])
-    def on_leave_chat_room(self, data: Dict[str, Any], current_user: User):
+    def on_leave_chat_room(self, data: dict[str, Any], current_user: User):
         """
         Maneja la salida de un usuario de una sala de chat.
         
@@ -138,7 +138,7 @@ class ChatNamespace(BaseNamespace):
             self.emit('user_left_chat', {
                 'user': format_user_info(current_user),
                 'room_name': room_name,
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             }, room=room_name, include_self=False)
 
             # Enviar confirmación al usuario
@@ -155,7 +155,7 @@ class ChatNamespace(BaseNamespace):
     @socket_auth_required()
     @socket_log_activity(ActivityType.CHAT_MESSAGE_SENT, "User sent chat message")
     @socket_validate_data(required_fields=['room_name', 'content'])
-    def on_send_chat_message(self, data: Dict[str, Any], current_user: User):
+    def on_send_chat_message(self, data: dict[str, Any], current_user: User):
         """
         Maneja el envío de un mensaje de chat.
         
@@ -226,7 +226,7 @@ class ChatNamespace(BaseNamespace):
             self._emit_error("Error al procesar el mensaje.", 'MESSAGE_PROCESSING_ERROR')
 
     @socket_auth_required()
-    def on_typing_indicator(self, data: Dict[str, Any], current_user: User):
+    def on_typing_indicator(self, data: dict[str, Any], current_user: User):
         """
         Maneja el indicador de "escribiendo".
         
@@ -247,7 +247,7 @@ class ChatNamespace(BaseNamespace):
             'user': format_user_info(current_user),
             'room_name': room_name,
             'is_typing': is_typing,
-            'timestamp': format_datetime(datetime.utcnow())
+            'timestamp': format_datetime(datetime.now(timezone.utc))
         }
         self.emit('typing_status', payload, room=room_name, include_self=False)
 

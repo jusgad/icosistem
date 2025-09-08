@@ -59,7 +59,7 @@ import time
 import sqlite3
 import psycopg2
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple, Union
+from typing import Optional, Any, Union
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from urllib.parse import urlparse
@@ -96,7 +96,7 @@ class BackupConfig:
     include_uploads: bool = True
     include_logs: bool = False
     include_config: bool = True
-    exclude_patterns: List[str] = field(default_factory=list)
+    exclude_patterns: list[str] = field(default_factory=list)
     retention_days: int = 30
     max_backups: int = 50
     parallel_workers: int = 4
@@ -123,8 +123,8 @@ class BackupMetadata:
     checksum: str
     encryption_key_id: Optional[str]
     destination: str
-    files: List[str] = field(default_factory=list)
-    database_info: Dict[str, Any] = field(default_factory=dict)
+    files: list[str] = field(default_factory=list)
+    database_info: dict[str, Any] = field(default_factory=dict)
     duration_seconds: float = 0.0
     status: str = 'pending'  # pending, running, completed, failed
     error_message: Optional[str] = None
@@ -329,7 +329,7 @@ class StorageBackend:
         """Descarga un archivo del backend."""
         raise NotImplementedError
     
-    def list_files(self, prefix: str = '') -> List[str]:
+    def list_files(self, prefix: str = '') -> list[str]:
         """Lista archivos en el backend."""
         raise NotImplementedError
     
@@ -379,7 +379,7 @@ class LocalStorageBackend(StorageBackend):
         except Exception:
             return False
     
-    def list_files(self, prefix: str = '') -> List[str]:
+    def list_files(self, prefix: str = '') -> list[str]:
         """Lista archivos en el directorio."""
         try:
             search_path = self.base_path / prefix if prefix else self.base_path
@@ -447,7 +447,7 @@ class S3StorageBackend(StorageBackend):
         except Exception:
             return False
     
-    def list_files(self, prefix: str = '') -> List[str]:
+    def list_files(self, prefix: str = '') -> list[str]:
         """Lista archivos en S3."""
         try:
             full_prefix = f"{self.prefix}{prefix}"
@@ -524,7 +524,7 @@ class GCSStorageBackend(StorageBackend):
         except Exception:
             return False
     
-    def list_files(self, prefix: str = '') -> List[str]:
+    def list_files(self, prefix: str = '') -> list[str]:
         """Lista archivos en GCS."""
         try:
             full_prefix = f"{self.prefix}{prefix}"
@@ -585,7 +585,7 @@ class DatabaseBackupManager:
         self.username = self.parsed_url.username
         self.password = self.parsed_url.password
     
-    def create_full_backup(self, output_file: Path) -> Dict[str, Any]:
+    def create_full_backup(self, output_file: Path) -> dict[str, Any]:
         """
         Crea backup completo de la base de datos.
         
@@ -648,7 +648,7 @@ class DatabaseBackupManager:
             self.logger.error(f"Error en pg_dump: {e.stderr}")
             raise BackupError(f"Fallo en backup de base de datos: {e.stderr}")
     
-    def create_schema_backup(self, output_file: Path) -> Dict[str, Any]:
+    def create_schema_backup(self, output_file: Path) -> dict[str, Any]:
         """
         Crea backup solo del esquema de la base de datos.
         
@@ -703,7 +703,7 @@ class DatabaseBackupManager:
             self.logger.error(f"Error en backup de esquema: {e.stderr}")
             raise BackupError(f"Fallo en backup de esquema: {e.stderr}")
     
-    def create_data_backup(self, output_file: Path) -> Dict[str, Any]:
+    def create_data_backup(self, output_file: Path) -> dict[str, Any]:
         """
         Crea backup solo de los datos (sin esquema).
         
@@ -806,7 +806,7 @@ class DatabaseBackupManager:
             self.logger.error(f"Error en restauración: {e.stderr}")
             return False
     
-    def _get_database_info(self) -> Dict[str, Any]:
+    def _get_database_info(self) -> dict[str, Any]:
         """Obtiene información adicional de la base de datos."""
         try:
             conn = psycopg2.connect(self.database_url)
@@ -863,8 +863,8 @@ class FileBackupManager:
         """
         self.logger = logger
     
-    def create_archive(self, source_paths: List[Path], output_file: Path, 
-                      exclude_patterns: List[str] = None, compress: bool = True) -> Dict[str, Any]:
+    def create_archive(self, source_paths: list[Path], output_file: Path, 
+                      exclude_patterns: list[str] = None, compress: bool = True) -> dict[str, Any]:
         """
         Crea archivo tar con los archivos especificados.
         
@@ -959,7 +959,7 @@ class FileBackupManager:
             self.logger.error(f"Error extrayendo archivo: {e}")
             return False
     
-    def _should_exclude(self, file_path: Path, exclude_patterns: List[str]) -> bool:
+    def _should_exclude(self, file_path: Path, exclude_patterns: list[str]) -> bool:
         """
         Determina si un archivo debe ser excluido.
         
@@ -1105,7 +1105,7 @@ class BackupManager:
             self._save_metadata(metadata)
             raise
     
-    def _get_backup_operations(self) -> List[Tuple[str, callable]]:
+    def _get_backup_operations(self) -> list[tuple[str, callable]]:
         """
         Obtiene la lista de operaciones para el backup.
         
@@ -1705,7 +1705,7 @@ class BackupManager:
         
         self._save_all_metadata(all_backups)
     
-    def _load_all_metadata(self) -> List[BackupMetadata]:
+    def _load_all_metadata(self) -> list[BackupMetadata]:
         """Carga toda la metadata de backups."""
         if not self.metadata_file.exists():
             return []
@@ -1745,7 +1745,7 @@ class BackupManager:
             self.logger.warning(f"Error cargando metadata: {e}")
             return []
     
-    def _save_all_metadata(self, backups: List[BackupMetadata]):
+    def _save_all_metadata(self, backups: list[BackupMetadata]):
         """Guarda toda la metadata de backups."""
         try:
             self.metadata_file.parent.mkdir(exist_ok=True)

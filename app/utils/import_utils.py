@@ -234,13 +234,13 @@ class ImportResult:
     processed_rows: int = 0
     successful_rows: int = 0
     failed_rows: int = 0
-    errors: List[Dict[str, Any]] = field(default_factory=list)
-    warnings: List[Dict[str, Any]] = field(default_factory=list)
-    imported_data: List[Dict[str, Any]] = field(default_factory=list)
+    errors: list[dict[str, Any]] = field(default_factory=list)
+    warnings: list[dict[str, Any]] = field(default_factory=list)
+    imported_data: list[dict[str, Any]] = field(default_factory=list)
     processing_time: Optional[float] = None
-    file_info: Optional[Dict[str, Any]] = None
-    field_mapping: Optional[Dict[str, str]] = None
-    validation_summary: Optional[Dict[str, Any]] = None
+    file_info: Optional[dict[str, Any]] = None
+    field_mapping: Optional[dict[str, str]] = None
+    validation_summary: Optional[dict[str, Any]] = None
     
     def add_error(self, row_number: int, error_message: str, field: str = None):
         """Añade un error al resultado."""
@@ -284,7 +284,7 @@ class ImportConfig:
     """Configuración de importación."""
     file_path: str
     target_model: Optional[str] = None
-    field_mappings: List[FieldMapping] = field(default_factory=list)
+    field_mappings: list[FieldMapping] = field(default_factory=list)
     validation_level: ValidationLevel = ValidationLevel.BASIC
     batch_size: int = 1000
     max_rows: Optional[int] = None
@@ -295,8 +295,8 @@ class ImportConfig:
     preview_only: bool = False
     rollback_on_error: bool = True
     progress_callback: Optional[Callable] = None
-    custom_validators: List[Callable] = field(default_factory=list)
-    transformation_rules: Dict[str, Callable] = field(default_factory=dict)
+    custom_validators: list[Callable] = field(default_factory=list)
+    transformation_rules: dict[str, Callable] = field(default_factory=dict)
 
 # ==============================================================================
 # UTILIDADES DE DETECCIÓN Y VALIDACIÓN DE ARCHIVOS
@@ -438,7 +438,7 @@ def detect_csv_delimiter(file_path: str, encoding: str = 'utf-8') -> str:
         # Fallback final
         return ','
 
-def validate_file(file_path: str) -> Dict[str, Any]:
+def validate_file(file_path: str) -> dict[str, Any]:
     """
     Valida un archivo antes de la importación.
     
@@ -486,7 +486,7 @@ def validate_file(file_path: str) -> Dict[str, Any]:
     except Exception as e:
         raise FileValidationError(f"Error validando archivo: {e}")
 
-def _validate_file_readability(file_path: str, file_info: Dict[str, Any]):
+def _validate_file_readability(file_path: str, file_info: dict[str, Any]):
     """Valida que el archivo se puede leer correctamente."""
     try:
         file_type = file_info['type']
@@ -527,11 +527,11 @@ class BaseFileReader:
         self.encoding = encoding
         self.file_info = validate_file(file_path)
     
-    def read(self, max_rows: Optional[int] = None) -> Iterator[Dict[str, Any]]:
+    def read(self, max_rows: Optional[int] = None) -> Iterator[dict[str, Any]]:
         """Lee el archivo y retorna un iterador de diccionarios."""
         raise NotImplementedError
     
-    def get_headers(self) -> List[str]:
+    def get_headers(self) -> list[str]:
         """Obtiene las cabeceras del archivo."""
         raise NotImplementedError
     
@@ -546,7 +546,7 @@ class CSVReader(BaseFileReader):
         super().__init__(file_path, encoding or detect_encoding(file_path))
         self.delimiter = delimiter or detect_csv_delimiter(file_path, self.encoding)
     
-    def read(self, max_rows: Optional[int] = None) -> Iterator[Dict[str, Any]]:
+    def read(self, max_rows: Optional[int] = None) -> Iterator[dict[str, Any]]:
         """Lee archivo CSV línea por línea."""
         try:
             with open(self.file_path, 'r', encoding=self.encoding) as f:
@@ -570,7 +570,7 @@ class CSVReader(BaseFileReader):
         except Exception as e:
             raise ProcessingError(f"Error leyendo CSV: {e}")
     
-    def get_headers(self) -> List[str]:
+    def get_headers(self) -> list[str]:
         """Obtiene cabeceras del CSV."""
         try:
             with open(self.file_path, 'r', encoding=self.encoding) as f:
@@ -600,7 +600,7 @@ class ExcelReader(BaseFileReader):
         if not OPENPYXL_AVAILABLE:
             raise ImportError("openpyxl no está disponible para archivos Excel")
     
-    def read(self, max_rows: Optional[int] = None) -> Iterator[Dict[str, Any]]:
+    def read(self, max_rows: Optional[int] = None) -> Iterator[dict[str, Any]]:
         """Lee archivo Excel línea por línea."""
         try:
             workbook = load_workbook(self.file_path, read_only=True, data_only=True)
@@ -644,7 +644,7 @@ class ExcelReader(BaseFileReader):
         except Exception as e:
             raise ProcessingError(f"Error leyendo Excel: {e}")
     
-    def get_headers(self) -> List[str]:
+    def get_headers(self) -> list[str]:
         """Obtiene cabeceras del Excel."""
         try:
             workbook = load_workbook(self.file_path, read_only=True)
@@ -671,7 +671,7 @@ class ExcelReader(BaseFileReader):
 class JSONReader(BaseFileReader):
     """Lector para archivos JSON."""
     
-    def read(self, max_rows: Optional[int] = None) -> Iterator[Dict[str, Any]]:
+    def read(self, max_rows: Optional[int] = None) -> Iterator[dict[str, Any]]:
         """Lee archivo JSON."""
         try:
             with open(self.file_path, 'r', encoding=self.encoding) as f:
@@ -702,7 +702,7 @@ class JSONReader(BaseFileReader):
         except Exception as e:
             raise ProcessingError(f"Error leyendo JSON: {e}")
     
-    def get_headers(self) -> List[str]:
+    def get_headers(self) -> list[str]:
         """Obtiene cabeceras del JSON."""
         try:
             # Leer una muestra para obtener claves
@@ -729,7 +729,7 @@ class JSONReader(BaseFileReader):
 class JSONLReader(BaseFileReader):
     """Lector para archivos JSONL (JSON Lines)."""
     
-    def read(self, max_rows: Optional[int] = None) -> Iterator[Dict[str, Any]]:
+    def read(self, max_rows: Optional[int] = None) -> Iterator[dict[str, Any]]:
         """Lee archivo JSONL línea por línea."""
         try:
             with open(self.file_path, 'r', encoding=self.encoding) as f:
@@ -748,7 +748,7 @@ class JSONLReader(BaseFileReader):
         except Exception as e:
             raise ProcessingError(f"Error leyendo JSONL: {e}")
     
-    def get_headers(self) -> List[str]:
+    def get_headers(self) -> list[str]:
         """Obtiene cabeceras del JSONL."""
         try:
             # Leer una muestra para obtener claves
@@ -818,9 +818,9 @@ class DataValidator:
         self.boolean_values = IMPORT_CONFIG['boolean_values']
         self.null_values = IMPORT_CONFIG['null_values']
     
-    def validate_row(self, row_data: Dict[str, Any], 
-                    field_mappings: List[FieldMapping],
-                    row_number: int) -> Tuple[Dict[str, Any], List[str]]:
+    def validate_row(self, row_data: dict[str, Any], 
+                    field_mappings: list[FieldMapping],
+                    row_number: int) -> tuple[dict[str, Any], list[str]]:
         """
         Valida una fila de datos.
         
@@ -1218,7 +1218,7 @@ class DataTransformer:
 class ImportManager:
     """Manager principal para operaciones de importación."""
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[dict[str, Any]] = None):
         self.config = IMPORT_CONFIG.copy()
         if config:
             self.config.update(config)
@@ -1230,7 +1230,7 @@ class ImportManager:
     
     def preview_data(self, file_path: str, 
                     max_rows: int = None,
-                    field_mapping: Dict[str, str] = None) -> Dict[str, Any]:
+                    field_mapping: dict[str, str] = None) -> dict[str, Any]:
         """
         Previsualiza datos del archivo sin importar.
         
@@ -1443,7 +1443,7 @@ class ImportManager:
         
         return result
     
-    def _process_batch(self, batch: List[Dict[str, Any]], 
+    def _process_batch(self, batch: list[dict[str, Any]], 
                       config: ImportConfig, 
                       result: ImportResult, 
                       batch_num: int):
@@ -1464,8 +1464,8 @@ class ImportManager:
             for _ in batch:
                 result.add_error(batch_num, f"Error en lote: {e}")
     
-    def _analyze_data(self, sample_data: List[Dict[str, Any]], 
-                     headers: List[str]) -> Dict[str, Any]:
+    def _analyze_data(self, sample_data: list[dict[str, Any]], 
+                     headers: list[str]) -> dict[str, Any]:
         """Analiza muestra de datos para estadísticas."""
         if not sample_data:
             return {}
@@ -1492,7 +1492,7 @@ class ImportManager:
         
         return analysis
     
-    def _suggest_data_type(self, values: List[Any]) -> str:
+    def _suggest_data_type(self, values: list[Any]) -> str:
         """Sugiere tipo de dato basado en valores."""
         if not values:
             return 'string'
@@ -1553,7 +1553,7 @@ class ImportManager:
         return max(type_counts, key=type_counts.get)
     
     def get_field_mapping_suggestions(self, file_path: str, 
-                                    target_model: str = None) -> Dict[str, str]:
+                                    target_model: str = None) -> dict[str, str]:
         """
         Sugiere mapeo de campos basado en nombres comunes.
         
@@ -1600,7 +1600,7 @@ class ImportManager:
 
 def import_from_csv(file_path: str, 
                    target_model: str = None,
-                   field_mapping: Dict[str, str] = None,
+                   field_mapping: dict[str, str] = None,
                    **kwargs) -> ImportResult:
     """
     Función de conveniencia para importar desde CSV.
@@ -1647,7 +1647,7 @@ def import_from_csv(file_path: str,
 def import_from_excel(file_path: str, 
                      sheet_name: str = None,
                      target_model: str = None,
-                     field_mapping: Dict[str, str] = None,
+                     field_mapping: dict[str, str] = None,
                      **kwargs) -> ImportResult:
     """
     Función de conveniencia para importar desde Excel.
@@ -1688,7 +1688,7 @@ def import_from_excel(file_path: str,
 
 def import_from_json(file_path: str, 
                     target_model: str = None,
-                    field_mapping: Dict[str, str] = None,
+                    field_mapping: dict[str, str] = None,
                     **kwargs) -> ImportResult:
     """
     Función de conveniencia para importar desde JSON.
@@ -1724,8 +1724,8 @@ def import_from_json(file_path: str,
     return manager.import_data(config)
 
 def validate_import_data(file_path: str, 
-                        field_mapping: Dict[str, str] = None,
-                        max_rows: int = 100) -> Dict[str, Any]:
+                        field_mapping: dict[str, str] = None,
+                        max_rows: int = 100) -> dict[str, Any]:
     """
     Valida datos de importación sin importar.
     
@@ -1790,7 +1790,7 @@ def validate_import_data(file_path: str,
 # Instancia global del import manager
 import_manager = ImportManager()
 
-def get_import_config() -> Dict[str, Any]:
+def get_import_config() -> dict[str, Any]:
     """Obtiene configuración actual de importación."""
     return import_manager.config.copy()
 
@@ -1798,7 +1798,7 @@ def configure_import(**kwargs):
     """Configura utilidades de importación globalmente."""
     import_manager.config.update(kwargs)
 
-def get_supported_formats() -> List[str]:
+def get_supported_formats() -> list[str]:
     """Obtiene formatos de archivo soportados."""
     formats = ['csv', 'tsv', 'json', 'jsonl']
     
@@ -1810,7 +1810,7 @@ def get_supported_formats() -> List[str]:
     
     return formats
 
-def get_import_statistics() -> Dict[str, Any]:
+def get_import_statistics() -> dict[str, Any]:
     """Obtiene estadísticas del sistema de importación."""
     return {
         'supported_formats': get_supported_formats(),

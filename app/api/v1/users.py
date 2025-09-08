@@ -20,8 +20,8 @@ from flask import Blueprint, request, jsonify, current_app, g, send_file
 from flask_restful import Resource, Api
 from sqlalchemy import or_, and_, func, desc, asc
 from sqlalchemy.orm import joinedload
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Tuple
+from datetime import datetime, timedelta, timezone
+from typing import Any, Optional
 import csv
 import io
 import xlsxwriter
@@ -698,7 +698,7 @@ class UserExportResource(Resource):
             current_app.logger.error(f"Error exporting users: {e}")
             raise BusinessLogicError("Error al exportar usuarios")
     
-    def _export_csv(self, users: List[User], fields: Optional[List[str]]) -> Any:
+    def _export_csv(self, users: list[User], fields: Optional[list[str]]) -> Any:
         """Exporta usuarios a CSV"""
         output = io.StringIO()
         
@@ -725,7 +725,7 @@ class UserExportResource(Resource):
             download_name=f'users_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
         )
     
-    def _export_xlsx(self, users: List[User], fields: Optional[List[str]]) -> Any:
+    def _export_xlsx(self, users: list[User], fields: Optional[list[str]]) -> Any:
         """Exporta usuarios a Excel"""
         output = io.BytesIO()
         
@@ -839,7 +839,7 @@ def activate_user(user_id):
         return jsonify({'message': 'Usuario ya está activo'}), 200
     
     user.is_active = True
-    user.activated_at = datetime.utcnow()
+    user.activated_at = datetime.now(timezone.utc)
     user.activated_by = get_current_user().id
     db.session.commit()
     
@@ -879,7 +879,7 @@ def deactivate_user(user_id):
     reason = data.get('reason', '')
     
     user.is_active = False
-    user.deactivated_at = datetime.utcnow()
+    user.deactivated_at = datetime.now(timezone.utc)
     user.deactivated_by = current_user.id
     user.deactivation_reason = reason
     db.session.commit()
@@ -1026,7 +1026,7 @@ def get_user_activity(user_id):
     
     # Filtro por período
     if days > 0:
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
         query = query.filter(ActivityLog.created_at >= cutoff_date)
     
     # Ordenar por fecha descendente
@@ -1258,13 +1258,13 @@ def get_dashboard_stats():
     ).group_by(User.user_type).all()
     
     # Usuarios registrados en los últimos 30 días
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
     new_users_30d = User.query.filter(
         User.created_at >= thirty_days_ago
     ).count()
     
     # Usuarios activos en los últimos 7 días
-    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
     active_users_7d = User.query.filter(
         User.last_login >= seven_days_ago
     ).count()
@@ -1304,7 +1304,7 @@ def handle_user_not_found(error):
         'error': 'User Not Found',
         'message': str(error),
         'code': 'USER_NOT_FOUND',
-        'timestamp': datetime.utcnow().isoformat()
+        'timestamp': datetime.now(timezone.utc).isoformat()
     }), 404
 
 
@@ -1315,12 +1315,12 @@ def handle_user_business_error(error):
         'error': 'User Business Logic Error',
         'message': str(error),
         'code': 'USER_BUSINESS_ERROR',
-        'timestamp': datetime.utcnow().isoformat()
+        'timestamp': datetime.now(timezone.utc).isoformat()
     }), 422
 
 
 # Funciones auxiliares para otros módulos
-def get_user_summary(user_id: int) -> Optional[Dict[str, Any]]:
+def get_user_summary(user_id: int) -> Optional[dict[str, Any]]:
     """
     Obtiene resumen básico de un usuario
     
@@ -1344,7 +1344,7 @@ def get_user_summary(user_id: int) -> Optional[Dict[str, Any]]:
     }
 
 
-def check_user_permissions(user_id: int, required_permissions: List[str]) -> bool:
+def check_user_permissions(user_id: int, required_permissions: list[str]) -> bool:
     """
     Verifica si un usuario tiene los permisos requeridos
     

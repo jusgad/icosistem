@@ -25,8 +25,8 @@ from flask_wtf.csrf import CSRFProtect
 from flask_compress import Compress
 # from flask_assets import Environment, Bundle  # No instalado
 from markupsafe import Markup
-from datetime import datetime, date, timedelta
-from typing import Dict, List, Optional, Any, Union, Callable
+from datetime import datetime, date, timedelta, timezone
+from typing import Optional, Any, Union, Callable
 import os
 import json
 import logging
@@ -310,8 +310,8 @@ class ViewsManager:
                 'available_languages': app.config.get('LANGUAGES', {}),
                 
                 # Fecha y hora actual
-                'now': datetime.utcnow(),
-                'current_year': datetime.utcnow().year,
+                'now': datetime.now(timezone.utc),
+                'current_year': datetime.now(timezone.utc).year,
                 
                 # Configuración de tema
                 'theme': session.get('theme', 'light'),
@@ -384,7 +384,7 @@ class ViewsManager:
             if not dt:
                 return ''
             
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             diff = now - dt
             
             if diff.days > 0:
@@ -546,7 +546,7 @@ class ViewsManager:
         def before_request():
             """Procesamiento antes de cada request."""
             # Registrar inicio de request para analytics
-            g.request_start_time = datetime.utcnow()
+            g.request_start_time = datetime.now(timezone.utc)
             
             # Detectar dispositivo móvil
             g.is_mobile = 'Mobile' in request.user_agent.string
@@ -565,7 +565,7 @@ class ViewsManager:
             
             # Trackear duración de request
             if hasattr(g, 'request_start_time'):
-                duration = datetime.utcnow() - g.request_start_time
+                duration = datetime.now(timezone.utc) - g.request_start_time
                 self._track_page_view(duration)
             
             return response
@@ -576,7 +576,7 @@ class ViewsManager:
             self.analytics_service = AnalyticsService()
         return self.analytics_service
     
-    def _get_user_notifications(self, user: User) -> List[Dict]:
+    def _get_user_notifications(self, user: User) -> list[Dict]:
         """Obtiene notificaciones del usuario."""
         # Implementar lógica para obtener notificaciones
         return []
@@ -596,7 +596,7 @@ class ViewsManager:
         
         return stats
     
-    def _get_main_navigation(self) -> List[Dict]:
+    def _get_main_navigation(self) -> list[Dict]:
         """Genera navegación principal."""
         nav_items = [
             {
@@ -651,7 +651,7 @@ class ViewsManager:
         
         return nav_items
     
-    def _get_user_navigation(self) -> List[Dict]:
+    def _get_user_navigation(self) -> list[Dict]:
         """Genera navegación del usuario."""
         if not hasattr(g, 'current_user') or not g.current_user:
             return []
@@ -674,7 +674,7 @@ class ViewsManager:
             }
         ]
     
-    def _get_breadcrumbs(self) -> List[Dict]:
+    def _get_breadcrumbs(self) -> list[Dict]:
         """Genera breadcrumbs automáticos."""
         breadcrumbs = []
         

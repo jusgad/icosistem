@@ -13,7 +13,7 @@ import logging
 import requests
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional, Union
 from functools import wraps
 from flask import current_app
 from requests.adapters import HTTPAdapter
@@ -47,7 +47,7 @@ class CurrencyProvider:
         session.mount("https://", adapter)
         return session
     
-    def get_rates(self, base_currency: str = 'USD') -> Dict[str, float]:
+    def get_rates(self, base_currency: str = 'USD') -> dict[str, float]:
         """Método base para obtener tasas de cambio"""
         raise NotImplementedError
     
@@ -61,7 +61,7 @@ class ExchangeRatesAPIProvider(CurrencyProvider):
     
     BASE_URL = "https://api.exchangeratesapi.io/v1"
     
-    def get_rates(self, base_currency: str = 'EUR') -> Dict[str, float]:
+    def get_rates(self, base_currency: str = 'EUR') -> dict[str, float]:
         """Obtiene todas las tasas desde EUR (base de la API gratuita)"""
         try:
             url = f"{self.BASE_URL}/latest"
@@ -124,7 +124,7 @@ class CurrencyLayerProvider(CurrencyProvider):
     
     BASE_URL = "https://api.currencylayer.com"
     
-    def get_rates(self, base_currency: str = 'USD') -> Dict[str, float]:
+    def get_rates(self, base_currency: str = 'USD') -> dict[str, float]:
         """Obtiene tasas desde USD (base de CurrencyLayer)"""
         try:
             url = f"{self.BASE_URL}/live"
@@ -198,7 +198,7 @@ class FreeCurrencyAPIProvider(CurrencyProvider):
     
     BASE_URL = "https://api.freecurrencyapi.com/v1"
     
-    def get_rates(self, base_currency: str = 'USD') -> Dict[str, float]:
+    def get_rates(self, base_currency: str = 'USD') -> dict[str, float]:
         """Obtiene tasas de la API gratuita"""
         try:
             url = f"{self.BASE_URL}/latest"
@@ -261,7 +261,7 @@ class CurrencyService:
         self.default_currency = current_app.config.get('DEFAULT_CURRENCY', 'USD')
         self.cache_duration = current_app.config.get('CURRENCY_CACHE_DURATION', 3600)  # 1 hora
     
-    def _initialize_providers(self) -> List[CurrencyProvider]:
+    def _initialize_providers(self) -> list[CurrencyProvider]:
         """Inicializa los proveedores de tasas de cambio"""
         providers = []
         
@@ -444,7 +444,7 @@ class CurrencyService:
         
         return amount_str
     
-    def get_supported_currencies(self) -> Dict[str, Dict[str, Union[str, int]]]:
+    def get_supported_currencies(self) -> dict[str, dict[str, Union[str, int]]]:
         """Retorna las monedas soportadas"""
         return self.SUPPORTED_CURRENCIES.copy()
     
@@ -453,7 +453,7 @@ class CurrencyService:
         return currency.upper() in self.SUPPORTED_CURRENCIES
     
     def get_all_rates(self, base_currency: str = None, 
-                     force_refresh: bool = False) -> Dict[str, float]:
+                     force_refresh: bool = False) -> dict[str, float]:
         """
         Obtiene todas las tasas de cambio para una moneda base.
         
@@ -462,7 +462,7 @@ class CurrencyService:
             force_refresh: Forzar actualización del cache
             
         Returns:
-            Dict[str, float]: Diccionario con todas las tasas
+            dict[str, float]: Diccionario con todas las tasas
         """
         if base_currency is None:
             base_currency = self.default_currency
@@ -552,7 +552,7 @@ class CurrencyService:
         self.cache.clear_pattern("currency_*")
         logger.info("Currency cache cleared")
     
-    def get_cache_stats(self) -> Dict[str, Union[int, List[str]]]:
+    def get_cache_stats(self) -> dict[str, Union[int, list[str]]]:
         """Retorna estadísticas del cache"""
         return {
             'cached_rates': len(self.cache.get_keys_pattern("currency_rate_*")),

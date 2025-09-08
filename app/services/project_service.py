@@ -7,8 +7,8 @@ Version: 1.0.0
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple, Any
-from datetime import datetime, timedelta
+from typing import Optional, Any
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from enum import Enum
 from dataclasses import dataclass
@@ -91,7 +91,7 @@ class ProjectMetrics:
 @dataclass
 class ProjectFilter:
     """Filtros para búsqueda de proyectos"""
-    status: Optional[List[str]] = None
+    status: Optional[list[str]] = None
     category: Optional[str] = None
     entrepreneur_id: Optional[int] = None
     ally_id: Optional[int] = None
@@ -129,7 +129,7 @@ class ProjectService(BaseService):
     @log_activity("project_created")
     def create_project(
         self, 
-        data: Dict[str, Any], 
+        data: dict[str, Any], 
         entrepreneur_id: int,
         created_by_id: int
     ) -> Project:
@@ -181,8 +181,8 @@ class ProjectService(BaseService):
                 tags=data.get('tags', []),
                 is_public=data.get('is_public', False),
                 created_by_id=created_by_id,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc)
             )
             
             db.session.add(project)
@@ -266,7 +266,7 @@ class ProjectService(BaseService):
         per_page: int = 20,
         sort_by: str = 'created_at',
         sort_direction: str = 'desc'
-    ) -> Tuple[List[Project], int]:
+    ) -> tuple[list[Project], int]:
         """
         Obtener lista de proyectos con filtros y paginación
         
@@ -279,7 +279,7 @@ class ProjectService(BaseService):
             sort_direction: Dirección del ordenamiento
             
         Returns:
-            Tuple[List[Project], int]: Lista de proyectos y total
+            tuple[list[Project], int]: Lista de proyectos y total
         """
         query = self._build_projects_query(filters, user_id)
         
@@ -299,7 +299,7 @@ class ProjectService(BaseService):
     def update_project(
         self, 
         project_id: int, 
-        data: Dict[str, Any], 
+        data: dict[str, Any], 
         updated_by_id: int
     ) -> Project:
         """
@@ -348,7 +348,7 @@ class ProjectService(BaseService):
                     else:
                         setattr(project, field, data[field])
             
-            project.updated_at = datetime.utcnow()
+            project.updated_at = datetime.now(timezone.utc)
             project.updated_by_id = updated_by_id
             
             db.session.commit()
@@ -402,7 +402,7 @@ class ProjectService(BaseService):
             
             # Soft delete
             project.is_deleted = True
-            project.deleted_at = datetime.utcnow()
+            project.deleted_at = datetime.now(timezone.utc)
             project.deleted_by_id = deleted_by_id
             
             # Cancelar tareas pendientes
@@ -466,7 +466,7 @@ class ProjectService(BaseService):
                 'project_id': project_id,
                 'ally_id': ally_id,
                 'role': role,
-                'assigned_at': datetime.utcnow(),
+                'assigned_at': datetime.now(timezone.utc),
                 'assigned_by_id': assigned_by_id
             }
             
@@ -532,7 +532,7 @@ class ProjectService(BaseService):
         project_id: int, 
         report_type: str,
         user_id: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generar reporte detallado del proyecto
         
@@ -542,7 +542,7 @@ class ProjectService(BaseService):
             user_id: ID del usuario que solicita
             
         Returns:
-            Dict[str, Any]: Datos del reporte
+            dict[str, Any]: Datos del reporte
         """
         project = self.get_project(project_id, user_id)
         metrics = self.get_project_metrics(project_id, user_id)
@@ -559,7 +559,7 @@ class ProjectService(BaseService):
                 'end_date': project.end_date
             },
             'metrics': metrics.__dict__,
-            'generated_at': datetime.utcnow(),
+            'generated_at': datetime.now(timezone.utc),
             'generated_by': user_id,
             'report_type': report_type
         }
@@ -592,7 +592,7 @@ class ProjectService(BaseService):
         return base_report
     
     # Métodos privados de validación
-    def _validate_project_data(self, data: Dict[str, Any]) -> None:
+    def _validate_project_data(self, data: dict[str, Any]) -> None:
         """Validar datos del proyecto"""
         required_fields = ['title', 'description', 'category']
         
@@ -792,7 +792,7 @@ class ProjectService(BaseService):
     def _send_project_updated_notifications(
         self, 
         project: Project, 
-        changes: List[str]
+        changes: list[str]
     ) -> None:
         """Enviar notificaciones de proyecto actualizado"""
         # Notificar a aliados asignados
@@ -818,7 +818,7 @@ class ProjectService(BaseService):
             return 0
         
         start_date = project.start_date
-        current_date = datetime.utcnow().date()
+        current_date = datetime.now(timezone.utc).date()
         
         return calculate_business_days(start_date, current_date)
     
@@ -827,7 +827,7 @@ class ProjectService(BaseService):
         if not project.end_date:
             return 0
         
-        current_date = datetime.utcnow().date()
+        current_date = datetime.now(timezone.utc).date()
         end_date = project.end_date
         
         if current_date >= end_date:
@@ -855,7 +855,7 @@ class ProjectService(BaseService):
         # Factor de tareas
         overdue_tasks = len([
             t for t in project.tasks 
-            if t.due_date and t.due_date < datetime.utcnow().date() 
+            if t.due_date and t.due_date < datetime.now(timezone.utc).date() 
             and t.status != 'completed'
         ])
         if overdue_tasks > 0:
@@ -864,7 +864,7 @@ class ProjectService(BaseService):
         return min(sum(risk_factors), 1.0)
     
     # Métodos auxiliares
-    def _serialize_task(self, task: Task) -> Dict[str, Any]:
+    def _serialize_task(self, task: Task) -> dict[str, Any]:
         """Serializar tarea para reportes"""
         return {
             'id': task.id,
@@ -875,7 +875,7 @@ class ProjectService(BaseService):
             'completed_at': task.completed_at
         }
     
-    def _serialize_document(self, document: Document) -> Dict[str, Any]:
+    def _serialize_document(self, document: Document) -> dict[str, Any]:
         """Serializar documento para reportes"""
         return {
             'id': document.id,
@@ -885,7 +885,7 @@ class ProjectService(BaseService):
             'uploaded_at': document.uploaded_at
         }
     
-    def _serialize_ally(self, ally: Ally) -> Dict[str, Any]:
+    def _serialize_ally(self, ally: Ally) -> dict[str, Any]:
         """Serializar aliado para reportes"""
         return {
             'id': ally.id,

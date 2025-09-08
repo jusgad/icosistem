@@ -180,10 +180,10 @@ class EmailBounce(CompleteBaseModel):
     @classmethod
     def get_bounce_stats(cls, days=30):
         """Get bounce statistics for the last N days."""
-        from datetime import datetime, timedelta
+        from datetime import datetime, timedelta, timezone
         from sqlalchemy import func
         
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
         
         stats = cls.query.filter(cls.created_at >= cutoff_date).with_entities(
             func.count(cls.id).label('total_bounces'),
@@ -208,7 +208,7 @@ class EmailBounce(CompleteBaseModel):
         from datetime import datetime, timedelta
         from sqlalchemy import func
         
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
         
         reasons = cls.query.filter(
             cls.created_at >= cutoff_date,
@@ -232,7 +232,7 @@ class EmailBounce(CompleteBaseModel):
         """Check if an email has bounced recently."""
         from datetime import datetime, timedelta
         
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
         
         recent_bounce = cls.query.filter(
             cls.email == email,

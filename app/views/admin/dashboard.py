@@ -9,7 +9,7 @@ Autor: Sistema de Emprendimiento
 Fecha: 2025
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, current_app
 from flask_login import login_required, current_user
 from sqlalchemy import func, desc, and_, or_
@@ -232,7 +232,7 @@ def api_metrics():
         return jsonify({
             'success': True,
             'data': metrics,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:
@@ -298,7 +298,7 @@ def api_system_status():
             'success': True,
             'healthy': overall_health,
             'services': status,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:
@@ -354,7 +354,7 @@ def notifications_center():
             'today': Notification.query.filter(
                 and_(
                     Notification.is_admin == True,
-                    Notification.created_at >= datetime.utcnow().date()
+                    Notification.created_at >= datetime.now(timezone.utc).date()
                 )
             ).count()
         }
@@ -432,7 +432,7 @@ def _get_dashboard_metrics(start_date, end_date):
     active_entrepreneurs = Entrepreneur.query.join(User).filter(
         and_(
             User.is_active == True,
-            User.last_login >= datetime.utcnow() - timedelta(days=30)
+            User.last_login >= datetime.now(timezone.utc) - timedelta(days=30)
         )
     ).count()
     
@@ -444,7 +444,7 @@ def _get_dashboard_metrics(start_date, end_date):
     # Reuniones programadas
     upcoming_meetings = Meeting.query.filter(
         and_(
-            Meeting.scheduled_for >= datetime.utcnow(),
+            Meeting.scheduled_for >= datetime.now(timezone.utc),
             Meeting.status == 'scheduled'
         )
     ).count()
@@ -523,7 +523,7 @@ def _get_system_alerts():
     inactive_users = User.query.filter(
         and_(
             User.is_active == True,
-            User.last_login < datetime.utcnow() - timedelta(days=90)
+            User.last_login < datetime.now(timezone.utc) - timedelta(days=90)
         )
     ).count()
     
@@ -538,7 +538,7 @@ def _get_system_alerts():
     stale_projects = Project.query.filter(
         and_(
             Project.status == 'active',
-            Project.updated_at < datetime.utcnow() - timedelta(days=30)
+            Project.updated_at < datetime.now(timezone.utc) - timedelta(days=30)
         )
     ).count()
     

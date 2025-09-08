@@ -7,7 +7,7 @@ import re
 import secrets
 import logging
 from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
+from typing import Any, Optional
 from flask import current_app, url_for
 from flask_login import UserMixin
 from flask_principal import Identity, AnonymousIdentity, identity_changed
@@ -327,7 +327,7 @@ from .user import User
     def is_locked(self):
         """Verificar si la cuenta está bloqueada."""
         if self.locked_until:
-            return datetime.utcnow() < self.locked_until
+            return datetime.now(timezone.utc) < self.locked_until
         return False
     
     @property
@@ -379,7 +379,7 @@ from .user import User
         """Generar token para reseteo de contraseña."""
         token = secrets.token_urlsafe(32)
         self.password_reset_token = token
-        self.password_reset_sent_at = datetime.utcnow()
+        self.password_reset_sent_at = datetime.now(timezone.utc)
         
         db.session.commit()
         user_logger.info(f"Password reset token generated for user: {self.email}")
@@ -405,7 +405,7 @@ from .user import User
         
         # Verificar expiración
         expiry_time = self.password_reset_sent_at + timedelta(hours=max_age_hours)
-        if datetime.utcnow() > expiry_time:
+        if datetime.now(timezone.utc) > expiry_time:
             return False
         
         return True
@@ -424,7 +424,7 @@ from .user import User
         """Generar token para verificación de email."""
         token = secrets.token_urlsafe(32)
         self.email_verification_token = token
-        self.email_verification_sent_at = datetime.utcnow()
+        self.email_verification_sent_at = datetime.now(timezone.utc)
         
         db.session.commit()
         user_logger.info(f"Email verification token generated for user: {self.email}")
@@ -450,7 +450,7 @@ from .user import User
         
         # Verificar expiración
         expiry_time = self.email_verification_sent_at + timedelta(hours=max_age_hours)
-        if datetime.utcnow() > expiry_time:
+        if datetime.now(timezone.utc) > expiry_time:
             return False
         
         return True
@@ -488,7 +488,7 @@ from .user import User
         Args:
             ip_address: Dirección IP del login
         """
-        self.last_login_at = datetime.utcnow()
+        self.last_login_at = datetime.now(timezone.utc)
         self.last_login_ip = ip_address
         self.total_logins += 1
         self.failed_login_attempts = 0
@@ -508,7 +508,7 @@ from .user import User
         self.failed_login_attempts += 1
         
         if self.failed_login_attempts >= max_attempts:
-            self.locked_until = datetime.utcnow() + timedelta(minutes=lockout_minutes)
+            self.locked_until = datetime.now(timezone.utc) + timedelta(minutes=lockout_minutes)
             user_logger.warning(f"User locked due to failed attempts: {self.email}")
         
         db.session.commit()
@@ -563,7 +563,7 @@ from .user import User
         
         return completion_percentage
     
-    def update_profile(self, data: Dict[str, Any], calculate_completion: bool = True):
+    def update_profile(self, data: dict[str, Any], calculate_completion: bool = True):
         """
         Actualizar perfil del usuario.
         
@@ -590,7 +590,7 @@ from .user import User
         db.session.commit()
         user_logger.info(f"Profile updated for user: {self.email}")
     
-    def update_preferences(self, preferences: Dict[str, Any]):
+    def update_preferences(self, preferences: dict[str, Any]):
         """
         Actualizar preferencias del usuario.
         
@@ -618,7 +618,7 @@ from .user import User
     
     def update_last_activity(self):
         """Actualizar timestamp de última actividad."""
-        self.last_activity_at = datetime.utcnow()
+        self.last_activity_at = datetime.now(timezone.utc)
         db.session.commit()
     
     def is_online(self, minutes_threshold: int = 15) -> bool:
@@ -634,7 +634,7 @@ from .user import User
         if not self.last_activity_at:
             return False
         
-        threshold_time = datetime.utcnow() - timedelta(minutes=minutes_threshold)
+        threshold_time = datetime.now(timezone.utc) - timedelta(minutes=minutes_threshold)
         return self.last_activity_at > threshold_time
     
     # ====================================
@@ -707,7 +707,7 @@ from .user import User
     # ====================================
     
     def to_dict(self, include_sensitive: bool = False, include_relationships: bool = False, 
-                exclude_fields: List[str] = None) -> Dict[str, Any]:
+                exclude_fields: list[str] = None) -> dict[str, Any]:
         """
         Convertir usuario a diccionario con opciones de seguridad.
         
@@ -748,7 +748,7 @@ from .user import User
         
         return data
     
-    def to_public_dict(self) -> Dict[str, Any]:
+    def to_public_dict(self) -> dict[str, Any]:
         """Convertir a diccionario con solo información pública."""
         return {
             'id': str(self.id),
@@ -793,7 +793,7 @@ from .user import User
     @classmethod
     def get_recent_users(cls, days: int = 7, limit: int = 10):
         """Obtener usuarios registrados recientemente."""
-        threshold_date = datetime.utcnow() - timedelta(days=days)
+        threshold_date = datetime.now(timezone.utc) - timedelta(days=days)
         return cls.query.filter(
             cls.created_at >= threshold_date,
             cls.is_active == True
@@ -899,7 +899,7 @@ def unauthorized():
 # UTILIDADES ADICIONALES
 # ====================================
 
-def get_user_stats() -> Dict[str, Any]:
+def get_user_stats() -> dict[str, Any]:
     """Obtener estadísticas de usuarios."""
     try:
         total_users = User.query.count()
@@ -913,14 +913,14 @@ def get_user_stats() -> Dict[str, Any]:
             users_by_role[role] = count
         
         # Usuarios recientes (últimos 30 días)
-        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
         recent_users = User.query.filter(
             User.created_at >= thirty_days_ago,
             User.is_active == True
         ).count()
         
         # Usuarios en línea (últimos 15 minutos)
-        fifteen_minutes_ago = datetime.utcnow() - timedelta(minutes=15)
+        fifteen_minutes_ago = datetime.now(timezone.utc) - timedelta(minutes=15)
         online_users = User.query.filter(
             User.last_activity_at >= fifteen_minutes_ago,
             User.is_active == True
@@ -952,7 +952,7 @@ def cleanup_unverified_users(days_old: int = 30) -> int:
         Número de usuarios eliminados
     """
     try:
-        cutoff_date = datetime.utcnow() - timedelta(days=days_old)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_old)
         
         # Buscar usuarios no verificados antiguos
         unverified_users = User.query.filter(
@@ -986,7 +986,7 @@ def cleanup_unverified_users(days_old: int = 30) -> int:
         return 0
 
 
-def generate_user_report(start_date: datetime = None, end_date: datetime = None) -> Dict[str, Any]:
+def generate_user_report(start_date: datetime = None, end_date: datetime = None) -> dict[str, Any]:
     """
     Generar reporte de usuarios.
     
@@ -1000,7 +1000,7 @@ def generate_user_report(start_date: datetime = None, end_date: datetime = None)
     try:
         # Fechas por defecto (último mes)
         if not end_date:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(timezone.utc)
         if not start_date:
             start_date = end_date - timedelta(days=30)
         
@@ -1110,7 +1110,7 @@ User.add_validation_rule('role', {
 # MÉTODOS DE NOTIFICACIÓN PERSONALIZADOS
 # ====================================
 
-def _get_default_recipients(self, event_type: str) -> List[str]:
+def _get_default_recipients(self, event_type: str) -> list[str]:
     """Obtener destinatarios por defecto según el evento."""
     if event_type == 'created':
         return [self.email]

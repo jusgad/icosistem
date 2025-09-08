@@ -10,7 +10,7 @@ Fecha: 2025
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from flask import (
     Blueprint, render_template, request, jsonify, flash, redirect, 
@@ -346,7 +346,7 @@ def edit_ally(ally_id):
             ally.preferred_communication = form.preferred_communication.data or 'video'
             ally.linkedin_profile = form.linkedin_profile.data.strip() if form.linkedin_profile.data else None
             ally.website = form.website.data.strip() if form.website.data else None
-            ally.updated_at = datetime.utcnow()
+            ally.updated_at = datetime.now(timezone.utc)
             
             # Validar disponibilidad si cambió
             if form.is_available.data != old_values['is_available']:
@@ -459,7 +459,7 @@ def assign_entrepreneur(ally_id):
             
             # Actualizar contadores
             entrepreneur.assigned_mentor_id = ally.id
-            entrepreneur.mentor_assigned_at = datetime.utcnow()
+            entrepreneur.mentor_assigned_at = datetime.now(timezone.utc)
             ally.current_entrepreneurs = (ally.current_entrepreneurs or 0) + 1
             
             db.session.commit()
@@ -599,7 +599,7 @@ def evaluate_ally(ally_id):
                 'notes': form.notes.data.strip() if form.notes.data else None,
                 'recommendations': form.recommendations.data.strip() if form.recommendations.data else None,
                 'evaluator_id': current_user.id,
-                'evaluation_date': datetime.utcnow()
+                'evaluation_date': datetime.now(timezone.utc)
             }
             
             # Calcular rating promedio
@@ -611,7 +611,7 @@ def evaluate_ally(ally_id):
             
             # Actualizar aliado
             ally.evaluation_data = evaluation_data  # JSON field
-            ally.last_evaluation_at = datetime.utcnow()
+            ally.last_evaluation_at = datetime.now(timezone.utc)
             ally.admin_rating = total_rating
             
             # Recalcular rating promedio general
@@ -802,7 +802,7 @@ def manage_availability(ally_id):
                 ally.is_available = False
                 flash('Disponibilidad desactivada automáticamente: capacidad máxima alcanzada.', 'warning')
             
-            ally.updated_at = datetime.utcnow()
+            ally.updated_at = datetime.now(timezone.utc)
             db.session.commit()
             
             # Registrar actividad
@@ -1211,7 +1211,7 @@ def _get_ally_statistics():
         'this_month': Ally.query.join(User).filter(
             and_(
                 User.is_active == True,
-                User.created_at >= datetime.utcnow().replace(day=1)
+                User.created_at >= datetime.now(timezone.utc).replace(day=1)
             )
         ).count(),
         'avg_hourly_rate': db.session.query(func.avg(Ally.hourly_rate)).filter(
@@ -1222,8 +1222,8 @@ def _get_ally_statistics():
 def _get_ally_detailed_metrics(ally):
     """Obtiene métricas detalladas de un aliado específico."""
     metrics = {
-        'account_age_days': (datetime.utcnow() - ally.user.created_at).days,
-        'last_login_days_ago': (datetime.utcnow() - ally.user.last_login).days if ally.user.last_login else None,
+        'account_age_days': (datetime.now(timezone.utc) - ally.user.created_at).days,
+        'last_login_days_ago': (datetime.now(timezone.utc) - ally.user.last_login).days if ally.user.last_login else None,
         'total_mentorships': len(ally.mentorships),
         'active_mentorships': len([m for m in ally.mentorships if m.status == 'active']),
         'completed_mentorships': len([m for m in ally.mentorships if m.status == 'completed']),
@@ -1237,7 +1237,7 @@ def _get_ally_detailed_metrics(ally):
     }
     
     # Calcular tendencia de actividad
-    recent_activity = [m for m in ally.mentorships if m.updated_at >= datetime.utcnow() - timedelta(days=30)]
+    recent_activity = [m for m in ally.mentorships if m.updated_at >= datetime.now(timezone.utc) - timedelta(days=30)]
     metrics['recent_activity_score'] = len(recent_activity) / len(ally.mentorships) if ally.mentorships else 0
     
     return metrics
@@ -1276,13 +1276,13 @@ def _get_ally_meetings_data(ally):
         )
     ).order_by(desc(Meeting.scheduled_for)).limit(20).all()
     
-    upcoming = [m for m in meetings if m.scheduled_for >= datetime.utcnow()]
-    past = [m for m in meetings if m.scheduled_for < datetime.utcnow()]
+    upcoming = [m for m in meetings if m.scheduled_for >= datetime.now(timezone.utc)]
+    past = [m for m in meetings if m.scheduled_for < datetime.now(timezone.utc)]
     
     return {
         'upcoming': upcoming[:5],
         'past': past[:10],
-        'total_this_month': len([m for m in meetings if m.scheduled_for >= datetime.utcnow().replace(day=1)]),
+        'total_this_month': len([m for m in meetings if m.scheduled_for >= datetime.now(timezone.utc).replace(day=1)]),
         'avg_duration': sum([m.duration for m in past if m.duration]) / len([m for m in past if m.duration]) if past else 0
     }
 
@@ -1327,7 +1327,7 @@ def _get_ally_availability_data(ally):
 
 def _get_ally_earnings_data(ally):
     """Obtiene datos de earnings del aliado."""
-    current_month = datetime.utcnow().replace(day=1)
+    current_month = datetime.now(timezone.utc).replace(day=1)
     last_month = (current_month - timedelta(days=1)).replace(day=1)
     
     mentorships = ally.mentorships
@@ -1351,7 +1351,7 @@ def _get_ally_earnings_data(ally):
         'growth_percentage': ((current_month_earnings - last_month_earnings) / last_month_earnings * 100) if last_month_earnings else 0,
         'hourly_rate': ally.hourly_rate,
         'currency': ally.currency,
-        'avg_monthly': total_earnings / max(1, (datetime.utcnow() - ally.user.created_at).days / 30.0)
+        'avg_monthly': total_earnings / max(1, (datetime.now(timezone.utc) - ally.user.created_at).days / 30.0)
     }
 
 def _get_ally_performance_trends(ally):
@@ -1388,7 +1388,7 @@ def _generate_ally_recommendations(ally):
         })
     
     # Recomendaciones basadas en actividad
-    if ally.last_activity_at and ally.last_activity_at < datetime.utcnow() - timedelta(days=15):
+    if ally.last_activity_at and ally.last_activity_at < datetime.now(timezone.utc) - timedelta(days=15):
         recommendations.append({
             'type': 'engagement',
             'priority': 'medium',
@@ -1546,7 +1546,7 @@ def _get_allies_needing_attention(limit=10):
             User.is_active == True,
             or_(
                 Ally.average_rating < 3.0,
-                Ally.last_activity_at < datetime.utcnow() - timedelta(days=30),
+                Ally.last_activity_at < datetime.now(timezone.utc) - timedelta(days=30),
                 and_(Ally.is_available == True, Ally.current_entrepreneurs == 0)
             )
         )
@@ -1559,7 +1559,7 @@ def _get_allies_needing_attention(limit=10):
 
 def _get_ally_revenue_metrics():
     """Obtiene métricas de ingresos de aliados."""
-    current_month = datetime.utcnow().replace(day=1)
+    current_month = datetime.now(timezone.utc).replace(day=1)
     
     total_revenue = db.session.query(
         func.sum(Mentorship.total_cost)
@@ -1585,7 +1585,7 @@ def _get_ally_revenue_metrics():
 
 def _calculate_monthly_earnings(ally):
     """Calcula ingresos del mes actual para un aliado."""
-    current_month = datetime.utcnow().replace(day=1)
+    current_month = datetime.now(timezone.utc).replace(day=1)
     
     monthly_earnings = sum([
         m.total_cost for m in ally.mentorships 

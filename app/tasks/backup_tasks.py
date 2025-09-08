@@ -29,7 +29,7 @@ import json
 import zipfile
 import tarfile
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union, Tuple
+from typing import Optional, Any, Union
 from dataclasses import dataclass, asdict
 from enum import Enum
 import tempfile
@@ -128,9 +128,9 @@ class BackupConfig:
     encryption: bool = True
     verify_integrity: bool = True
     retention_days: int = 30
-    include_patterns: List[str] = None
-    exclude_patterns: List[str] = None
-    metadata: Dict[str, Any] = None
+    include_patterns: list[str] = None
+    exclude_patterns: list[str] = None
+    metadata: dict[str, Any] = None
     
     def __post_init__(self):
         if self.include_patterns is None:
@@ -152,9 +152,9 @@ class BackupResult:
     duration: float
     storage_provider: StorageProvider
     error_message: str = None
-    metadata: Dict[str, Any] = None
+    metadata: dict[str, Any] = None
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -200,7 +200,7 @@ class BackupManager:
     
     def create_backup(self, config: BackupConfig) -> BackupResult:
         """Crea un backup según la configuración"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         backup_id = f"{config.name}_{start_time.strftime('%Y%m%d_%H%M%S')}"
         
         try:
@@ -258,7 +258,7 @@ class BackupManager:
                     remote_path = self._upload_to_storage(final_path, config.storage_provider)
                 
                 # Calcular duración
-                duration = (datetime.utcnow() - start_time).total_seconds()
+                duration = (datetime.now(timezone.utc) - start_time).total_seconds()
                 
                 # Crear resultado
                 result = BackupResult(
@@ -285,7 +285,7 @@ class BackupManager:
                 return result
                 
         except Exception as e:
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             logger.error(f"Error en backup {backup_id}: {str(e)}")
             
             return BackupResult(
@@ -363,7 +363,7 @@ class BackupManager:
             
             # Configuraciones a respaldar
             config_data = {
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'app_version': os.getenv('APP_VERSION', '1.0.0'),
                 'environment': os.getenv('FLASK_ENV', 'production'),
                 'database_url': DATABASE_URL.split('@')[1] if DATABASE_URL else None,  # Sin credenciales
@@ -504,7 +504,7 @@ class BackupManager:
         if not self.s3_client:
             raise StorageError("Cliente S3 no configurado")
         
-        s3_key = f"backups/{datetime.utcnow().strftime('%Y/%m/%d')}/{filename}"
+        s3_key = f"backups/{datetime.now(timezone.utc).strftime('%Y/%m/%d')}/{filename}"
         
         self.s3_client.upload_file(file_path, AWS_BUCKET_NAME, s3_key)
         
@@ -516,7 +516,7 @@ class BackupManager:
             raise StorageError("Cliente GCS no configurado")
         
         bucket = self.gcs_client.bucket(GCS_BUCKET_NAME)
-        blob_name = f"backups/{datetime.utcnow().strftime('%Y/%m/%d')}/{filename}"
+        blob_name = f"backups/{datetime.now(timezone.utc).strftime('%Y/%m/%d')}/{filename}"
         blob = bucket.blob(blob_name)
         
         blob.upload_from_filename(file_path)
@@ -528,7 +528,7 @@ class BackupManager:
         if not self.azure_client:
             raise StorageError("Cliente Azure no configurado")
         
-        blob_name = f"backups/{datetime.utcnow().strftime('%Y/%m/%d')}/{filename}"
+        blob_name = f"backups/{datetime.now(timezone.utc).strftime('%Y/%m/%d')}/{filename}"
         
         with open(file_path, 'rb') as data:
             self.azure_client.upload_blob(
@@ -556,7 +556,7 @@ class BackupManager:
                 status=BackupStatus.COMPLETED if result.success else BackupStatus.FAILED,
                 duration=result.duration,
                 metadata=result.metadata,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             
             db.session.add(backup_record)
@@ -566,7 +566,7 @@ class BackupManager:
             logger.error(f"Error registrando backup: {str(e)}")
     
     # Funciones auxiliares para obtener datos del sistema
-    def _get_system_settings(self) -> Dict[str, Any]:
+    def _get_system_settings(self) -> dict[str, Any]:
         """Obtiene configuraciones del sistema"""
         return {
             'timezone': os.getenv('TIMEZONE', 'UTC'),
@@ -575,7 +575,7 @@ class BackupManager:
             'session_timeout': os.getenv('SESSION_TIMEOUT', '3600')
         }
     
-    def _get_user_preferences_summary(self) -> Dict[str, Any]:
+    def _get_user_preferences_summary(self) -> dict[str, Any]:
         """Obtiene resumen de preferencias de usuarios"""
         try:
             from app import db
@@ -586,13 +586,13 @@ class BackupManager:
             return {
                 'total_users': total_users,
                 'active_users': active_users,
-                'backup_timestamp': datetime.utcnow().isoformat()
+                'backup_timestamp': datetime.now(timezone.utc).isoformat()
             }
         except Exception as e:
             logger.error(f"Error obteniendo resumen de usuarios: {str(e)}")
             return {}
     
-    def _get_feature_flags(self) -> Dict[str, bool]:
+    def _get_feature_flags(self) -> dict[str, bool]:
         """Obtiene feature flags del sistema"""
         return {
             'enable_notifications': True,
@@ -799,7 +799,7 @@ def incremental_backup(self):
             logger.info(f"Backup incremental exitoso: {result.backup_id}")
             
             # Solo notificar si hay problemas o es el primer backup del día
-            current_hour = datetime.utcnow().hour
+            current_hour = datetime.now(timezone.utc).hour
             if current_hour == 0:  # Primer backup del día
                 backup_manager.notification_service.send_system_notification(
                     message=f"Backup incremental diario iniciado: {format_file_size(result.file_size)}",
@@ -1108,7 +1108,7 @@ def cleanup_old_backups(self, backup_type: str, frequency: str):
         # Obtener política de retención
         retention_policy = RETENTION_POLICIES.get(frequency, {'keep_days': 30})
         retention_days = retention_policy.get('keep_days', 30)
-        cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=retention_days)
         
         # Obtener backups antiguos
         old_backups = BackupRecord.query.filter(
@@ -1185,7 +1185,7 @@ def verify_backup_integrity(self, backup_id: str = None, days_back: int = 7):
             backups = [BackupRecord.query.filter_by(backup_id=backup_id).first()]
         else:
             # Verificar backups recientes
-            cutoff_date = datetime.utcnow() - timedelta(days=days_back)
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_back)
             backups = BackupRecord.query.filter(
                 BackupRecord.created_at >= cutoff_date,
                 BackupRecord.status == BackupStatus.COMPLETED
@@ -1293,7 +1293,7 @@ def verify_backup_integrity(self, backup_id: str = None, days_back: int = 7):
     queue='backups',
     priority=8
 )
-def create_manual_backup(self, backup_config: Dict[str, Any]):
+def create_manual_backup(self, backup_config: dict[str, Any]):
     """
     Crea un backup manual bajo demanda
     
@@ -1305,7 +1305,7 @@ def create_manual_backup(self, backup_config: Dict[str, Any]):
         
         # Crear configuración desde diccionario
         config = BackupConfig(
-            name=backup_config.get('name', f"manual_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"),
+            name=backup_config.get('name', f"manual_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"),
             backup_type=BackupType(backup_config['backup_type']),
             frequency=BackupFrequency.ON_DEMAND,
             storage_provider=StorageProvider(backup_config.get('storage_provider', 'local')),
@@ -1475,9 +1475,9 @@ def _decompress_backup_file(file_path: str) -> str:
     return decompressed_path
 
 
-def _restore_database(backup_path: str, restore_type: str) -> Dict[str, Any]:
+def _restore_database(backup_path: str, restore_type: str) -> dict[str, Any]:
     """Restaura base de datos desde backup"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     try:
         # Comando pg_restore
@@ -1497,7 +1497,7 @@ def _restore_database(backup_path: str, restore_type: str) -> Dict[str, Any]:
         if result.returncode != 0:
             raise RestoreError(f"pg_restore falló: {result.stderr}")
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return {
             'restore_type': 'database',
@@ -1512,16 +1512,16 @@ def _restore_database(backup_path: str, restore_type: str) -> Dict[str, Any]:
         raise RestoreError(f"Error en restore de base de datos: {str(e)}")
 
 
-def _restore_files(backup_path: str, restore_type: str) -> Dict[str, Any]:
+def _restore_files(backup_path: str, restore_type: str) -> dict[str, Any]:
     """Restaura archivos desde backup"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     try:
         # Extraer archivos tar
         with tarfile.open(backup_path, 'r:gz') as tar:
             tar.extractall(path='/')
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return {
             'restore_type': 'files',
@@ -1534,9 +1534,9 @@ def _restore_files(backup_path: str, restore_type: str) -> Dict[str, Any]:
         raise RestoreError(f"Error en restore de archivos: {str(e)}")
 
 
-def _restore_user_data(backup_path: str, restore_type: str) -> Dict[str, Any]:
+def _restore_user_data(backup_path: str, restore_type: str) -> dict[str, Any]:
     """Restaura datos de usuario desde backup"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     try:
         # Extraer y procesar datos de usuario
@@ -1551,7 +1551,7 @@ def _restore_user_data(backup_path: str, restore_type: str) -> Dict[str, Any]:
         # Limpiar directorio temporal
         shutil.rmtree(temp_dir)
         
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         
         return {
             'restore_type': 'user_data',
@@ -1564,7 +1564,7 @@ def _restore_user_data(backup_path: str, restore_type: str) -> Dict[str, Any]:
         raise RestoreError(f"Error en restore de datos de usuario: {str(e)}")
 
 
-def _verify_restore_integrity(backup_type: BackupType) -> Dict[str, Any]:
+def _verify_restore_integrity(backup_type: BackupType) -> dict[str, Any]:
     """Verifica la integridad del restore"""
     try:
         if backup_type == BackupType.DATABASE:

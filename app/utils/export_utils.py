@@ -13,7 +13,7 @@ import json
 import logging
 from datetime import datetime
 from io import StringIO, BytesIO
-from typing import List, Dict, Any, Optional, Callable
+from typing import Any, Optional, Callable
 
 import pandas as pd
 from flask import current_app, Response
@@ -46,7 +46,7 @@ class ExportUtils:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         return f"{base_name}_{timestamp}.{extension}"
 
-    def _queryset_to_dicts(self, queryset: List[db.Model], fields: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+    def _queryset_to_dicts(self, queryset: list[db.Model], fields: Optional[list[str]] = None) -> list[dict[str, Any]]:
         """Convierte un queryset de SQLAlchemy a una lista de diccionarios."""
         data_list = []
         for item in queryset:
@@ -65,7 +65,7 @@ class ExportUtils:
                     data_list.append(item_dict)
         return data_list
 
-    def export_to_csv(self, data: List[Dict[str, Any]], filename_base: str = "export") -> Response:
+    def export_to_csv(self, data: list[dict[str, Any]], filename_base: str = "export") -> Response:
         """
         Exporta datos a formato CSV.
 
@@ -93,7 +93,7 @@ class ExportUtils:
             headers={"Content-Disposition": f"attachment;filename={filename}"}
         )
 
-    def export_to_json(self, data: List[Dict[str, Any]], filename_base: str = "export") -> Response:
+    def export_to_json(self, data: list[dict[str, Any]], filename_base: str = "export") -> Response:
         """
         Exporta datos a formato JSON.
 
@@ -117,7 +117,7 @@ class ExportUtils:
             headers={"Content-Disposition": f"attachment;filename={filename}"}
         )
 
-    def export_to_excel(self, data: List[Dict[str, Any]], filename_base: str = "export", sheet_name: str = "Datos") -> Response:
+    def export_to_excel(self, data: list[dict[str, Any]], filename_base: str = "export", sheet_name: str = "Datos") -> Response:
         """
         Exporta datos a formato Excel (XLSX).
 
@@ -155,7 +155,7 @@ class ExportUtils:
             logger.error(f"Error exportando a Excel: {str(e)}")
             return Response(f"Error generando Excel: {str(e)}", mimetype="text/plain", status=500)
 
-    def export_users(self, format: str = 'csv', fields: Optional[List[str]] = None, filters: Optional[Dict[str, Any]] = None) -> Response:
+    def export_users(self, format: str = 'csv', fields: Optional[list[str]] = None, filters: Optional[dict[str, Any]] = None) -> Response:
         """Exporta datos de usuarios."""
         query = User.query
         if filters:
@@ -171,7 +171,7 @@ class ExportUtils:
         else: # CSV por defecto
             return self.export_to_csv(data, "users_export")
 
-    def export_entrepreneurs(self, format: str = 'csv', fields: Optional[List[str]] = None, filters: Optional[Dict[str, Any]] = None) -> Response:
+    def export_entrepreneurs(self, format: str = 'csv', fields: Optional[list[str]] = None, filters: Optional[dict[str, Any]] = None) -> Response:
         """Exporta datos de emprendedores."""
         query = Entrepreneur.query.join(User) # Para poder filtrar por campos de User
         if filters:
@@ -201,7 +201,7 @@ class ExportUtils:
         else:
             return self.export_to_csv(data_list, "entrepreneurs_export")
 
-    def export_projects(self, format: str = 'csv', fields: Optional[List[str]] = None, filters: Optional[Dict[str, Any]] = None) -> Response:
+    def export_projects(self, format: str = 'csv', fields: Optional[list[str]] = None, filters: Optional[dict[str, Any]] = None) -> Response:
         """Exporta datos de proyectos."""
         query = Project.query
         if filters:
@@ -217,7 +217,7 @@ class ExportUtils:
         else:
             return self.export_to_csv(data, "projects_export")
 
-    def export_organizations(self, format: str = 'csv', fields: Optional[List[str]] = None, filters: Optional[Dict[str, Any]] = None) -> Response:
+    def export_organizations(self, format: str = 'csv', fields: Optional[list[str]] = None, filters: Optional[dict[str, Any]] = None) -> Response:
         """Exporta datos de organizaciones."""
         query = Organization.query
         if filters:
@@ -300,20 +300,20 @@ def get_export_utils():
     return _export_utils
 
 # Funciones de conveniencia
-def export_to_csv(data: List[Dict[str, Any]], filename_base: str = "export") -> Response:
+def export_to_csv(data: list[dict[str, Any]], filename_base: str = "export") -> Response:
     """Exportar datos a CSV"""
     return get_export_utils().export_to_csv(data, filename_base)
 
-def export_to_excel(data: List[Dict[str, Any]], filename_base: str = "export", sheet_name: str = "Datos") -> Response:
+def export_to_excel(data: list[dict[str, Any]], filename_base: str = "export", sheet_name: str = "Datos") -> Response:
     """Exportar datos a Excel"""
     return get_export_utils().export_to_excel(data, filename_base, sheet_name)
 
-def export_to_pdf(data: List[Dict[str, Any]], filename_base: str = "export") -> Response:
+def export_to_pdf(data: list[dict[str, Any]], filename_base: str = "export") -> Response:
     """Exportar datos a PDF (actualmente no implementado, devuelve CSV)"""
     # TODO: Implementar exportación a PDF
     return export_to_csv(data, filename_base)
 
-def export_to_json(data: List[Dict[str, Any]], filename_base: str = "export") -> Response:
+def export_to_json(data: list[dict[str, Any]], filename_base: str = "export") -> Response:
     """Exportar datos a JSON"""
     return get_export_utils().export_to_json(data, filename_base)
 

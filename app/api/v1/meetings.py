@@ -8,7 +8,7 @@ from flask import Blueprint, request, jsonify, current_app, url_for
 from flask_login import login_required, current_user
 from marshmallow import Schema, fields, validate, ValidationError, post_load
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional, Union
 import uuid
 from werkzeug.exceptions import BadRequest, NotFound, Forbidden, Conflict
 from dateutil import parser as date_parser
@@ -102,7 +102,7 @@ class MeetingCreateSchema(Schema):
             raise ValidationException("La duración de la reunión no puede exceder 8 horas")
         
         # Validar que la reunión sea en el futuro (al menos 5 minutos)
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if start < now + timedelta(minutes=5):
             raise ValidationException("La reunión debe programarse al menos 5 minutos en el futuro")
         
@@ -594,7 +594,7 @@ def update_meeting(meeting_id: uuid.UUID):
             if hasattr(meeting, field):
                 setattr(meeting, field, value)
         
-        meeting.updated_at = datetime.utcnow()
+        meeting.updated_at = datetime.now(timezone.utc)
         
         # Actualizar evento de calendario si existe
         if meeting.calendar_event_id:
@@ -682,7 +682,7 @@ def cancel_meeting(meeting_id: uuid.UUID):
         meeting.status = 'cancelled'
         meeting.cancellation_reason = reason
         meeting.cancelled_by = current_user.id
-        meeting.cancelled_at = datetime.utcnow()
+        meeting.cancelled_at = datetime.now(timezone.utc)
         
         # Cancelar evento de calendario
         if meeting.calendar_event_id:
@@ -750,7 +750,7 @@ def join_meeting(meeting_id: uuid.UUID):
             raise BadRequest("La reunión ya ha terminado")
         
         # Verificar tiempo de la reunión
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if now < meeting.start_time - timedelta(minutes=15):
             raise BadRequest("La reunión aún no está disponible para unirse")
         
@@ -776,7 +776,7 @@ def join_meeting(meeting_id: uuid.UUID):
             'meeting_url': meeting.meeting_url,
             'meeting_password': meeting.password,
             'platform': meeting.platform,
-            'joined_at': datetime.utcnow().isoformat(),
+            'joined_at': datetime.now(timezone.utc).isoformat(),
             'attendees_count': len(meeting.current_attendees)
         }
         
@@ -839,7 +839,7 @@ def leave_meeting(meeting_id: uuid.UUID):
             len(meeting.current_attendees) <= 1 and 
             meeting.status == 'in_progress'):
             meeting.status = 'completed'
-            meeting.ended_at = datetime.utcnow()
+            meeting.ended_at = datetime.now(timezone.utc)
         
         db.session.commit()
         
@@ -848,7 +848,7 @@ def leave_meeting(meeting_id: uuid.UUID):
         
         return {
             'message': 'Has salido de la reunión',
-            'left_at': datetime.utcnow().isoformat()
+            'left_at': datetime.now(timezone.utc).isoformat()
         }, 200
         
     except (NotFound, BadRequest) as e:
@@ -1274,7 +1274,7 @@ def get_upcoming_meetings():
         days_ahead = int(request.args.get('days', 7))
         
         # Calcular rango de fechas
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         end_date = now + timedelta(days=days_ahead)
         
         # Obtener reuniones próximas del usuario
@@ -1353,7 +1353,7 @@ def get_meeting_statistics():
         return {
             'statistics': stats,
             'period': period,
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         }, 200
         
     except Exception as e:
@@ -1389,10 +1389,10 @@ def _check_organizer_availability(
 
 
 def _check_attendees_availability(
-    attendees: List[Dict], 
+    attendees: list[Dict], 
     start_time: datetime, 
     end_time: datetime
-) -> List[Dict]:
+) -> list[Dict]:
     """Verificar disponibilidad de asistentes"""
     unavailable = []
     
@@ -1430,7 +1430,7 @@ def _get_user_conflicts(
     user_id: uuid.UUID, 
     start_time: datetime, 
     end_time: datetime
-) -> List[Dict]:
+) -> list[Dict]:
     """Obtener conflictos de horario de un usuario"""
     conflicts = Meeting.query.filter(
         Meeting.attendees.any(User.id == user_id),
@@ -1486,7 +1486,7 @@ def _has_significant_changes(update_data: Dict) -> bool:
 
 def _calculate_time_until_start(start_time: datetime) -> Dict:
     """Calcular tiempo hasta el inicio de la reunión"""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     delta = start_time - now
     
     if delta.total_seconds() < 0:
@@ -1507,7 +1507,7 @@ def _calculate_time_until_start(start_time: datetime) -> Dict:
 
 def _can_join_meeting(meeting: Meeting, user: User) -> bool:
     """Verificar si el usuario puede unirse a la reunión"""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     # Verificar tiempo (15 minutos antes hasta 30 minutos después)
     start_buffer = meeting.start_time - timedelta(minutes=15)

@@ -9,7 +9,7 @@ Autor: Gemini Code Assist
 
 from flask_login import current_user
 from sqlalchemy import func, desc
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.extensions import db
 from app.models import Project, Meeting, Task, ActivityLog
@@ -46,7 +46,7 @@ class DashboardService:
         # Próximas reuniones
         upcoming_meetings = Meeting.query.filter(
             Meeting.organizer_id == user.id,
-            Meeting.scheduled_for >= datetime.utcnow()
+            Meeting.scheduled_for >= datetime.now(timezone.utc)
         ).order_by(Meeting.scheduled_for.asc()).limit(3).all()
 
         # Tareas pendientes

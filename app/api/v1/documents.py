@@ -11,7 +11,7 @@ from werkzeug.exceptions import BadRequest, NotFound, Forbidden
 from marshmallow import Schema, fields, validate, ValidationError
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import selectinload
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import uuid
 import mimetypes
@@ -537,7 +537,7 @@ def update_document(document_id: int):
         if 'status' in data and current_user.is_admin():
             document.status = DocumentStatus(data['status'])
         
-        document.updated_at = datetime.utcnow()
+        document.updated_at = datetime.now(timezone.utc)
         
         db.session.commit()
         

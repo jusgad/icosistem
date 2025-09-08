@@ -126,9 +126,9 @@ class EmailTracking(CompleteBaseModel):
     
     def add_open(self, user_agent=None, ip_address=None, **kwargs):
         """Record an email open event."""
-        from datetime import datetime
+        from datetime import datetime, timezone
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         if not self.opened_at:
             self.opened_at = now
@@ -156,7 +156,7 @@ class EmailTracking(CompleteBaseModel):
         """Record a link click event."""
         from datetime import datetime
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         if not self.clicked_at:
             self.clicked_at = now

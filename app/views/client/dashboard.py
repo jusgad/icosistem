@@ -16,7 +16,7 @@ Tipos de cliente soportados:
 """
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 from decimal import Decimal
 
@@ -469,7 +469,7 @@ def save_customization():
             'widgets': valid_widgets,
             'layout': layout_config,
             'refresh_interval': refresh_interval,
-            'updated_at': datetime.utcnow().isoformat()
+            'updated_at': datetime.now(timezone.utc).isoformat()
         }
         
         _save_user_widget_config(current_user, config_data)
@@ -516,7 +516,7 @@ def export():
             'start_date': start_date,
             'end_date': end_date,
             'include_charts': include_charts,
-            'generated_at': datetime.utcnow(),
+            'generated_at': datetime.now(timezone.utc),
             'generated_by': current_user.name if current_user.is_authenticated else 'Cliente',
             'dashboard_data': _generate_dashboard_data(client_type, start_date, end_date)
         }
@@ -530,11 +530,11 @@ def export():
         # Generar archivo según formato
         if format_type == 'excel':
             file_path = generate_dashboard_report_excel(export_data)
-            filename = f'dashboard_reporte_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.xlsx'
+            filename = f'dashboard_reporte_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.xlsx'
             mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         else:  # PDF por defecto
             file_path = generate_dashboard_report_pdf(export_data)
-            filename = f'dashboard_reporte_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.pdf'
+            filename = f'dashboard_reporte_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.pdf'
             mimetype = 'application/pdf'
         
         from flask import send_file
@@ -576,7 +576,7 @@ def api_widget_data(widget_name):
             'widget': widget_name,
             'data': widget_data,
             'period': period,
-            'last_updated': datetime.utcnow().isoformat()
+            'last_updated': datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:

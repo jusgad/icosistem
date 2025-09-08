@@ -5,7 +5,7 @@ Este módulo define la clase Ally que extiende User con funcionalidades específ
 
 import logging
 from datetime import datetime, timedelta, time
-from typing import List, Dict, Any, Optional, Union
+from typing import Any, Optional, Union
 from decimal import Decimal
 from flask import current_app
 from sqlalchemy import Column, String, Boolean, DateTime, Integer, Text, ForeignKey, Numeric, Time, event
@@ -321,7 +321,7 @@ class Ally(User):
     def years_in_ecosystem(self):
         """Años como aliado en el ecosistema."""
         if self.joined_as_ally_at:
-            delta = datetime.utcnow() - self.joined_as_ally_at
+            delta = datetime.now(timezone.utc) - self.joined_as_ally_at
             return round(delta.days / 365.25, 1)
         return 0
     
@@ -417,7 +417,7 @@ class Ally(User):
     # ====================================
     
     def accept_mentee(self, entrepreneur_id: str, 
-                     mentorship_areas: List[str] = None) -> 'Mentorship':
+                     mentorship_areas: list[str] = None) -> 'Mentorship':
         """
         Aceptar un emprendedor como mentee.
         
@@ -455,7 +455,7 @@ class Ally(User):
                 entrepreneur_id=entrepreneur_id,
                 focus_areas=mentorship_areas or [],
                 status='active',
-                start_date=datetime.utcnow()
+                start_date=datetime.now(timezone.utc)
             )
             
             mentorship.save()
@@ -509,7 +509,7 @@ class Ally(User):
             
             # Completar mentoría
             mentorship.status = 'completed'
-            mentorship.end_date = datetime.utcnow()
+            mentorship.end_date = datetime.now(timezone.utc)
             mentorship.completion_notes = completion_notes
             
             if success_rating:
@@ -518,7 +518,7 @@ class Ally(User):
             # Actualizar métricas del aliado
             self.current_mentees = max(0, self.current_mentees - 1)
             self.completed_mentorship_programs += 1
-            self.last_mentorship_activity = datetime.utcnow()
+            self.last_mentorship_activity = datetime.now(timezone.utc)
             
             # Calcular horas totales si hay sesiones
             total_hours = sum(session.duration_minutes or 60 
@@ -576,7 +576,7 @@ class Ally(User):
         except Exception:
             return None
     
-    def get_mentorship_statistics(self) -> Dict[str, Any]:
+    def get_mentorship_statistics(self) -> dict[str, Any]:
         """Obtener estadísticas detalladas de mentoría."""
         try:
             stats = {
@@ -619,7 +619,7 @@ class Ally(User):
     # MÉTODOS DE HORARIOS Y DISPONIBILIDAD
     # ====================================
     
-    def set_availability_schedule(self, schedule: Dict[str, Any]):
+    def set_availability_schedule(self, schedule: dict[str, Any]):
         """
         Establecer horarios de disponibilidad.
         
@@ -691,7 +691,7 @@ class Ally(User):
             return False
     
     def get_available_slots(self, start_date: datetime, end_date: datetime,
-                           duration_minutes: int = 60) -> List[Dict[str, Any]]:
+                           duration_minutes: int = 60) -> list[dict[str, Any]]:
         """
         Obtener slots disponibles en un rango de fechas.
         
@@ -735,7 +735,7 @@ class Ally(User):
             return []
     
     def _generate_day_slots(self, date: datetime.date, start_time: str, 
-                           end_time: str, duration_minutes: int) -> List[Dict[str, Any]]:
+                           end_time: str, duration_minutes: int) -> list[dict[str, Any]]:
         """Generar slots para un día específico."""
         slots = []
         
@@ -784,7 +784,7 @@ class Ally(User):
     # MÉTODOS DE PROGRAMAS Y CONTENIDO
     # ====================================
     
-    def create_program(self, program_data: Dict[str, Any]) -> 'Program':
+    def create_program(self, program_data: dict[str, Any]) -> 'Program':
         """
         Crear nuevo programa de mentoría/capacitación.
         
@@ -825,7 +825,7 @@ class Ally(User):
         """Obtener programas creados por el aliado."""
         return self.programs_created_rel.all()
     
-    def schedule_workshop(self, workshop_data: Dict[str, Any]) -> bool:
+    def schedule_workshop(self, workshop_data: dict[str, Any]) -> bool:
         """
         Programar un taller.
         
@@ -864,7 +864,7 @@ class Ally(User):
             ally_logger.error(f"Error scheduling workshop: {str(e)}")
             return False
     
-    def contribute_content(self, content_type: str, content_data: Dict[str, Any]) -> bool:
+    def contribute_content(self, content_type: str, content_data: dict[str, Any]) -> bool:
         """
         Contribuir contenido al ecosistema.
         
@@ -887,7 +887,7 @@ class Ally(User):
             contributions.append({
                 'type': content_type,
                 'title': content_data.get('title'),
-                'created_at': datetime.utcnow().isoformat(),
+                'created_at': datetime.now(timezone.utc).isoformat(),
                 'data': content_data
             })
             self.set_metadata('content_contributions', contributions)
@@ -903,7 +903,7 @@ class Ally(User):
     # MÉTODOS DE ANÁLISIS Y REPORTES
     # ====================================
     
-    def get_mentor_dashboard_data(self) -> Dict[str, Any]:
+    def get_mentor_dashboard_data(self) -> dict[str, Any]:
         """
         Obtener datos para el dashboard del mentor.
         
@@ -948,14 +948,14 @@ class Ally(User):
             ally_logger.error(f"Error getting mentor dashboard data: {str(e)}")
             return {'error': str(e)}
     
-    def _get_upcoming_sessions(self) -> List[Dict[str, Any]]:
+    def _get_upcoming_sessions(self) -> list[dict[str, Any]]:
         """Obtener próximas sesiones programadas."""
         try:
             from .meeting import Meeting
             
             upcoming = Meeting.query.filter(
                 Meeting.organizer_id == self.id,
-                Meeting.start_time > datetime.utcnow(),
+                Meeting.start_time > datetime.now(timezone.utc),
                 Meeting.status == 'scheduled'
             ).order_by(Meeting.start_time.asc()).limit(5).all()
             
@@ -976,14 +976,14 @@ class Ally(User):
             ally_logger.error(f"Error getting upcoming sessions: {str(e)}")
             return []
     
-    def _get_current_month_stats(self) -> Dict[str, Any]:
+    def _get_current_month_stats(self) -> dict[str, Any]:
         """Obtener estadísticas del mes actual."""
         try:
             from .meeting import Meeting
             from .activity_log import ActivityLog
             
             # Primer día del mes actual
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             
             # Sesiones completadas este mes
@@ -1018,7 +1018,7 @@ class Ally(User):
             ally_logger.error(f"Error getting current month stats: {str(e)}")
             return {}
     
-    def _get_recent_achievements(self) -> List[Dict[str, Any]]:
+    def _get_recent_achievements(self) -> list[dict[str, Any]]:
         """Obtener logros recientes."""
         try:
             achievements = []
@@ -1072,7 +1072,7 @@ class Ally(User):
             ally_logger.error(f"Error getting recent achievements: {str(e)}")
             return []
     
-    def generate_mentorship_report(self, period_months: int = 6) -> Dict[str, Any]:
+    def generate_mentorship_report(self, period_months: int = 6) -> dict[str, Any]:
         """
         Generar reporte de mentoría para un período específico.
         
@@ -1087,7 +1087,7 @@ class Ally(User):
             from .meeting import Meeting
             
             # Calcular fechas
-            end_date = datetime.utcnow()
+            end_date = datetime.now(timezone.utc)
             start_date = end_date - timedelta(days=period_months * 30)
             
             # Obtener mentorías del período
@@ -1170,13 +1170,13 @@ class Ally(User):
         if mentorship.end_date:
             return (mentorship.end_date - mentorship.start_date).days
         else:
-            return (datetime.utcnow() - mentorship.start_date).days
+            return (datetime.now(timezone.utc) - mentorship.start_date).days
     
     # ====================================
     # MÉTODOS DE MATCHING Y RECOMENDACIONES
     # ====================================
     
-    def get_recommended_mentees(self, limit: int = 5) -> List[Dict[str, Any]]:
+    def get_recommended_mentees(self, limit: int = 5) -> list[dict[str, Any]]:
         """
         Obtener emprendedores recomendados para mentorear.
         
@@ -1256,7 +1256,7 @@ class Ally(User):
         
         return min(score, 1.0)
     
-    def _get_matching_reasons(self, entrepreneur) -> List[str]:
+    def _get_matching_reasons(self, entrepreneur) -> list[str]:
         """Obtener razones de compatibilidad con un emprendedor."""
         reasons = []
         
@@ -1325,14 +1325,14 @@ class Ally(User):
         
         # Establecer fecha de ingreso como aliado
         if not self.joined_as_ally_at:
-            self.joined_as_ally_at = datetime.utcnow()
+            self.joined_as_ally_at = datetime.now(timezone.utc)
     
     # ====================================
     # MÉTODOS DE SERIALIZACIÓN
     # ====================================
     
     def to_dict(self, include_sensitive: bool = False, include_relationships: bool = False,
-                exclude_fields: List[str] = None, public_view: bool = False) -> Dict[str, Any]:
+                exclude_fields: list[str] = None, public_view: bool = False) -> dict[str, Any]:
         """
         Convertir ally a diccionario.
         
@@ -1383,7 +1383,7 @@ class Ally(User):
         data.update(ally_data)
         return data
     
-    def to_mentor_profile(self) -> Dict[str, Any]:
+    def to_mentor_profile(self) -> dict[str, Any]:
         """Convertir a perfil de mentor para directorio público."""
         return {
             'id': str(self.id),
@@ -1446,7 +1446,7 @@ class Ally(User):
         ).order_by(cls.overall_mentor_score.desc()).all()
     
     @classmethod
-    def get_ally_stats(cls) -> Dict[str, Any]:
+    def get_ally_stats(cls) -> dict[str, Any]:
         """Obtener estadísticas de aliados."""
         try:
             total_allies = cls.query.filter_by(is_active=True).count()
@@ -1523,12 +1523,12 @@ def set_ally_defaults(mapper, connection, target):
     
     # Establecer fecha de ingreso como aliado
     if not target.joined_as_ally_at:
-        target.joined_as_ally_at = datetime.utcnow()
+        target.joined_as_ally_at = datetime.now(timezone.utc)
     
     # Establecer fecha de inicio de mentoría si tiene experiencia
     if target.years_mentoring_experience > 0 and not target.started_mentoring_at:
         years_ago = target.years_mentoring_experience
-        target.started_mentoring_at = datetime.utcnow() - timedelta(days=years_ago * 365)
+        target.started_mentoring_at = datetime.now(timezone.utc) - timedelta(days=years_ago * 365)
 
 
 @event.listens_for(Ally, 'before_update')
@@ -1541,7 +1541,7 @@ def update_ally_fields(mapper, connection, target):
     if session.is_modified(target):
         for field in mentorship_fields:
             if session.is_modified(target, field):
-                target.last_mentorship_activity = datetime.utcnow()
+                target.last_mentorship_activity = datetime.now(timezone.utc)
                 break
 
 
@@ -1567,7 +1567,7 @@ def ally_created_actions(mapper, connection, target):
 # ====================================
 
 def find_mentors_for_entrepreneur(entrepreneur_id: str, 
-                                 max_results: int = 5) -> List[Dict[str, Any]]:
+                                 max_results: int = 5) -> list[dict[str, Any]]:
     """
     Encontrar mentores compatibles para un emprendedor específico.
     
@@ -1612,8 +1612,8 @@ def find_mentors_for_entrepreneur(entrepreneur_id: str,
         return []
 
 
-def generate_mentor_directory(filters: Dict[str, Any] = None,
-                             page: int = 1, per_page: int = 20) -> Dict[str, Any]:
+def generate_mentor_directory(filters: dict[str, Any] = None,
+                             page: int = 1, per_page: int = 20) -> dict[str, Any]:
     """
     Generar directorio público de mentores.
     
@@ -1729,7 +1729,7 @@ def generate_mentor_directory(filters: Dict[str, Any] = None,
         return {'error': str(e)}
 
 
-def calculate_mentor_rankings() -> Dict[str, Any]:
+def calculate_mentor_rankings() -> dict[str, Any]:
     """
     Calcular rankings de mentores basado en métricas de performance.
     
@@ -1837,7 +1837,7 @@ def calculate_mentor_rankings() -> Dict[str, Any]:
         return {'error': str(e)}
 
 
-def analyze_mentorship_network() -> Dict[str, Any]:
+def analyze_mentorship_network() -> dict[str, Any]:
     """
     Analizar la red de mentoría del ecosistema.
     
@@ -2000,7 +2000,7 @@ Este módulo define la clase Ally que extiende User con funcionalidades específ
 
 import logging
 from datetime import datetime, timedelta, time
-from typing import List, Dict, Any, Optional, Union
+from typing import Any, Optional, Union
 from decimal import Decimal
 from flask import current_app
 from sqlalchemy import Column, String, Boolean, DateTime, Integer, Text, ForeignKey, Numeric, Time, event

@@ -12,7 +12,7 @@ Version: 1.0.0
 import time
 import logging
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Callable, Any, Dict
 
 from flask import request, jsonify, current_app, g
@@ -170,7 +170,7 @@ def api_response(func):
                 response_data = {
                     'success': True,
                     'data': data,
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }
                 return jsonify(response_data), status_code
             elif isinstance(result, dict) and 'error' in result: # Ya es una respuesta de error formateada
@@ -183,7 +183,7 @@ def api_response(func):
                 return jsonify({
                     'success': True,
                     'data': result,
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }), 200
         except ValidationError as e:
             logger.warning(f"ValidationError en {func.__name__}: {e}")
@@ -192,7 +192,7 @@ def api_response(func):
                 'error': 'Validation Error',
                 'message': str(e),
                 'details': getattr(e, 'details', None),
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }), 400
         except Exception as e:
             logger.error(f"Error inesperado en API endpoint {func.__name__}: {e}", exc_info=True)
@@ -200,7 +200,7 @@ def api_response(func):
                 'success': False,
                 'error': 'Internal Server Error',
                 'message': 'Ocurrió un error inesperado.',
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }), 500
     return wrapper
 

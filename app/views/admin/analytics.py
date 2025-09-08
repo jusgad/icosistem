@@ -11,7 +11,7 @@ Fecha: 2025
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 import json
 import pandas as pd
@@ -773,7 +773,7 @@ def api_get_kpis():
         return jsonify({
             'success': True,
             'data': kpis,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'date_range': {
                 'start': start_date.isoformat(),
                 'end': end_date.isoformat()
@@ -815,7 +815,7 @@ def api_get_chart_data(chart_type):
             'success': True,
             'chart_type': chart_type,
             'data': data,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:
@@ -836,7 +836,7 @@ def api_realtime_metrics():
         return jsonify({
             'success': True,
             'data': metrics,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:
@@ -1092,7 +1092,7 @@ def _get_attention_items_summary():
         'inactive_users': User.query.filter(
             and_(
                 User.is_active == True,
-                User.last_login < datetime.utcnow() - timedelta(days=30)
+                User.last_login < datetime.now(timezone.utc) - timedelta(days=30)
             )
         ).count(),
         
@@ -1103,7 +1103,7 @@ def _get_attention_items_summary():
 
 def _get_realtime_metrics():
     """Obtiene métricas en tiempo real."""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     last_hour = now - timedelta(hours=1)
     
     return {
@@ -1127,7 +1127,7 @@ def _get_realtime_metrics():
 
 def _calculate_monthly_active_users():
     """Calcula usuarios activos mensuales."""
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
     return User.query.filter(
         and_(
             User.is_active == True,
@@ -1138,8 +1138,8 @@ def _calculate_monthly_active_users():
 def _calculate_user_retention_rate():
     """Calcula tasa de retención de usuarios."""
     # Usuarios que se registraron hace 30 días
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-    sixty_days_ago = datetime.utcnow() - timedelta(days=60)
+    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
+    sixty_days_ago = datetime.now(timezone.utc) - timedelta(days=60)
     
     cohort_users = User.query.filter(
         and_(
@@ -1270,7 +1270,7 @@ def _count_active_entrepreneurs():
     return Entrepreneur.query.join(User).filter(
         and_(
             User.is_active == True,
-            User.last_login >= datetime.utcnow() - timedelta(days=30)
+            User.last_login >= datetime.now(timezone.utc) - timedelta(days=30)
         )
     ).count()
 
@@ -1295,7 +1295,7 @@ def _calculate_program_effectiveness_score():
 
 def _get_comprehensive_realtime_metrics():
     """Obtiene métricas comprehensivas en tiempo real."""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     return {
         'timestamp': now.isoformat(),
@@ -1331,7 +1331,7 @@ def _get_active_alerts():
         alerts.append({
             'type': 'critical',
             'message': 'Alta carga de CPU detectada',
-            'timestamp': datetime.utcnow(),
+            'timestamp': datetime.now(timezone.utc),
             'action_required': True
         })
     
@@ -1341,7 +1341,7 @@ def _get_active_alerts():
         alerts.append({
             'type': 'warning',
             'message': f'Alta tasa de usuarios inactivos: {inactive_rate:.1f}%',
-            'timestamp': datetime.utcnow(),
+            'timestamp': datetime.now(timezone.utc),
             'action_required': False
         })
     
@@ -1365,7 +1365,7 @@ def _prepare_export_data(export_type, start_date, end_date):
             'growth_metrics': _get_growth_metrics(start_date, end_date),
             'financial_overview': _get_financial_overview(start_date, end_date),
             'export_metadata': {
-                'generated_at': datetime.utcnow().isoformat(),
+                'generated_at': datetime.now(timezone.utc).isoformat(),
                 'period': f"{start_date.isoformat()} to {end_date.isoformat()}",
                 'generated_by': current_user.email
             }
@@ -1384,7 +1384,7 @@ def _prepare_export_data(export_type, start_date, end_date):
 def _count_currently_active_users():
     """Cuenta usuarios actualmente activos (simulado)."""
     return User.query.filter(
-        User.last_login >= datetime.utcnow() - timedelta(minutes=15)
+        User.last_login >= datetime.now(timezone.utc) - timedelta(minutes=15)
     ).count()
 
 def _get_system_load_metric():
@@ -1427,7 +1427,7 @@ def _calculate_inactive_user_rate():
     inactive_users = User.query.filter(
         and_(
             User.is_active == True,
-            User.last_login < datetime.utcnow() - timedelta(days=30)
+            User.last_login < datetime.now(timezone.utc) - timedelta(days=30)
         )
     ).count()
     
@@ -1435,11 +1435,11 @@ def _calculate_inactive_user_rate():
 
 # Funciones adicionales simuladas para completar la funcionalidad
 def _count_new_registrations_last_hour():
-    last_hour = datetime.utcnow() - timedelta(hours=1)
+    last_hour = datetime.now(timezone.utc) - timedelta(hours=1)
     return User.query.filter(User.created_at >= last_hour).count()
 
 def _count_meetings_in_progress():
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     return Meeting.query.filter(
         and_(
             Meeting.scheduled_for <= now,
@@ -1448,7 +1448,7 @@ def _count_meetings_in_progress():
     ).count()
 
 def _count_documents_uploaded_last_hour():
-    last_hour = datetime.utcnow() - timedelta(hours=1)
+    last_hour = datetime.now(timezone.utc) - timedelta(hours=1)
     return Document.query.filter(Document.uploaded_at >= last_hour).count()
 
 def _count_page_views_last_hour():

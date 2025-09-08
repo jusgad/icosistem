@@ -10,7 +10,7 @@ Version: 2.0.0
 
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Any, Union
+from typing import Optional, Any, Union
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import joinedload
@@ -76,7 +76,7 @@ class UserService(BaseService):
 
     # ==================== MÉTODOS DE CREACIÓN ====================
 
-    def create_user(self, user_data: Dict[str, Any], user_type: str) -> Union[User, Admin, Entrepreneur, Ally, Client]:
+    def create_user(self, user_data: dict[str, Any], user_type: str) -> Union[User, Admin, Entrepreneur, Ally, Client]:
         """
         Crea un nuevo usuario en el sistema.
         
@@ -141,7 +141,7 @@ class UserService(BaseService):
             logger.error(f"Error creando usuario: {str(e)}")
             raise ServiceError(f"Error interno creando usuario: {str(e)}")
 
-    def _create_user_by_type(self, data: Dict[str, Any], user_type: str) -> Union[Admin, Entrepreneur, Ally, Client]:
+    def _create_user_by_type(self, data: dict[str, Any], user_type: str) -> Union[Admin, Entrepreneur, Ally, Client]:
         """Crea usuario específico según el tipo."""
         user_classes = {
             'admin': Admin,
@@ -158,7 +158,7 @@ class UserService(BaseService):
 
     # ==================== MÉTODOS DE AUTENTICACIÓN ====================
 
-    def authenticate_user(self, email: str, password: str, remember_me: bool = False) -> Tuple[User, str]:
+    def authenticate_user(self, email: str, password: str, remember_me: bool = False) -> tuple[User, str]:
         """
         Autentica un usuario con email y contraseña.
         
@@ -185,8 +185,8 @@ class UserService(BaseService):
             
             # Verificar si la cuenta está bloqueada
             if user.is_locked:
-                if user.locked_until and datetime.utcnow() < user.locked_until:
-                    remaining = user.locked_until - datetime.utcnow()
+                if user.locked_until and datetime.now(timezone.utc) < user.locked_until:
+                    remaining = user.locked_until - datetime.now(timezone.utc)
                     raise AuthenticationError(f"Cuenta bloqueada. Intenta en {remaining.seconds // 60} minutos")
                 else:
                     # Desbloquear cuenta si el tiempo expiró
@@ -221,11 +221,11 @@ class UserService(BaseService):
     def _handle_failed_login(self, user: User) -> None:
         """Maneja intentos fallidos de login."""
         user.failed_login_attempts += 1
-        user.last_failed_login = datetime.utcnow()
+        user.last_failed_login = datetime.now(timezone.utc)
         
         if user.failed_login_attempts >= self.max_login_attempts:
             user.is_locked = True
-            user.locked_until = datetime.utcnow() + timedelta(minutes=self.lockout_duration)
+            user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=self.lockout_duration)
             
             # Notificar al usuario
             self.notification_service.create_notification(
@@ -239,7 +239,7 @@ class UserService(BaseService):
 
     def _handle_successful_login(self, user: User, remember_me: bool) -> None:
         """Maneja login exitoso."""
-        user.last_login = datetime.utcnow()
+        user.last_login = datetime.now(timezone.utc)
         user.failed_login_attempts = 0
         user.is_locked = False
         user.locked_until = None
@@ -247,7 +247,7 @@ class UserService(BaseService):
         
         if remember_me:
             user.remember_token = generate_secure_token()
-            user.remember_token_expires = datetime.utcnow() + timedelta(days=30)
+            user.remember_token_expires = datetime.now(timezone.utc) + timedelta(days=30)
         
         db.session.commit()
         
@@ -280,7 +280,7 @@ class UserService(BaseService):
             # Generar token de reset
             reset_token = generate_secure_token()
             user.reset_token = reset_token
-            user.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
+            user.reset_token_expires = datetime.now(timezone.utc) + timedelta(hours=1)
             
             db.session.commit()
             
@@ -323,14 +323,14 @@ class UserService(BaseService):
             
             # Buscar usuario por token
             user = User.query.filter_by(reset_token=token).first()
-            if not user or not user.reset_token_expires or datetime.utcnow() > user.reset_token_expires:
+            if not user or not user.reset_token_expires or datetime.now(timezone.utc) > user.reset_token_expires:
                 raise ValidationError("Token de reset inválido o expirado")
             
             # Actualizar contraseña
             user.password_hash = generate_password_hash(new_password)
             user.reset_token = None
             user.reset_token_expires = None
-            user.password_changed_at = datetime.utcnow()
+            user.password_changed_at = datetime.now(timezone.utc)
             
             # Reset de intentos fallidos
             user.failed_login_attempts = 0
@@ -422,7 +422,7 @@ class UserService(BaseService):
                     page: int = 1,
                     per_page: int = 20,
                     sort_by: str = 'created_at',
-                    sort_order: str = 'desc') -> Dict[str, Any]:
+                    sort_order: str = 'desc') -> dict[str, Any]:
         """
         Búsqueda avanzada de usuarios.
         
@@ -507,7 +507,7 @@ class UserService(BaseService):
 
     # ==================== MÉTODOS DE ACTUALIZACIÓN ====================
 
-    def update_user(self, user_id: int, update_data: Dict[str, Any], updated_by: int = None) -> User:
+    def update_user(self, user_id: int, update_data: dict[str, Any], updated_by: int = None) -> User:
         """
         Actualiza un usuario.
         
@@ -548,7 +548,7 @@ class UserService(BaseService):
                     setattr(user, field, value)
                     changes.append(f"{field}: {old_value} -> {value}")
             
-            user.updated_at = datetime.utcnow()
+            user.updated_at = datetime.now(timezone.utc)
             db.session.commit()
             
             # Log de actividad
@@ -604,7 +604,7 @@ class UserService(BaseService):
             
             # Actualizar contraseña
             user.password_hash = generate_password_hash(new_password)
-            user.password_changed_at = datetime.utcnow()
+            user.password_changed_at = datetime.now(timezone.utc)
             db.session.commit()
             
             # Notificación
@@ -654,7 +654,7 @@ class UserService(BaseService):
                 return True  # Ya está en el estado deseado
             
             user.is_active = is_active
-            user.updated_at = datetime.utcnow()
+            user.updated_at = datetime.now(timezone.utc)
             
             if not is_active:
                 # Si se desactiva, también deslogear
@@ -696,7 +696,7 @@ class UserService(BaseService):
 
     # ==================== MÉTODOS DE ESTADÍSTICAS ====================
 
-    def get_user_statistics(self, date_from: datetime = None, date_to: datetime = None) -> Dict[str, Any]:
+    def get_user_statistics(self, date_from: datetime = None, date_to: datetime = None) -> dict[str, Any]:
         """
         Obtiene estadísticas de usuarios.
         
@@ -730,7 +730,7 @@ class UserService(BaseService):
             # Usuarios por mes (últimos 12 meses)
             monthly_stats = []
             for i in range(12):
-                month_start = datetime.utcnow().replace(day=1) - timedelta(days=30*i)
+                month_start = datetime.now(timezone.utc).replace(day=1) - timedelta(days=30*i)
                 month_end = month_start + timedelta(days=30)
                 
                 count = User.query.filter(
@@ -768,7 +768,7 @@ class UserService(BaseService):
 
     # ==================== MÉTODOS PRIVADOS ====================
 
-    def _validate_user_data(self, data: Dict[str, Any], is_creation: bool = False) -> None:
+    def _validate_user_data(self, data: dict[str, Any], is_creation: bool = False) -> None:
         """Valida los datos del usuario."""
         required_fields = ['email', 'first_name', 'last_name'] if is_creation else []
         
@@ -801,7 +801,7 @@ class UserService(BaseService):
             if len(data['last_name'].strip()) < 2:
                 raise ValidationError("Apellido debe tener al menos 2 caracteres")
 
-    def _prepare_user_data(self, data: Dict[str, Any], is_update: bool = False) -> Dict[str, Any]:
+    def _prepare_user_data(self, data: dict[str, Any], is_update: bool = False) -> dict[str, Any]:
         """Prepara y sanitiza los datos del usuario."""
         prepared = {}
         
@@ -832,7 +832,7 @@ class UserService(BaseService):
         
         # Campos de fecha
         if not is_update:
-            prepared['created_at'] = datetime.utcnow()
+            prepared['created_at'] = datetime.now(timezone.utc)
             prepared['is_active'] = True
             prepared['email_verification_token'] = generate_secure_token()
         
@@ -852,7 +852,7 @@ class UserService(BaseService):
 
     def _generate_session_token(self, user: User) -> str:
         """Genera token de sesión seguro."""
-        token_data = f"{user.id}:{datetime.utcnow().isoformat()}:{secrets.token_hex(16)}"
+        token_data = f"{user.id}:{datetime.now(timezone.utc).isoformat()}:{secrets.token_hex(16)}"
         return encrypt_sensitive_data(token_data)
 
     def _log_activity(self, user_id: int, activity_type: str, details: str, performed_by: int = None) -> None:
@@ -865,7 +865,7 @@ class UserService(BaseService):
                 performed_by=performed_by or user_id,
                 ip_address=self._get_client_ip(),
                 user_agent=self._get_user_agent(),
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             db.session.add(activity)
             db.session.commit()
@@ -892,7 +892,7 @@ class UserService(BaseService):
             Número de tokens limpiados
         """
         try:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             
             # Reset tokens expirados
             reset_count = User.query.filter(
@@ -948,7 +948,7 @@ class UserService(BaseService):
             
             # Soft delete - marcar como eliminado
             user.is_active = False
-            user.deleted_at = datetime.utcnow()
+            user.deleted_at = datetime.now(timezone.utc)
             user.deleted_by = deleted_by
             user.deletion_reason = reason
             

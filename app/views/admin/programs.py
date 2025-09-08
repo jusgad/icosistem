@@ -11,7 +11,7 @@ Fecha: 2025
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from flask import (
     Blueprint, render_template, request, jsonify, flash, redirect, 
@@ -479,7 +479,7 @@ def edit_program(program_id):
             program.application_url = form.application_url.data.strip() if form.application_url.data else None
             program.is_featured = form.is_featured.data
             program.is_public = form.is_public.data
-            program.updated_at = datetime.utcnow()
+            program.updated_at = datetime.now(timezone.utc)
             
             # Recalcular métricas si cambió el status
             if old_values['status'] != program.status:
@@ -825,7 +825,7 @@ def evaluate_program(program_id):
                 'notes': form.notes.data.strip() if form.notes.data else None,
                 'recommendations': form.recommendations.data.strip() if form.recommendations.data else None,
                 'evaluator_id': current_user.id,
-                'evaluation_date': datetime.utcnow()
+                'evaluation_date': datetime.now(timezone.utc)
             }
             
             # Calcular score promedio
@@ -838,7 +838,7 @@ def evaluate_program(program_id):
             
             # Actualizar programa
             program.evaluation_data = evaluation_data  # JSON field
-            program.last_evaluation_at = datetime.utcnow()
+            program.last_evaluation_at = datetime.now(timezone.utc)
             program.quality_score = total_score
             
             # Determinar nivel de calidad
@@ -1216,7 +1216,7 @@ def _get_program_detailed_metrics(program):
     entrepreneurs = program.entrepreneurs
     
     return {
-        'age_days': (datetime.utcnow() - program.created_at).days,
+        'age_days': (datetime.now(timezone.utc) - program.created_at).days,
         'participants_count': len(entrepreneurs),
         'capacity_utilization': (len(entrepreneurs) / program.max_participants * 100) if program.max_participants else 0,
         'cohorts_count': len(program.cohorts),
@@ -1413,7 +1413,7 @@ def _generate_program_recommendations(program):
         })
     
     # Recomendaciones basadas en fechas
-    if program.start_date and program.start_date < datetime.utcnow().date() and program.status == 'upcoming':
+    if program.start_date and program.start_date < datetime.now(timezone.utc).date() and program.status == 'upcoming':
         recommendations.append({
             'type': 'status',
             'priority': 'high',
@@ -1502,7 +1502,7 @@ def _recalculate_program_metrics(program):
 def _finalize_program(program):
     """Finaliza un programa calculando métricas finales."""
     _recalculate_program_metrics(program)
-    program.completion_date = datetime.utcnow()
+    program.completion_date = datetime.now(timezone.utc)
     
     # Generar certificados si aplica
     if program.certificate_offered:

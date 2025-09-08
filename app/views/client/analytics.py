@@ -23,10 +23,10 @@ Tipos de analytics por cliente:
 import json
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict, OrderedDict
 from dataclasses import dataclass, asdict
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Any, Optional
 from scipy import stats
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
@@ -195,10 +195,10 @@ ANALYTICS_WIDGETS = {
 @dataclass
 class AnalyticsQuery:
     """Configuración de consulta de analytics."""
-    metrics: List[str]
-    dimensions: List[str]
-    filters: Dict[str, Any]
-    date_range: Tuple[datetime, datetime]
+    metrics: list[str]
+    dimensions: list[str]
+    filters: dict[str, Any]
+    date_range: tuple[datetime, datetime]
     granularity: str  # daily, weekly, monthly
     aggregation: str  # sum, avg, count, etc.
 
@@ -207,10 +207,10 @@ class AnalyticsQuery:
 class MLPrediction:
     """Resultado de predicción de machine learning."""
     metric: str
-    predictions: List[float]
-    confidence_intervals: List[Tuple[float, float]]
+    predictions: list[float]
+    confidence_intervals: list[tuple[float, float]]
     model_accuracy: float
-    feature_importance: Dict[str, float]
+    feature_importance: dict[str, float]
 
 
 @client_analytics_bp.route('/')
@@ -889,9 +889,9 @@ def api_real_time_metrics():
         
         return jsonify({
             'success': True,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'metrics': current_values,
-            'next_update': (datetime.utcnow() + timedelta(
+            'next_update': (datetime.now(timezone.utc) + timedelta(
                 seconds=ANALYTICS_CONFIG['REAL_TIME_INTERVAL']
             )).isoformat()
         })
@@ -972,7 +972,7 @@ def handle_metric_update_request(data):
         emit('metric_updated', {
             'metric': metric,
             'value': current_value,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:
@@ -1076,7 +1076,7 @@ def _get_active_analytics_alerts(user_id):
             'metric': 'project_completion_rate',
             'message': 'Tasa de finalización de proyectos por debajo del umbral',
             'severity': 'warning',
-            'created_at': datetime.utcnow() - timedelta(hours=2),
+            'created_at': datetime.now(timezone.utc) - timedelta(hours=2),
             'threshold': 75,
             'current_value': 68
         }
@@ -1155,18 +1155,18 @@ def _build_analytics_query(query_data, permissions):
 
 def _execute_analytics_query(query, permissions):
     """Ejecuta consulta de analytics y retorna resultados."""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     # Simular ejecución de consulta
     # En producción, esto ejecutaría la consulta real contra la base de datos
     data = []
     for i in range(30):  # 30 días de datos simulados
-        row = {'date': (datetime.utcnow() - timedelta(days=i)).date().isoformat()}
+        row = {'date': (datetime.now(timezone.utc) - timedelta(days=i)).date().isoformat()}
         for metric in query.metrics:
             row[metric] = np.random.randint(1, 100)
         data.append(row)
     
-    execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+    execution_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
     
     return {
         'data': data,
@@ -1277,7 +1277,7 @@ def _count_active_projects():
 def _count_online_entrepreneurs():
     """Cuenta emprendedores activos recientemente."""
     # Actividad en las últimas 24 horas
-    cutoff = datetime.utcnow() - timedelta(hours=24)
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
     return (
         Entrepreneur.query
         .join(User)
@@ -1292,7 +1292,7 @@ def _count_online_entrepreneurs():
 def _count_recent_activities():
     """Cuenta actividades recientes del ecosistema."""
     # Actividades en las últimas 6 horas
-    cutoff = datetime.utcnow() - timedelta(hours=6)
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=6)
     return (
         AnalyticsEvent.query
         .filter(AnalyticsEvent.created_at >= cutoff)
@@ -1302,7 +1302,7 @@ def _count_recent_activities():
 
 def _get_revenue_today():
     """Obtiene ingresos generados hoy."""
-    today = datetime.utcnow().date()
+    today = datetime.now(timezone.utc).date()
     return (
         db.session.query(func.sum(Project.revenue_generated))
         .filter(
@@ -1318,7 +1318,7 @@ def _get_revenue_today():
 def _get_historical_data_for_prediction(metric, permissions):
     """Obtiene datos históricos para entrenar modelo predictivo."""
     # Implementación simplificada
-    return [{'value': np.random.randint(10, 100), 'date': datetime.utcnow() - timedelta(days=i)} for i in range(90)]
+    return [{'value': np.random.randint(10, 100), 'date': datetime.now(timezone.utc) - timedelta(days=i)} for i in range(90)]
 
 
 def _prepare_ml_data(historical_data):

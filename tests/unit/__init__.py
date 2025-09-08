@@ -49,7 +49,7 @@ import sys
 import time
 import uuid
 import decimal
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from typing import Dict, List, Any, Optional, Tuple, Callable, Union
 from unittest.mock import Mock, patch, MagicMock, PropertyMock
 from dataclasses import dataclass, field
@@ -298,7 +298,7 @@ class ModelTestMixin:
         # Validar timestamps si existen
         if hasattr(model_instance, 'created_at'):
             assert model_instance.created_at is not None, "created_at must be set"
-            assert model_instance.created_at <= datetime.utcnow(), "created_at cannot be in future"
+            assert model_instance.created_at <= datetime.now(timezone.utc), "created_at cannot be in future"
         
         if hasattr(model_instance, 'updated_at'):
             assert model_instance.updated_at is not None, "updated_at must be set"
@@ -355,7 +355,7 @@ class ModelTestMixin:
         assert meeting.duration_minutes <= BUSINESS_CONSTANTS['max_mentorship_hours'] * 60, "Duration too long"
         
         if hasattr(meeting, 'scheduled_at') and meeting.scheduled_at:
-            assert meeting.scheduled_at >= datetime.utcnow() - timedelta(days=365), "Scheduled time too far in past"
+            assert meeting.scheduled_at >= datetime.now(timezone.utc) - timedelta(days=365), "Scheduled time too far in past"
 
 
 class ServiceTestMixin:

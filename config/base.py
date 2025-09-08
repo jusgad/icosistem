@@ -22,7 +22,7 @@ Fecha: 2025
 import os
 import secrets
 from datetime import timedelta
-from typing import Dict, List, Optional, Any
+from typing import Optional, Any
 from urllib.parse import quote_plus
 
 
@@ -192,12 +192,14 @@ class BaseConfig:
     RATELIMIT_API = os.environ.get('RATELIMIT_API', '100 per minute')
     RATELIMIT_UPLOAD = os.environ.get('RATELIMIT_UPLOAD', '10 per minute')
     
-    # Configuración de passwords
-    PASSWORD_MIN_LENGTH = int(os.environ.get('PASSWORD_MIN_LENGTH', '8'))
+    # Configuración de passwords con seguridad mejorada
+    PASSWORD_MIN_LENGTH = int(os.environ.get('PASSWORD_MIN_LENGTH', '12'))
     PASSWORD_REQUIRE_UPPERCASE = os.environ.get('PASSWORD_REQUIRE_UPPERCASE', 'True').lower() == 'true'
     PASSWORD_REQUIRE_LOWERCASE = os.environ.get('PASSWORD_REQUIRE_LOWERCASE', 'True').lower() == 'true'
     PASSWORD_REQUIRE_NUMBERS = os.environ.get('PASSWORD_REQUIRE_NUMBERS', 'True').lower() == 'true'
-    PASSWORD_REQUIRE_SYMBOLS = os.environ.get('PASSWORD_REQUIRE_SYMBOLS', 'False').lower() == 'true'
+    PASSWORD_REQUIRE_SYMBOLS = os.environ.get('PASSWORD_REQUIRE_SYMBOLS', 'True').lower() == 'true'
+    PASSWORD_BLACKLIST_COMMON = os.environ.get('PASSWORD_BLACKLIST_COMMON', 'True').lower() == 'true'
+    PASSWORD_CHECK_BREACHED = os.environ.get('PASSWORD_CHECK_BREACHED', 'False').lower() == 'true'
     
     # Configuración SSL/HTTPS
     SSL_REDIRECT = os.environ.get('SSL_REDIRECT', 'False').lower() == 'true'
@@ -206,6 +208,60 @@ class BaseConfig:
     # CORS Configuration
     CORS_ENABLED = os.environ.get('CORS_ENABLED', 'True').lower() == 'true'
     CORS_ORIGINS = os.environ.get('CORS_ORIGINS', '*').split(',')
+    
+    # Security Headers Configuration
+    SECURITY_HEADERS = {
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'SAMEORIGIN',
+        'X-XSS-Protection': '1; mode=block',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'X-Permitted-Cross-Domain-Policies': 'none',
+        'X-Download-Options': 'noopen',
+        'Content-Security-Policy': (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.googleapis.com *.google.com; "
+            "style-src 'self' 'unsafe-inline' *.googleapis.com fonts.googleapis.com; "
+            "font-src 'self' fonts.gstatic.com data:; "
+            "img-src 'self' data: https: *.google.com *.googleapis.com; "
+            "connect-src 'self' *.google.com *.googleapis.com; "
+            "frame-src 'self' *.google.com *.youtube.com; "
+            "object-src 'none'; "
+            "base-uri 'self'; "
+            "form-action 'self'; "
+            "frame-ancestors 'self';"
+        ),
+        'Permissions-Policy': (
+            "geolocation=(), "
+            "microphone=(), "
+            "camera=(), "
+            "magnetometer=(), "
+            "gyroscope=(), "
+            "payment=(), "
+            "usb=()"
+        )
+    }
+    
+    # Additional security configurations
+    SECURITY_REGISTERABLE = os.environ.get('SECURITY_REGISTERABLE', 'True').lower() == 'true'
+    SECURITY_RECOVERABLE = os.environ.get('SECURITY_RECOVERABLE', 'True').lower() == 'true'
+    SECURITY_CHANGEABLE = os.environ.get('SECURITY_CHANGEABLE', 'True').lower() == 'true'
+    SECURITY_CONFIRMABLE = os.environ.get('SECURITY_CONFIRMABLE', 'True').lower() == 'true'
+    SECURITY_TRACKABLE = os.environ.get('SECURITY_TRACKABLE', 'True').lower() == 'true'
+    
+    # Session security
+    SESSION_PERMANENT = False
+    REMEMBER_COOKIE_SECURE = os.environ.get('REMEMBER_COOKIE_SECURE', 'True').lower() == 'true'
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = 'Lax'
+    
+    # Encryption configuration
+    ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY') or secrets.token_urlsafe(32)
+    
+    # Account lockout configuration
+    ACCOUNT_LOCKOUT_ENABLED = os.environ.get('ACCOUNT_LOCKOUT_ENABLED', 'True').lower() == 'true'
+    MAX_LOGIN_ATTEMPTS = int(os.environ.get('MAX_LOGIN_ATTEMPTS', '5'))
+    LOCKOUT_DURATION_MINUTES = int(os.environ.get('LOCKOUT_DURATION_MINUTES', '15'))
     
     # ========================================
     # CONFIGURACIÓN DE EMAIL
@@ -495,7 +551,7 @@ def get_config_value(key: str, default: Any = None) -> Any:
 
 
 # Validaciones de configuración
-def validate_required_config() -> List[str]:
+def validate_required_config() -> list[str]:
     """
     Valida que las configuraciones críticas estén presentes.
     

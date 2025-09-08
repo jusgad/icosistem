@@ -10,7 +10,7 @@ import logging
 import json
 import asyncio
 import base64
-from typing import Dict, List, Optional, Any, Union, Tuple
+from typing import Optional, Any, Union
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from enum import Enum
@@ -134,7 +134,7 @@ class MeetParticipant:
     leave_time: Optional[datetime] = None
     duration_minutes: int = 0
     is_external: bool = False
-    permissions: Optional[Dict[str, bool]] = None
+    permissions: Optional[dict[str, bool]] = None
 
 
 @dataclass
@@ -167,7 +167,7 @@ class MeetRoom:
     phone_number: Optional[str] = None
     pin: Optional[str] = None
     organizer_email: str = ""
-    participants: List[MeetParticipant] = None
+    participants: list[MeetParticipant] = None
     configuration: Optional[MeetConfiguration] = None
     created_at: Optional[datetime] = None
     scheduled_start: Optional[datetime] = None
@@ -178,7 +178,7 @@ class MeetRoom:
     recording_enabled: bool = False
     recording_url: Optional[str] = None
     transcript_url: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
 
 @dataclass
@@ -203,12 +203,12 @@ class MeetingAnalytics:
     """Analytics detallados de reunión"""
     meeting_id: str
     metrics: MeetingMetrics
-    participant_analytics: List[Dict[str, Any]]
+    participant_analytics: list[dict[str, Any]]
     engagement_score: float
-    sentiment_analysis: Optional[Dict[str, Any]] = None
-    key_topics: Optional[List[str]] = None
-    action_items: Optional[List[str]] = None
-    follow_up_suggestions: Optional[List[str]] = None
+    sentiment_analysis: Optional[dict[str, Any]] = None
+    key_topics: Optional[list[str]] = None
+    action_items: Optional[list[str]] = None
+    follow_up_suggestions: Optional[list[str]] = None
 
 
 class GoogleMeetService(BaseService):
@@ -255,7 +255,7 @@ class GoogleMeetService(BaseService):
         title: str,
         start_time: datetime,
         duration_minutes: int,
-        participants: List[Dict[str, Any]],
+        participants: list[dict[str, Any]],
         meeting_type: str = MeetingType.TEAM_MEETING.value,
         description: Optional[str] = None,
         configuration: Optional[MeetConfiguration] = None,
@@ -414,7 +414,7 @@ class GoogleMeetService(BaseService):
         self,
         meeting_id: str,
         user_id: int,
-        updates: Dict[str, Any]
+        updates: dict[str, Any]
     ) -> MeetRoom:
         """
         Actualizar configuración de reunión
@@ -509,7 +509,7 @@ class GoogleMeetService(BaseService):
             # Actualizar en base de datos
             self._update_meeting_status(meeting_id, MeetingStatus.CANCELLED.value, {
                 'cancelled_by': user_id,
-                'cancelled_at': datetime.utcnow(),
+                'cancelled_at': datetime.now(timezone.utc),
                 'cancellation_reason': reason
             })
             
@@ -536,7 +536,7 @@ class GoogleMeetService(BaseService):
         meeting_id: str,
         user_id: int,
         auto_record: Optional[bool] = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Iniciar reunión
         
@@ -546,7 +546,7 @@ class GoogleMeetService(BaseService):
             auto_record: Iniciar grabación automáticamente
             
         Returns:
-            Dict[str, Any]: Información de inicio de reunión
+            dict[str, Any]: Información de inicio de reunión
         """
         try:
             # Obtener reunión
@@ -561,7 +561,7 @@ class GoogleMeetService(BaseService):
                 raise ValidationError(f"No se puede iniciar reunión en estado: {meeting.status}")
             
             # Actualizar estado
-            actual_start = datetime.utcnow()
+            actual_start = datetime.now(timezone.utc)
             self._update_meeting_status(meeting_id, MeetingStatus.IN_PROGRESS.value, {
                 'actual_start_time': actual_start,
                 'started_by': user_id
@@ -616,7 +616,7 @@ class GoogleMeetService(BaseService):
         meeting_id: str,
         user_id: int,
         save_recording: bool = True
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Finalizar reunión
         
@@ -626,7 +626,7 @@ class GoogleMeetService(BaseService):
             save_recording: Guardar grabación automáticamente
             
         Returns:
-            Dict[str, Any]: Resumen de la reunión finalizada
+            dict[str, Any]: Resumen de la reunión finalizada
         """
         try:
             # Obtener reunión
@@ -640,7 +640,7 @@ class GoogleMeetService(BaseService):
             if meeting.status != MeetingStatus.IN_PROGRESS.value:
                 raise ValidationError(f"No se puede finalizar reunión en estado: {meeting.status}")
             
-            actual_end = datetime.utcnow()
+            actual_end = datetime.now(timezone.utc)
             
             # Obtener métricas finales
             final_metrics = self._collect_final_metrics(meeting_id)
@@ -742,7 +742,7 @@ class GoogleMeetService(BaseService):
                 # Actualizar estado en base de datos
                 self._update_recording_status(meeting_id, RecordingStatus.RECORDING.value, {
                     'recording_started_by': user_id,
-                    'recording_started_at': datetime.utcnow(),
+                    'recording_started_at': datetime.now(timezone.utc),
                     'recording_layout': layout
                 })
                 
@@ -770,7 +770,7 @@ class GoogleMeetService(BaseService):
         meeting_id: str,
         user_id: int,
         save_to_drive: bool = True
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         """
         Detener grabación de reunión
         
@@ -780,7 +780,7 @@ class GoogleMeetService(BaseService):
             save_to_drive: Guardar en Google Drive
             
         Returns:
-            Optional[Dict[str, Any]]: Información de la grabación
+            Optional[dict[str, Any]]: Información de la grabación
         """
         try:
             # Verificar permisos
@@ -796,7 +796,7 @@ class GoogleMeetService(BaseService):
                 # Actualizar estado
                 self._update_recording_status(meeting_id, RecordingStatus.PROCESSING.value, {
                     'recording_stopped_by': user_id,
-                    'recording_stopped_at': datetime.utcnow(),
+                    'recording_stopped_at': datetime.now(timezone.utc),
                     'recording_duration_minutes': recording_info.get('duration_minutes', 0)
                 })
                 
@@ -933,7 +933,7 @@ class GoogleMeetService(BaseService):
                 status=MeetingStatus.SCHEDULED.value,
                 recording_enabled=auto_record,
                 created_by_id=ally.user_id,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             
             db.session.add(meeting)
@@ -954,10 +954,10 @@ class GoogleMeetService(BaseService):
         user_id: int,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-        status_filter: Optional[List[str]] = None,
+        status_filter: Optional[list[str]] = None,
         meeting_type_filter: Optional[str] = None,
         include_past: bool = True
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Obtener reuniones de un usuario
         
@@ -970,7 +970,7 @@ class GoogleMeetService(BaseService):
             include_past: Incluir reuniones pasadas
             
         Returns:
-            List[Dict[str, Any]]: Lista de reuniones
+            list[dict[str, Any]]: Lista de reuniones
         """
         try:
             user = User.query.get(user_id)
@@ -993,7 +993,7 @@ class GoogleMeetService(BaseService):
                 query = query.filter(Meeting.start_time <= end_date)
             
             if not include_past:
-                query = query.filter(Meeting.start_time >= datetime.utcnow())
+                query = query.filter(Meeting.start_time >= datetime.now(timezone.utc))
             
             # Aplicar filtros de estado
             if status_filter:
@@ -1140,7 +1140,7 @@ class GoogleMeetService(BaseService):
         title: str,
         start_time: datetime,
         duration_minutes: int,
-        participants: List[Dict[str, Any]],
+        participants: list[dict[str, Any]],
         description: Optional[str]
     ):
         """Crear evento de calendario para la reunión"""
@@ -1173,7 +1173,7 @@ class GoogleMeetService(BaseService):
         credentials: Credentials,
         calendar_event_id: str,
         configuration: MeetConfiguration
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Crear sala Meet a través del evento de calendario"""
         try:
             calendar_service = build('calendar', 'v3', credentials=credentials)
@@ -1200,7 +1200,7 @@ class GoogleMeetService(BaseService):
             logger.error(f"Error creando sala Meet: {str(e)}")
             raise ExternalServiceError(f"Error creando sala Meet: {str(e)}")
     
-    def _format_participants(self, participants: List[Dict[str, Any]]) -> List[MeetParticipant]:
+    def _format_participants(self, participants: list[dict[str, Any]]) -> list[MeetParticipant]:
         """Formatear lista de participantes"""
         formatted = []
         
@@ -1242,7 +1242,7 @@ class GoogleMeetService(BaseService):
                 configuration=json.dumps(asdict(meet_room.configuration)) if meet_room.configuration else None,
                 participants=json.dumps([asdict(p) for p in meet_room.participants]) if meet_room.participants else None,
                 metadata=json.dumps(meet_room.metadata) if meet_room.metadata else None,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             
             db.session.add(db_room)
@@ -1286,7 +1286,7 @@ class GoogleMeetService(BaseService):
         
         return False
     
-    def _send_meeting_invitations(self, meet_room: MeetRoom, participants: List[MeetParticipant]):
+    def _send_meeting_invitations(self, meet_room: MeetRoom, participants: list[MeetParticipant]):
         """Enviar invitaciones de reunión"""
         try:
             for participant in participants:
@@ -1353,7 +1353,7 @@ class GoogleMeetService(BaseService):
             
             # Recordatorio 24 horas antes
             reminder_24h = meet_room.scheduled_start - timedelta(hours=24)
-            if reminder_24h > datetime.utcnow():
+            if reminder_24h > datetime.now(timezone.utc):
                 send_meeting_reminder.apply_async(
                     args=[meet_room.id, '24_hours'],
                     eta=reminder_24h
@@ -1361,7 +1361,7 @@ class GoogleMeetService(BaseService):
             
             # Recordatorio 30 minutos antes
             reminder_30m = meet_room.scheduled_start - timedelta(minutes=30)
-            if reminder_30m > datetime.utcnow():
+            if reminder_30m > datetime.now(timezone.utc):
                 send_meeting_reminder.apply_async(
                     args=[meet_room.id, '30_minutes'],
                     eta=reminder_30m
@@ -1409,7 +1409,7 @@ class GoogleMeetService(BaseService):
         
         return False
     
-    def _validate_meeting_updates(self, updates: Dict[str, Any]):
+    def _validate_meeting_updates(self, updates: dict[str, Any]):
         """Validar actualizaciones de reunión"""
         if 'scheduled_start' in updates and 'scheduled_end' in updates:
             start = parse_datetime(updates['scheduled_start'])
@@ -1424,7 +1424,7 @@ class GoogleMeetService(BaseService):
         if 'name' in updates and len(updates['name']) < 3:
             raise ValidationError("El título debe tener al menos 3 caracteres")
     
-    def _update_meeting_record(self, meeting_id: str, updates: Dict[str, Any]):
+    def _update_meeting_record(self, meeting_id: str, updates: dict[str, Any]):
         """Actualizar registro de reunión en base de datos"""
         try:
             meeting = Meeting.query.filter_by(
@@ -1441,14 +1441,14 @@ class GoogleMeetService(BaseService):
                 if 'scheduled_end' in updates:
                     meeting.end_time = parse_datetime(updates['scheduled_end'])
                 
-                meeting.updated_at = datetime.utcnow()
+                meeting.updated_at = datetime.now(timezone.utc)
                 db.session.commit()
                 
         except SQLAlchemyError as e:
             db.session.rollback()
             logger.error(f"Error actualizando reunión: {str(e)}")
     
-    def _update_calendar_event(self, meeting: MeetRoom, updates: Dict[str, Any]):
+    def _update_calendar_event(self, meeting: MeetRoom, updates: dict[str, Any]):
         """Actualizar evento de calendario asociado"""
         try:
             if meeting.metadata and meeting.metadata.get('calendar_event_id'):
@@ -1476,7 +1476,7 @@ class GoogleMeetService(BaseService):
         except Exception as e:
             logger.error(f"Error actualizando evento de calendario: {str(e)}")
     
-    def _notify_meeting_changes(self, meeting: MeetRoom, updates: Dict[str, Any]):
+    def _notify_meeting_changes(self, meeting: MeetRoom, updates: dict[str, Any]):
         """Notificar cambios a los participantes"""
         try:
             change_summary = []
@@ -1513,7 +1513,7 @@ class GoogleMeetService(BaseService):
         """Verificar si el usuario puede cancelar la reunión"""
         return self._can_edit_meeting(meeting, user_id)
     
-    def _update_meeting_status(self, meeting_id: str, status: str, metadata: Dict[str, Any] = None):
+    def _update_meeting_status(self, meeting_id: str, status: str, metadata: dict[str, Any] = None):
         """Actualizar estado de reunión"""
         try:
             meeting = Meeting.query.filter_by(
@@ -1528,7 +1528,7 @@ class GoogleMeetService(BaseService):
                     current_metadata.update(metadata)
                     meeting.metadata = json.dumps(current_metadata)
                 
-                meeting.updated_at = datetime.utcnow()
+                meeting.updated_at = datetime.now(timezone.utc)
                 db.session.commit()
                 
         except SQLAlchemyError as e:
@@ -1632,7 +1632,7 @@ class GoogleMeetService(BaseService):
             meeting = Meeting.query.filter_by(google_meet_room_id=meeting_id).first()
             total_duration = 0
             if meeting and meeting.actual_start_time:
-                end_time = datetime.utcnow()
+                end_time = datetime.now(timezone.utc)
                 total_duration = int((end_time - meeting.actual_start_time).total_seconds() / 60)
             
             # Calcular promedio de duración por participante
@@ -1656,7 +1656,7 @@ class GoogleMeetService(BaseService):
             logger.error(f"Error recopilando métricas: {str(e)}")
             return MeetingMetrics()
     
-    def _get_meeting_participants(self, meeting_id: str) -> List[MeetParticipant]:
+    def _get_meeting_participants(self, meeting_id: str) -> list[MeetParticipant]:
         """Obtener participantes actuales de la reunión"""
         try:
             meeting = Meeting.query.filter_by(google_meet_room_id=meeting_id).first()
@@ -1674,7 +1674,7 @@ class GoogleMeetService(BaseService):
         # Por ahora retornamos métricas básicas
         return MeetingMetrics()
     
-    def _generate_meeting_analytics(self, meeting_id: str, metrics: MeetingMetrics) -> Dict[str, Any]:
+    def _generate_meeting_analytics(self, meeting_id: str, metrics: MeetingMetrics) -> dict[str, Any]:
         """Generar analytics automáticos de la reunión"""
         try:
             analytics = {
@@ -1691,7 +1691,7 @@ class GoogleMeetService(BaseService):
                     'average_duration': metrics.average_participant_duration,
                     'join_success_rate': metrics.join_success_rate
                 },
-                'generated_at': datetime.utcnow().isoformat()
+                'generated_at': datetime.now(timezone.utc).isoformat()
             }
             
             return analytics
@@ -1727,7 +1727,7 @@ class GoogleMeetService(BaseService):
                     name=participant.name,
                     role=participant.role,
                     join_time=participant.join_time,
-                    leave_time=participant.leave_time or datetime.utcnow(),
+                    leave_time=participant.leave_time or datetime.now(timezone.utc),
                     duration_minutes=participant.duration_minutes,
                     status=ParticipantStatus.LEFT.value
                 )
@@ -1788,7 +1788,7 @@ class GoogleMeetService(BaseService):
         # En implementación real, esto usaría la API de Google Meet
         return True
     
-    def _stop_meet_recording(self, meeting_id: str) -> Optional[Dict[str, Any]]:
+    def _stop_meet_recording(self, meeting_id: str) -> Optional[dict[str, Any]]:
         """Detener grabación (requiere Google Meet API específica)"""
         # En implementación real, esto usaría la API de Google Meet
         return {
@@ -1797,7 +1797,7 @@ class GoogleMeetService(BaseService):
             'file_size_mb': 120
         }
     
-    def _update_recording_status(self, meeting_id: str, status: str, metadata: Dict[str, Any]):
+    def _update_recording_status(self, meeting_id: str, status: str, metadata: dict[str, Any]):
         """Actualizar estado de grabación"""
         try:
             meeting = Meeting.query.filter_by(google_meet_room_id=meeting_id).first()
@@ -1825,7 +1825,7 @@ class GoogleMeetService(BaseService):
         except Exception as e:
             logger.error(f"Error notificando inicio de grabación: {str(e)}")
     
-    def _notify_recording_stopped(self, meeting: MeetRoom, recording_info: Dict[str, Any]):
+    def _notify_recording_stopped(self, meeting: MeetRoom, recording_info: dict[str, Any]):
         """Notificar fin de grabación"""
         try:
             for participant in meeting.participants:
@@ -1867,7 +1867,7 @@ class GoogleMeetService(BaseService):
         
         return False
     
-    def _schedule_recording_processing(self, meeting_id: str, recording_info: Dict[str, Any]):
+    def _schedule_recording_processing(self, meeting_id: str, recording_info: dict[str, Any]):
         """Programar procesamiento de grabación"""
         try:
             from app.tasks.meeting_tasks import process_meeting_recording
@@ -1890,7 +1890,7 @@ class GoogleMeetService(BaseService):
             logger.error(f"Error iniciando transcripción: {str(e)}")
             return False
     
-    def _stop_transcription(self, meeting_id: str) -> Optional[Dict[str, Any]]:
+    def _stop_transcription(self, meeting_id: str) -> Optional[dict[str, Any]]:
         """Detener transcripción"""
         try:
             # En implementación real, esto detendría la transcripción
@@ -1950,10 +1950,10 @@ class GoogleMeetService(BaseService):
     def _can_join_meeting(self, meeting: Meeting, user_id: int) -> bool:
         """Verificar si el usuario puede unirse a la reunión"""
         # Verificar horario de la reunión
-        if meeting.start_time > datetime.utcnow() + timedelta(minutes=15):
+        if meeting.start_time > datetime.now(timezone.utc) + timedelta(minutes=15):
             return False  # Muy temprano para unirse
         
-        if meeting.end_time < datetime.utcnow() - timedelta(hours=1):
+        if meeting.end_time < datetime.now(timezone.utc) - timedelta(hours=1):
             return False  # Reunión terminó hace más de 1 hora
         
         # Verificar acceso básico
@@ -1994,7 +1994,7 @@ class GoogleMeetService(BaseService):
             logger.error(f"Error obteniendo métricas almacenadas: {str(e)}")
             return MeetingMetrics()
     
-    def _get_participant_analytics(self, meeting_id: str) -> List[Dict[str, Any]]:
+    def _get_participant_analytics(self, meeting_id: str) -> list[dict[str, Any]]:
         """Obtener analytics de participantes"""
         try:
             participants = self._get_meeting_participants(meeting_id)
@@ -2035,7 +2035,7 @@ class GoogleMeetService(BaseService):
         
         return base_score * role_multiplier
     
-    def _calculate_engagement_score(self, metrics: MeetingMetrics, participant_analytics: List[Dict[str, Any]]) -> float:
+    def _calculate_engagement_score(self, metrics: MeetingMetrics, participant_analytics: list[dict[str, Any]]) -> float:
         """Calcular score de engagement general"""
         if not participant_analytics:
             return 0.0
@@ -2059,7 +2059,7 @@ class GoogleMeetService(BaseService):
         
         return min(combined_score, 100.0)
     
-    def _analyze_meeting_sentiment(self, meeting_id: str) -> Optional[Dict[str, Any]]:
+    def _analyze_meeting_sentiment(self, meeting_id: str) -> Optional[dict[str, Any]]:
         """Analizar sentimientos de la reunión (requiere transcripción)"""
         try:
             # En implementación real, esto analizaría la transcripción
@@ -2077,7 +2077,7 @@ class GoogleMeetService(BaseService):
             logger.error(f"Error analizando sentimientos: {str(e)}")
             return None
     
-    def _extract_key_topics(self, meeting_id: str) -> Optional[List[str]]:
+    def _extract_key_topics(self, meeting_id: str) -> Optional[list[str]]:
         """Extraer temas clave de la reunión"""
         try:
             # En implementación real, esto usaría NLP en la transcripción
@@ -2091,7 +2091,7 @@ class GoogleMeetService(BaseService):
             logger.error(f"Error extrayendo temas: {str(e)}")
             return None
     
-    def _extract_action_items(self, meeting_id: str) -> Optional[List[str]]:
+    def _extract_action_items(self, meeting_id: str) -> Optional[list[str]]:
         """Extraer action items de la reunión"""
         try:
             # En implementación real, esto usaría NLP para detectar tareas
@@ -2104,7 +2104,7 @@ class GoogleMeetService(BaseService):
             logger.error(f"Error extrayendo action items: {str(e)}")
             return None
     
-    def _generate_follow_up_suggestions(self, meeting_id: str) -> Optional[List[str]]:
+    def _generate_follow_up_suggestions(self, meeting_id: str) -> Optional[list[str]]:
         """Generar sugerencias de seguimiento"""
         try:
             meeting = Meeting.query.filter_by(google_meet_room_id=meeting_id).first()
@@ -2130,7 +2130,7 @@ class GoogleMeetService(BaseService):
             logger.error(f"Error generando sugerencias: {str(e)}")
             return None
     
-    def get_meeting_summary(self, meeting_id: str, user_id: int) -> Dict[str, Any]:
+    def get_meeting_summary(self, meeting_id: str, user_id: int) -> dict[str, Any]:
         """Obtener resumen completo de reunión finalizada"""
         try:
             # Verificar acceso
@@ -2176,7 +2176,7 @@ class GoogleMeetService(BaseService):
                 'follow_up': {
                     'suggestions': analytics.follow_up_suggestions
                 },
-                'generated_at': datetime.utcnow().isoformat()
+                'generated_at': datetime.now(timezone.utc).isoformat()
             }
             
             return summary
@@ -2187,9 +2187,9 @@ class GoogleMeetService(BaseService):
     
     def bulk_create_meetings(
         self,
-        meetings_data: List[Dict[str, Any]],
+        meetings_data: list[dict[str, Any]],
         organizer_id: int
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Crear múltiples reuniones en lote"""
         results = []
         
@@ -2225,7 +2225,7 @@ def create_quick_meeting(
     organizer_id: int,
     title: str,
     start_time: datetime,
-    participant_emails: List[str],
+    participant_emails: list[str],
     duration_minutes: int = 60,
     auto_record: bool = False
 ) -> MeetRoom:
@@ -2269,10 +2269,10 @@ def schedule_mentorship_session(
     )
 
 
-def get_upcoming_meetings(user_id: int, days_ahead: int = 7) -> List[Dict[str, Any]]:
+def get_upcoming_meetings(user_id: int, days_ahead: int = 7) -> list[dict[str, Any]]:
     """Obtener próximas reuniones"""
     
-    start_date = datetime.utcnow()
+    start_date = datetime.now(timezone.utc)
     end_date = start_date + timedelta(days=days_ahead)
     
     return google_meet_service.get_user_meetings(

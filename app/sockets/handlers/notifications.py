@@ -14,7 +14,7 @@ Funcionalidades:
 
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Set
+from typing import Optional, Any
 
 from flask import request
 from flask_socketio import emit, join_room, leave_room
@@ -83,7 +83,7 @@ class NotificationNamespace(BaseNamespace):
     @socket_auth_required()
     @socket_log_activity(ActivityType.NOTIFICATION_READ, "User marked notification as read")
     @socket_validate_data(required_fields=['notification_id'])
-    def on_mark_notification_as_read(self, data: Dict[str, Any], current_user: User):
+    def on_mark_notification_as_read(self, data: dict[str, Any], current_user: User):
         """
         Maneja el evento cuando un usuario marca una notificación como leída.
         
@@ -125,7 +125,7 @@ class NotificationNamespace(BaseNamespace):
 
     @socket_auth_required()
     @socket_log_activity(ActivityType.NOTIFICATION_READ_ALL, "User marked all notifications as read")
-    def on_mark_all_notifications_as_read(self, data: Dict[str, Any], current_user: User):
+    def on_mark_all_notifications_as_read(self, data: dict[str, Any], current_user: User):
         """
         Maneja el evento cuando un usuario marca todas sus notificaciones como leídas.
         
@@ -149,7 +149,7 @@ class NotificationNamespace(BaseNamespace):
             self._emit_error("Error procesando la solicitud.", 'PROCESSING_ERROR')
 
     @socket_auth_required()
-    def on_request_initial_notifications(self, data: Dict[str, Any], current_user: User):
+    def on_request_initial_notifications(self, data: dict[str, Any], current_user: User):
         """
         Maneja la solicitud del cliente para obtener un lote inicial de notificaciones.
         
@@ -194,7 +194,7 @@ class NotificationNamespace(BaseNamespace):
 
 # Esta función sería llamada desde NotificationService para enviar una nueva notificación
 # a un usuario específico a través de WebSockets.
-def send_realtime_notification(user_id: str, notification_payload: Dict[str, Any]):
+def send_realtime_notification(user_id: str, notification_payload: dict[str, Any]):
     """
     Envía una notificación en tiempo real a un usuario específico.
     Esta función es un helper que sería llamado por otros servicios.

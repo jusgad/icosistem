@@ -10,7 +10,7 @@ Fecha: 2025
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from flask import (
     Blueprint, render_template, request, jsonify, flash, redirect, 
@@ -338,7 +338,7 @@ def edit_entrepreneur(entrepreneur_id):
             entrepreneur.funding_goal = form.funding_goal.data
             entrepreneur.website = form.website.data.strip() if form.website.data else None
             entrepreneur.linkedin_profile = form.linkedin_profile.data.strip() if form.linkedin_profile.data else None
-            entrepreneur.updated_at = datetime.utcnow()
+            entrepreneur.updated_at = datetime.now(timezone.utc)
             
             # Cambio de programa si es necesario
             if form.program_id.data != entrepreneur.program_id:
@@ -445,7 +445,7 @@ def assign_mentor(entrepreneur_id):
             
             # Actualizar asignación en el perfil del emprendedor
             entrepreneur.assigned_mentor_id = mentor.id
-            entrepreneur.mentor_assigned_at = datetime.utcnow()
+            entrepreneur.mentor_assigned_at = datetime.now(timezone.utc)
             
             db.session.commit()
             
@@ -592,7 +592,7 @@ def evaluate_entrepreneur(entrepreneur_id):
             
             # Actualizar emprendedor
             entrepreneur.evaluation_score = total_score
-            entrepreneur.last_evaluation_at = datetime.utcnow()
+            entrepreneur.last_evaluation_at = datetime.now(timezone.utc)
             entrepreneur.evaluation_data = evaluation_data  # JSON field
             
             # Determinar nivel de riesgo
@@ -1113,7 +1113,7 @@ def _get_entrepreneur_statistics():
         'this_month': Entrepreneur.query.join(User).filter(
             and_(
                 User.is_active == True,
-                User.created_at >= datetime.utcnow().replace(day=1)
+                User.created_at >= datetime.now(timezone.utc).replace(day=1)
             )
         ).count()
     }
@@ -1121,8 +1121,8 @@ def _get_entrepreneur_statistics():
 def _get_entrepreneur_detailed_metrics(entrepreneur):
     """Obtiene métricas detalladas de un emprendedor específico."""
     metrics = {
-        'account_age_days': (datetime.utcnow() - entrepreneur.user.created_at).days,
-        'last_login_days_ago': (datetime.utcnow() - entrepreneur.user.last_login).days if entrepreneur.user.last_login else None,
+        'account_age_days': (datetime.now(timezone.utc) - entrepreneur.user.created_at).days,
+        'last_login_days_ago': (datetime.now(timezone.utc) - entrepreneur.user.last_login).days if entrepreneur.user.last_login else None,
         'projects_count': len(entrepreneur.projects),
         'active_projects': len([p for p in entrepreneur.projects if p.status == 'active']),
         'completed_projects': len([p for p in entrepreneur.projects if p.status == 'completed']),
@@ -1138,7 +1138,7 @@ def _get_entrepreneur_detailed_metrics(entrepreneur):
     
     # Calcular tendencia de progreso
     if entrepreneur.projects:
-        recent_projects = [p for p in entrepreneur.projects if p.updated_at >= datetime.utcnow() - timedelta(days=30)]
+        recent_projects = [p for p in entrepreneur.projects if p.updated_at >= datetime.now(timezone.utc) - timedelta(days=30)]
         metrics['projects_updated_recently'] = len(recent_projects)
         metrics['avg_recent_progress'] = sum([p.progress for p in recent_projects]) / len(recent_projects) if recent_projects else 0
     
@@ -1155,8 +1155,8 @@ def _get_entrepreneur_projects_data(entrepreneur):
             for status in PROJECT_STATUS
         },
         'avg_progress': sum([p.progress for p in projects]) / len(projects) if projects else 0,
-        'overdue': len([p for p in projects if p.target_date and p.target_date < datetime.utcnow().date() and p.status != 'completed']),
-        'due_soon': len([p for p in projects if p.target_date and p.target_date <= datetime.utcnow().date() + timedelta(days=7) and p.status != 'completed'])
+        'overdue': len([p for p in projects if p.target_date and p.target_date < datetime.now(timezone.utc).date() and p.status != 'completed']),
+        'due_soon': len([p for p in projects if p.target_date and p.target_date <= datetime.now(timezone.utc).date() + timedelta(days=7) and p.status != 'completed'])
     }
 
 def _get_mentorship_history(entrepreneur):
@@ -1219,13 +1219,13 @@ def _get_entrepreneur_meetings_data(entrepreneur):
         )
     ).order_by(desc(Meeting.scheduled_for)).limit(10).all()
     
-    upcoming = [m for m in meetings if m.scheduled_for >= datetime.utcnow()]
-    past = [m for m in meetings if m.scheduled_for < datetime.utcnow()]
+    upcoming = [m for m in meetings if m.scheduled_for >= datetime.now(timezone.utc)]
+    past = [m for m in meetings if m.scheduled_for < datetime.now(timezone.utc)]
     
     return {
         'upcoming': upcoming,
         'past': past,
-        'total_this_month': len([m for m in meetings if m.scheduled_for >= datetime.utcnow().replace(day=1)])
+        'total_this_month': len([m for m in meetings if m.scheduled_for >= datetime.now(timezone.utc).replace(day=1)])
     }
 
 def _generate_entrepreneur_recommendations(entrepreneur):
@@ -1243,7 +1243,7 @@ def _generate_entrepreneur_recommendations(entrepreneur):
         })
     
     # Recomendaciones basadas en actividad
-    if entrepreneur.last_activity_at and entrepreneur.last_activity_at < datetime.utcnow() - timedelta(days=30):
+    if entrepreneur.last_activity_at and entrepreneur.last_activity_at < datetime.now(timezone.utc) - timedelta(days=30):
         recommendations.append({
             'type': 'engagement',
             'priority': 'medium',
@@ -1397,7 +1397,7 @@ def _get_entrepreneurs_needing_attention(limit=10):
             User.is_active == True,
             or_(
                 Entrepreneur.evaluation_score < 50,
-                Entrepreneur.last_activity_at < datetime.utcnow() - timedelta(days=30),
+                Entrepreneur.last_activity_at < datetime.now(timezone.utc) - timedelta(days=30),
                 Entrepreneur.assigned_mentor_id.is_(None)
             )
         )

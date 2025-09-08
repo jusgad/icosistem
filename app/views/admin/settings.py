@@ -440,7 +440,7 @@ def configure_integration(integration_name):
             old_config = integration.configuration.copy() if integration.configuration else {}
             integration.configuration = config_data
             integration.is_enabled = form.is_enabled.data
-            integration.last_configured_at = datetime.utcnow()
+            integration.last_configured_at = datetime.now(timezone.utc)
             integration.configured_by = current_user.id
             
             db.session.commit()
@@ -948,7 +948,7 @@ def api_system_status():
         return jsonify({
             'success': True,
             'data': status,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:
@@ -992,7 +992,7 @@ def api_performance_metrics():
         return jsonify({
             'success': True,
             'data': metrics,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:
@@ -1076,7 +1076,7 @@ def _get_configuration_usage_stats():
         'total_configurations': SystemConfiguration.query.count(),
         'last_change': ConfigurationHistory.query.order_by(desc(ConfigurationHistory.changed_at)).first(),
         'changes_this_month': ConfigurationHistory.query.filter(
-            ConfigurationHistory.changed_at >= datetime.utcnow().replace(day=1)
+            ConfigurationHistory.changed_at >= datetime.now(timezone.utc).replace(day=1)
         ).count(),
         'most_changed_section': _get_most_changed_configuration_section()
     }
@@ -1148,7 +1148,7 @@ def _save_general_settings(configs):
         db.session.add(config)
     else:
         config.configuration_data = json.dumps(configs)
-        config.updated_at = datetime.utcnow()
+        config.updated_at = datetime.now(timezone.utc)
         config.updated_by = current_user.id
     
     db.session.commit()
@@ -1181,7 +1181,7 @@ def _log_configuration_change(section, old_config, new_config):
             section=section,
             changes=json.dumps(changes),
             changed_by=current_user.id,
-            changed_at=datetime.utcnow(),
+            changed_at=datetime.now(timezone.utc),
             change_reason=f'Configuration update by {current_user.full_name}'
         )
         db.session.add(history)

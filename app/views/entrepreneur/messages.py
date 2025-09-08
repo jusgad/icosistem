@@ -9,7 +9,7 @@ archivado, búsqueda avanzada, plantillas y analytics de comunicación.
 import os
 import json
 import hashlib
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from collections import defaultdict
 from flask import (
     Blueprint, render_template, request, jsonify, flash, redirect, 
@@ -395,7 +395,7 @@ def compose():
         
         # Actualizar conversación
         conversation.last_message_id = message.id
-        conversation.last_activity_at = datetime.utcnow()
+        conversation.last_activity_at = datetime.now(timezone.utc)
         conversation.save()
         
         # Enviar notificaciones
@@ -512,7 +512,7 @@ def reply(conversation_id):
         
         # Actualizar conversación
         conversation.last_message_id = message.id
-        conversation.last_activity_at = datetime.utcnow()
+        conversation.last_activity_at = datetime.now(timezone.utc)
         conversation.save()
         
         # Enviar notificaciones
@@ -855,7 +855,7 @@ def archive_messages():
                 conversation = _get_conversation_or_404(conv_id)
                 if _can_archive_conversation(conversation, current_user.id):
                     conversation.is_archived = True
-                    conversation.archived_at = datetime.utcnow()
+                    conversation.archived_at = datetime.now(timezone.utc)
                     conversation.save()
                     archived_count += 1
             except ResourceNotFoundError:
@@ -940,7 +940,7 @@ def analytics():
     try:
         # Rango de fechas para análisis
         date_range = request.args.get('range', '30')  # días
-        end_date = datetime.utcnow().date()
+        end_date = datetime.now(timezone.utc).date()
         start_date = end_date - timedelta(days=int(date_range))
         
         # Métricas de comunicación
@@ -1299,7 +1299,7 @@ def _get_online_contacts(user_id, limit=10):
 
 def _get_communication_metrics(user_id):
     """Obtener métricas básicas de comunicación."""
-    today = datetime.utcnow().date()
+    today = datetime.now(timezone.utc).date()
     week_start = today - timedelta(days=today.weekday())
     month_start = today.replace(day=1)
     
@@ -1387,7 +1387,7 @@ def _mark_messages_as_read(conversation_id, user_id):
             Message.sender_id != user_id,
             Message.is_read == False
         )
-    ).update({'is_read': True, 'read_at': datetime.utcnow()})
+    ).update({'is_read': True, 'read_at': datetime.now(timezone.utc)})
     
     # Commit los cambios
     from app import db
@@ -1484,7 +1484,7 @@ def _validate_message_data(form):
 def _check_message_rate_limit(user_id):
     """Verificar límites de velocidad de mensajes."""
     # Verificar mensajes en la última hora
-    hour_ago = datetime.utcnow() - timedelta(hours=1)
+    hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
     messages_last_hour = Message.query.filter(
         and_(
             Message.sender_id == user_id,
@@ -1717,7 +1717,7 @@ def _mark_specific_messages_as_read(message_ids, user_id):
             Message.sender_id != user_id,
             Message.is_read == False
         )
-    ).update({'is_read': True, 'read_at': datetime.utcnow()}, synchronize_session=False)
+    ).update({'is_read': True, 'read_at': datetime.now(timezone.utc)}, synchronize_session=False)
     
     from app import db
     db.session.commit()
@@ -1732,7 +1732,7 @@ def _mark_conversation_as_read(conversation_id, user_id):
             Message.sender_id != user_id,
             Message.is_read == False
         )
-    ).update({'is_read': True, 'read_at': datetime.utcnow()}, synchronize_session=False)
+    ).update({'is_read': True, 'read_at': datetime.now(timezone.utc)}, synchronize_session=False)
     
     from app import db
     db.session.commit()

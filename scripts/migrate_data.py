@@ -62,7 +62,7 @@ import time
 import psycopg2
 import pandas as pd
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple, Union, Callable
+from typing import Optional, Any, Union, Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from urllib.parse import urlparse
@@ -111,8 +111,8 @@ class MigrationConfig:
     migration_type: str = 'data'                # schema, data, files, legacy, environment, incremental, rollback
     source: str = 'postgresql'                  # postgresql, mysql, excel, csv, json, api, legacy_db
     target: str = 'postgresql'                  # postgresql, mysql, s3, local
-    source_config: Dict[str, Any] = field(default_factory=dict)
-    target_config: Dict[str, Any] = field(default_factory=dict)
+    source_config: dict[str, Any] = field(default_factory=dict)
+    target_config: dict[str, Any] = field(default_factory=dict)
     config_file: Optional[str] = None
     mapping_file: Optional[str] = None
     transformation_rules: Optional[str] = None
@@ -121,8 +121,8 @@ class MigrationConfig:
     since: Optional[str] = None                 # Para migración incremental
     until: Optional[str] = None
     migration_id: Optional[str] = None          # Para rollback
-    tables: List[str] = field(default_factory=list)
-    exclude_tables: List[str] = field(default_factory=list)
+    tables: list[str] = field(default_factory=list)
+    exclude_tables: list[str] = field(default_factory=list)
     validate: bool = True
     create_backup: bool = True
     dry_run: bool = False
@@ -152,10 +152,10 @@ class MigrationMetadata:
     end_time: Optional[datetime] = None
     duration_seconds: float = 0.0
     backup_location: Optional[str] = None
-    checkpoints: List[Dict[str, Any]] = field(default_factory=list)
-    errors: List[Dict[str, Any]] = field(default_factory=list)
-    validation_results: Dict[str, Any] = field(default_factory=dict)
-    rollback_data: Dict[str, Any] = field(default_factory=dict)
+    checkpoints: list[dict[str, Any]] = field(default_factory=list)
+    errors: list[dict[str, Any]] = field(default_factory=list)
+    validation_results: dict[str, Any] = field(default_factory=dict)
+    rollback_data: dict[str, Any] = field(default_factory=dict)
 
 
 class Colors:
@@ -283,7 +283,7 @@ class DataConnector:
     Clase base para conectores de datos.
     """
     
-    def __init__(self, config: Dict[str, Any], logger: MigrationLogger):
+    def __init__(self, config: dict[str, Any], logger: MigrationLogger):
         """
         Inicializa el conector.
         
@@ -303,19 +303,19 @@ class DataConnector:
         """Cierra la conexión."""
         raise NotImplementedError("Subclases deben implementar disconnect")
     
-    def get_tables(self) -> List[str]:
+    def get_tables(self) -> list[str]:
         """Obtiene lista de tablas disponibles."""
         raise NotImplementedError("Subclases deben implementar get_tables")
     
-    def get_table_schema(self, table_name: str) -> Dict[str, Any]:
+    def get_table_schema(self, table_name: str) -> dict[str, Any]:
         """Obtiene esquema de una tabla."""
         raise NotImplementedError("Subclases deben implementar get_table_schema")
     
-    def read_data(self, table_name: str, batch_size: int = 1000, offset: int = 0) -> List[Dict[str, Any]]:
+    def read_data(self, table_name: str, batch_size: int = 1000, offset: int = 0) -> list[dict[str, Any]]:
         """Lee datos de una tabla."""
         raise NotImplementedError("Subclases deben implementar read_data")
     
-    def write_data(self, table_name: str, data: List[Dict[str, Any]]) -> bool:
+    def write_data(self, table_name: str, data: list[dict[str, Any]]) -> bool:
         """Escribe datos a una tabla."""
         raise NotImplementedError("Subclases deben implementar write_data")
     
@@ -363,7 +363,7 @@ class PostgreSQLConnector(DataConnector):
         import re
         return re.sub(r'://([^:]+):([^@]+)@', r'://\1:***@', connection_string)
     
-    def get_tables(self) -> List[str]:
+    def get_tables(self) -> list[str]:
         """Obtiene lista de tablas."""
         try:
             inspector = inspect(self.engine)
@@ -372,7 +372,7 @@ class PostgreSQLConnector(DataConnector):
             self.logger.error(f"Error obteniendo tablas: {e}")
             return []
     
-    def get_table_schema(self, table_name: str) -> Dict[str, Any]:
+    def get_table_schema(self, table_name: str) -> dict[str, Any]:
         """Obtiene esquema de una tabla."""
         try:
             inspector = inspect(self.engine)
@@ -389,7 +389,7 @@ class PostgreSQLConnector(DataConnector):
             self.logger.error(f"Error obteniendo esquema de {table_name}: {e}")
             return {}
     
-    def read_data(self, table_name: str, batch_size: int = 1000, offset: int = 0) -> List[Dict[str, Any]]:
+    def read_data(self, table_name: str, batch_size: int = 1000, offset: int = 0) -> list[dict[str, Any]]:
         """Lee datos de una tabla."""
         try:
             query = text(f"SELECT * FROM {table_name} LIMIT {batch_size} OFFSET {offset}")
@@ -404,7 +404,7 @@ class PostgreSQLConnector(DataConnector):
             self.logger.error(f"Error leyendo datos de {table_name}: {e}")
             return []
     
-    def write_data(self, table_name: str, data: List[Dict[str, Any]]) -> bool:
+    def write_data(self, table_name: str, data: list[dict[str, Any]]) -> bool:
         """Escribe datos a una tabla."""
         try:
             if not data:
@@ -469,7 +469,7 @@ class MySQLConnector(DataConnector):
         import re
         return re.sub(r'://([^:]+):([^@]+)@', r'://\1:***@', connection_string)
     
-    def get_tables(self) -> List[str]:
+    def get_tables(self) -> list[str]:
         """Obtiene lista de tablas MySQL."""
         try:
             inspector = inspect(self.engine)
@@ -478,7 +478,7 @@ class MySQLConnector(DataConnector):
             self.logger.error(f"Error obteniendo tablas MySQL: {e}")
             return []
     
-    def get_table_schema(self, table_name: str) -> Dict[str, Any]:
+    def get_table_schema(self, table_name: str) -> dict[str, Any]:
         """Obtiene esquema de tabla MySQL."""
         try:
             inspector = inspect(self.engine)
@@ -495,7 +495,7 @@ class MySQLConnector(DataConnector):
             self.logger.error(f"Error obteniendo esquema MySQL de {table_name}: {e}")
             return {}
     
-    def read_data(self, table_name: str, batch_size: int = 1000, offset: int = 0) -> List[Dict[str, Any]]:
+    def read_data(self, table_name: str, batch_size: int = 1000, offset: int = 0) -> list[dict[str, Any]]:
         """Lee datos de tabla MySQL."""
         try:
             query = text(f"SELECT * FROM {table_name} LIMIT {batch_size} OFFSET {offset}")
@@ -510,7 +510,7 @@ class MySQLConnector(DataConnector):
             self.logger.error(f"Error leyendo datos MySQL de {table_name}: {e}")
             return []
     
-    def write_data(self, table_name: str, data: List[Dict[str, Any]]) -> bool:
+    def write_data(self, table_name: str, data: list[dict[str, Any]]) -> bool:
         """Escribe datos a tabla MySQL."""
         try:
             if not data:
@@ -557,7 +557,7 @@ class ExcelConnector(DataConnector):
         """No hay conexión que cerrar para Excel."""
         pass
     
-    def get_tables(self) -> List[str]:
+    def get_tables(self) -> list[str]:
         """Obtiene lista de hojas del Excel."""
         try:
             xl_file = pd.ExcelFile(self.file_path)
@@ -566,7 +566,7 @@ class ExcelConnector(DataConnector):
             self.logger.error(f"Error obteniendo hojas de Excel: {e}")
             return []
     
-    def get_table_schema(self, table_name: str) -> Dict[str, Any]:
+    def get_table_schema(self, table_name: str) -> dict[str, Any]:
         """Obtiene esquema de una hoja Excel."""
         try:
             df = pd.read_excel(self.file_path, sheet_name=table_name, nrows=1)
@@ -581,7 +581,7 @@ class ExcelConnector(DataConnector):
             self.logger.error(f"Error obteniendo esquema Excel de {table_name}: {e}")
             return {}
     
-    def read_data(self, table_name: str, batch_size: int = 1000, offset: int = 0) -> List[Dict[str, Any]]:
+    def read_data(self, table_name: str, batch_size: int = 1000, offset: int = 0) -> list[dict[str, Any]]:
         """Lee datos de una hoja Excel."""
         try:
             # Leer en chunks para manejar archivos grandes
@@ -606,7 +606,7 @@ class ExcelConnector(DataConnector):
             self.logger.error(f"Error leyendo datos Excel de {table_name}: {e}")
             return []
     
-    def write_data(self, table_name: str, data: List[Dict[str, Any]]) -> bool:
+    def write_data(self, table_name: str, data: list[dict[str, Any]]) -> bool:
         """Escribe datos a un archivo Excel."""
         try:
             if not data:
@@ -658,7 +658,7 @@ class CSVConnector(DataConnector):
         """No hay conexión que cerrar para CSV."""
         pass
     
-    def get_tables(self) -> List[str]:
+    def get_tables(self) -> list[str]:
         """Obtiene lista de archivos CSV."""
         try:
             csv_files = list(self.csv_dir.glob('*.csv'))
@@ -667,7 +667,7 @@ class CSVConnector(DataConnector):
             self.logger.error(f"Error obteniendo archivos CSV: {e}")
             return []
     
-    def get_table_schema(self, table_name: str) -> Dict[str, Any]:
+    def get_table_schema(self, table_name: str) -> dict[str, Any]:
         """Obtiene esquema de un archivo CSV."""
         try:
             csv_file = self.csv_dir / f"{table_name}.csv"
@@ -683,7 +683,7 @@ class CSVConnector(DataConnector):
             self.logger.error(f"Error obteniendo esquema CSV de {table_name}: {e}")
             return {}
     
-    def read_data(self, table_name: str, batch_size: int = 1000, offset: int = 0) -> List[Dict[str, Any]]:
+    def read_data(self, table_name: str, batch_size: int = 1000, offset: int = 0) -> list[dict[str, Any]]:
         """Lee datos de un archivo CSV."""
         try:
             csv_file = self.csv_dir / f"{table_name}.csv"
@@ -709,7 +709,7 @@ class CSVConnector(DataConnector):
             self.logger.error(f"Error leyendo datos CSV de {table_name}: {e}")
             return []
     
-    def write_data(self, table_name: str, data: List[Dict[str, Any]]) -> bool:
+    def write_data(self, table_name: str, data: list[dict[str, Any]]) -> bool:
         """Escribe datos a un archivo CSV."""
         try:
             if not data:
@@ -742,7 +742,7 @@ class DataTransformer:
     Clase para transformaciones de datos durante la migración.
     """
     
-    def __init__(self, transformation_rules: Optional[Dict[str, Any]] = None, logger: MigrationLogger = None):
+    def __init__(self, transformation_rules: Optional[dict[str, Any]] = None, logger: MigrationLogger = None):
         """
         Inicializa el transformador.
         
@@ -753,7 +753,7 @@ class DataTransformer:
         self.transformation_rules = transformation_rules or {}
         self.logger = logger
     
-    def transform_record(self, record: Dict[str, Any], table_name: str) -> Dict[str, Any]:
+    def transform_record(self, record: dict[str, Any], table_name: str) -> dict[str, Any]:
         """
         Transforma un registro según las reglas definidas.
         
@@ -817,7 +817,7 @@ class DataTransformer:
         
         return transformed_record
     
-    def _apply_transformation(self, value: Any, transformation: Dict[str, Any]) -> Any:
+    def _apply_transformation(self, value: Any, transformation: dict[str, Any]) -> Any:
         """
         Aplica una transformación específica a un valor.
         
@@ -870,7 +870,7 @@ class DataTransformer:
         
         return value
     
-    def _validate_field(self, value: Any, validation: Dict[str, Any]) -> bool:
+    def _validate_field(self, value: Any, validation: dict[str, Any]) -> bool:
         """
         Valida un campo según reglas específicas.
         
@@ -1395,7 +1395,7 @@ class MigrationManager:
             self.logger.error(f"Error en finalización: {e}")
             return False
     
-    def _create_connector(self, connector_type: str, config: Dict[str, Any]) -> DataConnector:
+    def _create_connector(self, connector_type: str, config: dict[str, Any]) -> DataConnector:
         """
         Crea un conector de datos según el tipo.
         
@@ -1419,7 +1419,7 @@ class MigrationManager:
         
         return connector_class(config, self.logger)
     
-    def _load_transformation_rules(self) -> Optional[Dict[str, Any]]:
+    def _load_transformation_rules(self) -> Optional[dict[str, Any]]:
         """Carga reglas de transformación desde archivo."""
         if not self.config.transformation_rules:
             return None
@@ -1473,7 +1473,7 @@ class MigrationManager:
             self.logger.warning(f"Error verificando espacio en disco: {e}")
             return True  # No fallar por esto
     
-    def _sanitize_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def _sanitize_config(self, config: dict[str, Any]) -> dict[str, Any]:
         """Sanitiza configuración removiendo datos sensibles."""
         sanitized = config.copy()
         

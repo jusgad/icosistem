@@ -246,7 +246,7 @@ def profile_picture():
         if result['success']:
             # Actualizar URL en base de datos
             g.entrepreneur.profile_picture_url = result['url']
-            g.entrepreneur.updated_at = datetime.utcnow()
+            g.entrepreneur.updated_at = datetime.now(timezone.utc)
             g.entrepreneur.save()
 
             # Registrar actividad
@@ -333,8 +333,8 @@ def change_password():
 
         # Actualizar contraseña
         current_user.password_hash = generate_password_hash(form.new_password.data)
-        current_user.password_changed_at = datetime.utcnow()
-        current_user.updated_at = datetime.utcnow()
+        current_user.password_changed_at = datetime.now(timezone.utc)
+        current_user.updated_at = datetime.now(timezone.utc)
         current_user.save()
 
         # Registrar actividad
@@ -397,7 +397,7 @@ def preferences():
         g.entrepreneur.timezone = form.timezone.data
         g.entrepreneur.language = form.language.data
         g.entrepreneur.currency = form.currency.data
-        g.entrepreneur.updated_at = datetime.utcnow()
+        g.entrepreneur.updated_at = datetime.now(timezone.utc)
         g.entrepreneur.save()
 
         # Registrar actividad
@@ -525,7 +525,7 @@ def delete_account():
 
         # Soft delete
         current_user.is_active = False
-        current_user.deleted_at = datetime.utcnow()
+        current_user.deleted_at = datetime.now(timezone.utc)
         current_user.deletion_reason = 'user_requested'
         current_user.save()
 
@@ -657,7 +657,7 @@ def _update_basic_info():
         # Enviar email de verificación
         EmailService.send_email_verification(current_user)
 
-    current_user.updated_at = datetime.utcnow()
+    current_user.updated_at = datetime.now(timezone.utc)
     current_user.save()
 
     # Registrar actividad
@@ -695,7 +695,7 @@ def _update_business_info():
             }), 400
         entrepreneur.website = form.website.data
 
-    entrepreneur.updated_at = datetime.utcnow()
+    entrepreneur.updated_at = datetime.now(timezone.utc)
     entrepreneur.save()
 
     # Registrar actividad
@@ -730,7 +730,7 @@ def _update_contact_info():
     entrepreneur.address = sanitize_input(form.address.data)
     entrepreneur.city = sanitize_input(form.city.data)
     entrepreneur.country = form.country.data
-    entrepreneur.updated_at = datetime.utcnow()
+    entrepreneur.updated_at = datetime.now(timezone.utc)
     entrepreneur.save()
 
     # Registrar actividad
@@ -771,7 +771,7 @@ def _update_social_links():
     entrepreneur.twitter_handle = form.twitter_handle.data
     entrepreneur.facebook_url = form.facebook_url.data
     entrepreneur.instagram_handle = form.instagram_handle.data
-    entrepreneur.updated_at = datetime.utcnow()
+    entrepreneur.updated_at = datetime.now(timezone.utc)
     entrepreneur.save()
 
     # Registrar actividad
@@ -875,7 +875,7 @@ def _enable_two_factor(form):
     
     # Habilitar 2FA
     current_user.two_factor_enabled = True
-    current_user.two_factor_enabled_at = datetime.utcnow()
+    current_user.two_factor_enabled_at = datetime.now(timezone.utc)
     current_user.save()
     
     # Registrar actividad

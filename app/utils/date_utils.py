@@ -10,7 +10,7 @@ Version: 1.0.0
 
 import logging
 from datetime import datetime, timedelta, date, time, timezone as dt_timezone
-from typing import Optional, Tuple, Union, List
+from typing import Optional, Union
 import pytz
 from babel.dates import format_date as babel_format_date, \
                         format_datetime as babel_format_datetime, \
@@ -35,7 +35,7 @@ def now() -> datetime:
     """Retorna la fecha y hora actual en UTC."""
     return get_current_utc_time()
 
-def get_date_range(period: str = 'month') -> Tuple[datetime, datetime]:
+def get_date_range(period: str = 'month') -> tuple[datetime, datetime]:
     """Obtiene un rango de fechas para el período especificado."""
     now_dt = get_current_utc_time()
     
@@ -297,7 +297,7 @@ def get_end_of_month(dt: Optional[Union[datetime, date]] = None) -> date:
     start_of_next_month = (get_start_of_month(dt) + relativedelta(months=1))
     return start_of_next_month - timedelta(days=1)
 
-def get_date_range(period_name: str, base_date: Optional[date] = None) -> Tuple[date, date]:
+def get_date_range(period_name: str, base_date: Optional[date] = None) -> tuple[date, date]:
     """
     Retorna un rango de fechas (inicio, fin) para un período común.
     
@@ -339,7 +339,7 @@ def get_date_range(period_name: str, base_date: Optional[date] = None) -> Tuple[
     else:
         raise ValueError(f"Período no reconocido: {period_name}")
 
-def is_business_day(d: Union[date, datetime], holidays: Optional[List[date]] = None) -> bool:
+def is_business_day(d: Union[date, datetime], holidays: Optional[list[date]] = None) -> bool:
     """
     Verifica si una fecha es un día hábil (Lunes a Viernes, no feriado).
     """
@@ -354,7 +354,7 @@ def is_business_day(d: Union[date, datetime], holidays: Optional[List[date]] = N
         
     return True
 
-def add_business_days(start_date: date, num_days: int, holidays: Optional[List[date]] = None) -> date:
+def add_business_days(start_date: date, num_days: int, holidays: Optional[list[date]] = None) -> date:
     """
     Añade un número de días hábiles a una fecha.
     """

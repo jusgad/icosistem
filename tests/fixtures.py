@@ -47,7 +47,7 @@ import json
 import uuid
 from datetime import datetime, timedelta, date
 from decimal import Decimal
-from typing import Dict, List, Any, Optional, Tuple, Generator
+from typing import Any, Optional, Generator
 from dataclasses import dataclass, field
 from enum import Enum
 import random
@@ -122,13 +122,13 @@ class ProgramConfiguration:
     investment_amount: int
     equity_percentage: float
     batch_size: int
-    focus_industries: List[IndustryVertical]
+    focus_industries: list[IndustryVertical]
     application_deadline: datetime
     program_start_date: datetime
-    requirements: Dict[str, Any] = field(default_factory=dict)
-    benefits: List[str] = field(default_factory=list)
+    requirements: dict[str, Any] = field(default_factory=dict)
+    benefits: list[str] = field(default_factory=list)
     mentor_count: int = 10
-    success_metrics: Dict[str, Any] = field(default_factory=dict)
+    success_metrics: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -140,8 +140,8 @@ class EcosystemMetrics:
     total_funding_raised: Decimal
     average_project_valuation: Decimal
     success_rate_percentage: float
-    geographic_distribution: Dict[str, int]
-    industry_distribution: Dict[str, int]
+    geographic_distribution: dict[str, int]
+    industry_distribution: dict[str, int]
     monthly_growth_rate: float
     retention_rate: float
 
@@ -220,8 +220,8 @@ def startup_accelerator_program(db_session):
         equity_percentage=7.0,
         batch_size=20,
         focus_industries=[IndustryVertical.FINTECH, IndustryVertical.HEALTHTECH],
-        application_deadline=datetime.utcnow() + timedelta(days=30),
-        program_start_date=datetime.utcnow() + timedelta(days=60),
+        application_deadline=datetime.now(timezone.utc) + timedelta(days=30),
+        program_start_date=datetime.now(timezone.utc) + timedelta(days=60),
         requirements={
             'min_team_size': 2,
             'max_team_size': 4,
@@ -316,7 +316,7 @@ def startup_accelerator_program(db_session):
             'id': i + 1,
             'entrepreneur': entrepreneur,
             'status': random.choice(['pending', 'under_review', 'approved', 'rejected']),
-            'submitted_at': datetime.utcnow() - timedelta(days=random.randint(1, 20)),
+            'submitted_at': datetime.now(timezone.utc) - timedelta(days=random.randint(1, 20)),
             'pitch_deck_url': f'https://storage.example.com/pitches/startup_{i}.pdf',
             'team_size': random.randint(2, 4),
             'funding_raised': random.randint(0, 100000),
@@ -361,8 +361,8 @@ def social_impact_incubator(db_session):
         equity_percentage=5.0,
         batch_size=15,
         focus_industries=[IndustryVertical.EDTECH, IndustryVertical.CLEANTECH],
-        application_deadline=datetime.utcnow() + timedelta(days=45),
-        program_start_date=datetime.utcnow() + timedelta(days=75),
+        application_deadline=datetime.now(timezone.utc) + timedelta(days=45),
+        program_start_date=datetime.now(timezone.utc) + timedelta(days=75),
         requirements={
             'social_impact_focus': True,
             'sustainability_metrics': True,
@@ -486,7 +486,7 @@ def mentorship_complete_session(db_session):
         'entrepreneur': entrepreneur,
         'mentor': mentor,
         'project': project,
-        'scheduled_at': datetime.utcnow() + timedelta(hours=2),
+        'scheduled_at': datetime.now(timezone.utc) + timedelta(hours=2),
         'duration_minutes': 90,
         'session_type': 'strategic_review',
         'agenda': [
@@ -532,7 +532,7 @@ def mentorship_complete_session(db_session):
     for i in range(3):
         prev_session = {
             'id': i + 10,
-            'date': datetime.utcnow() - timedelta(days=(i + 1) * 14),
+            'date': datetime.now(timezone.utc) - timedelta(days=(i + 1) * 14),
             'duration_minutes': 60,
             'session_type': ['technical_review', 'market_analysis', 'team_building'][i],
             'completed': True,
@@ -574,10 +574,10 @@ def mentorship_complete_session(db_session):
     
     # Crear plan de seguimiento
     follow_up_plan = {
-        'next_session_date': datetime.utcnow() + timedelta(days=14),
+        'next_session_date': datetime.now(timezone.utc) + timedelta(days=14),
         'interim_checkins': [
             {
-                'date': datetime.utcnow() + timedelta(days=7),
+                'date': datetime.now(timezone.utc) + timedelta(days=7),
                 'type': 'progress_update',
                 'method': 'email'
             }
@@ -585,12 +585,12 @@ def mentorship_complete_session(db_session):
         'deliverables_due': [
             {
                 'item': 'Métricas de usuario actualizadas',
-                'due_date': datetime.utcnow() + timedelta(days=5),
+                'due_date': datetime.now(timezone.utc) + timedelta(days=5),
                 'responsible': 'entrepreneur'
             },
             {
                 'item': 'Conexiones con inversionistas',
-                'due_date': datetime.utcnow() + timedelta(days=10),
+                'due_date': datetime.now(timezone.utc) + timedelta(days=10),
                 'responsible': 'mentor'
             }
         ],
@@ -684,7 +684,7 @@ def group_mentorship_session(db_session):
         'mentor': mentor,
         'participants': participants,
         'session_format': 'workshop_interactive',
-        'scheduled_at': datetime.utcnow() + timedelta(days=1),
+        'scheduled_at': datetime.now(timezone.utc) + timedelta(days=1),
         'duration_minutes': 120,
         'max_participants': 6,
         'current_participants': len(participants),
@@ -732,7 +732,7 @@ def group_mentorship_session(db_session):
 @pytest.fixture(scope='function')
 def analytics_dashboard_data():
     """Datos completos para dashboard de analytics."""
-    current_date = datetime.utcnow()
+    current_date = datetime.now(timezone.utc)
     
     # Métricas generales del ecosistema
     ecosystem_metrics = EcosystemMetrics(
@@ -975,7 +975,7 @@ def cohort_analysis_data():
     
     # Generar 8 cohortes históricas
     for cohort_num in range(1, 9):
-        start_date = datetime.utcnow() - timedelta(days=365 + (cohort_num * 120))
+        start_date = datetime.now(timezone.utc) - timedelta(days=365 + (cohort_num * 120))
         
         cohort = {
             'cohort_id': f'TECH_2023_C{cohort_num}',
@@ -1172,7 +1172,7 @@ def investor_matching_scenario(db_session):
             'investment_profile': profile,
             'current_pipeline': [],
             'matching_score_threshold': 0.7,
-            'last_investment_date': datetime.utcnow() - timedelta(days=random.randint(30, 180))
+            'last_investment_date': datetime.now(timezone.utc) - timedelta(days=random.randint(30, 180))
         }
         
         investors.append(investor_data)
@@ -1221,7 +1221,7 @@ def investor_matching_scenario(db_session):
             'previous_funding': {
                 'total_raised': random.randint(0, 500000),
                 'investors': random.randint(0, 5),
-                'last_round_date': datetime.utcnow() - timedelta(days=random.randint(180, 720)) if random.random() > 0.3 else None
+                'last_round_date': datetime.now(timezone.utc) - timedelta(days=random.randint(180, 720)) if random.random() > 0.3 else None
             },
             'competitive_advantages': random.sample([
                 'first_mover_advantage',
@@ -1255,7 +1255,7 @@ def investor_matching_scenario(db_session):
             },
             'due_diligence_ready': random.choice([True, False]),
             'seeking_active': True,
-            'last_pitch_date': datetime.utcnow() - timedelta(days=random.randint(7, 60))
+            'last_pitch_date': datetime.now(timezone.utc) - timedelta(days=random.randint(7, 60))
         }
         
         startups_seeking_funding.append(startup_data)
@@ -1331,7 +1331,7 @@ def investor_matching_scenario(db_session):
                     'startup': startup,
                     'investor': investor,
                     'matching_score': round(score, 3),
-                    'generated_at': datetime.utcnow(),
+                    'generated_at': datetime.now(timezone.utc),
                     'status': 'pending_review',
                     'contact_initiated': False,
                     'next_steps': [
@@ -1395,7 +1395,7 @@ def investor_matching_scenario(db_session):
                 'additional': 0.10
             },
             'success_rate': 0.73,
-            'last_updated': datetime.utcnow()
+            'last_updated': datetime.now(timezone.utc)
         }
     }
     
@@ -1414,8 +1414,8 @@ def program_evaluation_workflow(db_session):
         'id': 1,
         'name': 'Accelerator Elite 2025',
         'type': 'accelerator',
-        'application_deadline': datetime.utcnow() + timedelta(days=7),
-        'program_start': datetime.utcnow() + timedelta(days=45),
+        'application_deadline': datetime.now(timezone.utc) + timedelta(days=7),
+        'program_start': datetime.now(timezone.utc) + timedelta(days=45),
         'available_spots': 15,
         'total_applications': 85,
         'evaluation_process': {
@@ -1524,7 +1524,7 @@ def program_evaluation_workflow(db_session):
                     'evaluator': evaluator,
                     'stage': stage_name,
                     'score': round(base_score, 1),
-                    'completed_at': datetime.utcnow() - timedelta(days=random.randint(1, 14)),
+                    'completed_at': datetime.now(timezone.utc) - timedelta(days=random.randint(1, 14)),
                     'criteria_scores': {
                         'team_quality': round(random.uniform(6.0, 9.5), 1),
                         'market_opportunity': round(random.uniform(6.0, 9.5), 1),
@@ -1545,7 +1545,7 @@ def program_evaluation_workflow(db_session):
                 'evaluations': stage_evaluations,
                 'average_score': round(avg_stage_score, 2),
                 'stage_decision': 'advance' if avg_stage_score >= program_data['evaluation_process']['min_score_to_advance'][stage_idx] else 'reject',
-                'completed_at': datetime.utcnow() - timedelta(days=random.randint(1, 10))
+                'completed_at': datetime.now(timezone.utc) - timedelta(days=random.randint(1, 10))
             })
         
         # Calcular score general
@@ -1557,7 +1557,7 @@ def program_evaluation_workflow(db_session):
             'id': app_id,
             'entrepreneur': entrepreneur,
             'project': project,
-            'submitted_at': datetime.utcnow() - timedelta(days=random.randint(5, 25)),
+            'submitted_at': datetime.now(timezone.utc) - timedelta(days=random.randint(5, 25)),
             'current_stage': current_stage,
             'current_stage_index': current_stage_index,
             'overall_score': round(overall_score, 2),
@@ -1580,7 +1580,7 @@ def program_evaluation_workflow(db_session):
                     'proven_traction', 'strategic_partnerships'
                 ], 2)
             },
-            'next_deadline': datetime.utcnow() + timedelta(days=random.randint(1, 7)) if current_stage_index < len(program_data['evaluation_process']['stages']) else None
+            'next_deadline': datetime.now(timezone.utc) + timedelta(days=random.randint(1, 7)) if current_stage_index < len(program_data['evaluation_process']['stages']) else None
         }
         
         applications.append(application)
@@ -1746,23 +1746,23 @@ def feature_flags():
             'rollout_percentage': 50,
             'target_roles': ['entrepreneur', 'ally'],
             'exclude_users': [],
-            'start_date': datetime.utcnow() - timedelta(days=7),
-            'end_date': datetime.utcnow() + timedelta(days=30)
+            'start_date': datetime.now(timezone.utc) - timedelta(days=7),
+            'end_date': datetime.now(timezone.utc) + timedelta(days=30)
         },
         'ai_mentor_matching': {
             'enabled': True,
             'rollout_percentage': 25,
             'target_roles': ['entrepreneur'],
             'exclude_users': [],
-            'start_date': datetime.utcnow() - timedelta(days=3),
-            'end_date': datetime.utcnow() + timedelta(days=60)
+            'start_date': datetime.now(timezone.utc) - timedelta(days=3),
+            'end_date': datetime.now(timezone.utc) + timedelta(days=60)
         },
         'advanced_analytics': {
             'enabled': True,
             'rollout_percentage': 100,
             'target_roles': ['admin', 'client'],
             'exclude_users': [],
-            'start_date': datetime.utcnow() - timedelta(days=30),
+            'start_date': datetime.now(timezone.utc) - timedelta(days=30),
             'end_date': None  # Permanent
         },
         'mobile_app_beta': {
@@ -1778,8 +1778,8 @@ def feature_flags():
             'rollout_percentage': 10,
             'target_roles': ['entrepreneur'],
             'exclude_users': [],
-            'start_date': datetime.utcnow(),
-            'end_date': datetime.utcnow() + timedelta(days=90)
+            'start_date': datetime.now(timezone.utc),
+            'end_date': datetime.now(timezone.utc) + timedelta(days=90)
         }
     }
     

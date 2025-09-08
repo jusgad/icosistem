@@ -68,7 +68,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Any, Callable, Tuple
+from typing import Optional, Union, Any, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 import re
@@ -288,7 +288,7 @@ class NotificationRecipient:
     whatsapp_number: Optional[str] = None
     language: str = 'es'
     timezone: str = 'America/Bogota'
-    preferences: Dict[str, Any] = field(default_factory=dict)
+    preferences: dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class NotificationContent:
@@ -297,21 +297,21 @@ class NotificationContent:
     body: str = ''
     html_body: Optional[str] = None
     short_text: Optional[str] = None  # Para SMS/Push
-    attachments: List[str] = field(default_factory=list)
+    attachments: list[str] = field(default_factory=list)
     action_url: Optional[str] = None
     action_text: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class NotificationRequest:
     """Solicitud de notificación."""
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     notification_type: NotificationType = NotificationType.WELCOME_ENTREPRENEUR
-    recipients: List[NotificationRecipient] = field(default_factory=list)
-    channels: List[NotificationChannel] = field(default_factory=list)
+    recipients: list[NotificationRecipient] = field(default_factory=list)
+    channels: list[NotificationChannel] = field(default_factory=list)
     content: Optional[NotificationContent] = None
     template: Optional[str] = None
-    context: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
     priority: NotificationPriority = NotificationPriority.NORMAL
     scheduled_at: Optional[datetime] = None
     expires_at: Optional[datetime] = None
@@ -330,7 +330,7 @@ class NotificationResult:
     sent_at: Optional[datetime] = None
     delivered_at: Optional[datetime] = None
     error: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 # ==============================================================================
 # EXCEPCIONES PERSONALIZADAS
@@ -363,7 +363,7 @@ class RateLimitError(NotificationError):
 class NotificationChannel_Base(ABC):
     """Clase base para canales de notificación."""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         self.config = config
         self.enabled = config.get('enabled', True)
         self.rate_limiter = RateLimiter(
@@ -388,7 +388,7 @@ class NotificationChannel_Base(ABC):
 class EmailChannel(NotificationChannel_Base):
     """Canal de notificaciones por email."""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         super().__init__(config)
         self.provider = config.get('provider', 'smtp')
         
@@ -574,7 +574,7 @@ class EmailChannel(NotificationChannel_Base):
 class SMSChannel(NotificationChannel_Base):
     """Canal de notificaciones por SMS."""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         super().__init__(config)
         self.provider = config.get('provider', 'twilio')
         self.max_length = config.get('max_length', 160)
@@ -718,7 +718,7 @@ class SMSChannel(NotificationChannel_Base):
 class PushChannel(NotificationChannel_Base):
     """Canal de push notifications."""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         super().__init__(config)
         self.provider = config.get('provider', 'firebase')
         
@@ -810,7 +810,7 @@ class PushChannel(NotificationChannel_Base):
 class SlackChannel(NotificationChannel_Base):
     """Canal de notificaciones por Slack."""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         super().__init__(config)
         self.webhook_url = config.get('webhook_url')
         self.bot_token = config.get('bot_token')
@@ -877,14 +877,14 @@ class SlackChannel(NotificationChannel_Base):
         
         return result
     
-    def _send_webhook(self, message: Dict[str, Any]) -> str:
+    def _send_webhook(self, message: dict[str, Any]) -> str:
         """Envía por webhook."""
         response = requests.post(self.webhook_url, json=message)
         response.raise_for_status()
         return f"webhook_{int(time.time())}"
     
     def _send_bot(self, recipient: NotificationRecipient, 
-                  message: Dict[str, Any]) -> str:
+                  message: dict[str, Any]) -> str:
         """Envía por bot."""
         headers = {'Authorization': f'Bearer {self.bot_token}'}
         
@@ -914,7 +914,7 @@ class SlackChannel(NotificationChannel_Base):
 class TemplateManager:
     """Gestor de templates de notificaciones."""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         self.config = config
         self.template_dir = config.get('directory', 'templates/notifications')
         self.cache_enabled = config.get('cache_enabled', True)
@@ -934,7 +934,7 @@ class TemplateManager:
         # Templates incorporados
         self.built_in_templates = self._load_built_in_templates()
     
-    def _load_built_in_templates(self) -> Dict[str, Dict[str, str]]:
+    def _load_built_in_templates(self) -> dict[str, dict[str, str]]:
         """Carga templates incorporados."""
         return {
             # Template de bienvenida para emprendedor
@@ -1069,7 +1069,7 @@ Equipo {{program_name}}'''
             }
         }
     
-    def render(self, template_name: str, context: Dict[str, Any], 
+    def render(self, template_name: str, context: dict[str, Any], 
                content_type: str = 'body') -> str:
         """
         Renderiza template con contexto.
@@ -1127,7 +1127,7 @@ Equipo {{program_name}}'''
         
         return None
     
-    def _simple_render(self, template_content: str, context: Dict[str, Any]) -> str:
+    def _simple_render(self, template_content: str, context: dict[str, Any]) -> str:
         """Renderizado simple sin Jinja2."""
         # Reemplazar variables simples {{variable}}
         import re
@@ -1301,7 +1301,7 @@ class NotificationQueue:
 class NotificationManager:
     """Manager principal del sistema de notificaciones."""
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[dict[str, Any]] = None):
         self.config = {**NOTIFICATION_CONFIG, **(config or {})}
         
         # Inicializar template manager
@@ -1357,7 +1357,7 @@ class NotificationManager:
             except Exception as e:
                 logger.error(f"Error configurando canal de Slack: {e}")
     
-    def send_notification(self, notification_request: NotificationRequest) -> List[NotificationResult]:
+    def send_notification(self, notification_request: NotificationRequest) -> list[NotificationResult]:
         """
         Envía notificación por múltiples canales.
         
@@ -1414,7 +1414,7 @@ class NotificationManager:
         self.queue.enqueue(notification_request)
     
     def _render_notification_content(self, template_name: str, 
-                                   context: Dict[str, Any]) -> NotificationContent:
+                                   context: dict[str, Any]) -> NotificationContent:
         """Renderiza contenido usando templates."""
         content = NotificationContent()
         
@@ -1432,7 +1432,7 @@ class NotificationManager:
         
         return content
     
-    def create_recipient_from_user(self, user_data: Dict[str, Any]) -> NotificationRecipient:
+    def create_recipient_from_user(self, user_data: dict[str, Any]) -> NotificationRecipient:
         """Crea destinatario desde datos de usuario."""
         return NotificationRecipient(
             user_id=str(user_data.get('id', '')),
@@ -1447,7 +1447,7 @@ class NotificationManager:
             preferences=user_data.get('notification_preferences', {})
         )
     
-    def get_channel_status(self) -> Dict[str, bool]:
+    def get_channel_status(self) -> dict[str, bool]:
         """Obtiene estado de canales disponibles."""
         return {
             channel.value: channel in self.channels and self.channels[channel].is_available()
@@ -1473,9 +1473,9 @@ def get_notification_manager() -> NotificationManager:
         _notification_manager = NotificationManager()
     return _notification_manager
 
-def send_email(to: Union[str, List[str]], subject: str, body: str = '', 
+def send_email(to: Union[str, list[str]], subject: str, body: str = '', 
                html_body: str = '', template: str = None, 
-               context: Dict[str, Any] = None) -> List[NotificationResult]:
+               context: dict[str, Any] = None) -> list[NotificationResult]:
     """
     Función de conveniencia para enviar email.
     
@@ -1526,7 +1526,7 @@ def send_email(to: Union[str, List[str]], subject: str, body: str = '',
     
     return manager.send_notification(request)
 
-def send_sms(to: Union[str, List[str]], message: str) -> List[NotificationResult]:
+def send_sms(to: Union[str, list[str]], message: str) -> list[NotificationResult]:
     """
     Función de conveniencia para enviar SMS.
     
@@ -1559,8 +1559,8 @@ def send_sms(to: Union[str, List[str]], message: str) -> List[NotificationResult
     
     return manager.send_notification(request)
 
-def send_welcome_entrepreneur(user_data: Dict[str, Any], 
-                            action_url: str = None) -> List[NotificationResult]:
+def send_welcome_entrepreneur(user_data: dict[str, Any], 
+                            action_url: str = None) -> list[NotificationResult]:
     """
     Envía notificación de bienvenida a emprendedor.
     
@@ -1595,9 +1595,9 @@ def send_welcome_entrepreneur(user_data: Dict[str, Any],
     
     return manager.send_notification(request)
 
-def send_mentorship_reminder(entrepreneur_data: Dict[str, Any], 
-                           mentor_data: Dict[str, Any],
-                           meeting_data: Dict[str, Any]) -> List[NotificationResult]:
+def send_mentorship_reminder(entrepreneur_data: dict[str, Any], 
+                           mentor_data: dict[str, Any],
+                           meeting_data: dict[str, Any]) -> list[NotificationResult]:
     """
     Envía recordatorio de mentoría.
     
@@ -1644,7 +1644,7 @@ def configure_notifications(**kwargs):
         _notification_manager.queue.stop()
         _notification_manager = None
 
-def get_notification_stats() -> Dict[str, Any]:
+def get_notification_stats() -> dict[str, Any]:
     """Obtiene estadísticas del sistema de notificaciones."""
     manager = get_notification_manager()
     

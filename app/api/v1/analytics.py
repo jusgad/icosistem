@@ -10,9 +10,9 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import Schema, fields, validate, ValidationError
 from sqlalchemy import func, case, extract, and_, or_, text
 from sqlalchemy.orm import selectinload
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from dateutil.relativedelta import relativedelta
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Optional, Any
 import json
 from collections import defaultdict
 from functools import wraps
@@ -155,7 +155,7 @@ def calculate_growth_rate(current: float, previous: float) -> float:
         return 100.0 if current > 0 else 0.0
     return round(((current - previous) / previous) * 100, 2)
 
-def generate_time_series(start_date: date, end_date: date, granularity: str) -> List[Dict]:
+def generate_time_series(start_date: date, end_date: date, granularity: str) -> list[Dict]:
     """Genera serie temporal para gráficos."""
     series = []
     current = start_date
@@ -261,7 +261,7 @@ def get_dashboard():
         return {
             'dashboard': metrics,
             'period': f"{filters['start_date']} to {filters['end_date']}",
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         }
         
     except ValidationError as e:
@@ -334,8 +334,8 @@ def get_user_analytics():
         activity_stats = db.session.query(
             User.user_type,
             func.avg(func.extract('epoch', func.now() - User.last_login_at) / 86400).label('avg_inactive_days'),
-            func.count(case([(User.last_login_at >= datetime.utcnow() - timedelta(days=7), 1)])).label('active_last_week'),
-            func.count(case([(User.last_login_at >= datetime.utcnow() - timedelta(days=30), 1)])).label('active_last_month')
+            func.count(case([(User.last_login_at >= datetime.now(timezone.utc) - timedelta(days=7), 1)])).label('active_last_week'),
+            func.count(case([(User.last_login_at >= datetime.now(timezone.utc) - timedelta(days=30), 1)])).label('active_last_month')
         ).group_by(User.user_type).all()
         
         # Top usuarios por actividad (solo para admin)
@@ -396,7 +396,7 @@ def get_user_analytics():
                 ] if check_analytics_permission(current_user, 'advanced') else []
             },
             'filters_applied': filters,
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         }
         
     except ValidationError as e:
@@ -561,7 +561,7 @@ def get_project_analytics():
                 ] if check_analytics_permission(current_user, 'advanced') else []
             },
             'filters_applied': filters,
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         }
         
     except ValidationError as e:
@@ -693,7 +693,7 @@ def get_mentorship_analytics():
                 ]
             },
             'filters_applied': filters,
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         }
         
     except ValidationError as e:
@@ -818,7 +818,7 @@ def get_activity_analytics():
                 ]
             },
             'filters_applied': filters,
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         }
         
     except ValidationError as e:
@@ -951,7 +951,7 @@ def get_engagement_analytics():
                 }
             },
             'filters_applied': filters,
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         }
         
     except ValidationError as e:
@@ -1011,7 +1011,7 @@ def generate_report():
         return {
             'message': 'Reporte generado exitosamente',
             'report': report_data,
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         }
         
     except ValidationError as e:
@@ -1059,7 +1059,7 @@ def export_data(export_type: str):
             'export_data': export_data,
             'export_type': export_type,
             'filters_applied': filters,
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         }
         
     except ValidationError as e:

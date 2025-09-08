@@ -2,7 +2,7 @@
 Common Pydantic schemas for shared data structures.
 """
 
-from typing import Any, Dict, List, Optional, Generic, TypeVar, Union
+from typing import Any, Optional, Generic, TypeVar, Union
 from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
@@ -65,7 +65,7 @@ class SuccessResponse(BaseResponse):
     """Success response schema"""
     
     message: str = Field(description="Success message")
-    data: Optional[Dict[str, Any]] = Field(default=None, description="Response data")
+    data: Optional[dict[str, Any]] = Field(default=None, description="Response data")
 
 
 class ErrorDetail(BaseSchema):
@@ -91,8 +91,8 @@ class ErrorResponse(BaseResponse):
     success: bool = Field(default=False)
     error_type: ErrorType = Field(description="Type of error")
     message: str = Field(description="Error message")
-    details: Optional[List[ErrorDetail]] = Field(default=None, description="Detailed error information")
-    validation_errors: Optional[List[ValidationError]] = Field(default=None, description="Validation errors")
+    details: Optional[list[ErrorDetail]] = Field(default=None, description="Detailed error information")
+    validation_errors: Optional[list[ValidationError]] = Field(default=None, description="Validation errors")
     error_code: Optional[str] = Field(default=None, description="Application-specific error code")
 
 
@@ -112,7 +112,7 @@ class PaginationMeta(BaseSchema):
 class PaginatedResponse(BaseResponse, Generic[T]):
     """Generic paginated response"""
     
-    items: List[T] = Field(description="List of items")
+    items: list[T] = Field(description="List of items")
     pagination: PaginationMeta = Field(description="Pagination metadata")
 
 
@@ -144,7 +144,7 @@ class FilterCriteria(BaseSchema):
     
     field: str = Field(description="Field name to filter")
     operator: FilterOperator = Field(description="Filter operator")
-    value: Optional[Union[str, int, float, bool, List[Any]]] = Field(
+    value: Optional[Union[str, int, float, bool, list[Any]]] = Field(
         default=None, 
         description="Filter value"
     )
@@ -165,7 +165,7 @@ class QueryRequest(BaseSchema):
     per_page: int = Field(default=20, ge=1, le=100, description="Items per page")
     
     # Filtering
-    filters: Optional[List[FilterCriteria]] = Field(
+    filters: Optional[list[FilterCriteria]] = Field(
         default=None, 
         description="Filter criteria"
     )
@@ -177,19 +177,19 @@ class QueryRequest(BaseSchema):
     )
     
     # Sorting
-    sort: Optional[List[SortCriteria]] = Field(
+    sort: Optional[list[SortCriteria]] = Field(
         default=None, 
         description="Sort criteria"
     )
     
     # Field selection
-    fields: Optional[List[str]] = Field(
+    fields: Optional[list[str]] = Field(
         default=None, 
         description="Fields to include in response"
     )
     
     # Includes
-    include: Optional[List[str]] = Field(
+    include: Optional[list[str]] = Field(
         default=None, 
         description="Related resources to include"
     )
@@ -209,14 +209,14 @@ class ServiceHealth(BaseSchema):
     status: HealthCheckStatus = Field(description="Service status")
     response_time_ms: Optional[float] = Field(default=None, description="Response time in milliseconds")
     error: Optional[str] = Field(default=None, description="Error message if unhealthy")
-    details: Optional[Dict[str, Any]] = Field(default=None, description="Additional health details")
+    details: Optional[dict[str, Any]] = Field(default=None, description="Additional health details")
 
 
 class HealthCheckResponse(BaseResponse):
     """Health check response"""
     
     overall_status: HealthCheckStatus = Field(description="Overall system health")
-    services: List[ServiceHealth] = Field(description="Individual service health")
+    services: list[ServiceHealth] = Field(description="Individual service health")
     uptime_seconds: float = Field(description="System uptime in seconds")
     version: str = Field(description="Application version")
     environment: str = Field(description="Environment name")
@@ -317,15 +317,15 @@ class MetricValue(BaseSchema):
     value: Union[int, float, str] = Field(description="Metric value")
     unit: Optional[str] = Field(default=None, description="Metric unit")
     timestamp: datetime = Field(default_factory=datetime.utcnow, description="Metric timestamp")
-    tags: Optional[Dict[str, str]] = Field(default=None, description="Metric tags")
+    tags: Optional[dict[str, str]] = Field(default=None, description="Metric tags")
 
 
 class BulkOperation(BaseSchema):
     """Bulk operation request"""
     
     operation: str = Field(description="Operation to perform")
-    items: List[Dict[str, Any]] = Field(min_length=1, description="Items to process")
-    options: Optional[Dict[str, Any]] = Field(default=None, description="Operation options")
+    items: list[dict[str, Any]] = Field(min_length=1, description="Items to process")
+    options: Optional[dict[str, Any]] = Field(default=None, description="Operation options")
 
 
 class BulkOperationResult(BaseSchema):
@@ -334,7 +334,7 @@ class BulkOperationResult(BaseSchema):
     total_items: int = Field(ge=0, description="Total items processed")
     successful_items: int = Field(ge=0, description="Successfully processed items")
     failed_items: int = Field(ge=0, description="Failed items")
-    errors: Optional[List[ErrorDetail]] = Field(default=None, description="Processing errors")
+    errors: Optional[list[ErrorDetail]] = Field(default=None, description="Processing errors")
     processing_time_ms: float = Field(description="Processing time in milliseconds")
 
 
@@ -342,7 +342,7 @@ class ConfigurationSetting(BaseSchema):
     """Configuration setting schema"""
     
     key: str = Field(description="Setting key")
-    value: Union[str, int, float, bool, Dict[str, Any]] = Field(description="Setting value")
+    value: Union[str, int, float, bool, dict[str, Any]] = Field(description="Setting value")
     description: Optional[str] = Field(default=None, description="Setting description")
     is_sensitive: bool = Field(default=False, description="Whether setting contains sensitive data")
     category: Optional[str] = Field(default=None, description="Setting category")
@@ -351,7 +351,7 @@ class ConfigurationSetting(BaseSchema):
 
 # Utility functions for schema handling
 def create_paginated_response(
-    items: List[T], 
+    items: list[T], 
     pagination_meta: PaginationMeta,
     request_id: Optional[str] = None
 ) -> PaginatedResponse[T]:
@@ -366,8 +366,8 @@ def create_paginated_response(
 def create_error_response(
     error_type: ErrorType,
     message: str,
-    details: Optional[List[ErrorDetail]] = None,
-    validation_errors: Optional[List[ValidationError]] = None,
+    details: Optional[list[ErrorDetail]] = None,
+    validation_errors: Optional[list[ValidationError]] = None,
     error_code: Optional[str] = None,
     request_id: Optional[str] = None
 ) -> ErrorResponse:
@@ -384,7 +384,7 @@ def create_error_response(
 
 def create_success_response(
     message: str,
-    data: Optional[Dict[str, Any]] = None,
+    data: Optional[dict[str, Any]] = None,
     request_id: Optional[str] = None
 ) -> SuccessResponse:
     """Create a success response"""

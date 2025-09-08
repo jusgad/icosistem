@@ -25,8 +25,8 @@ import json
 import uuid
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union, Tuple
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Any, Union
 from dataclasses import dataclass, asdict
 from enum import Enum
 from collections import defaultdict, Counter
@@ -145,14 +145,14 @@ class AnalyticsReport:
     title: str
     timeframe: AnalyticsTimeframe
     generated_at: datetime
-    data: Dict[str, Any]
-    metrics: Dict[str, float]
-    charts: List[Dict[str, Any]]
-    insights: List[str]
-    recommendations: List[str]
-    metadata: Dict[str, Any]
+    data: dict[str, Any]
+    metrics: dict[str, float]
+    charts: list[dict[str, Any]]
+    insights: list[str]
+    recommendations: list[str]
+    metadata: dict[str, Any]
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             **asdict(self),
             'generated_at': self.generated_at.isoformat()
@@ -164,9 +164,9 @@ class UserSegment:
     """Segmento de usuarios para analytics"""
     name: str
     description: str
-    criteria: Dict[str, Any]
+    criteria: dict[str, Any]
     user_count: int
-    metrics: Dict[str, float]
+    metrics: dict[str, float]
 
 
 # === TAREAS DE MÉTRICAS EN TIEMPO REAL ===
@@ -187,7 +187,7 @@ def update_realtime_metrics(self):
     try:
         logger.info("Actualizando métricas en tiempo real")
         
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
         analytics_service = AnalyticsService()
         
         # Métricas de usuarios online
@@ -250,7 +250,7 @@ def update_realtime_metrics(self):
     queue='analytics',
     priority=5
 )
-def track_user_engagement(self, user_id: int, event_type: str, event_data: Dict[str, Any]):
+def track_user_engagement(self, user_id: int, event_type: str, event_data: dict[str, Any]):
     """
     Trackea evento de engagement de usuario
     
@@ -276,7 +276,7 @@ def track_user_engagement(self, user_id: int, event_type: str, event_data: Dict[
             session_id=event_data.get('session_id'),
             ip_address=event_data.get('ip_address'),
             user_agent=event_data.get('user_agent'),
-            timestamp=datetime.utcnow()
+            timestamp=datetime.now(timezone.utc)
         )
         
         from app import db
@@ -330,7 +330,7 @@ def generate_daily_analytics(self):
         logger.info("Generando reporte de analytics diario")
         
         # Rango de fechas (día anterior)
-        end_date = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        end_date = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
         start_date = end_date - timedelta(days=1)
         
         # Obtener datos del día
@@ -352,7 +352,7 @@ def generate_daily_analytics(self):
         report = AnalyticsReport(
             title=f"Reporte Diario - {start_date.strftime('%d/%m/%Y')}",
             timeframe=AnalyticsTimeframe.DAILY,
-            generated_at=datetime.utcnow(),
+            generated_at=datetime.now(timezone.utc),
             data=daily_data,
             metrics=metrics,
             charts=charts,
@@ -412,7 +412,7 @@ def generate_weekly_entrepreneur_report(self):
         logger.info("Generando reporte semanal de emprendedores")
         
         # Rango de fechas (semana anterior)
-        end_date = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        end_date = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
         start_date = end_date - timedelta(days=7)
         
         # Obtener todos los emprendedores activos
@@ -447,7 +447,7 @@ def generate_weekly_entrepreneur_report(self):
                 report = AnalyticsReport(
                     title=f"Tu Reporte Semanal - {entrepreneur.get_full_name()}",
                     timeframe=AnalyticsTimeframe.WEEKLY,
-                    generated_at=datetime.utcnow(),
+                    generated_at=datetime.now(timezone.utc),
                     data=entrepreneur_data,
                     metrics=entrepreneur_metrics,
                     charts=charts,
@@ -510,7 +510,7 @@ def generate_weekly_mentor_summary(self):
         logger.info("Generando resumen semanal de mentores")
         
         # Rango de fechas
-        end_date = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        end_date = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
         start_date = end_date - timedelta(days=7)
         
         # Obtener mentores activos
@@ -598,7 +598,7 @@ def generate_monthly_ecosystem_report(self):
         logger.info("Generando reporte mensual del ecosistema")
         
         # Rango de fechas (mes anterior)
-        today = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        today = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         start_date = (today.replace(month=today.month-1) if today.month > 1 
                      else today.replace(year=today.year-1, month=12))
         end_date = today
@@ -631,7 +631,7 @@ def generate_monthly_ecosystem_report(self):
         report = AnalyticsReport(
             title=f"Reporte Mensual del Ecosistema - {start_date.strftime('%B %Y')}",
             timeframe=AnalyticsTimeframe.MONTHLY,
-            generated_at=datetime.utcnow(),
+            generated_at=datetime.now(timezone.utc),
             data={
                 'ecosystem_overview': ecosystem_data,
                 'growth_analysis': growth_analysis,
@@ -734,7 +734,7 @@ def perform_cohort_analysis(self, start_date_str: str, end_date_str: str):
             'ltv_data': ltv_analysis,
             'insights': cohort_insights,
             'charts': cohort_charts,
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         }
         
         analysis_id = _save_cohort_analysis(analysis_result)
@@ -795,7 +795,7 @@ def analyze_user_churn(self):
         
         # Guardar análisis
         churn_analysis = {
-            'analysis_date': datetime.utcnow().isoformat(),
+            'analysis_date': datetime.now(timezone.utc).isoformat(),
             'current_metrics': current_churn_metrics,
             'predictions': churn_predictions,
             'risk_factors': risk_factors,
@@ -867,7 +867,7 @@ def analyze_project_success_patterns(self):
         
         # Guardar análisis
         analysis_result = {
-            'analysis_date': datetime.utcnow().isoformat(),
+            'analysis_date': datetime.now(timezone.utc).isoformat(),
             'projects_analyzed': len(project_data),
             'success_factors': success_factors,
             'active_projects_analysis': active_projects_analysis,
@@ -908,7 +908,7 @@ def analyze_project_success_patterns(self):
     queue='analytics',
     priority=3
 )
-def export_analytics_data(self, export_config: Dict[str, Any]):
+def export_analytics_data(self, export_config: dict[str, Any]):
     """
     Exporta datos de analytics en múltiples formatos
     
@@ -942,7 +942,7 @@ def export_analytics_data(self, export_config: Dict[str, Any]):
         # Generar nombre de archivo
         filename = generate_report_filename(
             f"{data_type}_{export_format}",
-            datetime.utcnow(),
+            datetime.now(timezone.utc),
             export_format
         )
         
@@ -971,7 +971,7 @@ def export_analytics_data(self, export_config: Dict[str, Any]):
             'date_range': date_range,
             'records_exported': len(data),
             'file_size': len(export_result['file_content']),
-            'exported_at': datetime.utcnow().isoformat(),
+            'exported_at': datetime.now(timezone.utc).isoformat(),
             'exported_by': export_config.get('user_id', 'system')
         }
         
@@ -1024,7 +1024,7 @@ def train_ml_models(self):
                 'model_type': 'churn_prediction',
                 'accuracy': churn_model['accuracy'],
                 'features': churn_model['features'],
-                'trained_at': datetime.utcnow().isoformat()
+                'trained_at': datetime.now(timezone.utc).isoformat()
             })
         except Exception as e:
             logger.error(f"Error entrenando modelo de churn: {str(e)}")
@@ -1036,7 +1036,7 @@ def train_ml_models(self):
                 'model_type': 'user_segmentation',
                 'clusters': segmentation_model['n_clusters'],
                 'silhouette_score': segmentation_model['silhouette_score'],
-                'trained_at': datetime.utcnow().isoformat()
+                'trained_at': datetime.now(timezone.utc).isoformat()
             })
         except Exception as e:
             logger.error(f"Error entrenando modelo de segmentación: {str(e)}")
@@ -1048,7 +1048,7 @@ def train_ml_models(self):
                 'model_type': 'mentor_recommendation',
                 'precision': recommendation_model['precision'],
                 'recall': recommendation_model['recall'],
-                'trained_at': datetime.utcnow().isoformat()
+                'trained_at': datetime.now(timezone.utc).isoformat()
             })
         except Exception as e:
             logger.error(f"Error entrenando modelo de recomendación: {str(e)}")
@@ -1060,7 +1060,7 @@ def train_ml_models(self):
                 'model_type': 'project_success',
                 'accuracy': success_model['accuracy'],
                 'precision': success_model['precision'],
-                'trained_at': datetime.utcnow().isoformat()
+                'trained_at': datetime.now(timezone.utc).isoformat()
             })
         except Exception as e:
             logger.error(f"Error entrenando modelo de éxito: {str(e)}")
@@ -1068,7 +1068,7 @@ def train_ml_models(self):
         # Guardar información de modelos
         training_session = {
             'session_id': str(uuid.uuid4()),
-            'trained_at': datetime.utcnow().isoformat(),
+            'trained_at': datetime.now(timezone.utc).isoformat(),
             'models_trained': models_trained,
             'total_models': len(models_trained),
             'training_duration': 'calculated_in_implementation'
@@ -1107,7 +1107,7 @@ def generate_user_engagement_report(self):
         logger.info("Generando reporte de engagement de usuarios")
         
         # Rango de fechas (últimos 30 días)
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=30)
         
         # Obtener datos de engagement
@@ -1143,7 +1143,7 @@ def generate_user_engagement_report(self):
         report = AnalyticsReport(
             title=f"Reporte de Engagement de Usuarios - {start_date.strftime('%d/%m/%Y')} a {end_date.strftime('%d/%m/%Y')}",
             timeframe=AnalyticsTimeframe.MONTHLY,
-            generated_at=datetime.utcnow(),
+            generated_at=datetime.now(timezone.utc),
             data={
                 'engagement_data': engagement_data,
                 'segments': engagement_segments,
@@ -1201,10 +1201,10 @@ def _get_online_users_count() -> int:
         return 0
 
 
-def _get_recent_activity_metrics() -> Dict[str, int]:
+def _get_recent_activity_metrics() -> dict[str, int]:
     """Obtiene métricas de actividad reciente"""
     try:
-        one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+        one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
         
         return {
             'logins': ActivityLog.query.filter(
@@ -1228,7 +1228,7 @@ def _get_recent_activity_metrics() -> Dict[str, int]:
         return {}
 
 
-def _get_system_performance_metrics() -> Dict[str, float]:
+def _get_system_performance_metrics() -> dict[str, float]:
     """Obtiene métricas de rendimiento del sistema"""
     try:
         import psutil
@@ -1245,10 +1245,10 @@ def _get_system_performance_metrics() -> Dict[str, float]:
         return {}
 
 
-def _get_current_engagement_metrics() -> Dict[str, int]:
+def _get_current_engagement_metrics() -> dict[str, int]:
     """Obtiene métricas de engagement actuales"""
     try:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         
         return {
@@ -1281,7 +1281,7 @@ def _get_active_sessions_count() -> int:
 def _get_current_meetings_count() -> int:
     """Obtiene el conteo de reuniones actualmente en curso"""
     try:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         return Meeting.query.filter(
             Meeting.start_time <= now,
             Meeting.end_time >= now,
@@ -1302,13 +1302,13 @@ def _get_pending_notifications_count() -> int:
         return 0
 
 
-def _save_realtime_metrics(metrics_data: Dict[str, Any]):
+def _save_realtime_metrics(metrics_data: dict[str, Any]):
     """Guarda métricas en tiempo real en la base de datos"""
     try:
         metric = SystemMetric(
             metric_type='realtime',
             metric_data=metrics_data,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.now(timezone.utc)
         )
         
         from app import db
@@ -1319,7 +1319,7 @@ def _save_realtime_metrics(metrics_data: Dict[str, Any]):
         logger.error(f"Error guardando métricas en tiempo real: {str(e)}")
 
 
-def _send_metrics_to_mixpanel(metrics_data: Dict[str, Any]):
+def _send_metrics_to_mixpanel(metrics_data: dict[str, Any]):
     """Envía métricas a Mixpanel"""
     try:
         if mp:
@@ -1328,7 +1328,7 @@ def _send_metrics_to_mixpanel(metrics_data: Dict[str, Any]):
         logger.error(f"Error enviando métricas a Mixpanel: {str(e)}")
 
 
-def _send_metrics_to_amplitude(metrics_data: Dict[str, Any]):
+def _send_metrics_to_amplitude(metrics_data: dict[str, Any]):
     """Envía métricas a Amplitude"""
     try:
         if amplitude_client:
@@ -1337,26 +1337,26 @@ def _send_metrics_to_amplitude(metrics_data: Dict[str, Any]):
         logger.error(f"Error enviando métricas a Amplitude: {str(e)}")
 
 
-def _update_user_engagement_metrics(user_id: int, event_type: str, event_data: Dict[str, Any]):
+def _update_user_engagement_metrics(user_id: int, event_type: str, event_data: dict[str, Any]):
     """Actualiza métricas de engagement del usuario"""
     try:
         # Obtener o crear métrica de usuario
         user_metric = UserMetric.query.filter(
             UserMetric.user_id == user_id,
-            UserMetric.date == datetime.utcnow().date()
+            UserMetric.date == datetime.now(timezone.utc).date()
         ).first()
         
         if not user_metric:
             user_metric = UserMetric(
                 user_id=user_id,
-                date=datetime.utcnow().date(),
+                date=datetime.now(timezone.utc).date(),
                 metrics={}
             )
         
         # Actualizar métricas
         metrics = user_metric.metrics or {}
         metrics[event_type] = metrics.get(event_type, 0) + 1
-        metrics['last_activity'] = datetime.utcnow().isoformat()
+        metrics['last_activity'] = datetime.now(timezone.utc).isoformat()
         user_metric.metrics = metrics
         
         from app import db
@@ -1367,7 +1367,7 @@ def _update_user_engagement_metrics(user_id: int, event_type: str, event_data: D
         logger.error(f"Error actualizando métricas de usuario: {str(e)}")
 
 
-def _analyze_user_behavior_patterns(user_id: int, event_type: str, event_data: Dict[str, Any]):
+def _analyze_user_behavior_patterns(user_id: int, event_type: str, event_data: dict[str, Any]):
     """Analiza patrones de comportamiento del usuario"""
     try:
         # Implementar análisis de patrones
@@ -1377,7 +1377,7 @@ def _analyze_user_behavior_patterns(user_id: int, event_type: str, event_data: D
         logger.error(f"Error analizando patrones de comportamiento: {str(e)}")
 
 
-def _get_daily_analytics_data(start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _get_daily_analytics_data(start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """Obtiene datos de analytics para el día"""
     try:
         return {
@@ -1391,7 +1391,7 @@ def _get_daily_analytics_data(start_date: datetime, end_date: datetime) -> Dict[
         return {}
 
 
-def _calculate_daily_metrics(daily_data: Dict[str, Any]) -> Dict[str, float]:
+def _calculate_daily_metrics(daily_data: dict[str, Any]) -> dict[str, float]:
     """Calcula métricas diarias"""
     try:
         # Implementar cálculo de métricas
@@ -1408,7 +1408,7 @@ def _calculate_daily_metrics(daily_data: Dict[str, Any]) -> Dict[str, float]:
         return {}
 
 
-def _generate_daily_insights(daily_data: Dict[str, Any], metrics: Dict[str, float]) -> List[str]:
+def _generate_daily_insights(daily_data: dict[str, Any], metrics: dict[str, float]) -> list[str]:
     """Genera insights diarios automáticos"""
     insights = []
     
@@ -1437,7 +1437,7 @@ def _generate_daily_insights(daily_data: Dict[str, Any], metrics: Dict[str, floa
     return insights
 
 
-def _generate_daily_charts(daily_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _generate_daily_charts(daily_data: dict[str, Any]) -> list[dict[str, Any]]:
     """Genera gráficos para el reporte diario"""
     charts = []
     
@@ -1471,7 +1471,7 @@ def _generate_daily_charts(daily_data: Dict[str, Any]) -> List[Dict[str, Any]]:
     return charts
 
 
-def _generate_daily_recommendations(metrics: Dict[str, float], insights: List[str]) -> List[str]:
+def _generate_daily_recommendations(metrics: dict[str, float], insights: list[str]) -> list[str]:
     """Genera recomendaciones basadas en métricas diarias"""
     recommendations = []
     
@@ -1523,42 +1523,42 @@ def _save_analytics_report(report: AnalyticsReport) -> str:
 
 
 # Funciones auxiliares adicionales (implementación parcial para brevedad)
-def _export_daily_report(report: AnalyticsReport) -> Dict[str, str]:
+def _export_daily_report(report: AnalyticsReport) -> dict[str, str]:
     """Exporta reporte diario en múltiples formatos"""
     return {'pdf': 'path/to/report.pdf', 'excel': 'path/to/report.xlsx'}
 
 
-def _email_daily_report(report: AnalyticsReport, export_results: Dict[str, str]):
+def _email_daily_report(report: AnalyticsReport, export_results: dict[str, str]):
     """Envía reporte diario por email"""
     pass
 
 
-def _update_comparative_metrics(metrics: Dict[str, float], timeframe: str):
+def _update_comparative_metrics(metrics: dict[str, float], timeframe: str):
     """Actualiza métricas comparativas"""
     pass
 
 
-def _get_entrepreneur_weekly_data(entrepreneur_id: int, start_date: datetime, end_date: datetime) -> Dict[str, Any]:
+def _get_entrepreneur_weekly_data(entrepreneur_id: int, start_date: datetime, end_date: datetime) -> dict[str, Any]:
     """Obtiene datos semanales del emprendedor"""
     return {}
 
 
-def _calculate_entrepreneur_metrics(data: Dict[str, Any]) -> Dict[str, float]:
+def _calculate_entrepreneur_metrics(data: dict[str, Any]) -> dict[str, float]:
     """Calcula métricas del emprendedor"""
     return {}
 
 
-def _generate_entrepreneur_insights(entrepreneur: Entrepreneur, metrics: Dict[str, float]) -> List[str]:
+def _generate_entrepreneur_insights(entrepreneur: Entrepreneur, metrics: dict[str, float]) -> list[str]:
     """Genera insights para el emprendedor"""
     return []
 
 
-def _generate_entrepreneur_charts(data: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _generate_entrepreneur_charts(data: dict[str, Any]) -> list[dict[str, Any]]:
     """Genera gráficos para el emprendedor"""
     return []
 
 
-def _generate_entrepreneur_recommendations(entrepreneur: Entrepreneur, metrics: Dict[str, float]) -> List[str]:
+def _generate_entrepreneur_recommendations(entrepreneur: Entrepreneur, metrics: dict[str, float]) -> list[str]:
     """Genera recomendaciones para el emprendedor"""
     return []
 

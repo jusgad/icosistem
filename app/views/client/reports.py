@@ -24,10 +24,10 @@ import json
 import uuid
 import tempfile
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict, OrderedDict
 from dataclasses import dataclass
-from typing import Dict, List, Any, Optional
+from typing import Any, Optional
 
 from flask import (
     Blueprint, render_template, request, redirect, url_for, 
@@ -200,12 +200,12 @@ class ReportConfig:
     period: str
     start_date: datetime
     end_date: datetime
-    filters: Dict[str, Any]
-    widgets: List[str]
+    filters: dict[str, Any]
+    widgets: list[str]
     format_type: str
     include_charts: bool
     include_analysis: bool
-    branding: Dict[str, str]
+    branding: dict[str, str]
 
 
 @client_reports_bp.route('/')
@@ -1060,19 +1060,19 @@ def _generate_report_immediate(config, user_id):
         # Generar archivo según formato
         if config.format_type == 'excel':
             file_path = generate_custom_report_excel(report_data, config)
-            filename = f'{config.template}_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.xlsx'
+            filename = f'{config.template}_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.xlsx'
             mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         elif config.format_type == 'csv':
             file_path = _generate_report_csv(report_data, config)
-            filename = f'{config.template}_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.csv'
+            filename = f'{config.template}_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.csv'
             mimetype = 'text/csv'
         elif config.format_type == 'powerpoint':
             file_path = _generate_report_powerpoint(report_data, config)
-            filename = f'{config.template}_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.pptx'
+            filename = f'{config.template}_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.pptx'
             mimetype = 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
         else:  # PDF por defecto
             file_path = _generate_report_pdf(report_data, config)
-            filename = f'{config.template}_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.pdf'
+            filename = f'{config.template}_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.pdf'
             mimetype = 'application/pdf'
         
         return {
@@ -1094,7 +1094,7 @@ def _generate_report_data(config):
     """Genera los datos para el reporte según la configuración."""
     report_data = {
         'config': config,
-        'generated_at': datetime.utcnow(),
+        'generated_at': datetime.now(timezone.utc),
         'metadata': {
             'template': config.template,
             'period': f"{config.start_date} to {config.end_date}",
@@ -1160,7 +1160,7 @@ def _generate_report_pdf(report_data, config):
 def _check_user_report_limits(user_id):
     """Verifica límites de reportes del usuario."""
     # Contar reportes del último mes
-    month_ago = datetime.utcnow() - timedelta(days=30)
+    month_ago = datetime.now(timezone.utc) - timedelta(days=30)
     recent_reports_count = _get_user_reports_count_since(user_id, month_ago)
     
     return recent_reports_count < REPORTS_CONFIG['MAX_REPORTS_PER_USER']
@@ -1175,7 +1175,7 @@ def _get_user_recent_reports(user_id, limit=10):
             'title': f'Reporte {i}',
             'template': 'executive_summary',
             'format': 'pdf',
-            'created_at': datetime.utcnow() - timedelta(days=i),
+            'created_at': datetime.now(timezone.utc) - timedelta(days=i),
             'file_size': 1024 * 1024 * 2,  # 2MB
             'download_count': i
         }
@@ -1192,7 +1192,7 @@ def _get_user_scheduled_reports(user_id):
             'title': 'Reporte Mensual de Impacto',
             'template': 'impact_analysis',
             'frequency': 'monthly',
-            'next_execution': datetime.utcnow() + timedelta(days=5),
+            'next_execution': datetime.now(timezone.utc) + timedelta(days=5),
             'recipients': ['stakeholder@example.com'],
             'status': 'active'
         }

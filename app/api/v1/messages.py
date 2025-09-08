@@ -7,8 +7,8 @@ Versión: 1.0
 from flask import Blueprint, request, jsonify, current_app, send_file
 from flask_login import login_required, current_user
 from marshmallow import Schema, fields, validate, ValidationError, post_load
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Union
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Union
 import uuid
 import os
 import mimetypes
@@ -89,7 +89,7 @@ class MessageCreateSchema(Schema):
         
         # Validar fecha de envío programado
         if data.get('scheduled_send_at'):
-            if data['scheduled_send_at'] <= datetime.utcnow():
+            if data['scheduled_send_at'] <= datetime.now(timezone.utc):
                 raise ValidationException("La fecha de envío programado debe ser futura")
         
         return data
@@ -439,7 +439,7 @@ def get_message(message_id: uuid.UUID):
                 {
                     'message_id': str(message_id),
                     'read_by': current_user.id,
-                    'read_at': datetime.utcnow().isoformat()
+                    'read_at': datetime.now(timezone.utc).isoformat()
                 },
                 room=f"thread_{message.thread_id}"
             )
@@ -554,7 +554,7 @@ def send_message():
         db.session.add(message)
         
         # Actualizar actividad del hilo
-        thread.last_activity_at = datetime.utcnow()
+        thread.last_activity_at = datetime.now(timezone.utc)
         thread.last_message_id = message.id
         
         db.session.commit()
@@ -624,13 +624,13 @@ def update_message(message_id: uuid.UUID):
             if message.sender_id != current_user.id:
                 raise Forbidden("Solo el remitente puede editar el contenido")
             
-            time_since_sent = datetime.utcnow() - message.created_at
+            time_since_sent = datetime.now(timezone.utc) - message.created_at
             if time_since_sent > timedelta(minutes=15):
                 raise BadRequest("No se puede editar el contenido después de 15 minutos")
             
             message.content = sanitize_message_content(update_data['content'])
             message.is_edited = True
-            message.edited_at = datetime.utcnow()
+            message.edited_at = datetime.now(timezone.utc)
         
         # Actualizar estado de lectura/estrella/archivo (solo para el usuario actual)
         if 'is_read' in update_data:
@@ -654,7 +654,7 @@ def update_message(message_id: uuid.UUID):
         if 'metadata' in update_data and message.sender_id == current_user.id:
             message.metadata.update(update_data['metadata'])
         
-        message.updated_at = datetime.utcnow()
+        message.updated_at = datetime.now(timezone.utc)
         db.session.commit()
         
         # Emitir evento de actualización si se editó el contenido
@@ -713,7 +713,7 @@ def delete_message(message_id: uuid.UUID):
         if message.sender_id != current_user.id:
             raise Forbidden("Solo el remitente puede eliminar el mensaje")
         
-        time_since_sent = datetime.utcnow() - message.created_at
+        time_since_sent = datetime.now(timezone.utc) - message.created_at
         if time_since_sent > timedelta(hours=1):
             raise BadRequest("No se puede eliminar el mensaje después de 1 hora")
         
@@ -723,7 +723,7 @@ def delete_message(message_id: uuid.UUID):
         
         # Soft delete
         message.is_deleted = True
-        message.deleted_at = datetime.utcnow()
+        message.deleted_at = datetime.now(timezone.utc)
         message.deleted_by = current_user.id
         message.deletion_reason = reason
         
@@ -735,7 +735,7 @@ def delete_message(message_id: uuid.UUID):
             {
                 'message_id': str(message_id),
                 'deleted_by': current_user.id,
-                'deleted_at': datetime.utcnow().isoformat()
+                'deleted_at': datetime.now(timezone.utc).isoformat()
             },
             room=f"thread_{message.thread_id}"
         )
@@ -899,7 +899,7 @@ def download_attachment(attachment_id: uuid.UUID):
         
         # Incrementar contador de descargas
         attachment.download_count += 1
-        attachment.last_downloaded_at = datetime.utcnow()
+        attachment.last_downloaded_at = datetime.now(timezone.utc)
         attachment.last_downloaded_by = current_user.id
         db.session.commit()
         
@@ -1234,7 +1234,7 @@ def add_thread_participant(thread_id: uuid.UUID):
         
         # Agregar participante
         thread.participants.append(user)
-        thread.last_activity_at = datetime.utcnow()
+        thread.last_activity_at = datetime.now(timezone.utc)
         
         # Crear mensaje del sistema
         system_message = Message(
@@ -1347,7 +1347,7 @@ def remove_thread_participant(thread_id: uuid.UUID, user_id: uuid.UUID):
         
         # Remover participante
         thread.participants.remove(user)
-        thread.last_activity_at = datetime.utcnow()
+        thread.last_activity_at = datetime.now(timezone.utc)
         
         # Crear mensaje del sistema
         if current_user.id == user_id:
@@ -1719,7 +1719,7 @@ def get_message_statistics():
         return {
             'statistics': stats,
             'period': period,
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         }, 200
         
     except Exception as e:
@@ -1800,7 +1800,7 @@ def export_messages():
         return {
             'message': 'Exportación iniciada',
             'task_id': task.id,
-            'estimated_completion': datetime.utcnow() + timedelta(minutes=5)
+            'estimated_completion': datetime.now(timezone.utc) + timedelta(minutes=5)
         }, 202
         
     except (BadRequest,) as e:
@@ -1832,11 +1832,11 @@ def _get_content_preview(content: str, message_type: str, max_length: int = 100)
         return "Mensaje"
 
 
-def _mark_messages_as_delivered(messages: List[Message]):
+def _mark_messages_as_delivered(messages: list[Message]):
     """Marcar mensajes como entregados"""
     for message in messages:
         if not message.delivered_at and current_user in message.recipients:
-            message.delivered_at = datetime.utcnow()
+            message.delivered_at = datetime.now(timezone.utc)
     
     if messages:
         db.session.commit()
@@ -1912,7 +1912,7 @@ def _get_or_create_direct_thread(user1_id: uuid.UUID, user2_id: uuid.UUID) -> Me
     return thread
 
 
-def _create_group_thread(participants: List[User]) -> MessageThread:
+def _create_group_thread(participants: list[User]) -> MessageThread:
     """Crear hilo de grupo"""
     participant_names = [p.full_name for p in participants[:3]]
     if len(participants) > 3:
@@ -1937,7 +1937,7 @@ def _create_group_thread(participants: List[User]) -> MessageThread:
 def _check_sending_limits(user_id: uuid.UUID) -> bool:
     """Verificar límites de envío de mensajes"""
     # Verificar mensajes enviados en la última hora
-    one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+    one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
     recent_messages = Message.query.filter(
         Message.sender_id == user_id,
         Message.created_at >= one_hour_ago

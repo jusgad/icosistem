@@ -43,7 +43,7 @@ try:
     from werkzeug.urls import url_parse
 except ImportError:
     from urllib.parse import urlparse as url_parse
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional as TypingOptional, Any, Tuple
 import secrets
 import logging
@@ -199,7 +199,7 @@ class LoginForm(FlaskForm):
         failed_attempts = LoginAttempt.query.filter(
             LoginAttempt.ip_address == client_ip,
             LoginAttempt.status == AttemptStatus.FAILED,
-            LoginAttempt.created_at > datetime.utcnow() - timedelta(hours=1)
+            LoginAttempt.created_at > datetime.now(timezone.utc) - timedelta(hours=1)
         ).count()
         
         if failed_attempts < 3:
@@ -582,7 +582,7 @@ def reset_password(token):
         is_used=False
     ).first()
     
-    if not reset_request or reset_request.expires_at < datetime.utcnow():
+    if not reset_request or reset_request.expires_at < datetime.now(timezone.utc):
         flash(_('Token de reseteo inválido o expirado.'), 'error')
         return redirect(url_for('auth.forgot_password'))
     
@@ -595,7 +595,7 @@ def reset_password(token):
             
             # Marcar token como usado
             reset_request.is_used = True
-            reset_request.used_at = datetime.utcnow()
+            reset_request.used_at = datetime.now(timezone.utc)
             
             # Invalidar todas las sesiones existentes
             UserSession.query.filter_by(
@@ -803,7 +803,7 @@ def logout():
                 if auth_middleware:
                     auth_middleware.jwt_auth.blacklist_manager.add_token(
                         jti, 
-                        datetime.utcnow() + timedelta(hours=24)
+                        datetime.now(timezone.utc) + timedelta(hours=24)
                     )
             
             # Marcar sesión como cerrada en BD
@@ -897,9 +897,9 @@ def oauth_callback(provider):
             oauth_account.access_token = token_data['access_token']
             oauth_account.refresh_token = token_data.get('refresh_token')
             oauth_account.token_expires_at = (
-                datetime.utcnow() + timedelta(seconds=token_data.get('expires_in', 3600))
+                datetime.now(timezone.utc) + timedelta(seconds=token_data.get('expires_in', 3600))
             )
-            oauth_account.last_used_at = datetime.utcnow()
+            oauth_account.last_used_at = datetime.now(timezone.utc)
             
             db.session.commit()
             
@@ -934,7 +934,7 @@ def oauth_callback(provider):
                     access_token=token_data['access_token'],
                     refresh_token=token_data.get('refresh_token'),
                     token_expires_at=(
-                        datetime.utcnow() + timedelta(seconds=token_data.get('expires_in', 3600))
+                        datetime.now(timezone.utc) + timedelta(seconds=token_data.get('expires_in', 3600))
                     )
                 )
                 db.session.add(oauth_account)
@@ -965,7 +965,7 @@ def oauth_callback(provider):
                     avatar_url=user_info.get('avatar_url'),
                     user_type=UserType.ENTREPRENEUR,  # Default
                     status=UserStatus.ACTIVE,  # OAuth users son verificados automáticamente
-                    email_verified_at=datetime.utcnow(),
+                    email_verified_at=datetime.now(timezone.utc),
                     registration_ip=get_client_ip(),
                     preferred_language=get_locale()
                 )
@@ -981,7 +981,7 @@ def oauth_callback(provider):
                     access_token=token_data['access_token'],
                     refresh_token=token_data.get('refresh_token'),
                     token_expires_at=(
-                        datetime.utcnow() + timedelta(seconds=token_data.get('expires_in', 3600))
+                        datetime.now(timezone.utc) + timedelta(seconds=token_data.get('expires_in', 3600))
                     )
                 )
                 db.session.add(oauth_account)

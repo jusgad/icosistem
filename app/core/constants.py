@@ -183,10 +183,7 @@ PROGRAM_STATUS = [
     'active', 'inactive', 'draft', 'completed', 'cancelled'
 ]
 
-# Entrepreneur stages
-ENTREPRENEUR_STAGES = [
-    'ideation', 'validation', 'prototype', 'launch', 'growth', 'scale'
-]
+# Se eliminó duplicado - ya se definió arriba en líneas 75-78
 
 # Event types
 EVENT_TYPES = [
@@ -343,10 +340,7 @@ RECURRENCE_PATTERNS = [
     'none', 'daily', 'weekly', 'biweekly', 'monthly', 'quarterly', 'yearly'
 ]
 
-# Reminder intervals
-REMINDER_INTERVALS = [
-    '5_minutes', '15_minutes', '30_minutes', '1_hour', '2_hours', '1_day', '1_week'
-]
+# Se eliminó duplicado - ya se definió arriba como REMINDER_INTERVALS corregido
 
 # Participant roles
 PARTICIPANT_ROLES = [
@@ -552,15 +546,16 @@ ACTIVITY_TYPES = [
     'meeting_scheduled', 'message_sent', 'document_uploaded', 'report_generated'
 ]
 
-# Auto-generated stubs
-REMINDER_INTERVALS = []  # Auto-generated stub
+# Reminder intervals (corregido - se eliminó el stub vacío)
+REMINDER_INTERVALS = [
+    '5_minutes', '15_minutes', '30_minutes', '1_hour', '2_hours', '1_day', '1_week'
+]
 
 
 # Auto-generated comprehensive stubs - 1 items
 EMAIL_PRIORITIES = ['low', 'medium', 'high']
 
-# Final emergency patch
-PARTICIPANT_ROLES = ['host', 'participant', 'observer']
+# USER_STATUS - nueva constante sin duplicar
 USER_STATUS = ["active", "inactive", "pending", "suspended", "banned"]
 # Business limits and constraints
 MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024  # Convert MB to bytes

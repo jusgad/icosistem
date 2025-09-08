@@ -12,7 +12,7 @@ import json
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, date, time
-from typing import Dict, List, Any, Optional, Union, Type, Callable, Tuple
+from typing import Any, Optional, Union, Type, Callable
 from functools import wraps
 from werkzeug.datastructures import FileStorage
 from flask import current_app, request, flash, session, g, url_for
@@ -260,7 +260,7 @@ class BaseForm(FlaskForm):
                     field.render_kw = {}
                 field.render_kw['placeholder'] = placeholder
     
-    def _get_locale_placeholders(self) -> Dict[str, str]:
+    def _get_locale_placeholders(self) -> dict[str, str]:
         """Obtiene placeholders según el locale"""
         placeholders_map = {
             'es': {
@@ -311,7 +311,7 @@ class BaseForm(FlaskForm):
                     if not hasattr(validator, 'message') or not validator.message:
                         validator.message = error_messages[validator_name]
     
-    def _get_locale_error_messages(self) -> Dict[str, str]:
+    def _get_locale_error_messages(self) -> dict[str, str]:
         """Obtiene mensajes de error según el locale"""
         messages_map = {
             'es': {
@@ -502,7 +502,7 @@ class BaseForm(FlaskForm):
             self._form_errors = []
         self._form_errors.append(message)
     
-    def get_form_errors(self) -> List[str]:
+    def get_form_errors(self) -> list[str]:
         """Obtiene errores generales del formulario"""
         return getattr(self, '_form_errors', [])
     
@@ -520,7 +520,7 @@ class BaseForm(FlaskForm):
         # Log de cambios para auditoría
         self._log_object_changes(obj, original_values)
     
-    def _log_object_changes(self, obj, original_values: Dict[str, Any]):
+    def _log_object_changes(self, obj, original_values: dict[str, Any]):
         """Log de cambios en el objeto para auditoría"""
         changes = []
         for field_name, original_value in original_values.items():
@@ -534,7 +534,7 @@ class BaseForm(FlaskForm):
                 f"{'; '.join(changes)}"
             )
     
-    def to_dict(self, exclude: List[str] = None) -> Dict[str, Any]:
+    def to_dict(self, exclude: list[str] = None) -> dict[str, Any]:
         """Convierte formulario a diccionario"""
         exclude = exclude or ['csrf_token', 'submit']
         
@@ -552,7 +552,7 @@ class BaseForm(FlaskForm):
         
         return data
     
-    def from_dict(self, data: Dict[str, Any], exclude: List[str] = None):
+    def from_dict(self, data: dict[str, Any], exclude: list[str] = None):
         """Carga datos desde diccionario"""
         exclude = exclude or ['csrf_token', 'submit']
         
@@ -561,7 +561,7 @@ class BaseForm(FlaskForm):
                 field = getattr(self, field_name)
                 field.data = value
     
-    def get_changed_fields(self, original_data: Dict[str, Any]) -> Dict[str, Any]:
+    def get_changed_fields(self, original_data: dict[str, Any]) -> dict[str, Any]:
         """Retorna campos que han cambiado"""
         changed = {}
         current_data = self.to_dict()
@@ -637,7 +637,7 @@ class AuditMixin:
         super().__init__(*args, **kwargs)
         self._audit_data = {
             'form_name': self.__class__.__name__,
-            'created_at': datetime.utcnow(),
+            'created_at': datetime.now(timezone.utc),
             'user_id': getattr(self.user, 'id', None) if hasattr(self, 'user') else None,
             'client_ip': getattr(self, 'client_ip', None),
             'user_agent': request.headers.get('User-Agent') if request else None
@@ -648,7 +648,7 @@ class AuditMixin:
         result = super().validate(**kwargs)
         
         self._audit_data.update({
-            'validated_at': datetime.utcnow(),
+            'validated_at': datetime.now(timezone.utc),
             'validation_result': result,
             'errors': dict(self.errors) if not result else None
         })
@@ -670,7 +670,7 @@ class CacheableMixin:
         super().__init__(*args, **kwargs)
         self.cache = CacheManager()
     
-    def get_cached_choices(self, field_name: str, fetch_function: Callable) -> List[Tuple]:
+    def get_cached_choices(self, field_name: str, fetch_function: Callable) -> list[Tuple]:
         """Obtiene opciones de campo desde cache"""
         cache_key = f"form_choices_{self.__class__.__name__}_{field_name}"
         
@@ -709,7 +709,7 @@ class SearchFormMixin:
                 field.render_kw['autocomplete'] = 'off'
                 field.render_kw['data-search'] = 'true'
     
-    def get_search_filters(self) -> Dict[str, Any]:
+    def get_search_filters(self) -> dict[str, Any]:
         """Obtiene filtros de búsqueda aplicados"""
         filters = {}
         for field in self:
@@ -822,7 +822,7 @@ class FileUploadForm(BaseForm):
         
         return valid
     
-    def process_files(self) -> Dict[str, str]:
+    def process_files(self) -> dict[str, str]:
         """Procesa archivos subidos"""
         processed_files = {}
         

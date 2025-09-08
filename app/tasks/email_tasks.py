@@ -21,8 +21,8 @@ Funcionalidades principales:
 import logging
 import json
 import uuid
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Any, Union
 from dataclasses import dataclass, asdict
 from enum import Enum
 
@@ -92,7 +92,7 @@ class EmailCategory(Enum):
 @dataclass
 class EmailContext:
     """Contexto para templates de email"""
-    user: Dict[str, Any]
+    user: dict[str, Any]
     app_name: str = "Ecosistema de Emprendimiento"
     app_url: str = "https://ecosistema-emprendimiento.com"
     support_email: str = "soporte@ecosistema-emprendimiento.com"
@@ -100,7 +100,7 @@ class EmailContext:
     tracking_pixel_url: str = ""
     current_year: int = datetime.now().year
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convierte a diccionario para usar en templates"""
         return asdict(self)
 
@@ -487,7 +487,7 @@ def send_weekly_entrepreneur_report(self, entrepreneur_id: int = None):
     queue='emails',
     priority=EmailPriority.LOW.value
 )
-def send_monthly_ecosystem_report(self, admin_emails: List[str] = None):
+def send_monthly_ecosystem_report(self, admin_emails: list[str] = None):
     """
     Envía reporte mensual del ecosistema a administradores
     
@@ -646,7 +646,7 @@ def send_onboarding_sequence(self, user_id: int, user_type: str, step: int):
     queue='emails',
     priority=EmailPriority.HIGH.value
 )
-def send_reminder_email(self, reminder_type: str, user_id: int, context_data: Dict[str, Any]):
+def send_reminder_email(self, reminder_type: str, user_id: int, context_data: dict[str, Any]):
     """
     Envía emails de recordatorio
     
@@ -742,7 +742,7 @@ def process_email_queue(self):
         logger.info("Procesando cola de emails pendientes")
         
         # Obtener emails pendientes de los últimos 7 días
-        cutoff_date = datetime.utcnow() - timedelta(days=7)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=7)
         pending_emails = EmailLog.query.filter(
             EmailLog.status == EmailStatus.PENDING,
             EmailLog.created_at >= cutoff_date
@@ -764,7 +764,7 @@ def process_email_queue(self):
                 
                 if result.get('success'):
                     email_log.status = EmailStatus.SENT
-                    email_log.sent_at = datetime.utcnow()
+                    email_log.sent_at = datetime.now(timezone.utc)
                     processed += 1
                 else:
                     email_log.retry_count += 1
@@ -834,7 +834,7 @@ def send_bulk_campaign(self, campaign_id: int):
         
         # Actualizar estado a enviando
         campaign.status = 'sending'
-        campaign.started_at = datetime.utcnow()
+        campaign.started_at = datetime.now(timezone.utc)
         
         from app import db
         db.session.commit()
@@ -895,7 +895,7 @@ def send_bulk_campaign(self, campaign_id: int):
     queue='emails',
     priority=EmailPriority.NORMAL.value
 )
-def send_campaign_batch(self, campaign_id: int, recipients: List[Dict], batch_idx: int):
+def send_campaign_batch(self, campaign_id: int, recipients: list[Dict], batch_idx: int):
     """
     Envía un lote de una campaña de email
     
@@ -983,12 +983,12 @@ def update_email_metrics(self):
         logger.info("Actualizando métricas de email")
         
         # Obtener emails enviados en los últimos 7 días sin métricas actualizadas
-        cutoff_date = datetime.utcnow() - timedelta(days=7)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=7)
         emails_to_update = EmailLog.query.filter(
             EmailLog.status == EmailStatus.SENT,
             EmailLog.sent_at >= cutoff_date,
             EmailLog.last_metrics_update.is_(None) | 
-            (EmailLog.last_metrics_update < datetime.utcnow() - timedelta(hours=6))
+            (EmailLog.last_metrics_update < datetime.now(timezone.utc) - timedelta(hours=6))
         ).limit(1000).all()
         
         if not emails_to_update:
@@ -1012,7 +1012,7 @@ def update_email_metrics(self):
                     email_log.clicked = metrics.get('clicked', False)
                     email_log.bounced = metrics.get('bounced', False)
                     email_log.unsubscribed = metrics.get('unsubscribed', False)
-                    email_log.last_metrics_update = datetime.utcnow()
+                    email_log.last_metrics_update = datetime.now(timezone.utc)
                     
                     if metrics.get('delivered_at'):
                         email_log.delivered_at = metrics['delivered_at']
@@ -1049,15 +1049,15 @@ def update_email_metrics(self):
 
 def _send_templated_email(
     template_name: str,
-    context: Dict[str, Any],
+    context: dict[str, Any],
     to_email: str,
     to_name: str,
     subject: str,
     category: EmailCategory,
     user_id: int = None,
-    metadata: Dict[str, Any] = None,
+    metadata: dict[str, Any] = None,
     priority: EmailPriority = EmailPriority.NORMAL
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Función auxiliar para enviar emails con template
     """
@@ -1112,7 +1112,7 @@ def _send_templated_email(
         # Actualizar log según resultado
         if result.get('success'):
             email_log.status = EmailStatus.SENT
-            email_log.sent_at = datetime.utcnow()
+            email_log.sent_at = datetime.now(timezone.utc)
             email_log.external_id = result.get('message_id')
         else:
             email_log.status = EmailStatus.FAILED
@@ -1127,7 +1127,7 @@ def _send_templated_email(
         return {'success': False, 'error': str(e)}
 
 
-def _prepare_welcome_context(user: User, user_type: str) -> Dict[str, Any]:
+def _prepare_welcome_context(user: User, user_type: str) -> dict[str, Any]:
     """Prepara contexto para email de bienvenida"""
     context = {
         'user': {
@@ -1145,7 +1145,7 @@ def _prepare_welcome_context(user: User, user_type: str) -> Dict[str, Any]:
     return context
 
 
-def _prepare_meeting_context(meeting: Meeting, notification_type: str) -> Dict[str, Any]:
+def _prepare_meeting_context(meeting: Meeting, notification_type: str) -> dict[str, Any]:
     """Prepara contexto para notificaciones de reunión"""
     context = {
         'meeting': {
@@ -1171,13 +1171,13 @@ def _prepare_meeting_context(meeting: Meeting, notification_type: str) -> Dict[s
     
     # Añadir información específica del tipo de notificación
     if notification_type.startswith('reminder'):
-        time_until = meeting.start_time - datetime.utcnow()
+        time_until = meeting.start_time - datetime.now(timezone.utc)
         context['time_until'] = _format_time_until(time_until)
     
     return context
 
 
-def _prepare_mentorship_context(session: MentorshipSession) -> Dict[str, Any]:
+def _prepare_mentorship_context(session: MentorshipSession) -> dict[str, Any]:
     """Prepara contexto para resumen de mentoría"""
     context = {
         'session': {
@@ -1204,7 +1204,7 @@ def _prepare_mentorship_context(session: MentorshipSession) -> Dict[str, Any]:
     return context
 
 
-def _prepare_daily_digest_context(user: User) -> Dict[str, Any]:
+def _prepare_daily_digest_context(user: User) -> dict[str, Any]:
     """Prepara contexto para digest diario"""
     from app.services.analytics_service import AnalyticsService
     
@@ -1228,7 +1228,7 @@ def _prepare_daily_digest_context(user: User) -> Dict[str, Any]:
     return context
 
 
-def _prepare_weekly_entrepreneur_context(entrepreneur: Entrepreneur) -> Dict[str, Any]:
+def _prepare_weekly_entrepreneur_context(entrepreneur: Entrepreneur) -> dict[str, Any]:
     """Prepara contexto para reporte semanal de emprendedor"""
     from app.services.analytics_service import AnalyticsService
     
@@ -1249,7 +1249,7 @@ def _prepare_weekly_entrepreneur_context(entrepreneur: Entrepreneur) -> Dict[str
     return context
 
 
-def _prepare_monthly_ecosystem_context() -> Dict[str, Any]:
+def _prepare_monthly_ecosystem_context() -> dict[str, Any]:
     """Prepara contexto para reporte mensual del ecosistema"""
     from app.services.analytics_service import AnalyticsService
     
@@ -1268,7 +1268,7 @@ def _prepare_monthly_ecosystem_context() -> Dict[str, Any]:
     return context
 
 
-def _has_digest_content(context: Dict[str, Any]) -> bool:
+def _has_digest_content(context: dict[str, Any]) -> bool:
     """Verifica si el digest tiene contenido relevante"""
     activities = context.get('activities', [])
     upcoming_events = context.get('upcoming_events', [])
@@ -1288,7 +1288,7 @@ def _get_welcome_message(user_type: str) -> str:
     return messages.get(user_type, "¡Bienvenido al Ecosistema de Emprendimiento!")
 
 
-def _get_next_steps(user_type: str) -> List[str]:
+def _get_next_steps(user_type: str) -> list[str]:
     """Obtiene próximos pasos recomendados"""
     steps = {
         'entrepreneur': [
@@ -1353,23 +1353,23 @@ def _format_time_until(time_delta: timedelta) -> str:
         return f"{days} días"
 
 
-def _get_upcoming_events(user: User) -> List[Dict[str, Any]]:
+def _get_upcoming_events(user: User) -> list[dict[str, Any]]:
     """Obtiene eventos próximos para el usuario"""
     # Implementar lógica para obtener reuniones, mentorías, etc.
     return []
 
 
-def _get_personalized_recommendations(user: User) -> List[Dict[str, Any]]:
+def _get_personalized_recommendations(user: User) -> list[dict[str, Any]]:
     """Obtiene recomendaciones personalizadas"""
     # Implementar lógica de recomendaciones basada en ML/reglas
     return []
 
 
-def _get_recent_mentorship_sessions(entrepreneur_id: int) -> List[Dict[str, Any]]:
+def _get_recent_mentorship_sessions(entrepreneur_id: int) -> list[dict[str, Any]]:
     """Obtiene sesiones de mentoría recientes"""
     sessions = MentorshipSession.query.filter(
         MentorshipSession.entrepreneur_id == entrepreneur_id,
-        MentorshipSession.date >= datetime.utcnow() - timedelta(days=7)
+        MentorshipSession.date >= datetime.now(timezone.utc) - timedelta(days=7)
     ).all()
     
     return [
@@ -1383,7 +1383,7 @@ def _get_recent_mentorship_sessions(entrepreneur_id: int) -> List[Dict[str, Any]
     ]
 
 
-def _send_email_from_log(email_log: EmailLog) -> Dict[str, Any]:
+def _send_email_from_log(email_log: EmailLog) -> dict[str, Any]:
     """Envía email desde log existente"""
     try:
         email_service = EmailService()
@@ -1412,13 +1412,13 @@ def _send_email_from_log(email_log: EmailLog) -> Dict[str, Any]:
 
 
 # Funciones adicionales que se pueden implementar según necesidades específicas
-def _get_campaign_recipients(campaign: EmailCampaign) -> List[Dict[str, Any]]:
+def _get_campaign_recipients(campaign: EmailCampaign) -> list[dict[str, Any]]:
     """Obtiene destinatarios de campaña según segmentación"""
     # Implementar lógica de segmentación
     return []
 
 
-def _prepare_campaign_context(campaign: EmailCampaign, recipient: Dict[str, Any]) -> Dict[str, Any]:
+def _prepare_campaign_context(campaign: EmailCampaign, recipient: dict[str, Any]) -> dict[str, Any]:
     """Prepara contexto personalizado para campaña"""
     return {
         'recipient': recipient,
@@ -1429,27 +1429,27 @@ def _prepare_campaign_context(campaign: EmailCampaign, recipient: Dict[str, Any]
     }
 
 
-def _get_project_progress(entrepreneur_id: int) -> Dict[str, Any]:
+def _get_project_progress(entrepreneur_id: int) -> dict[str, Any]:
     """Obtiene progreso de proyectos"""
     return {}
 
 
-def _get_goals_achievements(entrepreneur_id: int) -> List[Dict[str, Any]]:
+def _get_goals_achievements(entrepreneur_id: int) -> list[dict[str, Any]]:
     """Obtiene logros de objetivos"""
     return []
 
 
-def _get_entrepreneur_recommendations(entrepreneur_id: int) -> List[Dict[str, Any]]:
+def _get_entrepreneur_recommendations(entrepreneur_id: int) -> list[dict[str, Any]]:
     """Obtiene recomendaciones específicas para emprendedor"""
     return []
 
 
-def _get_month_success_stories() -> List[Dict[str, Any]]:
+def _get_month_success_stories() -> list[dict[str, Any]]:
     """Obtiene historias de éxito del mes"""
     return []
 
 
-def _prepare_onboarding_context(user: User, user_type: str, step: int) -> Dict[str, Any]:
+def _prepare_onboarding_context(user: User, user_type: str, step: int) -> dict[str, Any]:
     """Prepara contexto para paso de onboarding"""
     return {
         'user': {
@@ -1461,7 +1461,7 @@ def _prepare_onboarding_context(user: User, user_type: str, step: int) -> Dict[s
     }
 
 
-def _prepare_reminder_context(user: User, reminder_type: str, context_data: Dict[str, Any]) -> Dict[str, Any]:
+def _prepare_reminder_context(user: User, reminder_type: str, context_data: dict[str, Any]) -> dict[str, Any]:
     """Prepara contexto para recordatorios"""
     return {
         'user': {

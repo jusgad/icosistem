@@ -15,7 +15,7 @@ from .extensions import (
 )
 
 # Importar configuraciones
-from .config import config
+from config import config
 
 # Importar comandos CLI
 # from .commands import register_commands  # Comentado temporalmente

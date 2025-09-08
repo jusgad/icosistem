@@ -53,87 +53,132 @@ except Exception as e:
 # Exportaciones principales
 __all__ = ['User', 'UserType', 'UserStatus', 'BaseModel', 'CompleteBaseModel', 
            'SearchableMixin', 'CacheableMixin']
-# Additional model stubs
-class Admin:
-    """Admin model stub."""
-    pass
+# Importar modelos reales (con manejo de errores)
+try:
+    from .admin import Admin
+    models_logger.info("✅ Admin model loaded")
+except Exception as e:
+    models_logger.error(f"❌ Error loading Admin model: {e}")
+    Admin = None
 
-class Organization:
-    """Organization model stub."""
-    pass
+try:
+    from .organization import Organization
+    models_logger.info("✅ Organization model loaded")
+except Exception as e:
+    models_logger.error(f"❌ Error loading Organization model: {e}")
+    Organization = None
 
-class Program:
-    """Program model stub."""
-    pass
+try:
+    from .program import Program
+    models_logger.info("✅ Program model loaded")
+except Exception as e:
+    models_logger.error(f"❌ Error loading Program model: {e}")
+    Program = None
 
-class Activity:
-    """Activity model stub."""  
-    pass
+try:
+    from .activity_log import ActivityLog
+    models_logger.info("✅ ActivityLog model loaded")
+except Exception as e:
+    models_logger.error(f"❌ Error loading ActivityLog model: {e}")
+    ActivityLog = None
 
-# Additional critical model stubs
-class Entrepreneur:
-    """Entrepreneur model stub."""
-    pass
+try:
+    from .entrepreneur import Entrepreneur
+    models_logger.info("✅ Entrepreneur model loaded")
+except Exception as e:
+    models_logger.error(f"❌ Error loading Entrepreneur model: {e}")
+    Entrepreneur = None
 
-class Ally:
-    """Ally model stub."""
-    pass
+try:
+    from .ally import Ally
+    models_logger.info("✅ Ally model loaded")
+except Exception as e:
+    models_logger.error(f"❌ Error loading Ally model: {e}")
+    Ally = None
 
-class Client:
-    """Client model stub."""
-    pass
+try:
+    from .client import Client
+    models_logger.info("✅ Client model loaded")
+except Exception as e:
+    models_logger.error(f"❌ Error loading Client model: {e}")
+    Client = None
 
-class Project:
-    """Project model stub."""
-    pass
+try:
+    from .project import Project
+    models_logger.info("✅ Project model loaded")
+except Exception as e:
+    models_logger.error(f"❌ Error loading Project model: {e}")
+    Project = None
 
-class Meeting:
-    """Meeting model stub."""
-    pass
+try:
+    from .meeting import Meeting
+    models_logger.info("✅ Meeting model loaded")
+except Exception as e:
+    models_logger.error(f"❌ Error loading Meeting model: {e}")
+    Meeting = None
 
-class Task:
-    """Task model stub."""
-    pass
+try:
+    from .task import Task
+    models_logger.info("✅ Task model loaded")
+except Exception as e:
+    models_logger.error(f"❌ Error loading Task model: {e}")
+    Task = None
 
-class Document:
-    """Document model stub."""
-    pass
+try:
+    from .document import Document
+    models_logger.info("✅ Document model loaded")
+except Exception as e:
+    models_logger.error(f"❌ Error loading Document model: {e}")
+    Document = None
 
-class Notification:
-    """Notification model stub."""
-    pass
+try:
+    from .notification import Notification
+    models_logger.info("✅ Notification model loaded")
+except Exception as e:
+    models_logger.error(f"❌ Error loading Notification model: {e}")
+    Notification = None
 
-class Message:
-    """Message model stub."""
-    pass
+try:
+    from .message import Message
+    models_logger.info("✅ Message model loaded")
+except Exception as e:
+    models_logger.error(f"❌ Error loading Message model: {e}")
+    Message = None
 
-class ActivityLog:
-    """ActivityLog model stub."""
-    pass
+try:
+    from .milestone import Milestone
+    models_logger.info("✅ Milestone model loaded")
+except Exception as e:
+    models_logger.error(f"❌ Error loading Milestone model: {e}")
+    Milestone = None
 
-class Milestone:
-    """Milestone model stub."""
-    pass
+try:
+    from .application import Application
+    models_logger.info("✅ Application model loaded")
+except Exception as e:
+    models_logger.error(f"❌ Error loading Application model: {e}")
+    Application = None
 
-class ProjectMilestone:
-    """ProjectMilestone model stub."""
-    pass
+try:
+    from .availability import Availability
+    models_logger.info("✅ Availability model loaded")
+except Exception as e:
+    models_logger.error(f"❌ Error loading Availability model: {e}")
+    Availability = None
 
-class ProgramMilestone:
-    """ProgramMilestone model stub."""
-    pass
+try:
+    from .evaluation import Evaluation
+    models_logger.info("✅ Evaluation model loaded")
+except Exception as e:
+    models_logger.error(f"❌ Error loading Evaluation model: {e}")
+    Evaluation = None
 
-class Application:
-    """Application model stub."""
-    pass
-
-class Availability:
-    """Availability model stub."""
-    pass
-
-class Evaluation:
-    """Evaluation model stub."""
-    pass
+try:
+    from .mentorship import MentorshipRelationship
+    models_logger.info("✅ MentorshipRelationship model loaded")
+except Exception as e:
+    models_logger.error(f"❌ Error loading MentorshipRelationship model: {e}")
+    MentorshipRelationship = None
 
 # Email models
 try:
@@ -149,8 +194,8 @@ except Exception as e:
     EmailTemplate = EmailCampaign = EmailLog = EmailTracking = EmailBounce = EmailSuppression = None
 
 # Export all models
-__all__.extend(['Admin', 'Organization', 'Program', 'Activity', 'Entrepreneur', 
+__all__.extend(['Admin', 'Organization', 'Program', 'ActivityLog', 'Entrepreneur', 
                'Ally', 'Client', 'Project', 'Meeting', 'Task', 'Document', 
-               'Notification', 'Message', 'ActivityLog', 'Milestone', 'ProjectMilestone',
-               'ProgramMilestone', 'Application', 'Availability', 'Evaluation', 'EmailTemplate', 'EmailCampaign',
+               'Notification', 'Message', 'Milestone', 'Application', 'Availability', 
+               'Evaluation', 'MentorshipRelationship', 'EmailTemplate', 'EmailCampaign',
                'EmailLog', 'EmailTracking', 'EmailBounce', 'EmailSuppression'])

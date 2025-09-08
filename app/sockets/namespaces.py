@@ -17,8 +17,8 @@ Namespaces implementados:
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Set
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Any
 from flask import request, current_app
 from flask_socketio import Namespace, emit, join_room, leave_room, disconnect
 from sqlalchemy.exc import SQLAlchemyError
@@ -58,7 +58,7 @@ class BaseNamespace(Namespace):
     def __init__(self, namespace: str):
         super().__init__(namespace)
         self.user_service = UserService()
-        self.connected_users: Dict[str, Dict[str, Any]] = {}
+        self.connected_users: dict[str, dict[str, Any]] = {}
     
     def on_connect(self, auth):
         """Maneja conexiones al namespace"""
@@ -83,7 +83,7 @@ class BaseNamespace(Namespace):
             emit('connected', {
                 'namespace': self.namespace,
                 'user_id': str(user.id),
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             })
             
             logger.info(f"Usuario {user.username} conectado a namespace {self.namespace}")
@@ -139,8 +139,8 @@ class BaseNamespace(Namespace):
             'username': user.username,
             'role': user.role.value,
             'session_id': request.sid,
-            'connected_at': datetime.utcnow(),
-            'last_activity': datetime.utcnow()
+            'connected_at': datetime.now(timezone.utc),
+            'last_activity': datetime.now(timezone.utc)
         }
     
     def _get_current_user_id(self) -> Optional[str]:
@@ -161,13 +161,13 @@ class BaseNamespace(Namespace):
         emit('error', {
             'code': code,
             'message': message,
-            'timestamp': format_datetime(datetime.utcnow())
+            'timestamp': format_datetime(datetime.now(timezone.utc))
         })
     
     def _update_user_activity(self, user_id: str):
         """Actualiza la última actividad del usuario"""
         if user_id in self.connected_users:
-            self.connected_users[user_id]['last_activity'] = datetime.utcnow()
+            self.connected_users[user_id]['last_activity'] = datetime.now(timezone.utc)
 
 
 class ChatNamespace(BaseNamespace):
@@ -182,8 +182,8 @@ class ChatNamespace(BaseNamespace):
     
     def __init__(self):
         super().__init__('/chat')
-        self.active_rooms: Dict[str, Set[str]] = {}
-        self.typing_users: Dict[str, Dict[str, datetime]] = {}
+        self.active_rooms: dict[str, set[str]] = {}
+        self.typing_users: dict[str, dict[str, datetime]] = {}
     
     def _authorize_namespace_access(self, user: User) -> bool:
         """Solo usuarios activos pueden acceder al chat"""
@@ -291,14 +291,14 @@ class ChatNamespace(BaseNamespace):
             emit('joined_room', {
                 'room': room,
                 'user_count': len(self.active_rooms[room]),
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             })
             
             # Notificar a otros en la sala
             self.emit('user_joined', {
                 'user': format_user_info(user),
                 'room': room,
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             }, room=room, include_self=False)
             
             logger.info(f"Usuario {user.username} se unió a sala {room}")
@@ -331,7 +331,7 @@ class ChatNamespace(BaseNamespace):
             self.emit('user_left', {
                 'user': format_user_info(user),
                 'room': room,
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             }, room=room)
             
             logger.info(f"Usuario {user.username} dejó sala {room}")
@@ -354,13 +354,13 @@ class ChatNamespace(BaseNamespace):
             # Registrar usuario escribiendo
             if room not in self.typing_users:
                 self.typing_users[room] = {}
-            self.typing_users[room][str(user.id)] = datetime.utcnow()
+            self.typing_users[room][str(user.id)] = datetime.now(timezone.utc)
             
             # Notificar a otros en la sala
             self.emit('user_typing', {
                 'user': format_user_info(user),
                 'room': room,
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             }, room=room, include_self=False)
             
         except Exception as e:
@@ -387,7 +387,7 @@ class ChatNamespace(BaseNamespace):
             self.emit('user_stopped_typing', {
                 'user': format_user_info(user),
                 'room': room,
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             }, room=room, include_self=False)
             
         except Exception as e:
@@ -475,7 +475,7 @@ class NotificationNamespace(BaseNamespace):
             emit('notifications_read', {
                 'count': updated_count,
                 'notification_ids': notification_ids,
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             })
             
             logger.info(f"Usuario {user.username} marcó {updated_count} notificaciones como leídas")
@@ -496,7 +496,7 @@ class NotificationNamespace(BaseNamespace):
             
             emit('unread_count', {
                 'count': unread_count,
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             })
             
         except Exception as e:
@@ -526,7 +526,7 @@ class NotificationNamespace(BaseNamespace):
             
             emit('subscribed_to_topic', {
                 'topic': topic,
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             })
             
             logger.info(f"Usuario {user.username} suscrito a tópico {topic}")
@@ -582,7 +582,7 @@ class PresenceNamespace(BaseNamespace):
     
     def __init__(self):
         super().__init__('/presence')
-        self.user_presence: Dict[str, Dict[str, Any]] = {}
+        self.user_presence: dict[str, dict[str, Any]] = {}
     
     def on_connect(self, auth):
         """Maneja conexión y establece presencia"""
@@ -623,7 +623,7 @@ class PresenceNamespace(BaseNamespace):
             emit('status_updated', {
                 'status': status,
                 'location': location,
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             })
             
         except Exception as e:
@@ -656,7 +656,7 @@ class PresenceNamespace(BaseNamespace):
             
             emit('presence_data', {
                 'presence': presence_data,
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             })
             
         except Exception as e:
@@ -667,7 +667,7 @@ class PresenceNamespace(BaseNamespace):
         """Actualiza la información de presencia del usuario"""
         try:
             user_id = str(user.id)
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             
             # Actualizar datos de presencia
             self.user_presence[user_id] = {
@@ -726,8 +726,8 @@ class CollaborationNamespace(BaseNamespace):
     
     def __init__(self):
         super().__init__('/collaboration')
-        self.active_documents: Dict[str, Dict[str, Any]] = {}
-        self.document_cursors: Dict[str, Dict[str, Any]] = {}
+        self.active_documents: dict[str, dict[str, Any]] = {}
+        self.document_cursors: dict[str, dict[str, Any]] = {}
     
     def on_join_document(self, data):
         """Une usuario a sesión de colaboración en documento"""
@@ -762,7 +762,7 @@ class CollaborationNamespace(BaseNamespace):
             
             self.active_documents[document_id]['users'][str(user.id)] = {
                 'user': format_user_info(user),
-                'joined_at': format_datetime(datetime.utcnow())
+                'joined_at': format_datetime(datetime.now(timezone.utc))
             }
             
             # Emitir confirmación y estado actual
@@ -771,14 +771,14 @@ class CollaborationNamespace(BaseNamespace):
                 'content': self.active_documents[document_id]['content'],
                 'version': self.active_documents[document_id]['version'],
                 'users': list(self.active_documents[document_id]['users'].values()),
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             })
             
             # Notificar a otros usuarios
             self.emit('user_joined_document', {
                 'user': format_user_info(user),
                 'document_id': document_id,
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             }, room=room, include_self=False)
             
             logger.info(f"Usuario {user.username} se unió a documento {document_id}")
@@ -825,7 +825,7 @@ class CollaborationNamespace(BaseNamespace):
                 'changes': changes,
                 'version': self.active_documents[document_id]['version'],
                 'author': format_user_info(user),
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             }
             
             self.emit('document_changed', change_data, 
@@ -876,7 +876,7 @@ class AdminNamespace(BaseNamespace):
             
             emit('system_stats', {
                 'stats': stats,
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             })
             
         except Exception as e:
@@ -903,7 +903,7 @@ class AdminNamespace(BaseNamespace):
                 'message': message,
                 'priority': priority,
                 'from': format_user_info(user),
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             }
             
             # Emitir a roles específicos o a todos
@@ -916,7 +916,7 @@ class AdminNamespace(BaseNamespace):
             
             emit('announcement_sent', {
                 'target_roles': target_roles or ['all'],
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             })
             
             logger.info(f"Anuncio enviado por {user.username} a roles {target_roles}")
@@ -974,7 +974,7 @@ class AnalyticsNamespace(BaseNamespace):
             
             emit('subscribed_to_metrics', {
                 'metrics': metric_types,
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             })
             
             logger.info(f"Usuario {user.username} suscrito a métricas {metric_types}")
@@ -998,7 +998,7 @@ class MentorshipNamespace(BaseNamespace):
     def __init__(self):
         super().__init__('/mentorship')
         self.mentorship_service = MentorshipService()
-        self.active_sessions: Dict[str, Dict[str, Any]] = {}
+        self.active_sessions: dict[str, dict[str, Any]] = {}
     
     def _authorize_namespace_access(self, user: User) -> bool:
         """Solo emprendedores y mentores pueden acceder"""
@@ -1037,7 +1037,7 @@ class MentorshipNamespace(BaseNamespace):
             
             self.active_sessions[session_id]['participants'][str(user.id)] = {
                 'user': format_user_info(user),
-                'joined_at': format_datetime(datetime.utcnow()),
+                'joined_at': format_datetime(datetime.now(timezone.utc)),
                 'role': 'mentor' if user.id == session.mentor_id else 'entrepreneur'
             }
             
@@ -1046,14 +1046,14 @@ class MentorshipNamespace(BaseNamespace):
                 'session_id': session_id,
                 'participants': list(self.active_sessions[session_id]['participants'].values()),
                 'status': self.active_sessions[session_id]['status'],
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             })
             
             # Notificar a otros participantes
             self.emit('participant_joined', {
                 'user': format_user_info(user),
                 'session_id': session_id,
-                'timestamp': format_datetime(datetime.utcnow())
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             }, room=room, include_self=False)
             
             logger.info(f"Usuario {user.username} se unió a sesión de mentoría {session_id}")
@@ -1084,14 +1084,14 @@ class MentorshipNamespace(BaseNamespace):
             # Actualizar estado de la sesión
             if session_id in self.active_sessions:
                 self.active_sessions[session_id]['status'] = 'active'
-                self.active_sessions[session_id]['started_at'] = datetime.utcnow()
+                self.active_sessions[session_id]['started_at'] = datetime.now(timezone.utc)
             
             # Emitir inicio de sesión
             session_data = {
                 'session_id': session_id,
                 'status': 'active',
-                'started_at': format_datetime(datetime.utcnow()),
-                'timestamp': format_datetime(datetime.utcnow())
+                'started_at': format_datetime(datetime.now(timezone.utc)),
+                'timestamp': format_datetime(datetime.now(timezone.utc))
             }
             
             self.emit('session_started', session_data, room=f'mentorship_{session_id}')

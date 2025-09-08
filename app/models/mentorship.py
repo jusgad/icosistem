@@ -6,7 +6,7 @@ mentor-mentee, sesiones, seguimiento de progreso y evaluaciones.
 """
 
 from datetime import datetime, date, timedelta
-from typing import List, Optional, Dict, Any, Union
+from typing import Optional, Any, Union
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Enum as SQLEnum, Float, Date, Time
 from sqlalchemy.orm import relationship, validates, backref
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -377,7 +377,7 @@ class MentorshipRelationship(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMi
         return session
     
     def add_goal(self, title: str, description: str = None, 
-                target_date: date = None, metrics: Dict[str, Any] = None) -> 'MentorshipGoal':
+                target_date: date = None, metrics: dict[str, Any] = None) -> 'MentorshipGoal':
         """Agregar objetivo de mentoría"""
         from .. import db
         
@@ -422,7 +422,7 @@ class MentorshipRelationship(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMi
         self.goals_achieved = len([goal for goal in self.goals 
                                  if goal.status == GoalStatus.COMPLETED])
     
-    def get_progress_summary(self) -> Dict[str, Any]:
+    def get_progress_summary(self) -> dict[str, Any]:
         """Obtener resumen de progreso"""
         completed_sessions = [s for s in self.sessions if s.status == SessionStatus.COMPLETED]
         pending_sessions = [s for s in self.sessions if s.status == SessionStatus.SCHEDULED]
@@ -450,7 +450,7 @@ class MentorshipRelationship(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMi
             }
         }
     
-    def get_dashboard_data(self) -> Dict[str, Any]:
+    def get_dashboard_data(self) -> dict[str, Any]:
         """Generar datos para dashboard"""
         recent_sessions = (self.sessions
                          .order_by(MentorshipSession.scheduled_datetime.desc())
@@ -458,7 +458,7 @@ class MentorshipRelationship(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMi
                          .all())
         
         upcoming_sessions = (self.sessions
-                           .filter(MentorshipSession.scheduled_datetime > datetime.utcnow())
+                           .filter(MentorshipSession.scheduled_datetime > datetime.now(timezone.utc))
                            .filter(MentorshipSession.status == SessionStatus.SCHEDULED)
                            .order_by(MentorshipSession.scheduled_datetime.asc())
                            .limit(3)
@@ -530,7 +530,7 @@ class MentorshipRelationship(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMi
             cls.is_deleted == False
         ).all()
     
-    def to_dict(self, include_sensitive=False) -> Dict[str, Any]:
+    def to_dict(self, include_sensitive=False) -> dict[str, Any]:
         """Convertir a diccionario"""
         data = {
             'id': self.id,
@@ -676,7 +676,7 @@ class MentorshipSession(BaseModel, TimestampMixin, AuditMixin):
     @validates('scheduled_datetime')
     def validate_scheduled_datetime(self, key, scheduled_dt):
         """Validar fecha programada"""
-        if scheduled_dt and scheduled_dt < datetime.utcnow():
+        if scheduled_dt and scheduled_dt < datetime.now(timezone.utc):
             # Solo permitir fechas pasadas si es una actualización
             if not self.id:
                 raise ValidationError("No se pueden programar sesiones en el pasado")
@@ -686,13 +686,13 @@ class MentorshipSession(BaseModel, TimestampMixin, AuditMixin):
     @hybrid_property
     def is_upcoming(self):
         """Verificar si la sesión es próxima"""
-        return (self.scheduled_datetime > datetime.utcnow() and 
+        return (self.scheduled_datetime > datetime.now(timezone.utc) and 
                 self.status == SessionStatus.SCHEDULED)
     
     @hybrid_property
     def is_overdue(self):
         """Verificar si la sesión está vencida"""
-        return (self.scheduled_datetime < datetime.utcnow() and 
+        return (self.scheduled_datetime < datetime.now(timezone.utc) and 
                 self.status == SessionStatus.SCHEDULED)
     
     @hybrid_property
@@ -728,16 +728,16 @@ class MentorshipSession(BaseModel, TimestampMixin, AuditMixin):
             raise ValidationError("Solo se pueden iniciar sesiones programadas")
         
         self.status = SessionStatus.IN_PROGRESS
-        self.actual_start_time = datetime.utcnow()
+        self.actual_start_time = datetime.now(timezone.utc)
     
-    def complete_session(self, session_summary: str = None, action_items: List[str] = None,
+    def complete_session(self, session_summary: str = None, action_items: list[str] = None,
                         mentor_feedback: str = None, session_rating: float = None):
         """Completar la sesión"""
         if self.status != SessionStatus.IN_PROGRESS:
             raise ValidationError("Solo se pueden completar sesiones en progreso")
         
         self.status = SessionStatus.COMPLETED
-        self.actual_end_time = datetime.utcnow()
+        self.actual_end_time = datetime.now(timezone.utc)
         
         if self.actual_start_time:
             duration = (self.actual_end_time - self.actual_start_time).total_seconds() / 60
@@ -800,7 +800,7 @@ class MentorshipSession(BaseModel, TimestampMixin, AuditMixin):
             'title': title,
             'description': description,
             'due_date': due_date.isoformat() if due_date else None,
-            'assigned_at': datetime.utcnow().isoformat(),
+            'assigned_at': datetime.now(timezone.utc).isoformat(),
             'completed': False
         }
         
@@ -815,13 +815,13 @@ class MentorshipSession(BaseModel, TimestampMixin, AuditMixin):
             'description': description,
             'assignee': assignee,  # 'mentor' or 'mentee'
             'due_date': due_date.isoformat() if due_date else None,
-            'created_at': datetime.utcnow().isoformat(),
+            'created_at': datetime.now(timezone.utc).isoformat(),
             'completed': False
         }
         
         self.action_items.append(action_item)
     
-    def get_session_analytics(self) -> Dict[str, Any]:
+    def get_session_analytics(self) -> dict[str, Any]:
         """Obtener analytics de la sesión"""
         return {
             'basic_info': {
@@ -861,9 +861,9 @@ class MentorshipSession(BaseModel, TimestampMixin, AuditMixin):
     @classmethod
     def get_upcoming_sessions(cls, days_ahead: int = 7):
         """Obtener sesiones próximas"""
-        end_date = datetime.utcnow() + timedelta(days=days_ahead)
+        end_date = datetime.now(timezone.utc) + timedelta(days=days_ahead)
         return cls.query.filter(
-            cls.scheduled_datetime.between(datetime.utcnow(), end_date),
+            cls.scheduled_datetime.between(datetime.now(timezone.utc), end_date),
             cls.status == SessionStatus.SCHEDULED
         ).order_by(cls.scheduled_datetime.asc()).all()
     
@@ -871,11 +871,11 @@ class MentorshipSession(BaseModel, TimestampMixin, AuditMixin):
     def get_overdue_sessions(cls):
         """Obtener sesiones vencidas"""
         return cls.query.filter(
-            cls.scheduled_datetime < datetime.utcnow(),
+            cls.scheduled_datetime < datetime.now(timezone.utc),
             cls.status == SessionStatus.SCHEDULED
         ).all()
     
-    def to_dict(self, include_sensitive=False) -> Dict[str, Any]:
+    def to_dict(self, include_sensitive=False) -> dict[str, Any]:
         """Convertir a diccionario"""
         data = {
             'id': self.id,
@@ -1007,15 +1007,15 @@ class MentorshipGoal(BaseModel, TimestampMixin, AuditMixin):
         # Cambiar estado basado en progreso
         if progress == 100:
             self.status = GoalStatus.COMPLETED
-            self.completed_at = datetime.utcnow()
+            self.completed_at = datetime.now(timezone.utc)
         elif progress > 0:
             self.status = GoalStatus.IN_PROGRESS
     
-    def complete(self, completion_evidence: Dict[str, Any] = None, 
+    def complete(self, completion_evidence: dict[str, Any] = None, 
                 mentor_assessment: str = None, achievement_rating: float = None):
         """Completar el objetivo"""
         self.status = GoalStatus.COMPLETED
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(timezone.utc)
         self.current_progress = 100.0
         
         if completion_evidence:
@@ -1038,7 +1038,7 @@ class MentorshipGoal(BaseModel, TimestampMixin, AuditMixin):
         if reason:
             self.progress_notes = f"Cancelado: {reason}"
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convertir a diccionario"""
         return {
             'id': self.id,
@@ -1144,7 +1144,7 @@ class MentorshipEvaluation(BaseModel, TimestampMixin, AuditMixin):
             return current_avg - previous_avg
         return 0.0
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convertir a diccionario"""
         return {
             'id': self.id,
@@ -1184,7 +1184,7 @@ class MentorshipEvaluation(BaseModel, TimestampMixin, AuditMixin):
 # Funciones de utilidad para el módulo
 def get_mentorship_statistics(organization_id: int = None, 
                              date_from: date = None, 
-                             date_to: date = None) -> Dict[str, Any]:
+                             date_to: date = None) -> dict[str, Any]:
     """Obtener estadísticas de mentoría"""
     query = MentorshipRelationship.query
     
@@ -1248,7 +1248,7 @@ def get_mentorship_statistics(organization_id: int = None,
     }
 
 
-def get_mentor_performance_metrics(mentor_id: int) -> Dict[str, Any]:
+def get_mentor_performance_metrics(mentor_id: int) -> dict[str, Any]:
     """Obtener métricas de rendimiento de un mentor"""
     relationships = MentorshipRelationship.query.filter_by(mentor_id=mentor_id).all()
     

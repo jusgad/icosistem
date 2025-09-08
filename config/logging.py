@@ -26,7 +26,7 @@ import json
 import logging
 import logging.config
 import logging.handlers
-from typing import Dict, Any, Optional, List, Union
+from typing import Any, Optional, Union
 from datetime import datetime, timezone
 from pathlib import Path
 import gzip
@@ -447,7 +447,7 @@ class SamplingFilter(logging.Filter):
     Permite configurar diferentes rates de sampling por nivel.
     """
     
-    def __init__(self, sample_rates: Dict[str, float]):
+    def __init__(self, sample_rates: dict[str, float]):
         """
         Inicializa el filtro de sampling.
         
@@ -551,7 +551,7 @@ class LoggingConfig:
         self.enable_console_logging = os.environ.get('ENABLE_CONSOLE_LOGGING', str(config['enable_console_logging'])).lower() == 'true'
         self.enable_sampling = os.environ.get('ENABLE_LOG_SAMPLING', str(config['enable_sampling'])).lower() == 'true'
     
-    def get_logging_config(self) -> Dict[str, Any]:
+    def get_logging_config(self) -> dict[str, Any]:
         """
         Genera la configuración completa de logging.
         
@@ -589,7 +589,7 @@ class LoggingConfig:
         
         return config
     
-    def _get_formatters(self) -> Dict[str, Dict[str, Any]]:
+    def _get_formatters(self) -> dict[str, dict[str, Any]]:
         """
         Configura formatters disponibles.
         
@@ -625,7 +625,7 @@ class LoggingConfig:
         
         return formatters
     
-    def _get_filters(self) -> Dict[str, Dict[str, Any]]:
+    def _get_filters(self) -> dict[str, dict[str, Any]]:
         """
         Configura filtros disponibles.
         
@@ -660,7 +660,7 @@ class LoggingConfig:
         
         return filters
     
-    def _get_handlers(self) -> Dict[str, Dict[str, Any]]:
+    def _get_handlers(self) -> dict[str, dict[str, Any]]:
         """
         Configura handlers disponibles.
         
@@ -751,7 +751,7 @@ class LoggingConfig:
         
         return handlers
     
-    def _get_loggers(self) -> Dict[str, Dict[str, Any]]:
+    def _get_loggers(self) -> dict[str, dict[str, Any]]:
         """
         Configura loggers específicos.
         
@@ -850,7 +850,7 @@ class LoggingConfig:
         
         return loggers
     
-    def _get_root_handlers(self) -> List[str]:
+    def _get_root_handlers(self) -> list[str]:
         """
         Obtiene handlers para el logger root.
         
@@ -871,7 +871,7 @@ class LoggingConfig:
         
         return handlers
     
-    def _get_app_handlers(self) -> List[str]:
+    def _get_app_handlers(self) -> list[str]:
         """
         Obtiene handlers específicos para la aplicación.
         

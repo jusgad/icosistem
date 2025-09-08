@@ -39,9 +39,9 @@ class Notification(CompleteBaseModel):
     
     def mark_as_read(self):
         """Mark notification as read."""
-        from datetime import datetime
+        from datetime import datetime, timezone
         self.status = NotificationStatus.READ
-        self.read_at = datetime.utcnow()
+        self.read_at = datetime.now(timezone.utc)
 
 class NotificationTemplate(CompleteBaseModel):
     """Model for notification templates."""

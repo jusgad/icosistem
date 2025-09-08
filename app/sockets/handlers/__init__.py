@@ -22,8 +22,8 @@ Arquitectura:
 """
 
 import logging
-from typing import Dict, List, Optional, Any, Set
-from datetime import datetime
+from typing import Optional, Any
+from datetime import datetime, timezone
 
 from flask_socketio import SocketIO
 from flask import current_app
@@ -36,17 +36,17 @@ logger = logging.getLogger(__name__)
 # Estas variables serán accesibles por otros módulos del paquete 'sockets'
 # --------------------------------------------------------------------------
 
-# active_connections: Dict[str(user_id), Dict[str, Any]]
+# active_connections: dict[str(user_id), dict[str, Any]]
 # Ejemplo: {'123': {'session_id': 'abc', 'username': 'user1', 'role': 'entrepreneur', ...}}
-active_connections: Dict[str, Dict[str, Any]] = {}
+active_connections: dict[str, dict[str, Any]] = {}
 
-# user_rooms: Dict[str(user_id), List[str(room_name)]]
+# user_rooms: dict[str(user_id), list[str(room_name)]]
 # Ejemplo: {'123': ['user_123', 'project_456', 'role_entrepreneur']}
-user_rooms: Dict[str, List[str]] = {}
+user_rooms: dict[str, list[str]] = {}
 
-# room_users: Dict[str(room_name), Set[str(user_id)]]
+# room_users: dict[str(room_name), set[str(user_id)]]
 # Ejemplo: {'project_456': {'123', '789'}}
-room_users: Dict[str, Set[str]] = {}
+room_users: dict[str, set[str]] = {}
 
 
 # --------------------------------------------------------------------------
@@ -73,18 +73,18 @@ class SocketManager:
         self.user_rooms = user_rooms
         self.room_users = room_users
 
-    def add_user_connection(self, user_id: str, session_id: str, user_info: Dict[str, Any]):
+    def add_user_connection(self, user_id: str, session_id: str, user_info: dict[str, Any]):
         """Registra una nueva conexión de usuario."""
         self.active_connections[user_id] = {
             'session_id': session_id,
             'user_id': user_id,
             **user_info, # username, role, etc.
-            'connected_at': datetime.utcnow(),
-            'last_activity': datetime.utcnow()
+            'connected_at': datetime.now(timezone.utc),
+            'last_activity': datetime.now(timezone.utc)
         }
         logger.info(f"Usuario conectado: ID {user_id}, SID {session_id}, Info: {user_info.get('username', 'N/A')}")
 
-    def remove_user_connection(self, session_id: str) -> Optional[Dict[str, Any]]:
+    def remove_user_connection(self, session_id: str) -> Optional[dict[str, Any]]:
         """Remueve una conexión de usuario por session_id."""
         user_id_to_remove = None
         user_info_removed = None
@@ -151,7 +151,7 @@ class SocketManager:
         """Emite un evento a todos los usuarios en una sala."""
         self.sio.emit(event, data, room=room_name, namespace=namespace, include_self=include_self)
 
-    def get_user_by_sid(self, sid: str) -> Optional[Dict[str, Any]]:
+    def get_user_by_sid(self, sid: str) -> Optional[dict[str, Any]]:
         """Obtiene la información del usuario conectado con un SID específico."""
         for user_id, conn_data in self.active_connections.items():
             if conn_data['session_id'] == sid:

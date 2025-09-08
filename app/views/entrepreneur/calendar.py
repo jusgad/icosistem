@@ -1324,7 +1324,7 @@ def _get_month_metrics(entrepreneur_id, start_date, end_date):
 
 def _get_upcoming_important_events(entrepreneur_id, limit=5):
     """Obtener próximos eventos importantes."""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     # Reuniones importantes
     important_meetings = Meeting.query.filter(
@@ -1836,7 +1836,7 @@ def _populate_meeting_form_choices(form):
 
 def _validate_event_datetime(event_datetime, exclude_event=None):
     """Validar fecha y hora del evento."""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     # No puede ser en el pasado (con margen de MIN_ADVANCE_MINUTES)
     if event_datetime <= now + timedelta(minutes=MIN_ADVANCE_MINUTES):
@@ -2048,7 +2048,7 @@ def _can_cancel_event(event, event_type, user_id):
     """Verificar si el usuario puede cancelar el evento."""
     # Solo eventos futuros pueden cancelarse
     event_datetime = _get_event_datetime(event, event_type)
-    return event_datetime > datetime.utcnow()
+    return event_datetime > datetime.now(timezone.utc)
 
 
 def _get_event_change_history(event, event_type):
@@ -2068,7 +2068,7 @@ def _get_event_attachments(event, event_type):
 def _calculate_time_until_event(event):
     """Calcular tiempo hasta el evento."""
     event_datetime = _get_event_datetime(event, 'meeting')  # Asumir meeting por simplicidad
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     if event_datetime > now:
         delta = event_datetime - now
@@ -2097,7 +2097,7 @@ def _get_event_datetime(event, event_type):
     elif event_type == 'task':
         return datetime.combine(event.due_date, time(9, 0))  # Default time
     
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
 
 
 def _get_event_end_datetime(event, event_type):

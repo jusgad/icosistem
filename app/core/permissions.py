@@ -5,7 +5,7 @@ Este módulo maneja todos los aspectos de control de acceso basado en roles (RBA
 
 import logging
 from functools import wraps
-from typing import List, Dict, Any, Optional, Callable, Union
+from typing import Any, Optional, Callable, Union
 from flask import current_app, request, jsonify, abort, redirect, url_for, flash
 from flask_login import current_user
 from flask_principal import Principal, Permission, RoleNeed, UserNeed, identity_loaded
@@ -355,7 +355,7 @@ def has_permission(user, permission: str) -> bool:
     return permission in role_perms or PermissionRegistry.FULL_SYSTEM_ACCESS in role_perms
 
 
-def get_user_permissions(user) -> List[str]:
+def get_user_permissions(user) -> list[str]:
     """
     Obtener todos los permisos de un usuario.
     
@@ -834,14 +834,14 @@ class PermissionManager:
         except Exception as e:
             permissions_logger.error(f"Error invalidating permissions cache: {str(e)}")
     
-    def _get_all_permissions(self) -> List[str]:
+    def _get_all_permissions(self) -> list[str]:
         """Obtener lista de todos los permisos disponibles."""
         all_permissions = set()
         for role_perms in ROLE_PERMISSIONS.values():
             all_permissions.update(role_perms)
         return list(all_permissions)
     
-    def bulk_check_permissions(self, user_id: int, permissions: List[str]) -> Dict[str, bool]:
+    def bulk_check_permissions(self, user_id: int, permissions: list[str]) -> dict[str, bool]:
         """Verificar múltiples permisos de una vez."""
         results = {}
         
@@ -861,7 +861,7 @@ class PermissionManager:
         
         return results
     
-    def get_accessible_resources(self, user_id: int, resource_type: str) -> List[int]:
+    def get_accessible_resources(self, user_id: int, resource_type: str) -> list[int]:
         """Obtener lista de IDs de recursos accesibles para un usuario."""
         try:
             from app.models.user import User
@@ -907,7 +907,7 @@ class PermissionManager:
             permissions_logger.error(f"Error getting accessible resources: {str(e)}")
             return []
     
-    def _get_all_resource_ids(self, resource_type: str) -> List[int]:
+    def _get_all_resource_ids(self, resource_type: str) -> list[int]:
         """Obtener todos los IDs de un tipo de recurso."""
         try:
             if resource_type == 'project':
@@ -984,7 +984,7 @@ class PermissionMiddleware:
 # HERRAMIENTAS DE AUDITORIA DE PERMISOS
 # ====================================
 
-def audit_user_permissions(user_id: int) -> Dict[str, Any]:
+def audit_user_permissions(user_id: int) -> dict[str, Any]:
     """Auditar permisos de un usuario específico."""
     try:
         from app.models.user import User
@@ -1026,7 +1026,7 @@ def audit_user_permissions(user_id: int) -> Dict[str, Any]:
         return {'error': str(e)}
 
 
-def generate_permissions_report() -> Dict[str, Any]:
+def generate_permissions_report() -> dict[str, Any]:
     """Generar reporte completo de permisos del sistema."""
     try:
         from app.models.user import User

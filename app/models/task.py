@@ -5,8 +5,8 @@ Este módulo define los modelos para gestión de tareas y actividades,
 incluyendo asignación, seguimiento, dependencias, subtareas y automatización.
 """
 
-from datetime import datetime, date, timedelta
-from typing import List, Optional, Dict, Any, Union
+from datetime import datetime, date, timedelta, timezone
+from typing import Optional, Any, Union
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Enum as SQLEnum, Float, Date, Table
 from sqlalchemy.orm import relationship, validates, backref
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -307,7 +307,7 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         # Configurar fechas por defecto
         if not self.start_date:
-            self.start_date = datetime.utcnow()
+            self.start_date = datetime.now(timezone.utc)
         
         # Configuraciones por defecto
         if not self.notification_settings:
@@ -389,7 +389,7 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     def is_overdue(self):
         """Verificar si la tarea está vencida"""
         return (self.due_date and 
-                self.due_date < datetime.utcnow() and 
+                self.due_date < datetime.now(timezone.utc) and 
                 self.status not in [TaskStatus.COMPLETED, TaskStatus.CANCELLED, TaskStatus.ARCHIVED])
     
     @hybrid_property
@@ -397,7 +397,7 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         """Verificar si vence pronto (próximas 24 horas)"""
         if not self.due_date:
             return False
-        return (self.due_date - datetime.utcnow()).total_seconds() <= 86400  # 24 horas
+        return (self.due_date - datetime.now(timezone.utc)).total_seconds() <= 86400  # 24 horas
     
     @hybrid_property
     def days_until_due(self):
@@ -470,7 +470,7 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     
     # Métodos de negocio
     def assign_user(self, user, role: str = 'assignee', assigned_by_user_id: int = None,
-                   notification_settings: Dict[str, Any] = None) -> bool:
+                   notification_settings: dict[str, Any] = None) -> bool:
         """Asignar usuario a la tarea"""
         valid_roles = ['assignee', 'reviewer', 'approver', 'watcher']
         if role not in valid_roles:
@@ -498,7 +498,7 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
                     ).values(
                         is_active=True,
                         role=role,
-                        assigned_at=datetime.utcnow(),
+                        assigned_at=datetime.now(timezone.utc),
                         assigned_by_id=assigned_by_user_id or self.creator_id,
                         notification_settings=notification_settings or {
                             'due_date_reminders': True,
@@ -587,10 +587,10 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         # Actualizar fechas relevantes
         if new_status == TaskStatus.IN_PROGRESS and old_status == TaskStatus.NOT_STARTED:
             if not self.start_date:
-                self.start_date = datetime.utcnow()
+                self.start_date = datetime.now(timezone.utc)
         
         elif new_status == TaskStatus.COMPLETED:
-            self.completed_at = datetime.utcnow()
+            self.completed_at = datetime.now(timezone.utc)
             self.progress_percentage = 100.0
             
             # Verificar si se pueden desbloquear tareas dependientes
@@ -598,7 +598,7 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         elif new_status == TaskStatus.BLOCKED:
             self.is_blocked = True
-            self.blocked_at = datetime.utcnow()
+            self.blocked_at = datetime.now(timezone.utc)
             self.blocked_by_id = updated_by_user_id
             if notes:
                 self.blocked_reason = notes
@@ -640,11 +640,11 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             if self.status == TaskStatus.NOT_STARTED:
                 self.status = TaskStatus.IN_PROGRESS
                 if not self.start_date:
-                    self.start_date = datetime.utcnow()
+                    self.start_date = datetime.now(timezone.utc)
         elif progress_percentage == 100:
             if self.status != TaskStatus.COMPLETED:
                 self.status = TaskStatus.COMPLETED
-                self.completed_at = datetime.utcnow()
+                self.completed_at = datetime.now(timezone.utc)
                 self._check_and_unblock_dependents()
         
         self._log_activity('progress_updated', 
@@ -676,13 +676,13 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             # Todas las subtareas completadas
             if self.status != TaskStatus.COMPLETED:
                 self.status = TaskStatus.COMPLETED
-                self.completed_at = datetime.utcnow()
+                self.completed_at = datetime.now(timezone.utc)
         elif len(completed_subtasks) > 0 or any(st.status == TaskStatus.IN_PROGRESS for st in active_subtasks):
             # Al menos una subtarea en progreso
             if self.status == TaskStatus.NOT_STARTED:
                 self.status = TaskStatus.IN_PROGRESS
                 if not self.start_date:
-                    self.start_date = datetime.utcnow()
+                    self.start_date = datetime.now(timezone.utc)
     
     def add_dependency(self, prerequisite_task, dependency_type: str = 'finish_to_start',
                       lag_days: int = 0, is_critical: bool = False):
@@ -771,7 +771,7 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         if incomplete_prerequisites and not self.is_blocked:
             self.is_blocked = True
-            self.blocked_at = datetime.utcnow()
+            self.blocked_at = datetime.now(timezone.utc)
             self.blocked_reason = f"Bloqueada por {len(incomplete_prerequisites)} dependencia(s) incompleta(s)"
             
             if self.status == TaskStatus.IN_PROGRESS:
@@ -926,13 +926,13 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         return new_task
     
-    def create_recurring_instances(self, end_date: date, max_instances: int = 12) -> List['Task']:
+    def create_recurring_instances(self, end_date: date, max_instances: int = 12) -> list['Task']:
         """Crear instancias de tarea recurrente"""
         if self.recurrence_pattern == RecurrencePattern.NONE:
             return []
         
         instances = []
-        current_date = self.next_occurrence_date or self.due_date or datetime.utcnow()
+        current_date = self.next_occurrence_date or self.due_date or datetime.now(timezone.utc)
         instance_count = 0
         
         while (current_date.date() <= end_date and 
@@ -1032,7 +1032,7 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         return None
     
     def _log_activity(self, activity_type: str, description: str, 
-                     user_id: int = None, metadata: Dict[str, Any] = None):
+                     user_id: int = None, metadata: dict[str, Any] = None):
         """Registrar actividad de la tarea"""
         from .activity_log import ActivityLog
         from .. import db
@@ -1047,7 +1047,7 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         db.session.add(activity)
     
-    def get_task_analytics(self) -> Dict[str, Any]:
+    def get_task_analytics(self) -> dict[str, Any]:
         """Obtener analytics de la tarea"""
         return {
             'basic_info': {
@@ -1086,11 +1086,11 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
                 'start_date': self.start_date.isoformat() if self.start_date else None,
                 'due_date': self.due_date.isoformat() if self.due_date else None,
                 'completed_at': self.completed_at.isoformat() if self.completed_at else None,
-                'days_active': (datetime.utcnow() - self.created_at).days if self.created_at else 0
+                'days_active': (datetime.now(timezone.utc) - self.created_at).days if self.created_at else 0
             }
         }
     
-    def get_completion_status(self) -> Dict[str, Any]:
+    def get_completion_status(self) -> dict[str, Any]:
         """Obtener estado de completitud detallado"""
         completion_criteria_met = 0
         if self.completion_criteria:
@@ -1137,7 +1137,7 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     
     # Métodos de búsqueda y filtrado
     @classmethod
-    def search_tasks(cls, query: str = None, filters: Dict[str, Any] = None,
+    def search_tasks(cls, query: str = None, filters: dict[str, Any] = None,
                     user_id: int = None, limit: int = 50, offset: int = 0):
         """Buscar tareas"""
         search = cls.query.filter(cls.is_deleted == False)
@@ -1210,13 +1210,13 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             if filters.get('is_overdue'):
                 if filters['is_overdue']:
                     search = search.filter(
-                        cls.due_date < datetime.utcnow(),
+                        cls.due_date < datetime.now(timezone.utc),
                         cls.status.notin_([TaskStatus.COMPLETED, TaskStatus.CANCELLED])
                     )
                 else:
                     search = search.filter(
                         (cls.due_date.is_(None)) |
-                        (cls.due_date >= datetime.utcnow()) |
+                        (cls.due_date >= datetime.now(timezone.utc)) |
                         (cls.status.in_([TaskStatus.COMPLETED, TaskStatus.CANCELLED]))
                     )
             
@@ -1276,7 +1276,7 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     def get_overdue_tasks(cls, user_id: int = None, organization_id: int = None):
         """Obtener tareas vencidas"""
         query = cls.query.filter(
-            cls.due_date < datetime.utcnow(),
+            cls.due_date < datetime.now(timezone.utc),
             cls.status.notin_([TaskStatus.COMPLETED, TaskStatus.CANCELLED, TaskStatus.ARCHIVED]),
             cls.is_deleted == False
         )
@@ -1295,10 +1295,10 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     @classmethod
     def get_due_soon_tasks(cls, hours_ahead: int = 24, user_id: int = None):
         """Obtener tareas que vencen pronto"""
-        due_before = datetime.utcnow() + timedelta(hours=hours_ahead)
+        due_before = datetime.now(timezone.utc) + timedelta(hours=hours_ahead)
         
         query = cls.query.filter(
-            cls.due_date.between(datetime.utcnow(), due_before),
+            cls.due_date.between(datetime.now(timezone.utc), due_before),
             cls.status.notin_([TaskStatus.COMPLETED, TaskStatus.CANCELLED]),
             cls.is_deleted == False
         )
@@ -1331,7 +1331,7 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         return query.all()
     
     @classmethod
-    def get_user_task_summary(cls, user_id: int) -> Dict[str, Any]:
+    def get_user_task_summary(cls, user_id: int) -> dict[str, Any]:
         """Obtener resumen de tareas del usuario"""
         user_tasks = cls.query.filter(
             (cls.assignee_id == user_id) | (cls.assignees.any(id=user_id)),
@@ -1382,7 +1382,7 @@ class Task(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         }
     
     def to_dict(self, include_subtasks=False, include_assignees=False, 
-               include_dependencies=False, include_comments=False) -> Dict[str, Any]:
+               include_dependencies=False, include_comments=False) -> dict[str, Any]:
         """Convertir a diccionario"""
         data = {
             'id': self.id,
@@ -1631,7 +1631,7 @@ class TaskLabel(BaseModel, TimestampMixin):
 # Funciones de utilidad para el módulo
 def get_task_statistics(organization_id: int = None, user_id: int = None,
                        project_id: int = None, date_from: date = None, 
-                       date_to: date = None) -> Dict[str, Any]:
+                       date_to: date = None) -> dict[str, Any]:
     """Obtener estadísticas de tareas"""
     query = Task.query.filter(Task.is_deleted == False)
     
@@ -1788,7 +1788,7 @@ def process_recurring_tasks():
     """Procesar tareas recurrentes y crear nuevas instancias"""
     recurring_tasks = Task.query.filter(
         Task.recurrence_pattern != RecurrencePattern.NONE,
-        Task.next_occurrence_date <= datetime.utcnow(),
+        Task.next_occurrence_date <= datetime.now(timezone.utc),
         Task.is_deleted == False
     ).all()
     
@@ -1832,7 +1832,7 @@ def auto_update_task_progress():
 
 
 def generate_task_burndown_data(project_id: int, sprint_start: date, 
-                               sprint_end: date) -> Dict[str, Any]:
+                               sprint_end: date) -> dict[str, Any]:
     """Generar datos para gráfico burndown de tareas"""
     project_tasks = Task.query.filter(
         Task.project_id == project_id,

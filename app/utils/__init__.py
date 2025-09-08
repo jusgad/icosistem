@@ -38,7 +38,7 @@ Categorías de utilidades:
 
 import logging
 import warnings
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 # Configurar logger para el módulo
 logger = logging.getLogger(__name__)
@@ -608,7 +608,7 @@ def get_available_features():
     }
     return features
 
-def configure_utils(config: Dict[str, Any]):
+def configure_utils(config: dict[str, Any]):
     """
     Configura las utilidades globalmente.
     

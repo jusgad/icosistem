@@ -11,7 +11,7 @@ Date: 2025
 import os
 import re
 import logging
-from typing import Dict, List, Any, Optional, Union, Type, Tuple
+from typing import Any, Optional, Union, Type
 from functools import wraps
 from datetime import datetime, timedelta
 from werkzeug.datastructures import FileStorage
@@ -286,11 +286,11 @@ class BaseForm(FlaskForm):
         
         logger.info(f"Form validation failed - {form_name}: {'; '.join(errors)}")
     
-    def get_errors_dict(self) -> Dict[str, List[str]]:
+    def get_errors_dict(self) -> dict[str, list[str]]:
         """Retorna errores en formato diccionario"""
         return dict(self.errors)
     
-    def get_errors_list(self) -> List[str]:
+    def get_errors_list(self) -> list[str]:
         """Retorna todos los errores como lista plana"""
         errors = []
         for field_errors in self.errors.values():
@@ -301,7 +301,7 @@ class BaseForm(FlaskForm):
         """Verifica si el formulario tiene campos de archivo"""
         return any(isinstance(field, FileField) for field in self)
     
-    def get_changed_fields(self, original_data: Dict[str, Any]) -> Dict[str, Any]:
+    def get_changed_fields(self, original_data: dict[str, Any]) -> dict[str, Any]:
         """Retorna campos que han cambiado respecto a datos originales"""
         changed = {}
         for field in self:
@@ -585,7 +585,7 @@ class DateTimeLocalField(DateTimeField):
 # UTILIDADES PARA FORMULARIOS
 # =============================================================================
 
-def get_form_errors(form: FlaskForm) -> Dict[str, List[str]]:
+def get_form_errors(form: FlaskForm) -> dict[str, list[str]]:
     """Extrae errores de formulario en formato JSON"""
     errors = {}
     for field_name, field_errors in form.errors.items():
@@ -602,7 +602,7 @@ def flash_form_errors(form: FlaskForm, category: str = 'error') -> None:
 
 
 def populate_form_from_object(form: FlaskForm, obj: Any, 
-                            exclude: List[str] = None) -> None:
+                            exclude: list[str] = None) -> None:
     """Popula formulario desde objeto con campos excluidos"""
     exclude = exclude or []
     
@@ -611,7 +611,7 @@ def populate_form_from_object(form: FlaskForm, obj: Any,
             field.data = getattr(obj, field.name)
 
 
-def form_to_dict(form: FlaskForm, exclude: List[str] = None) -> Dict[str, Any]:
+def form_to_dict(form: FlaskForm, exclude: list[str] = None) -> dict[str, Any]:
     """Convierte formulario a diccionario"""
     exclude = exclude or ['csrf_token', 'submit']
     

@@ -10,7 +10,7 @@ from flask_jwt_extended import (
 )
 from flask_login import login_user, logout_user, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import pyotp
 import qrcode
 from io import BytesIO
@@ -143,7 +143,7 @@ class LoginResource(Resource):
                     'success': False,
                     'error_type': 'validation_error',
                     'message': 'Email and password are required',
-                    'timestamp': datetime.utcnow()
+                    'timestamp': datetime.now(timezone.utc)
                 }, 400
             
             # Import here to avoid circular imports
@@ -158,7 +158,7 @@ class LoginResource(Resource):
                     'success': False,
                     'error_type': 'account_locked',
                     'message': 'Account temporarily locked due to failed login attempts',
-                    'timestamp': datetime.utcnow()
+                    'timestamp': datetime.now(timezone.utc)
                 }, 423
             
             # Find user
@@ -170,7 +170,7 @@ class LoginResource(Resource):
                     'success': False,
                     'error_type': 'authentication_error',
                     'message': 'Invalid email or password',
-                    'timestamp': datetime.utcnow()
+                    'timestamp': datetime.now(timezone.utc)
                 }, 401
             
             # Check if account is active
@@ -179,7 +179,7 @@ class LoginResource(Resource):
                     'success': False,
                     'error_type': 'account_inactive',
                     'message': 'Account is inactive. Please contact support.',
-                    'timestamp': datetime.utcnow()
+                    'timestamp': datetime.now(timezone.utc)
                 }, 401
             
             # Check if email is verified
@@ -188,7 +188,7 @@ class LoginResource(Resource):
                     'success': False,
                     'error_type': 'email_not_verified',
                     'message': 'Please verify your email address before logging in',
-                    'timestamp': datetime.utcnow()
+                    'timestamp': datetime.now(timezone.utc)
                 }, 401
             
             # Check for two-factor authentication
@@ -199,7 +199,7 @@ class LoginResource(Resource):
                         'error_type': 'two_factor_required',
                         'message': 'Two-factor authentication code required',
                         'two_factor_required': True,
-                        'timestamp': datetime.utcnow()
+                        'timestamp': datetime.now(timezone.utc)
                     }, 200
                 
                 # Verify 2FA code
@@ -208,7 +208,7 @@ class LoginResource(Resource):
                         'success': False,
                         'error_type': 'invalid_two_factor',
                         'message': 'Invalid two-factor authentication code',
-                        'timestamp': datetime.utcnow()
+                        'timestamp': datetime.now(timezone.utc)
                     }, 401
             
             # Create tokens
@@ -253,7 +253,7 @@ class LoginResource(Resource):
                 'success': False,
                 'error_type': 'internal_error',
                 'message': 'An error occurred during login',
-                'timestamp': datetime.utcnow()
+                'timestamp': datetime.now(timezone.utc)
             }, 500
 
 
@@ -302,7 +302,7 @@ class RegisterResource(Resource):
                     'error_type': 'validation_error',
                     'message': 'Invalid registration data',
                     'details': e.errors(),
-                    'timestamp': datetime.utcnow()
+                    'timestamp': datetime.now(timezone.utc)
                 }, 400
             
             # Check if user already exists
@@ -313,7 +313,7 @@ class RegisterResource(Resource):
                     'success': False,
                     'error_type': 'user_exists',
                     'message': 'User with this email already exists',
-                    'timestamp': datetime.utcnow()
+                    'timestamp': datetime.now(timezone.utc)
                 }, 409
             
             # Create new user
@@ -332,7 +332,7 @@ class RegisterResource(Resource):
                     'success': False,
                     'error_type': 'registration_failed',
                     'message': result.get('message', 'Registration failed'),
-                    'timestamp': datetime.utcnow()
+                    'timestamp': datetime.now(timezone.utc)
                 }, 400
                 
         except Exception as e:
@@ -341,7 +341,7 @@ class RegisterResource(Resource):
                 'success': False,
                 'error_type': 'internal_error',
                 'message': 'An error occurred during registration',
-                'timestamp': datetime.utcnow()
+                'timestamp': datetime.now(timezone.utc)
             }, 500
 
 
@@ -392,7 +392,7 @@ class LogoutResource(Resource):
             return {
                 'success': True,
                 'message': 'Logged out successfully',
-                'timestamp': datetime.utcnow()
+                'timestamp': datetime.now(timezone.utc)
             }, 200
             
         except Exception as e:
@@ -401,7 +401,7 @@ class LogoutResource(Resource):
                 'success': False,
                 'error_type': 'internal_error',
                 'message': 'An error occurred during logout',
-                'timestamp': datetime.utcnow()
+                'timestamp': datetime.now(timezone.utc)
             }, 500
 
 
@@ -442,7 +442,7 @@ class TokenRefreshResource(Resource):
                     'success': False,
                     'error_type': 'invalid_user',
                     'message': 'User account is inactive or does not exist',
-                    'timestamp': datetime.utcnow()
+                    'timestamp': datetime.now(timezone.utc)
                 }, 401
             
             # Create new access token
@@ -482,7 +482,7 @@ class TokenRefreshResource(Resource):
                 'success': False,
                 'error_type': 'internal_error',
                 'message': 'An error occurred during token refresh',
-                'timestamp': datetime.utcnow()
+                'timestamp': datetime.now(timezone.utc)
             }, 500
 
 
@@ -518,7 +518,7 @@ class PasswordResetResource(Resource):
                     'success': False,
                     'error_type': 'validation_error',
                     'message': 'Email address is required',
-                    'timestamp': datetime.utcnow()
+                    'timestamp': datetime.now(timezone.utc)
                 }, 400
             
             from app.services.auth_service import AuthService
@@ -530,7 +530,7 @@ class PasswordResetResource(Resource):
             return {
                 'success': True,
                 'message': 'If an account with that email exists, a password reset email has been sent',
-                'timestamp': datetime.utcnow()
+                'timestamp': datetime.now(timezone.utc)
             }, 200
             
         except Exception as e:
@@ -539,7 +539,7 @@ class PasswordResetResource(Resource):
                 'success': False,
                 'error_type': 'internal_error',
                 'message': 'An error occurred processing the password reset request',
-                'timestamp': datetime.utcnow()
+                'timestamp': datetime.now(timezone.utc)
             }, 500
 
 
@@ -609,7 +609,7 @@ class TwoFactorSetupResource(Resource):
                 'success': False,
                 'error_type': 'internal_error',
                 'message': 'An error occurred during 2FA setup',
-                'timestamp': datetime.utcnow()
+                'timestamp': datetime.now(timezone.utc)
             }, 500
 
 
@@ -643,7 +643,7 @@ class TwoFactorVerifyResource(Resource):
                     'success': False,
                     'error_type': 'validation_error',
                     'message': 'Verification code is required',
-                    'timestamp': datetime.utcnow()
+                    'timestamp': datetime.now(timezone.utc)
                 }, 400
             
             from app.models.user import User
@@ -660,14 +660,14 @@ class TwoFactorVerifyResource(Resource):
                 return {
                     'success': True,
                     'message': 'Two-factor authentication enabled successfully',
-                    'timestamp': datetime.utcnow()
+                    'timestamp': datetime.now(timezone.utc)
                 }, 200
             else:
                 return {
                     'success': False,
                     'error_type': 'invalid_code',
                     'message': 'Invalid verification code',
-                    'timestamp': datetime.utcnow()
+                    'timestamp': datetime.now(timezone.utc)
                 }, 400
                 
         except Exception as e:
@@ -676,5 +676,5 @@ class TwoFactorVerifyResource(Resource):
                 'success': False,
                 'error_type': 'internal_error',
                 'message': 'An error occurred during 2FA verification',
-                'timestamp': datetime.utcnow()
+                'timestamp': datetime.now(timezone.utc)
             }, 500

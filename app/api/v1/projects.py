@@ -7,8 +7,8 @@ Versión: 1.0
 from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 from marshmallow import Schema, fields, validate, ValidationError
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from datetime import datetime, timedelta, timezone
+from typing import Optional
 import uuid
 from werkzeug.exceptions import BadRequest, NotFound, Forbidden, Conflict
 
@@ -556,7 +556,7 @@ def get_project_metrics(project_id: uuid.UUID):
         return {
             'project_id': project_id,
             'metrics': metrics,
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         }, 200
         
     except (NotFound, Forbidden) as e:
@@ -667,7 +667,7 @@ def get_projects_statistics():
         
         return {
             'statistics': stats,
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         }, 200
         
     except Exception as e:

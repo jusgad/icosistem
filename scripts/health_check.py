@@ -28,7 +28,7 @@ import psutil
 import requests
 import argparse
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
+from typing import Any, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -66,11 +66,11 @@ class HealthCheckResult:
     component: str
     status: HealthStatus
     message: str
-    details: Dict[str, Any]
+    details: dict[str, Any]
     timestamp: datetime
     response_time: Optional[float] = None
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             'component': self.component,
             'status': self.status.value,
@@ -86,9 +86,9 @@ class HealthChecker:
     
     def __init__(self, app=None):
         self.app = app or create_app()
-        self.results: List[HealthCheckResult] = []
+        self.results: list[HealthCheckResult] = []
         
-    def check_all(self, detailed: bool = False) -> Dict[str, Any]:
+    def check_all(self, detailed: bool = False) -> dict[str, Any]:
         """Ejecuta todas las verificaciones de salud"""
         print("🔍 Iniciando verificaciones de salud del sistema...")
         print("=" * 60)
@@ -770,7 +770,7 @@ class HealthChecker:
             ))
             print(f"⚠️ Integridad Datos: WARNING - {e}")
     
-    def _generate_summary(self) -> Dict[str, Any]:
+    def _generate_summary(self) -> dict[str, Any]:
         """Genera resumen de todas las verificaciones"""
         total_checks = len(self.results)
         healthy_count = sum(1 for r in self.results if r.status == HealthStatus.HEALTHY)
@@ -801,7 +801,7 @@ class HealthChecker:
         
         return summary
     
-    def check_component(self, component_name: str) -> Dict[str, Any]:
+    def check_component(self, component_name: str) -> dict[str, Any]:
         """Verifica un componente específico"""
         component_methods = {
             'app': self._check_application,
@@ -836,7 +836,7 @@ class HealthChecker:
         return self._generate_summary()
 
 
-def print_summary(summary: Dict[str, Any], detailed: bool = False) -> None:
+def print_summary(summary: dict[str, Any], detailed: bool = False) -> None:
     """Imprime resumen de verificaciones"""
     print("\n" + "=" * 60)
     print("📊 RESUMEN DE VERIFICACIONES")

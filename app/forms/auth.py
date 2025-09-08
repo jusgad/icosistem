@@ -75,7 +75,7 @@ class LoginRateLimit(BaseValidator):
         ip_key = f"login_attempts_ip_{client_ip}"
         ip_attempts = self.cache.get(ip_key) or []
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         window_start = now - timedelta(minutes=self.window_minutes)
         
         # Filtrar intentos recientes
@@ -105,7 +105,7 @@ class LoginRateLimit(BaseValidator):
         """Registra intento de login"""
         identifier = identifier.lower()
         client_ip = self._get_client_ip()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         if not success:
             # Registrar intento fallido
@@ -365,7 +365,7 @@ class LoginForm(BaseForm, AuditMixin):
         self.rate_limiter.record_attempt(identifier, success=True)
         
         # Actualizar último login
-        self.user.last_login = datetime.utcnow()
+        self.user.last_login = datetime.now(timezone.utc)
         self.user.login_count = (self.user.login_count or 0) + 1
         
         # Actualizar timezone si se proporcionó
@@ -586,7 +586,7 @@ class RegisterForm(BaseForm, AuditMixin):
             
             # Generar token de verificación de email
             user.email_verification_token = secrets.token_urlsafe(32)
-            user.email_verification_expires = datetime.utcnow() + timedelta(hours=24)
+            user.email_verification_expires = datetime.now(timezone.utc) + timedelta(hours=24)
             
             # Procesar código de referido si existe
             if self.referral_code.data:
@@ -669,7 +669,7 @@ class ForgotPasswordForm(BaseForm):
         try:
             # Generar token de reset
             user.password_reset_token = secrets.token_urlsafe(32)
-            user.password_reset_expires = datetime.utcnow() + timedelta(hours=1)
+            user.password_reset_expires = datetime.now(timezone.utc) + timedelta(hours=1)
             
             from app.extensions import db
             db.session.commit()
@@ -749,7 +749,7 @@ class ResetPasswordForm(BaseForm):
         
         self.user = User.query.filter(
             User.password_reset_token == field.data,
-            User.password_reset_expires > datetime.utcnow()
+            User.password_reset_expires > datetime.now(timezone.utc)
         ).first()
         
         if not self.user:
@@ -781,7 +781,7 @@ class ResetPasswordForm(BaseForm):
             self.user.password_reset_expires = None
             
             # Actualizar timestamp de cambio de contraseña
-            self.user.password_changed_at = datetime.utcnow()
+            self.user.password_changed_at = datetime.now(timezone.utc)
             
             db.session.commit()
             
@@ -890,7 +890,7 @@ class ChangePasswordForm(BaseForm):
             
             # Establecer nueva contraseña
             self.user.set_password(self.new_password.data)
-            self.user.password_changed_at = datetime.utcnow()
+            self.user.password_changed_at = datetime.now(timezone.utc)
             
             # Invalidar sesiones si se solicitó
             if self.logout_all_devices.data:
@@ -1015,7 +1015,7 @@ class TwoFactorVerifyForm(BaseForm):
             
             self.user.two_factor_secret = self.secret.data
             self.user.two_factor_enabled = True
-            self.user.two_factor_enabled_at = datetime.utcnow()
+            self.user.two_factor_enabled_at = datetime.now(timezone.utc)
             
             db.session.commit()
             
@@ -1095,7 +1095,7 @@ class EmailVerificationForm(BaseForm):
         """Valida el token de verificación"""
         self.user = User.query.filter(
             User.email_verification_token == field.data,
-            User.email_verification_expires > datetime.utcnow()
+            User.email_verification_expires > datetime.now(timezone.utc)
         ).first()
         
         if not self.user:
@@ -1110,7 +1110,7 @@ class EmailVerificationForm(BaseForm):
             from app.extensions import db
             
             self.user.email_verified = True
-            self.user.email_verified_at = datetime.utcnow()
+            self.user.email_verified_at = datetime.now(timezone.utc)
             self.user.email_verification_token = None
             self.user.email_verification_expires = None
             
@@ -1158,7 +1158,7 @@ class ResendVerificationForm(BaseForm):
             
             # Generar nuevo token
             user.email_verification_token = secrets.token_urlsafe(32)
-            user.email_verification_expires = datetime.utcnow() + timedelta(hours=24)
+            user.email_verification_expires = datetime.now(timezone.utc) + timedelta(hours=24)
             
             db.session.commit()
             

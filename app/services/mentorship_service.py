@@ -11,7 +11,7 @@ Version: 2.0.0
 
 import logging
 from datetime import datetime, timedelta, time
-from typing import Dict, List, Optional, Tuple, Any, Union
+from typing import Optional, Any, Union
 from decimal import Decimal
 from collections import defaultdict
 import statistics
@@ -96,7 +96,7 @@ class MentorshipService(BaseService):
 
     # ==================== GESTIÓN DE SESIONES ====================
 
-    def create_mentorship_session(self, session_data: Dict[str, Any], created_by: int = None) -> MentorshipSession:
+    def create_mentorship_session(self, session_data: dict[str, Any], created_by: int = None) -> MentorshipSession:
         """
         Crea una nueva sesión de mentoría.
         
@@ -159,7 +159,7 @@ class MentorshipService(BaseService):
                 is_recurring=session_data.get('is_recurring', False),
                 recurrence_pattern=session_data.get('recurrence_pattern'),
                 created_by=created_by,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             
             db.session.add(session)
@@ -227,26 +227,26 @@ class MentorshipService(BaseService):
             
             old_status = session.status
             session.status = new_status
-            session.status_updated_at = datetime.utcnow()
+            session.status_updated_at = datetime.now(timezone.utc)
             session.status_updated_by = updated_by
             
             # Acciones específicas por estado
             if new_status == MENTORSHIP_STATUS.IN_PROGRESS:
-                session.started_at = datetime.utcnow()
+                session.started_at = datetime.now(timezone.utc)
                 
             elif new_status == MENTORSHIP_STATUS.COMPLETED:
-                session.completed_at = datetime.utcnow()
+                session.completed_at = datetime.now(timezone.utc)
                 session.actual_duration_minutes = self._calculate_actual_duration(session)
                 
             elif new_status == MENTORSHIP_STATUS.CANCELLED:
-                session.cancelled_at = datetime.utcnow()
+                session.cancelled_at = datetime.now(timezone.utc)
                 session.cancellation_reason = notes
                 # Liberar slot en calendario
                 if session.calendar_event_id:
                     self._cancel_calendar_event(session.calendar_event_id)
                     
             elif new_status == MENTORSHIP_STATUS.RESCHEDULED:
-                session.rescheduled_at = datetime.utcnow()
+                session.rescheduled_at = datetime.now(timezone.utc)
                 session.reschedule_reason = notes
             
             # Actualizar historial de estados
@@ -254,7 +254,7 @@ class MentorshipService(BaseService):
             status_history.append({
                 'from_status': old_status,
                 'to_status': new_status,
-                'changed_at': datetime.utcnow().isoformat(),
+                'changed_at': datetime.now(timezone.utc).isoformat(),
                 'changed_by': updated_by,
                 'notes': notes
             })
@@ -331,7 +331,7 @@ class MentorshipService(BaseService):
             # Actualizar sesión
             session.scheduled_at = new_datetime
             session.status = MENTORSHIP_STATUS.RESCHEDULED
-            session.rescheduled_at = datetime.utcnow()
+            session.rescheduled_at = datetime.now(timezone.utc)
             session.reschedule_reason = reason
             session.rescheduled_by = rescheduled_by
             
@@ -340,7 +340,7 @@ class MentorshipService(BaseService):
             reschedule_history.append({
                 'previous_datetime': previous_datetime.isoformat(),
                 'new_datetime': new_datetime.isoformat(),
-                'rescheduled_at': datetime.utcnow().isoformat(),
+                'rescheduled_at': datetime.now(timezone.utc).isoformat(),
                 'rescheduled_by': rescheduled_by,
                 'reason': reason
             })
@@ -379,7 +379,7 @@ class MentorshipService(BaseService):
 
     # ==================== SISTEMA DE EVALUACIONES ====================
 
-    def submit_session_feedback(self, session_id: int, feedback_data: Dict[str, Any], 
+    def submit_session_feedback(self, session_id: int, feedback_data: dict[str, Any], 
                               submitted_by: int) -> bool:
         """
         Envía feedback de una sesión completada.
@@ -416,7 +416,7 @@ class MentorshipService(BaseService):
                 session.mentor_feedback = feedback_data.get('comments')
                 session.entrepreneur_preparation_rating = feedback_data.get('preparation_rating')
                 session.entrepreneur_engagement_rating = feedback_data.get('engagement_rating')
-                session.mentor_feedback_submitted_at = datetime.utcnow()
+                session.mentor_feedback_submitted_at = datetime.now(timezone.utc)
                 session.session_outcome = feedback_data.get('outcome')
                 session.next_steps = feedback_data.get('next_steps')
                 
@@ -426,7 +426,7 @@ class MentorshipService(BaseService):
                 session.entrepreneur_feedback = feedback_data.get('comments')
                 session.mentor_helpfulness_rating = feedback_data.get('helpfulness_rating')
                 session.mentor_knowledge_rating = feedback_data.get('knowledge_rating')
-                session.entrepreneur_feedback_submitted_at = datetime.utcnow()
+                session.entrepreneur_feedback_submitted_at = datetime.now(timezone.utc)
                 session.would_recommend_mentor = feedback_data.get('would_recommend')
             
             # Marcar feedback como recibido
@@ -473,7 +473,7 @@ class MentorshipService(BaseService):
 
     # ==================== GESTIÓN DE DISPONIBILIDAD ====================
 
-    def set_mentor_availability(self, mentor_id: int, availability_data: Dict[str, Any]) -> bool:
+    def set_mentor_availability(self, mentor_id: int, availability_data: dict[str, Any]) -> bool:
         """
         Establece la disponibilidad de un mentor.
         
@@ -499,7 +499,7 @@ class MentorshipService(BaseService):
             mentor.max_sessions_per_day = availability_data.get('max_sessions_per_day')
             mentor.preferred_session_duration = availability_data.get('preferred_duration')
             mentor.availability_notes = availability_data.get('notes')
-            mentor.availability_updated_at = datetime.utcnow()
+            mentor.availability_updated_at = datetime.now(timezone.utc)
             
             # Bloqueos específicos de fechas
             if 'blocked_dates' in availability_data:
@@ -534,7 +534,7 @@ class MentorshipService(BaseService):
             raise ServiceError(f"Error interno estableciendo disponibilidad: {str(e)}")
 
     def get_mentor_available_slots(self, mentor_id: int, start_date: datetime, 
-                                 end_date: datetime, duration_minutes: int = None) -> List[Dict[str, Any]]:
+                                 end_date: datetime, duration_minutes: int = None) -> list[dict[str, Any]]:
         """
         Obtiene slots disponibles de un mentor.
         
@@ -610,7 +610,7 @@ class MentorshipService(BaseService):
 
     # ==================== MÉTRICAS Y ANALYTICS ====================
 
-    def get_mentor_metrics(self, mentor_id: int, period_days: int = 30) -> Dict[str, Any]:
+    def get_mentor_metrics(self, mentor_id: int, period_days: int = 30) -> dict[str, Any]:
         """
         Obtiene métricas de un mentor.
         
@@ -626,7 +626,7 @@ class MentorshipService(BaseService):
             if not mentor:
                 raise UserNotFoundError(f"Mentor {mentor_id} no encontrado")
             
-            end_date = datetime.utcnow()
+            end_date = datetime.now(timezone.utc)
             start_date = end_date - timedelta(days=period_days)
             
             # Sesiones en el período
@@ -711,7 +711,7 @@ class MentorshipService(BaseService):
             logger.error(f"Error obteniendo métricas de mentor: {str(e)}")
             raise ServiceError(f"Error interno obteniendo métricas: {str(e)}")
 
-    def get_mentorship_analytics(self, date_from: datetime = None, date_to: datetime = None) -> Dict[str, Any]:
+    def get_mentorship_analytics(self, date_from: datetime = None, date_to: datetime = None) -> dict[str, Any]:
         """
         Obtiene analytics generales del sistema de mentoría.
         
@@ -724,9 +724,9 @@ class MentorshipService(BaseService):
         """
         try:
             if not date_from:
-                date_from = datetime.utcnow() - timedelta(days=30)
+                date_from = datetime.now(timezone.utc) - timedelta(days=30)
             if not date_to:
-                date_to = datetime.utcnow()
+                date_to = datetime.now(timezone.utc)
             
             # Sesiones en el período
             sessions_query = MentorshipSession.query.filter(
@@ -915,7 +915,7 @@ class MentorshipService(BaseService):
                        page: int = 1,
                        per_page: int = 20,
                        sort_by: str = 'scheduled_at',
-                       sort_order: str = 'desc') -> Dict[str, Any]:
+                       sort_order: str = 'desc') -> dict[str, Any]:
         """
         Búsqueda avanzada de sesiones de mentoría.
         
@@ -994,7 +994,7 @@ class MentorshipService(BaseService):
 
     # ==================== MÉTODOS PRIVADOS ====================
 
-    def _validate_session_data(self, data: Dict[str, Any]) -> None:
+    def _validate_session_data(self, data: dict[str, Any]) -> None:
         """Valida datos de sesión."""
         required_fields = ['mentor_id', 'entrepreneur_id', 'scheduled_at']
         
@@ -1011,14 +1011,14 @@ class MentorshipService(BaseService):
         if not validate_session_duration(duration, self.min_session_duration, self.max_session_duration):
             raise ValidationError(f"Duración debe estar entre {self.min_session_duration} y {self.max_session_duration} minutos")
 
-    def _validate_feedback_data(self, data: Dict[str, Any]) -> None:
+    def _validate_feedback_data(self, data: dict[str, Any]) -> None:
         """Valida datos de feedback."""
         if 'rating' in data:
             rating = data['rating']
             if rating is not None and (rating < 1 or rating > 5):
                 raise ValidationError("Rating debe estar entre 1 y 5")
 
-    def _validate_availability_data(self, data: Dict[str, Any]) -> None:
+    def _validate_availability_data(self, data: dict[str, Any]) -> None:
         """Valida datos de disponibilidad."""
         if 'schedule' in data:
             schedule = data['schedule']
@@ -1084,7 +1084,7 @@ class MentorshipService(BaseService):
                 activity_type=activity_type,
                 details=details,
                 performed_by=performed_by or user_id,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             db.session.add(activity)
             db.session.commit()
@@ -1115,7 +1115,7 @@ class MentorshipService(BaseService):
         except Exception as e:
             logger.error(f"Error enviando notificaciones: {str(e)}")
 
-    def _create_calendar_event(self, session: MentorshipSession) -> Optional[Dict[str, Any]]:
+    def _create_calendar_event(self, session: MentorshipSession) -> Optional[dict[str, Any]]:
         """Crea evento en Google Calendar."""
         try:
             event_data = {
@@ -1162,7 +1162,7 @@ class MentorshipService(BaseService):
             logger.error(f"Error cancelando evento de calendario: {str(e)}")
             return False
 
-    def _create_recurring_sessions(self, base_session: MentorshipSession) -> List[MentorshipSession]:
+    def _create_recurring_sessions(self, base_session: MentorshipSession) -> list[MentorshipSession]:
         """Crea sesiones recurrentes basadas en el patrón."""
         try:
             if not base_session.recurrence_pattern:
@@ -1197,7 +1197,7 @@ class MentorshipService(BaseService):
                         status=MENTORSHIP_STATUS.SCHEDULED,
                         is_recurring=True,
                         parent_session_id=base_session.id,
-                        created_at=datetime.utcnow()
+                        created_at=datetime.now(timezone.utc)
                     )
                     
                     db.session.add(recurring_session)
@@ -1209,7 +1209,7 @@ class MentorshipService(BaseService):
             logger.error(f"Error creando sesiones recurrentes: {str(e)}")
             return []
 
-    def _calculate_recurrence_dates(self, start_date: datetime, pattern: Dict[str, Any]) -> List[datetime]:
+    def _calculate_recurrence_dates(self, start_date: datetime, pattern: dict[str, Any]) -> list[datetime]:
         """Calcula fechas de recurrencia."""
         dates = []
         frequency = pattern.get('frequency', 'weekly')  # weekly, biweekly, monthly
@@ -1235,12 +1235,12 @@ class MentorshipService(BaseService):
         try:
             # Recordatorio 24 horas antes
             reminder_24h = session.scheduled_at - timedelta(hours=24)
-            if reminder_24h > datetime.utcnow():
+            if reminder_24h > datetime.now(timezone.utc):
                 self._schedule_reminder(session, reminder_24h, '24 horas')
             
             # Recordatorio 1 hora antes
             reminder_1h = session.scheduled_at - timedelta(hours=1)
-            if reminder_1h > datetime.utcnow():
+            if reminder_1h > datetime.now(timezone.utc):
                 self._schedule_reminder(session, reminder_1h, '1 hora')
             
         except Exception as e:
@@ -1371,7 +1371,7 @@ class MentorshipService(BaseService):
             
             # Marcar como feedback completo
             session.feedback_complete = True
-            session.feedback_completed_at = datetime.utcnow()
+            session.feedback_completed_at = datetime.now(timezone.utc)
             
             db.session.commit()
             
@@ -1470,7 +1470,7 @@ class MentorshipService(BaseService):
             logger.error(f"Error verificando límites de mentor: {str(e)}")
             return False
 
-    def _get_default_schedule(self) -> Dict[str, Any]:
+    def _get_default_schedule(self) -> dict[str, Any]:
         """Obtiene horario por defecto."""
         return {
             'monday': {'available': True, 'start': '09:00', 'end': '17:00'},
@@ -1482,7 +1482,7 @@ class MentorshipService(BaseService):
             'sunday': {'available': False}
         }
 
-    def _get_mentor_sessions_in_period(self, mentor_id: int, start_date: datetime, end_date: datetime) -> List[MentorshipSession]:
+    def _get_mentor_sessions_in_period(self, mentor_id: int, start_date: datetime, end_date: datetime) -> list[MentorshipSession]:
         """Obtiene sesiones del mentor en un período."""
         return MentorshipSession.query.filter(
             and_(
@@ -1497,9 +1497,9 @@ class MentorshipService(BaseService):
             )
         ).all()
 
-    def _generate_day_slots(self, date: datetime.date, day_schedule: Dict[str, Any], 
-                          duration: int, existing_sessions: List[MentorshipSession],
-                          timezone: str = None) -> List[Dict[str, Any]]:
+    def _generate_day_slots(self, date: datetime.date, day_schedule: dict[str, Any], 
+                          duration: int, existing_sessions: list[MentorshipSession],
+                          timezone: str = None) -> list[dict[str, Any]]:
         """Genera slots disponibles para un día específico."""
         try:
             slots = []
@@ -1546,8 +1546,8 @@ class MentorshipService(BaseService):
             logger.error(f"Error generando slots del día: {str(e)}")
             return []
 
-    def _filter_slots_by_limits(self, slots: List[Dict[str, Any]], mentor: Ally, 
-                               existing_sessions: List[MentorshipSession]) -> List[Dict[str, Any]]:
+    def _filter_slots_by_limits(self, slots: list[dict[str, Any]], mentor: Ally, 
+                               existing_sessions: list[MentorshipSession]) -> list[dict[str, Any]]:
         """Filtra slots considerando límites del mentor."""
         try:
             filtered_slots = []
@@ -1590,7 +1590,7 @@ class MentorshipService(BaseService):
             logger.error(f"Error filtrando slots: {str(e)}")
             return slots
 
-    def _get_mentorship_summary(self, entrepreneur: Entrepreneur) -> Dict[str, Any]:
+    def _get_mentorship_summary(self, entrepreneur: Entrepreneur) -> dict[str, Any]:
         """Obtiene resumen de mentoría del emprendedor."""
         try:
             sessions = entrepreneur.mentorship_sessions or []
@@ -1609,7 +1609,7 @@ class MentorshipService(BaseService):
             logger.error(f"Error obteniendo resumen de mentoría: {str(e)}")
             return {}
 
-    def _get_project_phases_distribution(self, projects: List) -> Dict[str, int]:
+    def _get_project_phases_distribution(self, projects: List) -> dict[str, int]:
         """Obtiene distribución de fases de proyectos."""
         distribution = defaultdict(int)
         for project in projects:
@@ -1617,7 +1617,7 @@ class MentorshipService(BaseService):
                 distribution[project.current_phase] += 1
         return dict(distribution)
 
-    def _calculate_task_metrics(self, entrepreneur: Entrepreneur) -> Dict[str, Any]:
+    def _calculate_task_metrics(self, entrepreneur: Entrepreneur) -> dict[str, Any]:
         """Calcula métricas de tareas del emprendedor."""
         try:
             # Esta función se implementaría en el TaskService
@@ -1632,7 +1632,7 @@ class MentorshipService(BaseService):
             logger.error(f"Error calculando métricas de tareas: {str(e)}")
             return {}
 
-    def _calculate_document_metrics(self, entrepreneur: Entrepreneur) -> Dict[str, Any]:
+    def _calculate_document_metrics(self, entrepreneur: Entrepreneur) -> dict[str, Any]:
         """Calcula métricas de documentos del emprendedor."""
         try:
             # Esta función se implementaría en el DocumentService
@@ -1682,7 +1682,7 @@ class MentorshipService(BaseService):
             logger.error(f"Error calculando score general: {str(e)}")
             return 0.0
 
-    def _generate_progress_recommendations(self, entrepreneur: Entrepreneur, overall_score: float) -> List[str]:
+    def _generate_progress_recommendations(self, entrepreneur: Entrepreneur, overall_score: float) -> list[str]:
         """Genera recomendaciones basadas en el progreso."""
         recommendations = []
         
@@ -1752,7 +1752,7 @@ class MentorshipService(BaseService):
     # ==================== MÉTODOS DE REPORTES ====================
 
     def generate_mentorship_report(self, mentor_id: int = None, entrepreneur_id: int = None, 
-                                 period_days: int = 30) -> Dict[str, Any]:
+                                 period_days: int = 30) -> dict[str, Any]:
         """
         Genera reporte especializado de mentoría.
         
@@ -1765,7 +1765,7 @@ class MentorshipService(BaseService):
             Dict con datos del reporte
         """
         try:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(timezone.utc)
             start_date = end_date - timedelta(days=period_days)
             
             # Base query
@@ -1848,7 +1848,7 @@ class MentorshipService(BaseService):
         """
         try:
             # Sesiones que debieron haber ocurrido hace más de 24 horas y siguen programadas
-            cutoff_time = datetime.utcnow() - timedelta(hours=24)
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=24)
             
             expired_sessions = MentorshipSession.query.filter(
                 and_(
@@ -1864,7 +1864,7 @@ class MentorshipService(BaseService):
             for session in expired_sessions:
                 # Marcar como no realizada
                 session.status = MENTORSHIP_STATUS.NO_SHOW
-                session.status_updated_at = datetime.utcnow()
+                session.status_updated_at = datetime.now(timezone.utc)
                 
                 # Cancelar evento de calendario si existe
                 if session.calendar_event_id:
@@ -1892,7 +1892,7 @@ class MentorshipService(BaseService):
         """
         try:
             # Sesiones completadas hace más de 24 horas sin feedback
-            cutoff_time = datetime.utcnow() - timedelta(hours=24)
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=24)
             
             sessions_pending_feedback = MentorshipSession.query.filter(
                 and_(

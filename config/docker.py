@@ -614,7 +614,7 @@ class DockerConfig(BaseConfig):
         }
         
         import datetime
-        health_status['timestamp'] = datetime.datetime.utcnow().isoformat()
+        health_status['timestamp'] = datetime.datetime.now(timezone.utc).isoformat()
         
         # Check database
         if cls.HEALTH_CHECK_CONFIG['database']['enabled']:

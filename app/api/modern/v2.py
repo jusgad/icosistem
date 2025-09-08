@@ -80,7 +80,7 @@ def handle_validation_error(error):
         'success': False,
         'error_type': 'validation_error',
         'message': str(error),
-        'timestamp': api.datetime.utcnow().isoformat()
+        'timestamp': api.datetime.now(timezone.utc).isoformat()
     }, 400
 
 @api.errorhandler(PermissionError)
@@ -90,7 +90,7 @@ def handle_permission_error(error):
         'success': False,
         'error_type': 'permission_error',
         'message': 'Permisos insuficientes para acceder a este recurso',
-        'timestamp': api.datetime.utcnow().isoformat()
+        'timestamp': api.datetime.now(timezone.utc).isoformat()
     }, 403
 
 @api.errorhandler(FileNotFoundError)
@@ -100,7 +100,7 @@ def handle_not_found_error(error):
         'success': False,
         'error_type': 'not_found_error',
         'message': 'Resource not found',
-        'timestamp': api.datetime.utcnow().isoformat()
+        'timestamp': api.datetime.now(timezone.utc).isoformat()
     }, 404
 
 @api.errorhandler(Exception)
@@ -110,7 +110,7 @@ def handle_generic_error(error):
         'success': False,
         'error_type': 'internal_error',
         'message': 'An internal server error occurred',
-        'timestamp': api.datetime.utcnow().isoformat()
+        'timestamp': api.datetime.now(timezone.utc).isoformat()
     }, 500
 
 # Import and register namespaces

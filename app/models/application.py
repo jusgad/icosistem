@@ -1,5 +1,5 @@
-from datetime import datetime, date
-from typing import Optional, Dict, Any, List
+from datetime import datetime, date, timezone
+from typing import Optional, Any
 from enum import Enum
 
 from app.extensions import db
@@ -99,7 +99,7 @@ class Application(BaseModel, TimestampMixin, UserTrackingMixin):
         """Días desde la submisión"""
         if not self.submitted_at:
             return None
-        delta = datetime.utcnow() - self.submitted_at
+        delta = datetime.now(timezone.utc) - self.submitted_at
         return delta.days
     
     @property
@@ -115,7 +115,7 @@ class Application(BaseModel, TimestampMixin, UserTrackingMixin):
             return False
         
         self.status = ApplicationStatus.SUBMITTED
-        self.submitted_at = datetime.utcnow()
+        self.submitted_at = datetime.now(timezone.utc)
         return True
     
     def start_review(self, reviewer_id: int) -> bool:
@@ -133,7 +133,7 @@ class Application(BaseModel, TimestampMixin, UserTrackingMixin):
             return False
         
         self.status = ApplicationStatus.APPROVED
-        self.reviewed_at = datetime.utcnow()
+        self.reviewed_at = datetime.now(timezone.utc)
         self.decision_date = date.today()
         if notes:
             self.review_notes = notes
@@ -145,7 +145,7 @@ class Application(BaseModel, TimestampMixin, UserTrackingMixin):
             return False
         
         self.status = ApplicationStatus.REJECTED
-        self.reviewed_at = datetime.utcnow()
+        self.reviewed_at = datetime.now(timezone.utc)
         self.decision_date = date.today()
         self.rejection_reason = reason
         if notes:
@@ -161,20 +161,20 @@ class Application(BaseModel, TimestampMixin, UserTrackingMixin):
         return True
     
     @classmethod
-    def get_pending_review(cls) -> List['Application']:
+    def get_pending_review(cls) -> list['Application']:
         """Obtener aplicaciones pendientes de revisión"""
         return cls.query.filter_by(status=ApplicationStatus.UNDER_REVIEW).all()
     
     @classmethod
-    def get_overdue_reviews(cls) -> List['Application']:
+    def get_overdue_reviews(cls) -> list['Application']:
         """Obtener revisiones vencidas"""
-        cutoff_date = datetime.utcnow() - timedelta(days=14)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=14)
         return cls.query.filter(
             cls.status == ApplicationStatus.UNDER_REVIEW,
             cls.submitted_at <= cutoff_date
         ).all()
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convertir a diccionario"""
         return {
             'id': self.id,

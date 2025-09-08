@@ -21,7 +21,7 @@ import asyncio
 import inspect
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager, contextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from functools import wraps
 from typing import (
@@ -75,11 +75,11 @@ class OperationResult(BaseModel, Generic[T]):
     data: Optional[T] = Field(default=None, description="Datos de la operación")
     error: Optional[str] = Field(default=None, description="Mensaje de error")
     error_code: Optional[str] = Field(default=None, description="Código de error")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Metadatos adicionales")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Metadatos adicionales")
     execution_time: Optional[float] = Field(default=None, description="Tiempo de ejecución en segundos")
     
     @classmethod
-    def success_result(cls, data: T = None, metadata: Dict[str, Any] = None) -> 'OperationResult[T]':
+    def success_result(cls, data: T = None, metadata: dict[str, Any] = None) -> 'OperationResult[T]':
         """Crear un resultado de operación exitoso."""
         return cls(
             success=True,
@@ -92,7 +92,7 @@ class OperationResult(BaseModel, Generic[T]):
         cls, 
         error: str, 
         error_code: str = None,
-        metadata: Dict[str, Any] = None
+        metadata: dict[str, Any] = None
     ) -> 'OperationResult[T]':
         """Crear un resultado de operación con error."""
         return cls(
@@ -132,7 +132,7 @@ class ServiceConfig(BaseModel):
     auto_rollback: bool = Field(default=True, description="Auto rollback on errors")
     
     # Additional configuration
-    custom_config: Dict[str, Any] = Field(default_factory=dict, description="Custom configuration")
+    custom_config: dict[str, Any] = Field(default_factory=dict, description="Custom configuration")
 
 
 class CircuitBreaker:
@@ -152,7 +152,7 @@ class CircuitBreaker:
         
         if self.state == "open":
             if self.last_failure_time:
-                if datetime.utcnow() - self.last_failure_time > timedelta(seconds=self.timeout):
+                if datetime.now(timezone.utc) - self.last_failure_time > timedelta(seconds=self.timeout):
                     self.state = "half-open"
                     return True
             return False
@@ -168,7 +168,7 @@ class CircuitBreaker:
     def record_failure(self):
         """Record failed operation."""
         self.failure_count += 1
-        self.last_failure_time = datetime.utcnow()
+        self.last_failure_time = datetime.now(timezone.utc)
         
         if self.failure_count >= self.failure_threshold:
             self.state = "open"
@@ -182,8 +182,8 @@ class ModernServiceContext:
         self.correlation_id = str(uuid4())
         self.user_id: Optional[str] = None
         self.session_id: Optional[str] = None
-        self.start_time = datetime.utcnow()
-        self.metadata: Dict[str, Any] = {}
+        self.start_time = datetime.now(timezone.utc)
+        self.metadata: dict[str, Any] = {}
         self.trace_id: Optional[str] = None
         
         # Auto-populate from Flask context
@@ -207,7 +207,7 @@ class ModernServiceContext:
         except Exception:
             pass  # Ignore errors in context population
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert context to dictionary."""
         return {
             'service_name': self.service_name,
@@ -245,7 +245,7 @@ class ModernBaseService(ABC):
         
         # Context and dependencies
         self.context = ModernServiceContext(self.config.name)
-        self.dependencies: List[str] = []
+        self.dependencies: list[str] = []
         
         # Initialize service
         asyncio.create_task(self._initialize())
@@ -361,7 +361,7 @@ class ModernBaseService(ABC):
         operation_name: str,
         user_id: str = None,
         correlation_id: str = None,
-        metadata: Dict[str, Any] = None
+        metadata: dict[str, Any] = None
     ):
         """Async context manager for service operations."""
         
@@ -397,14 +397,14 @@ class ModernBaseService(ABC):
             correlation_id=op_context.correlation_id,
             user_id=op_context.user_id
         ):
-            start_time = datetime.utcnow()
+            start_time = datetime.now(timezone.utc)
             
             try:
                 self.logger.debug("Operation started", operation=operation_name)
                 
                 yield op_context
                 
-                execution_time = (datetime.utcnow() - start_time).total_seconds()
+                execution_time = (datetime.now(timezone.utc) - start_time).total_seconds()
                 
                 # Record success metrics
                 if self.config.metrics_enabled:
@@ -426,7 +426,7 @@ class ModernBaseService(ABC):
                 )
                 
             except Exception as e:
-                execution_time = (datetime.utcnow() - start_time).total_seconds()
+                execution_time = (datetime.now(timezone.utc) - start_time).total_seconds()
                 error_type = type(e).__name__
                 
                 # Record error metrics
@@ -548,7 +548,7 @@ class ModernBaseService(ABC):
     
     # Validation Methods
     
-    def validate_input(self, data: Dict[str, Any], schema: Type[BaseModel]) -> BaseModel:
+    def validate_input(self, data: dict[str, Any], schema: Type[BaseModel]) -> BaseModel:
         """Validate input data using Pydantic schema."""
         try:
             return schema(**data)
@@ -556,7 +556,7 @@ class ModernBaseService(ABC):
             self.logger.warning("Input validation failed", errors=e.errors())
             raise ValueError(f"Validation failed: {e}")
     
-    async def validate_business_rules(self, data: Any) -> List[str]:
+    async def validate_business_rules(self, data: Any) -> list[str]:
         """Validate business rules. Override in subclasses."""
         return []
     
@@ -621,7 +621,7 @@ class ModernBaseService(ABC):
     
     # Health Check
     
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Perform health check."""
         try:
             # Basic health indicators
@@ -629,8 +629,8 @@ class ModernBaseService(ABC):
                 'service': self.config.name,
                 'status': self.state.value,
                 'healthy': self.state == ServiceState.HEALTHY,
-                'timestamp': datetime.utcnow().isoformat(),
-                'uptime_seconds': (datetime.utcnow() - self.context.start_time).total_seconds()
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'uptime_seconds': (datetime.now(timezone.utc) - self.context.start_time).total_seconds()
             }
             
             # Check dependencies
@@ -665,10 +665,10 @@ class ModernBaseService(ABC):
                 'service': self.config.name,
                 'healthy': False,
                 'error': str(e),
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
     
-    async def _perform_health_check(self) -> Dict[str, Any]:
+    async def _perform_health_check(self) -> dict[str, Any]:
         """Service-specific health check. Override in subclasses."""
         return {'service_specific_checks': 'passed'}
     
@@ -705,7 +705,7 @@ class ModernBaseService(ABC):
         data: T = None, 
         error: str = None,
         error_code: str = None,
-        metadata: Dict[str, Any] = None
+        metadata: dict[str, Any] = None
     ) -> OperationResult[T]:
         """Create an operation result."""
         if error:
@@ -722,7 +722,7 @@ class ModernBaseService(ABC):
     @property 
     def uptime(self) -> timedelta:
         """Get service uptime."""
-        return datetime.utcnow() - self.context.start_time
+        return datetime.now(timezone.utc) - self.context.start_time
 
 
 # Decorators for service methods

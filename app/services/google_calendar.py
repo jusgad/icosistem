@@ -10,7 +10,7 @@ import logging
 import json
 import asyncio
 import base64
-from typing import Dict, List, Optional, Any, Union, Tuple
+from typing import Optional, Any, Union
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from enum import Enum
@@ -106,7 +106,7 @@ class CalendarCredentials:
     token_uri: str
     client_id: str
     client_secret: str
-    scopes: List[str]
+    scopes: list[str]
     expiry: Optional[datetime] = None
 
 
@@ -120,24 +120,24 @@ class CalendarEvent:
     end_time: Optional[datetime] = None
     timezone: str = 'UTC'
     location: Optional[str] = None
-    attendees: Optional[List[Dict[str, str]]] = None
-    recurrence: Optional[List[str]] = None
-    reminders: Optional[Dict[str, Any]] = None
+    attendees: Optional[list[dict[str, str]]] = None
+    recurrence: Optional[list[str]] = None
+    reminders: Optional[dict[str, Any]] = None
     visibility: str = CalendarVisibility.DEFAULT.value
     status: str = CalendarEventStatus.CONFIRMED.value
     calendar_id: str = 'primary'
     meeting_url: Optional[str] = None
     creator_email: Optional[str] = None
     organizer_email: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
 
 @dataclass
 class CalendarBatch:
     """Lote de operaciones de calendario"""
-    events_to_create: List[CalendarEvent]
-    events_to_update: List[CalendarEvent]
-    events_to_delete: List[str]
+    events_to_create: list[CalendarEvent]
+    events_to_update: list[CalendarEvent]
+    events_to_delete: list[str]
     calendar_id: str = 'primary'
 
 
@@ -159,7 +159,7 @@ class CalendarSyncResult:
     events_created: int = 0
     events_updated: int = 0
     events_deleted: int = 0
-    errors: List[str] = None
+    errors: list[str] = None
     last_sync_token: Optional[str] = None
 
 
@@ -242,7 +242,7 @@ class GoogleCalendarService(BaseService):
             oauth_state = {
                 'user_id': user_id,
                 'custom_state': state,
-                'timestamp': datetime.utcnow().timestamp()
+                'timestamp': datetime.now(timezone.utc).timestamp()
             }
             
             encoded_state = base64.urlsafe_b64encode(
@@ -265,7 +265,7 @@ class GoogleCalendarService(BaseService):
             raise ExternalServiceError(f"Error en OAuth: {str(e)}")
     
     @log_activity("google_calendar_connected")
-    def handle_oauth_callback(self, code: str, state: str) -> Dict[str, Any]:
+    def handle_oauth_callback(self, code: str, state: str) -> dict[str, Any]:
         """
         Manejar callback de OAuth
         
@@ -274,7 +274,7 @@ class GoogleCalendarService(BaseService):
             state: Estado de la solicitud
             
         Returns:
-            Dict[str, Any]: Resultado de la conexión
+            dict[str, Any]: Resultado de la conexión
         """
         try:
             # Decodificar estado
@@ -529,7 +529,7 @@ class GoogleCalendarService(BaseService):
         end_date: datetime,
         calendar_id: str = 'primary',
         max_results: int = 250
-    ) -> List[CalendarEvent]:
+    ) -> list[CalendarEvent]:
         """
         Obtener eventos de Google Calendar
         
@@ -541,7 +541,7 @@ class GoogleCalendarService(BaseService):
             max_results: Máximo número de resultados
             
         Returns:
-            List[CalendarEvent]: Lista de eventos
+            list[CalendarEvent]: Lista de eventos
         """
         try:
             credentials = self._get_user_credentials(user_id)
@@ -584,8 +584,8 @@ class GoogleCalendarService(BaseService):
         user_id: int,
         start_time: datetime,
         end_time: datetime,
-        calendars: Optional[List[str]] = None
-    ) -> List[AvailabilitySlot]:
+        calendars: Optional[list[str]] = None
+    ) -> list[AvailabilitySlot]:
         """
         Verificar disponibilidad en calendarios
         
@@ -596,7 +596,7 @@ class GoogleCalendarService(BaseService):
             calendars: IDs de calendarios a verificar
             
         Returns:
-            List[AvailabilitySlot]: Slots de disponibilidad
+            list[AvailabilitySlot]: Slots de disponibilidad
         """
         try:
             credentials = self._get_user_credentials(user_id)
@@ -664,12 +664,12 @@ class GoogleCalendarService(BaseService):
     
     def find_available_slots(
         self,
-        user_ids: List[int],
+        user_ids: list[int],
         duration_minutes: int,
         preferred_start: datetime,
         preferred_end: datetime,
         max_suggestions: int = 5
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Encontrar slots disponibles para múltiples usuarios
         
@@ -681,7 +681,7 @@ class GoogleCalendarService(BaseService):
             max_suggestions: Máximo número de sugerencias
             
         Returns:
-            List[Dict[str, Any]]: Slots disponibles sugeridos
+            list[dict[str, Any]]: Slots disponibles sugeridos
         """
         try:
             suggestions = []
@@ -787,7 +787,7 @@ class GoogleCalendarService(BaseService):
                 showDeleted=True
             ).execute() if sync_token else service.events().list(
                 calendarId='primary',
-                timeMin=datetime.utcnow().isoformat() + 'Z',
+                timeMin=datetime.now(timezone.utc).isoformat() + 'Z',
                 maxResults=1000,
                 singleEvents=True,
                 orderBy='startTime'
@@ -927,7 +927,7 @@ class GoogleCalendarService(BaseService):
                 google_event_id=created_event.id,
                 status='scheduled',
                 created_by_id=ally.user_id,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             
             db.session.add(meeting)
@@ -942,7 +942,7 @@ class GoogleCalendarService(BaseService):
             logger.error(f"Error agendando sesión de mentoría: {str(e)}")
             raise BusinessLogicError(f"Error agendando sesión: {str(e)}")
     
-    def setup_webhook(self, user_id: int) -> Dict[str, Any]:
+    def setup_webhook(self, user_id: int) -> dict[str, Any]:
         """
         Configurar webhook para cambios de calendario
         
@@ -950,7 +950,7 @@ class GoogleCalendarService(BaseService):
             user_id: ID del usuario
             
         Returns:
-            Dict[str, Any]: Información del webhook
+            dict[str, Any]: Información del webhook
         """
         try:
             credentials = self._get_user_credentials(user_id)
@@ -966,13 +966,13 @@ class GoogleCalendarService(BaseService):
                 _external=True
             )
             
-            channel_id = f"calendar_sync_{user_id}_{datetime.utcnow().timestamp()}"
+            channel_id = f"calendar_sync_{user_id}_{datetime.now(timezone.utc).timestamp()}"
             
             watch_request = {
                 'id': channel_id,
                 'type': 'web_hook',
                 'address': webhook_url,
-                'expiration': int((datetime.utcnow() + timedelta(days=7)).timestamp() * 1000)
+                'expiration': int((datetime.now(timezone.utc) + timedelta(days=7)).timestamp() * 1000)
             }
             
             watch_response = service.events().watch(
@@ -1132,7 +1132,7 @@ class GoogleCalendarService(BaseService):
         """Construir servicio de Google Calendar"""
         return build('calendar', 'v3', credentials=credentials)
     
-    def _prepare_google_event(self, event: CalendarEvent) -> Dict[str, Any]:
+    def _prepare_google_event(self, event: CalendarEvent) -> dict[str, Any]:
         """Preparar evento para Google Calendar API"""
         google_event = {
             'summary': event.summary,
@@ -1169,7 +1169,7 @@ class GoogleCalendarService(BaseService):
         
         return google_event
     
-    def _convert_google_to_calendar_event(self, google_event: Dict[str, Any]) -> CalendarEvent:
+    def _convert_google_to_calendar_event(self, google_event: dict[str, Any]) -> CalendarEvent:
         """Convertir evento de Google a CalendarEvent"""
         start = google_event.get('start', {})
         end = google_event.get('end', {})
@@ -1201,7 +1201,7 @@ class GoogleCalendarService(BaseService):
             metadata=metadata
         )
     
-    def _parse_google_datetime(self, datetime_obj: Dict[str, Any]) -> datetime:
+    def _parse_google_datetime(self, datetime_obj: dict[str, Any]) -> datetime:
         """Parsear fecha/hora de Google Calendar"""
         if 'dateTime' in datetime_obj:
             return parse_datetime(datetime_obj['dateTime'])
@@ -1210,7 +1210,7 @@ class GoogleCalendarService(BaseService):
             date_str = datetime_obj['date']
             return datetime.strptime(date_str, '%Y-%m-%d').replace(tzinfo=pytz.UTC)
         else:
-            return datetime.utcnow()
+            return datetime.now(timezone.utc)
     
     def _validate_event(self, event: CalendarEvent):
         """Validar datos del evento"""
@@ -1239,7 +1239,7 @@ class GoogleCalendarService(BaseService):
         self,
         user_id: int,
         credentials: Credentials,
-        user_info: Dict[str, Any]
+        user_info: dict[str, Any]
     ):
         """Almacenar credenciales en base de datos"""
         try:
@@ -1265,7 +1265,7 @@ class GoogleCalendarService(BaseService):
             if existing_token:
                 existing_token.encrypted_token = encrypted_token
                 existing_token.expires_at = credentials.expiry
-                existing_token.updated_at = datetime.utcnow()
+                existing_token.updated_at = datetime.now(timezone.utc)
                 existing_token.is_active = True
             else:
                 new_token = OAuthToken(
@@ -1274,7 +1274,7 @@ class GoogleCalendarService(BaseService):
                     encrypted_token=encrypted_token,
                     expires_at=credentials.expiry,
                     is_active=True,
-                    created_at=datetime.utcnow()
+                    created_at=datetime.now(timezone.utc)
                 )
                 db.session.add(new_token)
             
@@ -1287,14 +1287,14 @@ class GoogleCalendarService(BaseService):
             if integration:
                 integration.is_active = True
                 integration.google_email = user_info.get('email')
-                integration.updated_at = datetime.utcnow()
+                integration.updated_at = datetime.now(timezone.utc)
             else:
                 integration = CalendarIntegration(
                     user_id=user_id,
                     provider='google',
                     google_email=user_info.get('email'),
                     is_active=True,
-                    created_at=datetime.utcnow()
+                    created_at=datetime.now(timezone.utc)
                 )
                 db.session.add(integration)
             
@@ -1305,7 +1305,7 @@ class GoogleCalendarService(BaseService):
             logger.error(f"Error almacenando credenciales: {str(e)}")
             raise
     
-    def _get_google_user_info(self, credentials: Credentials) -> Dict[str, Any]:
+    def _get_google_user_info(self, credentials: Credentials) -> dict[str, Any]:
         """Obtener información del usuario de Google"""
         try:
             service = build('oauth2', 'v2', credentials=credentials)
@@ -1399,7 +1399,7 @@ class GoogleCalendarService(BaseService):
                 errors=[str(e)]
             )
     
-    def _store_event_locally(self, user_id: int, event: CalendarEvent, google_event: Dict[str, Any]):
+    def _store_event_locally(self, user_id: int, event: CalendarEvent, google_event: dict[str, Any]):
         """Almacenar evento en base de datos local"""
         try:
             # Verificar si ya existe
@@ -1422,7 +1422,7 @@ class GoogleCalendarService(BaseService):
                 status='scheduled',
                 attendees=json.dumps(event.attendees) if event.attendees else None,
                 metadata=json.dumps(event.metadata) if event.metadata else None,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
                 synced_from_google=True
             )
             
@@ -1441,9 +1441,9 @@ class GoogleCalendarService(BaseService):
     
     def _prepare_google_event_updates(
         self, 
-        current_event: Dict[str, Any], 
+        current_event: dict[str, Any], 
         updates: CalendarEvent
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Preparar actualizaciones para evento existente"""
         # Empezar con el evento actual
         updated_event = current_event.copy()
@@ -1512,7 +1512,7 @@ class GoogleCalendarService(BaseService):
                 meeting.location = event.location
                 meeting.attendees = json.dumps(event.attendees) if event.attendees else None
                 meeting.metadata = json.dumps(event.metadata) if event.metadata else None
-                meeting.updated_at = datetime.utcnow()
+                meeting.updated_at = datetime.now(timezone.utc)
                 
                 db.session.commit()
                 logger.debug(f"Evento actualizado localmente: {event.id}")
@@ -1530,7 +1530,7 @@ class GoogleCalendarService(BaseService):
             
             if meeting:
                 meeting.status = 'cancelled'
-                meeting.updated_at = datetime.utcnow()
+                meeting.updated_at = datetime.now(timezone.utc)
                 # No eliminar físicamente, solo marcar como cancelado
                 db.session.commit()
                 logger.debug(f"Evento marcado como cancelado localmente: {event_id}")
@@ -1559,14 +1559,14 @@ class GoogleCalendarService(BaseService):
             
             if calendar_sync:
                 calendar_sync.sync_token = sync_token
-                calendar_sync.last_sync_at = datetime.utcnow()
+                calendar_sync.last_sync_at = datetime.now(timezone.utc)
             else:
                 calendar_sync = CalendarSync(
                     user_id=user_id,
                     provider='google',
                     sync_token=sync_token,
-                    last_sync_at=datetime.utcnow(),
-                    created_at=datetime.utcnow()
+                    last_sync_at=datetime.now(timezone.utc),
+                    created_at=datetime.now(timezone.utc)
                 )
                 db.session.add(calendar_sync)
             
@@ -1646,7 +1646,7 @@ class GoogleCalendarService(BaseService):
         except Exception as e:
             logger.error(f"Error enviando notificaciones de mentoría: {str(e)}")
     
-    def _store_webhook_info(self, user_id: int, watch_response: Dict[str, Any]):
+    def _store_webhook_info(self, user_id: int, watch_response: dict[str, Any]):
         """Almacenar información del webhook"""
         try:
             # Buscar integración existente
@@ -1661,7 +1661,7 @@ class GoogleCalendarService(BaseService):
                 integration.webhook_expiration = datetime.fromtimestamp(
                     int(watch_response.get('expiration', 0)) / 1000
                 ) if watch_response.get('expiration') else None
-                integration.updated_at = datetime.utcnow()
+                integration.updated_at = datetime.now(timezone.utc)
                 
                 db.session.commit()
                 
@@ -1679,7 +1679,7 @@ class GoogleCalendarService(BaseService):
             sync_user_calendar.apply_async(
                 args=[user_id],
                 countdown=30,
-                task_id=f"calendar_sync_{user_id}_{datetime.utcnow().timestamp()}"
+                task_id=f"calendar_sync_{user_id}_{datetime.now(timezone.utc).timestamp()}"
             )
             
             logger.info(f"Sincronización encolada para usuario {user_id}")
@@ -1692,7 +1692,7 @@ class GoogleCalendarService(BaseService):
             except Exception as sync_error:
                 logger.error(f"Error en fallback sync: {str(sync_error)}")
     
-    def get_calendar_status(self, user_id: int) -> Dict[str, Any]:
+    def get_calendar_status(self, user_id: int) -> dict[str, Any]:
         """Obtener estado de la integración de calendario"""
         try:
             integration = CalendarIntegration.query.filter_by(
@@ -1720,7 +1720,7 @@ class GoogleCalendarService(BaseService):
             webhook_active = bool(
                 integration.webhook_channel_id and 
                 integration.webhook_expiration and
-                integration.webhook_expiration > datetime.utcnow()
+                integration.webhook_expiration > datetime.now(timezone.utc)
             )
             
             # Obtener información de última sincronización
@@ -1760,7 +1760,7 @@ class GoogleCalendarService(BaseService):
             
             # Verificar si necesita renovación (menos de 24 horas)
             if (integration.webhook_expiration and 
-                integration.webhook_expiration > datetime.utcnow() + timedelta(hours=24)):
+                integration.webhook_expiration > datetime.now(timezone.utc) + timedelta(hours=24)):
                 return True  # No necesita renovación aún
             
             # Configurar nuevo webhook
@@ -1773,7 +1773,7 @@ class GoogleCalendarService(BaseService):
             logger.error(f"Error renovando webhook: {str(e)}")
             return False
     
-    def bulk_sync_calendars(self, user_ids: List[int]) -> Dict[str, Any]:
+    def bulk_sync_calendars(self, user_ids: list[int]) -> dict[str, Any]:
         """Sincronizar múltiples calendarios en lote"""
         results = {
             'successful': 0,
@@ -1804,7 +1804,7 @@ google_calendar_service = GoogleCalendarService()
 # Funciones de conveniencia
 def schedule_meeting(
     organizer_id: int,
-    attendee_emails: List[str],
+    attendee_emails: list[str],
     title: str,
     start_time: datetime,
     duration_minutes: int,
@@ -1835,11 +1835,11 @@ def schedule_meeting(
 
 
 def find_meeting_time(
-    participant_ids: List[int],
+    participant_ids: list[int],
     duration_minutes: int,
     preferred_date: datetime,
     max_suggestions: int = 3
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Encontrar horario para reunión"""
     
     start_of_day = preferred_date.replace(hour=8, minute=0, second=0, microsecond=0)

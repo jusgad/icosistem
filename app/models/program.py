@@ -6,7 +6,7 @@ incluyendo incubación, aceleración, mentoría, capacitación, etc.
 """
 
 from datetime import datetime, date, timedelta
-from typing import List, Optional, Dict, Any, Union
+from typing import Optional, Any, Union
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Enum as SQLEnum, Float, Date, Table
 from sqlalchemy.orm import relationship, validates, backref
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -501,7 +501,7 @@ class Program(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             EnrollmentStatus.UNDER_REVIEW
         ])
     
-    def can_apply(self, entrepreneur) -> Dict[str, Any]:
+    def can_apply(self, entrepreneur) -> dict[str, Any]:
         """Verificar si un emprendedor puede aplicar"""
         result = {
             'can_apply': True,
@@ -537,7 +537,7 @@ class Program(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         return result
     
-    def _check_requirements(self, entrepreneur) -> List[str]:
+    def _check_requirements(self, entrepreneur) -> list[str]:
         """Verificar requisitos específicos"""
         missing = []
         
@@ -580,7 +580,7 @@ class Program(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             entrepreneur_id=entrepreneur.id,
             status=EnrollmentStatus.APPLIED,
             application_data=application_data or {},
-            applied_at=datetime.utcnow()
+            applied_at=datetime.now(timezone.utc)
         )
         
         from .. import db
@@ -589,7 +589,7 @@ class Program(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         # Si es proceso abierto, aprobar automáticamente
         if self.selection_process == SelectionProcess.OPEN:
             enrollment.status = EnrollmentStatus.ENROLLED
-            enrollment.enrolled_at = datetime.utcnow()
+            enrollment.enrolled_at = datetime.now(timezone.utc)
             self.current_participants += 1
         
         return enrollment
@@ -607,7 +607,7 @@ class Program(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             raise ValidationError("El programa está completo")
         
         enrollment.status = EnrollmentStatus.ACCEPTED
-        enrollment.approved_at = datetime.utcnow()
+        enrollment.approved_at = datetime.now(timezone.utc)
         enrollment.reviewer_notes = notes
         
         return enrollment
@@ -619,7 +619,7 @@ class Program(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             raise ValidationError("Inscripción no encontrada")
         
         enrollment.status = EnrollmentStatus.REJECTED
-        enrollment.rejected_at = datetime.utcnow()
+        enrollment.rejected_at = datetime.now(timezone.utc)
         enrollment.rejection_reason = reason
         
         return enrollment
@@ -661,7 +661,7 @@ class Program(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         for enrollment in active_enrollments:
             if self._meets_graduation_criteria(enrollment):
                 enrollment.status = EnrollmentStatus.GRADUATED
-                enrollment.graduated_at = datetime.utcnow()
+                enrollment.graduated_at = datetime.now(timezone.utc)
                 
                 # Generar certificado si aplica
                 if self.provides_certificate:
@@ -694,7 +694,7 @@ class Program(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             'program_name': self.name,
             'participant_name': enrollment.entrepreneur.full_name,
             'completion_date': date.today().isoformat(),
-            'certificate_id': f"{self.slug}-{enrollment.id}-{int(datetime.utcnow().timestamp())}"
+            'certificate_id': f"{self.slug}-{enrollment.id}-{int(datetime.now(timezone.utc).timestamp())}"
         }
         
         enrollment.certificate_data = certificate_data
@@ -742,7 +742,7 @@ class Program(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         db.session.execute(program_mentors.insert().values(mentor_data))
     
-    def get_dashboard_data(self) -> Dict[str, Any]:
+    def get_dashboard_data(self) -> dict[str, Any]:
         """Generar datos para dashboard del programa"""
         active_enrollments = self.get_active_enrollments()
         pending_applications = self.get_pending_applications()
@@ -794,7 +794,7 @@ class Program(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         ).all()
     
     @classmethod
-    def search_programs(cls, query_text: str = None, filters: Dict[str, Any] = None):
+    def search_programs(cls, query_text: str = None, filters: dict[str, Any] = None):
         """Buscar programas"""
         search = cls.query.filter(cls.is_deleted == False)
         
@@ -854,7 +854,7 @@ class Program(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
                 .limit(limit)
                 .all())
     
-    def to_dict(self, include_sensitive=False, include_relations=False) -> Dict[str, Any]:
+    def to_dict(self, include_sensitive=False, include_relations=False) -> dict[str, Any]:
         """Convertir a diccionario"""
         data = {
             'id': self.id,
@@ -1041,7 +1041,7 @@ class ProgramEnrollment(BaseModel, TimestampMixin, AuditMixin):
     def days_in_program(self):
         """Días en el programa"""
         if self.started_at:
-            end_date = self.completed_at or datetime.utcnow()
+            end_date = self.completed_at or datetime.now(timezone.utc)
             return (end_date - self.started_at).days
         return 0
     
@@ -1052,8 +1052,8 @@ class ProgramEnrollment(BaseModel, TimestampMixin, AuditMixin):
             raise ValidationError("Solo se pueden aprobar aplicaciones pendientes")
         
         self.status = EnrollmentStatus.ACCEPTED
-        self.approved_at = datetime.utcnow()
-        self.reviewed_at = datetime.utcnow()
+        self.approved_at = datetime.now(timezone.utc)
+        self.reviewed_at = datetime.now(timezone.utc)
         self.reviewer_id = reviewer.id
         self.reviewer_notes = notes
         self.review_score = score
@@ -1064,8 +1064,8 @@ class ProgramEnrollment(BaseModel, TimestampMixin, AuditMixin):
             raise ValidationError("Solo se pueden rechazar aplicaciones pendientes")
         
         self.status = EnrollmentStatus.REJECTED
-        self.rejected_at = datetime.utcnow()
-        self.reviewed_at = datetime.utcnow()
+        self.rejected_at = datetime.now(timezone.utc)
+        self.reviewed_at = datetime.now(timezone.utc)
         self.reviewer_id = reviewer.id
         self.rejection_reason = reason
         self.reviewer_notes = notes
@@ -1076,7 +1076,7 @@ class ProgramEnrollment(BaseModel, TimestampMixin, AuditMixin):
             raise ValidationError("Solo se pueden inscribir aplicaciones aceptadas")
         
         self.status = EnrollmentStatus.ENROLLED
-        self.enrolled_at = datetime.utcnow()
+        self.enrolled_at = datetime.now(timezone.utc)
     
     def start_program(self):
         """Iniciar participación en el programa"""
@@ -1084,7 +1084,7 @@ class ProgramEnrollment(BaseModel, TimestampMixin, AuditMixin):
             raise ValidationError("Debe estar inscrito para iniciar")
         
         self.status = EnrollmentStatus.ACTIVE
-        self.started_at = datetime.utcnow()
+        self.started_at = datetime.now(timezone.utc)
     
     def complete_program(self, final_score=None, grade=None):
         """Completar el programa"""
@@ -1092,7 +1092,7 @@ class ProgramEnrollment(BaseModel, TimestampMixin, AuditMixin):
             raise ValidationError("Debe estar activo para completar")
         
         self.status = EnrollmentStatus.COMPLETED
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(timezone.utc)
         
         if final_score:
             self.final_score = final_score
@@ -1105,7 +1105,7 @@ class ProgramEnrollment(BaseModel, TimestampMixin, AuditMixin):
             raise ValidationError("Debe completar el programa para graduarse")
         
         self.status = EnrollmentStatus.GRADUATED
-        self.graduated_at = datetime.utcnow()
+        self.graduated_at = datetime.now(timezone.utc)
         
         # Generar certificado
         if self.program.provides_certificate:
@@ -1117,7 +1117,7 @@ class ProgramEnrollment(BaseModel, TimestampMixin, AuditMixin):
             raise ValidationError("Solo participantes activos pueden abandonar")
         
         self.status = EnrollmentStatus.DROPPED_OUT
-        self.dropped_out_at = datetime.utcnow()
+        self.dropped_out_at = datetime.now(timezone.utc)
         if reason:
             self.notes = f"Razón de abandono: {reason}"
     
@@ -1152,7 +1152,7 @@ class ProgramEnrollment(BaseModel, TimestampMixin, AuditMixin):
         self.certificate_data = cert_data
         self.certificate_issued = True
     
-    def to_dict(self, include_sensitive=False) -> Dict[str, Any]:
+    def to_dict(self, include_sensitive=False) -> dict[str, Any]:
         """Convertir a diccionario"""
         data = {
             'id': self.id,
@@ -1274,7 +1274,7 @@ class ProgramSession(BaseModel, TimestampMixin, AuditMixin):
         
         attendance.attended = attended
         attendance.notes = notes
-        attendance.marked_at = datetime.utcnow()
+        attendance.marked_at = datetime.now(timezone.utc)
         
         return attendance
 

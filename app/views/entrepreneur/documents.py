@@ -9,7 +9,7 @@ búsqueda, analytics y integración con servicios externos.
 import os
 import json
 import mimetypes
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import zipfile
 from io import BytesIO
@@ -555,7 +555,7 @@ def edit(document_id):
         document.folder_id = form.folder_id.data if form.folder_id.data else None
         document.project_id = form.project_id.data if form.project_id.data else None
         document.is_confidential = form.is_confidential.data
-        document.updated_at = datetime.utcnow()
+        document.updated_at = datetime.now(timezone.utc)
         
         # Actualizar tags
         _update_document_tags(document, form.tags.data)
@@ -656,7 +656,7 @@ def share(document_id):
             # Actualizar nivel de acceso existente
             existing_access.access_level = form.access_level.data
             existing_access.expires_at = form.expires_at.data
-            existing_access.updated_at = datetime.utcnow()
+            existing_access.updated_at = datetime.now(timezone.utc)
             existing_access.save()
             action = 'updated'
         else:
@@ -769,7 +769,7 @@ def new_version(document_id):
         document.current_version = version.version_number
         document.file_size = version.file_size
         document.file_path = version.file_path
-        document.updated_at = datetime.utcnow()
+        document.updated_at = datetime.now(timezone.utc)
         document.save()
         
         # Registrar actividad
@@ -828,7 +828,7 @@ def delete(document_id):
         
         # Soft delete
         document.is_deleted = True
-        document.deleted_at = datetime.utcnow()
+        document.deleted_at = datetime.now(timezone.utc)
         document.deleted_by = current_user.id
         document.save()
         
@@ -1098,7 +1098,7 @@ def analytics():
     try:
         # Rango de fechas para análisis
         date_range = request.args.get('range', '30')  # días
-        end_date = datetime.utcnow().date()
+        end_date = datetime.now(timezone.utc).date()
         start_date = end_date - timedelta(days=int(date_range))
         
         # Métricas de almacenamiento
@@ -1700,7 +1700,7 @@ def _can_download_document(document, user_id):
 
 def _is_access_valid(access):
     """Verificar si el acceso compartido es válido."""
-    if access.expires_at and access.expires_at < datetime.utcnow():
+    if access.expires_at and access.expires_at < datetime.now(timezone.utc):
         return False
     return True
 
@@ -2073,7 +2073,7 @@ def _bulk_delete_documents(documents):
     for doc in documents:
         if _can_delete_document(doc, current_user.id):
             doc.is_deleted = True
-            doc.deleted_at = datetime.utcnow()
+            doc.deleted_at = datetime.now(timezone.utc)
             doc.deleted_by = current_user.id
             doc.save()
             count += 1

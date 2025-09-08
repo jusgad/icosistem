@@ -9,8 +9,8 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
 from marshmallow import Schema, fields, validate, ValidationError
 from sqlalchemy import and_, or_
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Any, Callable
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Any, Callable
 import hashlib
 import hmac
 import json
@@ -95,7 +95,7 @@ class WebhookConfig:
     secret_key: str
     verify_signature: bool = True
     require_https: bool = True
-    allowed_ips: List[str] = None
+    allowed_ips: list[str] = None
 
 # Configuraciones por proveedor
 WEBHOOK_CONFIGS = {
@@ -241,7 +241,7 @@ def verify_stripe_signature(payload: bytes, signature: str, secret: str, timesta
         
         # Verificar timestamp (tolerancia de 5 minutos)
         webhook_timestamp = int(timestamp_str)
-        current_timestamp = int(datetime.utcnow().timestamp())
+        current_timestamp = int(datetime.now(timezone.utc).timestamp())
         
         if abs(current_timestamp - webhook_timestamp) > WEBHOOK_SIGNATURE_TOLERANCE:
             return False
@@ -283,7 +283,7 @@ def verify_slack_signature(payload: bytes, signature: str, secret: str, timestam
         
         # Verificar timestamp
         webhook_timestamp = int(timestamp)
-        current_timestamp = int(datetime.utcnow().timestamp())
+        current_timestamp = int(datetime.now(timezone.utc).timestamp())
         
         if abs(current_timestamp - webhook_timestamp) > WEBHOOK_SIGNATURE_TOLERANCE:
             return False
@@ -349,7 +349,7 @@ def log_webhook_event(
             payload=payload,
             status=status,
             error_message=error_message,
-            processed_at=datetime.utcnow() if status == WebhookStatus.PROCESSED else None
+            processed_at=datetime.now(timezone.utc) if status == WebhookStatus.PROCESSED else None
         )
         
         db.session.add(webhook_event)
@@ -488,7 +488,7 @@ class WebhookHandlers:
             
             if payment:
                 payment.status = PaymentStatus.COMPLETED
-                payment.processed_at = datetime.utcnow()
+                payment.processed_at = datetime.now(timezone.utc)
                 payment.amount_received = amount
                 db.session.commit()
                 
@@ -521,7 +521,7 @@ class WebhookHandlers:
             if payment:
                 payment.status = PaymentStatus.FAILED
                 payment.error_message = error_message
-                payment.failed_at = datetime.utcnow()
+                payment.failed_at = datetime.now(timezone.utc)
                 db.session.commit()
                 
                 # Notificar al usuario
@@ -634,7 +634,7 @@ def google_calendar_webhook():
         if not resource_id or not resource_uri:
             raise WebhookException("Cabeceras de Google Calendar faltantes")
         
-        event_id = f"calendar_{resource_id}_{int(datetime.utcnow().timestamp())}"
+        event_id = f"calendar_{resource_id}_{int(datetime.now(timezone.utc).timestamp())}"
         
         # Verificar duplicados
         if is_duplicate_webhook(WebhookProvider.GOOGLE_CALENDAR, event_id):
@@ -781,7 +781,7 @@ def github_webhook():
             raise WebhookException("Tipo de evento GitHub faltante")
         
         # Generar ID único para el evento
-        event_id = f"github_{event_type}_{int(datetime.utcnow().timestamp())}"
+        event_id = f"github_{event_type}_{int(datetime.now(timezone.utc).timestamp())}"
         
         # Procesar eventos relevantes
         success = True

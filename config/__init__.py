@@ -17,7 +17,7 @@ Fecha: 2025
 
 import os
 import warnings
-from typing import Dict, Type, Any, Optional
+from typing import Type, Any, Optional
 from urllib.parse import urlparse
 
 # Configuraciones específicas por ambiente
@@ -26,6 +26,32 @@ from .development import DevelopmentConfig
 from .production import ProductionConfig
 from .testing import TestingConfig
 from .docker import DockerConfig
+
+# Importar también desde config.py de la raíz para compatibilidad
+try:
+    import sys
+    import os
+    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+    from config import Config, DevelopmentConfig as RootDevConfig, ProductionConfig as RootProdConfig, TestingConfig as RootTestConfig, DockerConfig as RootDockerConfig
+    
+    # Crear mapeo de compatibilidad con la estructura anterior
+    config = {
+        'development': RootDevConfig,
+        'testing': RootTestConfig,
+        'production': RootProdConfig,
+        'docker': RootDockerConfig,
+        'default': RootDevConfig
+    }
+    
+except ImportError:
+    # Fallback al sistema moderno si no existe el archivo raíz
+    config = {
+        'development': DevelopmentConfig,
+        'testing': TestingConfig,
+        'production': ProductionConfig,
+        'docker': DockerConfig,
+        'default': DevelopmentConfig
+    }
 
 
 class ConfigurationError(Exception):
@@ -45,7 +71,7 @@ class ConfigManager:
     """
     
     # Mapeo de ambientes a clases de configuración
-    _config_map: Dict[str, Type[BaseConfig]] = {
+    _config_map: dict[str, Type[BaseConfig]] = {
         'development': DevelopmentConfig,
         'testing': TestingConfig,
         'production': ProductionConfig,
@@ -232,7 +258,7 @@ class ConfigManager:
                 f"Errores de validación en configuración '{environment}':\n{error_str}"
             )
     
-    def get_database_info(self) -> Dict[str, Any]:
+    def get_database_info(self) -> dict[str, Any]:
         """
         Obtiene información de la base de datos de forma segura.
         
@@ -259,7 +285,7 @@ class ConfigManager:
         except Exception:
             return {'error': 'No se pudo parsear la URL de base de datos'}
     
-    def get_redis_info(self) -> Dict[str, Any]:
+    def get_redis_info(self) -> dict[str, Any]:
         """
         Obtiene información de Redis de forma segura.
         
@@ -368,7 +394,7 @@ def init_app_config(app, environment: Optional[str] = None) -> BaseConfig:
     return config
 
 
-def validate_environment() -> Dict[str, Any]:
+def validate_environment() -> dict[str, Any]:
     """
     Valida el ambiente actual y retorna un reporte de estado.
     

@@ -11,7 +11,7 @@ Date: 2025
 import json
 import logging
 from datetime import datetime, date, timedelta
-from typing import Dict, List, Any, Optional, Union, Tuple
+from typing import Any, Optional, Union
 from decimal import Decimal
 from flask import current_app, g, flash, request
 from flask_wtf import FlaskForm
@@ -56,7 +56,7 @@ logger = logging.getLogger(__name__)
 class AdminPermissionRequired(BaseValidator):
     """Validador que requiere permisos específicos de administrador"""
     
-    def __init__(self, required_permissions: List[str], message: str = None):
+    def __init__(self, required_permissions: list[str], message: str = None):
         super().__init__(message)
         self.required_permissions = required_permissions
     
@@ -265,7 +265,7 @@ class AdminUserCreateForm(ModelForm, CacheableMixin):
         # Cargar permisos dinámicamente
         self.admin_permissions.choices = self._get_admin_permissions()
     
-    def _get_admin_permissions(self) -> List[Tuple[str, str]]:
+    def _get_admin_permissions(self) -> list[tuple[str, str]]:
         """Obtiene lista de permisos disponibles"""
         permissions = [
             ('users_manage', 'Gestionar Usuarios'),
@@ -310,7 +310,7 @@ class AdminUserCreateForm(ModelForm, CacheableMixin):
             if not self.email_verified.data:
                 import secrets
                 user.email_verification_token = secrets.token_urlsafe(32)
-                user.email_verification_expires = datetime.utcnow() + timedelta(hours=24)
+                user.email_verification_expires = datetime.now(timezone.utc) + timedelta(hours=24)
             
             db.session.add(user)
             db.session.flush()  # Para obtener el ID
@@ -485,7 +485,7 @@ class AdminUserEditForm(ModelForm):
             # Procesar suspensión
             if self.suspend_account.data:
                 user.is_active = False
-                user.suspended_at = datetime.utcnow()
+                user.suspended_at = datetime.now(timezone.utc)
                 user.suspended_by = g.current_user.id
                 user.suspension_reason = self.suspension_reason.data
             elif not self.suspend_account.data and user.suspended_at:
@@ -579,12 +579,12 @@ class AdminBulkUserForm(BaseForm):
         if self.action.data == 'send_notification' and not field.data:
             raise ValidationError('Mensaje requerido para enviar notificación')
     
-    def get_selected_users(self) -> List[User]:
+    def get_selected_users(self) -> list[User]:
         """Obtiene usuarios seleccionados"""
         user_ids = self.user_ids.data.split(',') if self.user_ids.data else []
         return User.query.filter(User.id.in_(user_ids)).all()
     
-    def execute_bulk_action(self) -> Dict[str, Any]:
+    def execute_bulk_action(self) -> dict[str, Any]:
         """Ejecuta la acción masiva seleccionada"""
         from app.services.admin import AdminService
         
@@ -1218,7 +1218,7 @@ class AdminReportForm(BaseForm):
                 if keyword in query_upper:
                     raise ValidationError(f'Palabra clave no permitida: {keyword}')
     
-    def generate_report(self) -> Dict[str, Any]:
+    def generate_report(self) -> dict[str, Any]:
         """Genera el reporte solicitado"""
         from app.services.admin import AdminReportService
         

@@ -5,8 +5,8 @@ Este módulo define los modelos para gestión de mensajería y comunicación,
 incluyendo conversaciones, mensajes, notificaciones y canales de comunicación.
 """
 
-from datetime import datetime, date, timedelta
-from typing import List, Optional, Dict, Any, Union
+from datetime import datetime, date, timedelta, timezone
+from typing import Optional, Any, Union
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Enum as SQLEnum, Float, Date, Table
 from sqlalchemy.orm import relationship, validates, backref
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -284,7 +284,7 @@ class Conversation(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     
     # Métodos de negocio
     def add_participant(self, user, role: str = 'member', 
-                       notification_settings: Dict[str, Any] = None) -> bool:
+                       notification_settings: dict[str, Any] = None) -> bool:
         """Agregar participante a la conversación"""
         # Verificar límite de participantes
         if self.max_participants and self.participant_count >= self.max_participants:
@@ -311,7 +311,7 @@ class Conversation(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
                         conversation_participants.c.user_id == user.id
                     ).values(
                         is_active=True,
-                        joined_at=datetime.utcnow(),
+                        joined_at=datetime.now(timezone.utc),
                         left_at=None
                     )
                 )
@@ -359,7 +359,7 @@ class Conversation(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
                 conversation_participants.c.user_id == user.id
             ).values(
                 is_active=False,
-                left_at=datetime.utcnow()
+                left_at=datetime.now(timezone.utc)
             )
         )
         
@@ -390,7 +390,7 @@ class Conversation(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         """Marcar conversación como leída para un usuario"""
         from .. import db
         
-        read_time = read_at or datetime.utcnow()
+        read_time = read_at or datetime.now(timezone.utc)
         
         db.session.execute(
             conversation_participants.update().where(
@@ -449,10 +449,10 @@ class Conversation(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         # Actualizar estadísticas
         self.total_messages += 1
-        self.last_message_at = datetime.utcnow()
-        self.last_activity_at = datetime.utcnow()
+        self.last_message_at = datetime.now(timezone.utc)
+        self.last_activity_at = datetime.now(timezone.utc)
     
-    def get_conversation_summary(self, user_id: int) -> Dict[str, Any]:
+    def get_conversation_summary(self, user_id: int) -> dict[str, Any]:
         """Obtener resumen de la conversación para un usuario"""
         unread_count = self.get_unread_count(user_id)
         
@@ -519,7 +519,7 @@ class Conversation(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         return conversation
     
-    def to_dict(self, include_participants=False, user_id: int = None) -> Dict[str, Any]:
+    def to_dict(self, include_participants=False, user_id: int = None) -> dict[str, Any]:
         """Convertir a diccionario"""
         data = {
             'id': self.id,
@@ -852,7 +852,7 @@ class Message(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             'size': size,
             'mime_type': mime_type,
             'type': attachment_type.value,
-            'uploaded_at': datetime.utcnow().isoformat()
+            'uploaded_at': datetime.now(timezone.utc).isoformat()
         }
         
         self.attachments.append(attachment)
@@ -914,14 +914,14 @@ class Message(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         self.edit_history.append({
             'content': self.content,
-            'edited_at': datetime.utcnow().isoformat(),
+            'edited_at': datetime.now(timezone.utc).isoformat(),
             'edited_by': edited_by_user_id
         })
         
         # Actualizar contenido
         old_content = self.content
         self.content = new_content
-        self.edited_at = datetime.utcnow()
+        self.edited_at = datetime.now(timezone.utc)
         self.edited_by_id = edited_by_user_id
         
         # Reprocesar contenido
@@ -933,7 +933,7 @@ class Message(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         """Eliminar mensaje"""
         if soft_delete:
             self.is_deleted = True
-            self.deleted_at = datetime.utcnow()
+            self.deleted_at = datetime.now(timezone.utc)
             self.deleted_by_id = deleted_by_user_id
             self.content = "[Mensaje eliminado]"
             self.content_html = "[Mensaje eliminado]"
@@ -946,7 +946,7 @@ class Message(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         """Marcar mensaje como leído por un usuario"""
         from .. import db
         
-        read_time = read_at or datetime.utcnow()
+        read_time = read_at or datetime.now(timezone.utc)
         
         # Actualizar estado en tabla de destinatarios
         db.session.execute(
@@ -962,7 +962,7 @@ class Message(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         # Actualizar última lectura en conversación
         self.conversation.mark_as_read(User.query.get(user_id), read_time)
     
-    def get_delivery_status(self) -> Dict[str, Any]:
+    def get_delivery_status(self) -> dict[str, Any]:
         """Obtener estado de entrega del mensaje"""
         from .. import db
         
@@ -1031,7 +1031,7 @@ class Message(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
     
     def schedule_message(self, send_at: datetime):
         """Programar mensaje para envío futuro"""
-        if send_at <= datetime.utcnow():
+        if send_at <= datetime.now(timezone.utc):
             raise ValidationError("La fecha de programación debe ser futura")
         
         self.scheduled_at = send_at
@@ -1043,7 +1043,7 @@ class Message(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         if not self.is_scheduled:
             raise ValidationError("El mensaje no está programado")
         
-        if self.scheduled_at > datetime.utcnow():
+        if self.scheduled_at > datetime.now(timezone.utc):
             raise ValidationError("Aún no es hora de enviar el mensaje")
         
         self.is_scheduled = False
@@ -1051,8 +1051,8 @@ class Message(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         # Actualizar estadísticas de conversación
         self.conversation.total_messages += 1
-        self.conversation.last_message_at = datetime.utcnow()
-        self.conversation.last_activity_at = datetime.utcnow()
+        self.conversation.last_message_at = datetime.now(timezone.utc)
+        self.conversation.last_activity_at = datetime.now(timezone.utc)
     
     def create_reply(self, sender_id: int, content: str, message_type: MessageType = MessageType.TEXT):
         """Crear respuesta a este mensaje"""
@@ -1070,12 +1070,12 @@ class Message(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         # Actualizar estadísticas de conversación
         self.conversation.total_messages += 1
-        self.conversation.last_message_at = datetime.utcnow()
-        self.conversation.last_activity_at = datetime.utcnow()
+        self.conversation.last_message_at = datetime.now(timezone.utc)
+        self.conversation.last_activity_at = datetime.now(timezone.utc)
         
         return reply
     
-    def get_thread_messages(self) -> List['Message']:
+    def get_thread_messages(self) -> list['Message']:
         """Obtener mensajes del hilo (respuestas)"""
         return Message.query.filter(
             Message.parent_message_id == self.id,
@@ -1142,11 +1142,11 @@ class Message(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         if due_before:
             query = query.filter(cls.scheduled_at <= due_before)
         else:
-            query = query.filter(cls.scheduled_at <= datetime.utcnow())
+            query = query.filter(cls.scheduled_at <= datetime.now(timezone.utc))
         
         return query.all()
     
-    def to_dict(self, include_thread=False, include_reactions=True, user_id: int = None) -> Dict[str, Any]:
+    def to_dict(self, include_thread=False, include_reactions=True, user_id: int = None) -> dict[str, Any]:
         """Convertir a diccionario"""
         data = {
             'id': self.id,
@@ -1206,7 +1206,7 @@ class Message(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
 
 # Funciones de utilidad para el módulo
 def get_messaging_statistics(user_id: int = None, organization_id: int = None,
-                           date_from: date = None, date_to: date = None) -> Dict[str, Any]:
+                           date_from: date = None, date_to: date = None) -> dict[str, Any]:
     """Obtener estadísticas de mensajería"""
     conversations_query = Conversation.query.filter(Conversation.is_deleted == False)
     messages_query = Message.query.filter(Message.is_deleted == False)
@@ -1336,10 +1336,10 @@ def create_direct_conversation(user1_id: int, user2_id: int) -> Conversation:
     return conversation
 
 
-def send_system_notification(user_ids: List[int], title: str, content: str,
+def send_system_notification(user_ids: list[int], title: str, content: str,
                            notification_type: str = 'info', 
                            related_entity_type: str = None,
-                           related_entity_id: int = None) -> List[Message]:
+                           related_entity_id: int = None) -> list[Message]:
     """Enviar notificación del sistema a múltiples usuarios"""
     messages = []
     
@@ -1388,8 +1388,8 @@ def send_system_notification(user_ids: List[int], title: str, content: str,
         
         # Actualizar estadísticas de conversación
         notification_conv.total_messages += 1
-        notification_conv.last_message_at = datetime.utcnow()
-        notification_conv.last_activity_at = datetime.utcnow()
+        notification_conv.last_message_at = datetime.now(timezone.utc)
+        notification_conv.last_activity_at = datetime.now(timezone.utc)
     
     return messages
 

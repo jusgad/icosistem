@@ -5,7 +5,7 @@ Este módulo maneja todas las operaciones CRUD relacionadas con el registro
 de horas de trabajo de los aliados, incluyendo reportes y exportación.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from flask import (
     Blueprint, render_template, request, redirect, url_for, 
     flash, jsonify, current_app, abort, send_file
@@ -141,7 +141,7 @@ def index():
         )
         
         # Tendencia semanal (últimas 12 semanas)
-        twelve_weeks_ago = datetime.utcnow() - timedelta(weeks=12)
+        twelve_weeks_ago = datetime.now(timezone.utc) - timedelta(weeks=12)
         weekly_trend = (
             db.session.query(
                 extract('week', Meeting.date).label('week'),
@@ -174,7 +174,7 @@ def index():
             .filter(
                 Meeting.ally_id == ally.id,
                 Meeting.completed == False,
-                Meeting.date >= datetime.utcnow()
+                Meeting.date >= datetime.now(timezone.utc)
             )
             .order_by(Meeting.date)
             .limit(5)
@@ -302,7 +302,7 @@ def register_post():
         # Validar y parsear fecha
         try:
             work_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-            if work_date > datetime.utcnow().date():
+            if work_date > datetime.now(timezone.utc).date():
                 flash('No se pueden registrar horas para fechas futuras.', 'error')
                 return redirect(url_for('ally_hours.register'))
         except ValueError:
@@ -567,7 +567,7 @@ def edit(meeting_id):
             abort(403)
         
         # Verificar si está dentro del período de edición permitido
-        days_since_meeting = (datetime.utcnow().date() - meeting.date.date()).days
+        days_since_meeting = (datetime.now(timezone.utc).date() - meeting.date.date()).days
         max_edit_days = current_app.config.get('MAX_HOURS_EDIT_DAYS', 7)
         
         if days_since_meeting > max_edit_days:
@@ -638,7 +638,7 @@ def edit_post(meeting_id):
             abort(403)
         
         # Verificar período de edición
-        days_since_meeting = (datetime.utcnow().date() - meeting.date.date()).days
+        days_since_meeting = (datetime.now(timezone.utc).date() - meeting.date.date()).days
         max_edit_days = current_app.config.get('MAX_HOURS_EDIT_DAYS', 7)
         
         if days_since_meeting > max_edit_days:
@@ -663,7 +663,7 @@ def edit_post(meeting_id):
         # Validar fecha
         try:
             work_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-            if work_date > datetime.utcnow().date():
+            if work_date > datetime.now(timezone.utc).date():
                 flash('No se pueden registrar horas para fechas futuras.', 'error')
                 return redirect(url_for('ally_hours.edit', meeting_id=meeting_id))
         except ValueError:
@@ -721,7 +721,7 @@ def edit_post(meeting_id):
         meeting.description = description
         meeting.billable = billable
         meeting.hourly_rate = rate if billable else None
-        meeting.updated_at = datetime.utcnow()
+        meeting.updated_at = datetime.now(timezone.utc)
         meeting.updated_by = current_user.id
         
         db.session.commit()
@@ -766,7 +766,7 @@ def delete(meeting_id):
             abort(403)
         
         # Verificar período de eliminación
-        days_since_meeting = (datetime.utcnow().date() - meeting.date.date()).days
+        days_since_meeting = (datetime.now(timezone.utc).date() - meeting.date.date()).days
         max_delete_days = current_app.config.get('MAX_HOURS_DELETE_DAYS', 3)
         
         if days_since_meeting > max_delete_days:
@@ -846,10 +846,10 @@ def export():
         # Generar archivo según el formato
         if format_type == 'excel':
             file_path = generate_hours_report_excel(ally, meetings, start_date_str, end_date_str)
-            filename = f'horas_reporte_{ally.id}_{datetime.utcnow().strftime("%Y%m%d")}.xlsx'
+            filename = f'horas_reporte_{ally.id}_{datetime.now(timezone.utc).strftime("%Y%m%d")}.xlsx'
         else:  # PDF por defecto
             file_path = generate_hours_report_pdf(ally, meetings, start_date_str, end_date_str)
-            filename = f'horas_reporte_{ally.id}_{datetime.utcnow().strftime("%Y%m%d")}.pdf'
+            filename = f'horas_reporte_{ally.id}_{datetime.now(timezone.utc).strftime("%Y%m%d")}.pdf'
         
         return send_file(
             file_path,
@@ -999,7 +999,7 @@ def api_quick_stats():
 
 def _get_date_range_for_period(period):
     """Obtiene el rango de fechas para un período dado."""
-    today = datetime.utcnow().date()
+    today = datetime.now(timezone.utc).date()
     
     if period == 'current_week':
         start_date = today - timedelta(days=today.weekday())

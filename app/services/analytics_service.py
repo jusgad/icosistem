@@ -9,8 +9,8 @@ Version: 1.0.0
 import logging
 import json
 import asyncio
-from typing import Dict, List, Optional, Any, Union, Tuple
-from datetime import datetime, timedelta, date
+from typing import Optional, Any, Union
+from datetime import datetime, timedelta, date, timezone
 from decimal import Decimal
 from enum import Enum
 from dataclasses import dataclass, asdict
@@ -109,12 +109,12 @@ class AnalyticsEvent:
     event_type: str
     user_id: Optional[int]
     session_id: Optional[str]
-    properties: Dict[str, Any]
+    properties: dict[str, Any]
     timestamp: datetime
     category: str = EventCategory.USER_ENGAGEMENT.value
     value: Optional[float] = None
     revenue: Optional[Decimal] = None
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
 
 @dataclass
@@ -124,7 +124,7 @@ class MetricResult:
     value: Union[int, float, Decimal]
     type: str
     timestamp: datetime
-    labels: Optional[Dict[str, str]] = None
+    labels: Optional[dict[str, str]] = None
     trend: Optional[float] = None
     previous_value: Optional[Union[int, float, Decimal]] = None
 
@@ -136,7 +136,7 @@ class DashboardWidget:
     title: str
     type: str  # chart, kpi, table, etc.
     data: Any
-    config: Dict[str, Any]
+    config: dict[str, Any]
     refresh_interval: int = 300  # 5 minutos
 
 
@@ -145,9 +145,9 @@ class CohortData:
     """Datos de análisis de cohorte"""
     cohort_period: str
     cohort_size: int
-    retention_rates: List[float]
-    revenue_per_cohort: List[Decimal]
-    periods: List[str]
+    retention_rates: list[float]
+    revenue_per_cohort: list[Decimal]
+    periods: list[str]
 
 
 @dataclass
@@ -201,7 +201,7 @@ class AnalyticsService(BaseService):
     def track_event(
         self,
         event_type: str,
-        properties: Dict[str, Any],
+        properties: dict[str, Any],
         user_id: Optional[int] = None,
         session_id: Optional[str] = None,
         category: str = EventCategory.USER_ENGAGEMENT.value,
@@ -230,7 +230,7 @@ class AnalyticsService(BaseService):
                 user_id=user_id,
                 session_id=session_id,
                 properties=properties,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 category=category,
                 value=value,
                 revenue=revenue,
@@ -258,7 +258,7 @@ class AnalyticsService(BaseService):
         start_date: datetime,
         end_date: datetime,
         organization_id: Optional[int] = None
-    ) -> Dict[str, MetricResult]:
+    ) -> dict[str, MetricResult]:
         """
         Obtener KPIs principales del ecosistema
         
@@ -268,7 +268,7 @@ class AnalyticsService(BaseService):
             organization_id: Filtrar por organización específica
             
         Returns:
-            Dict[str, MetricResult]: KPIs calculados
+            dict[str, MetricResult]: KPIs calculados
         """
         try:
             kpis = {}
@@ -334,7 +334,7 @@ class AnalyticsService(BaseService):
         self,
         user_id: int,
         days: int = 30
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Obtener analytics específicos de un usuario
         
@@ -343,10 +343,10 @@ class AnalyticsService(BaseService):
             days: Número de días a analizar
             
         Returns:
-            Dict[str, Any]: Analytics del usuario
+            dict[str, Any]: Analytics del usuario
         """
         try:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(timezone.utc)
             start_date = end_date - timedelta(days=days)
             
             user = User.query.get(user_id)
@@ -397,7 +397,7 @@ class AnalyticsService(BaseService):
         metric: str = 'retention',
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None
-    ) -> List[CohortData]:
+    ) -> list[CohortData]:
         """
         Realizar análisis de cohortes
         
@@ -408,13 +408,13 @@ class AnalyticsService(BaseService):
             end_date: Fecha de fin
             
         Returns:
-            List[CohortData]: Datos de análisis de cohortes
+            list[CohortData]: Datos de análisis de cohortes
         """
         try:
             if not start_date:
-                start_date = datetime.utcnow() - timedelta(days=365)
+                start_date = datetime.now(timezone.utc) - timedelta(days=365)
             if not end_date:
-                end_date = datetime.utcnow()
+                end_date = datetime.now(timezone.utc)
             
             # Obtener usuarios agrupados por cohorte
             cohorts = self._get_user_cohorts(cohort_type, start_date, end_date)
@@ -448,8 +448,8 @@ class AnalyticsService(BaseService):
         funnel_name: str,
         start_date: datetime,
         end_date: datetime,
-        segment: Optional[Dict[str, Any]] = None
-    ) -> List[FunnelData]:
+        segment: Optional[dict[str, Any]] = None
+    ) -> list[FunnelData]:
         """
         Analizar embudo de conversión
         
@@ -460,7 +460,7 @@ class AnalyticsService(BaseService):
             segment: Segmento específico a analizar
             
         Returns:
-            List[FunnelData]: Datos del embudo de conversión
+            list[FunnelData]: Datos del embudo de conversión
         """
         try:
             funnel_steps = self._get_funnel_definition(funnel_name)
@@ -509,15 +509,15 @@ class AnalyticsService(BaseService):
             logger.error(f"Error analizando embudo {funnel_name}: {str(e)}")
             raise BusinessLogicError(f"Error analizando embudo: {str(e)}")
     
-    def get_real_time_metrics(self) -> Dict[str, Any]:
+    def get_real_time_metrics(self) -> dict[str, Any]:
         """
         Obtener métricas en tiempo real
         
         Returns:
-            Dict[str, Any]: Métricas en tiempo real
+            dict[str, Any]: Métricas en tiempo real
         """
         try:
-            current_time = datetime.utcnow()
+            current_time = datetime.now(timezone.utc)
             
             # Métricas de los últimos 5 minutos
             last_5_min = current_time - timedelta(minutes=5)
@@ -546,8 +546,8 @@ class AnalyticsService(BaseService):
         self,
         dashboard_type: str,
         user_id: int,
-        filters: Optional[Dict[str, Any]] = None
-    ) -> List[DashboardWidget]:
+        filters: Optional[dict[str, Any]] = None
+    ) -> list[DashboardWidget]:
         """
         Generar dashboard dinámico
         
@@ -557,7 +557,7 @@ class AnalyticsService(BaseService):
             filters: Filtros aplicados
             
         Returns:
-            List[DashboardWidget]: Widgets del dashboard
+            list[DashboardWidget]: Widgets del dashboard
         """
         try:
             widgets = []
@@ -581,9 +581,9 @@ class AnalyticsService(BaseService):
     
     def create_custom_report(
         self,
-        report_config: Dict[str, Any],
+        report_config: dict[str, Any],
         user_id: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Crear reporte personalizado
         
@@ -592,7 +592,7 @@ class AnalyticsService(BaseService):
             user_id: ID del usuario que solicita
             
         Returns:
-            Dict[str, Any]: Datos del reporte
+            dict[str, Any]: Datos del reporte
         """
         try:
             report_data = {
@@ -600,7 +600,7 @@ class AnalyticsService(BaseService):
                     'title': report_config.get('title', 'Reporte Personalizado'),
                     'description': report_config.get('description', ''),
                     'created_by': user_id,
-                    'created_at': datetime.utcnow(),
+                    'created_at': datetime.now(timezone.utc),
                     'filters': report_config.get('filters', {}),
                     'date_range': report_config.get('date_range', {})
                 },
@@ -629,7 +629,7 @@ class AnalyticsService(BaseService):
         metric: str,
         periods_ahead: int = 12,
         confidence_level: float = 0.95
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Obtener analytics predictivos
         
@@ -639,7 +639,7 @@ class AnalyticsService(BaseService):
             confidence_level: Nivel de confianza
             
         Returns:
-            Dict[str, Any]: Predicciones y métricas
+            dict[str, Any]: Predicciones y métricas
         """
         try:
             # Obtener datos históricos
@@ -669,7 +669,7 @@ class AnalyticsService(BaseService):
                 'predictions': predictions,
                 'accuracy_metrics': accuracy_metrics,
                 'confidence_level': confidence_level,
-                'generated_at': datetime.utcnow()
+                'generated_at': datetime.now(timezone.utc)
             }
             
         except Exception as e:
@@ -678,8 +678,8 @@ class AnalyticsService(BaseService):
     
     def segment_users(
         self,
-        segmentation_criteria: Dict[str, Any]
-    ) -> Dict[str, List[int]]:
+        segmentation_criteria: dict[str, Any]
+    ) -> dict[str, list[int]]:
         """
         Segmentar usuarios basado en criterios específicos
         
@@ -687,7 +687,7 @@ class AnalyticsService(BaseService):
             segmentation_criteria: Criterios de segmentación
             
         Returns:
-            Dict[str, List[int]]: Segmentos con IDs de usuarios
+            dict[str, list[int]]: Segmentos con IDs de usuarios
         """
         try:
             segments = {}
@@ -762,7 +762,7 @@ class AnalyticsService(BaseService):
             name="active_entrepreneurs",
             value=current_value,
             type=MetricType.GAUGE.value,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             trend=trend,
             previous_value=previous_value
         )
@@ -788,7 +788,7 @@ class AnalyticsService(BaseService):
             name="projects_in_progress",
             value=current_value,
             type=MetricType.GAUGE.value,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.now(timezone.utc)
         )
     
     def _calculate_project_success_rate(
@@ -817,7 +817,7 @@ class AnalyticsService(BaseService):
             name="project_success_rate",
             value=round(success_rate, 2),
             type=MetricType.PERCENTAGE.value,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.now(timezone.utc)
         )
     
     def _calculate_mentorship_hours(
@@ -846,7 +846,7 @@ class AnalyticsService(BaseService):
             name="mentorship_hours",
             value=round(total_hours, 1),
             type=MetricType.GAUGE.value,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.now(timezone.utc)
         )
     
     def _calculate_user_retention(
@@ -874,7 +874,7 @@ class AnalyticsService(BaseService):
                 name="user_retention",
                 value=0,
                 type=MetricType.PERCENTAGE.value,
-                timestamp=datetime.utcnow()
+                timestamp=datetime.now(timezone.utc)
             )
         
         # Usuarios que tuvieron actividad en el período
@@ -889,7 +889,7 @@ class AnalyticsService(BaseService):
             name="user_retention",
             value=round(retention_rate, 2),
             type=MetricType.PERCENTAGE.value,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.now(timezone.utc)
         )
     
     # Métodos de procesamiento de eventos
@@ -911,7 +911,7 @@ class AnalyticsService(BaseService):
     
     def _update_realtime_counters(self, event: AnalyticsEvent) -> None:
         """Actualizar contadores en tiempo real en Redis"""
-        current_hour = datetime.utcnow().strftime('%Y%m%d%H')
+        current_hour = datetime.now(timezone.utc).strftime('%Y%m%d%H')
         
         # Contadores globales
         self.redis.incr(f"events:{current_hour}")
@@ -938,7 +938,7 @@ class AnalyticsService(BaseService):
             self.redis.incr("registrations:today")
             
             # Tracking para análisis de cohorte
-            cohort_key = f"cohort:{datetime.utcnow().strftime('%Y%m')}"
+            cohort_key = f"cohort:{datetime.now(timezone.utc).strftime('%Y%m')}"
             self.redis.sadd(cohort_key, event.user_id)
     
     def _process_project_created(self, event: AnalyticsEvent) -> None:
@@ -949,7 +949,7 @@ class AnalyticsService(BaseService):
             
             # Tracking de embudo de conversión
             funnel_key = f"funnel:project_creation:{event.user_id}"
-            self.redis.hset(funnel_key, "project_created", datetime.utcnow().timestamp())
+            self.redis.hset(funnel_key, "project_created", datetime.now(timezone.utc).timestamp())
     
     # Métodos de análisis de cohortes
     def _get_user_cohorts(
@@ -957,7 +957,7 @@ class AnalyticsService(BaseService):
         cohort_type: str, 
         start_date: datetime, 
         end_date: datetime
-    ) -> Dict[str, List[int]]:
+    ) -> dict[str, list[int]]:
         """Obtener usuarios agrupados por cohorte"""
         cohorts = defaultdict(list)
         
@@ -979,7 +979,7 @@ class AnalyticsService(BaseService):
     
     def _calculate_cohort_retention(
         self, 
-        user_ids: List[int], 
+        user_ids: list[int], 
         cohort_period: str,
         cohort_type: str
     ) -> CohortData:
@@ -1024,15 +1024,15 @@ class AnalyticsService(BaseService):
     def _generate_executive_dashboard(
         self, 
         user_id: int, 
-        filters: Optional[Dict[str, Any]]
-    ) -> List[DashboardWidget]:
+        filters: Optional[dict[str, Any]]
+    ) -> list[DashboardWidget]:
         """Generar dashboard ejecutivo"""
         widgets = []
         
         # Widget 1: KPIs principales
         kpis = self.get_ecosystem_kpis(
-            datetime.utcnow() - timedelta(days=30),
-            datetime.utcnow()
+            datetime.now(timezone.utc) - timedelta(days=30),
+            datetime.now(timezone.utc)
         )
         
         widgets.append(DashboardWidget(
@@ -1111,7 +1111,7 @@ class AnalyticsService(BaseService):
         except Exception as e:
             logger.error(f"Error encolando evento: {str(e)}")
     
-    def _extract_metadata(self, properties: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_metadata(self, properties: dict[str, Any]) -> dict[str, Any]:
         """Extraer metadata del evento"""
         metadata = {}
         
@@ -1150,7 +1150,7 @@ class AnalyticsService(BaseService):
     
     def _get_new_registrations_today(self) -> int:
         """Obtener nuevos registros de hoy"""
-        today = datetime.utcnow().date()
+        today = datetime.now(timezone.utc).date()
         return User.query.filter(
             func.date(User.created_at) == today
         ).count()
@@ -1205,12 +1205,12 @@ class AnalyticsService(BaseService):
         except Exception as e:
             self.logger.warning(f"Redis no disponible: {e}")
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Verifica el estado de salud del servicio de analytics."""
         health_info = {
             'service': 'AnalyticsService',
             'status': 'healthy',
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'checks': {}
         }
         
@@ -1247,7 +1247,7 @@ analytics_service = AnalyticsService()
 
 
 # Funciones de conveniencia para tracking rápido
-def track_user_action(user_id: int, action: str, properties: Dict[str, Any] = None):
+def track_user_action(user_id: int, action: str, properties: dict[str, Any] = None):
     """Trackear acción de usuario"""
     return analytics_service.track_event(
         event_type=action,

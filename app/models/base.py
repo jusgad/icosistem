@@ -7,7 +7,7 @@ import uuid
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional, List, Union
+from typing import Any, Optional, Union
 from flask import current_app, g
 from flask_login import current_user
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, event
@@ -118,7 +118,7 @@ class BaseModel(db.Model):
     # ====================================
     
     def to_dict(self, include_relationships: bool = False, 
-                exclude_fields: List[str] = None) -> Dict[str, Any]:
+                exclude_fields: list[str] = None) -> dict[str, Any]:
         """
         Convertir modelo a diccionario.
         
@@ -173,7 +173,7 @@ class BaseModel(db.Model):
         return json.dumps(self.to_dict(**kwargs), ensure_ascii=False, indent=2, default=str)
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], exclude_fields: List[str] = None):
+    def from_dict(cls, data: dict[str, Any], exclude_fields: list[str] = None):
         """
         Crear instancia del modelo desde diccionario.
         
@@ -247,7 +247,7 @@ class BaseModel(db.Model):
             models_logger.error(f"Error saving {self.__class__.__name__}: {str(e)}")
             raise
     
-    def update(self, data: Dict[str, Any], commit: bool = True):
+    def update(self, data: dict[str, Any], commit: bool = True):
         """Actualizar modelo con nuevos datos."""
         try:
             for key, value in data.items():
@@ -358,22 +358,22 @@ class TimestampMixin:
     @property
     def age(self):
         """Obtener edad del registro desde su creación."""
-        return datetime.utcnow() - self.created_at
+        return datetime.now(timezone.utc) - self.created_at
     
     @property
     def time_since_update(self):
         """Obtener tiempo desde la última actualización."""
-        return datetime.utcnow() - self.updated_at
+        return datetime.now(timezone.utc) - self.updated_at
     
     def is_recent(self, hours: int = 24) -> bool:
         """Verificar si el registro es reciente."""
         from datetime import timedelta
-        return self.created_at > (datetime.utcnow() - timedelta(hours=hours))
+        return self.created_at > (datetime.now(timezone.utc) - timedelta(hours=hours))
     
     def was_updated_recently(self, hours: int = 1) -> bool:
         """Verificar si fue actualizado recientemente."""
         from datetime import timedelta
-        return self.updated_at > (datetime.utcnow() - timedelta(hours=hours))
+        return self.updated_at > (datetime.now(timezone.utc) - timedelta(hours=hours))
 
 
 # ====================================
@@ -456,7 +456,7 @@ class SoftDeleteMixin:
             user_id = current_user.id
         
         self.is_deleted = True
-        self.deleted_at = datetime.utcnow()
+        self.deleted_at = datetime.now(timezone.utc)
         self.deleted_by_id = user_id
         
         if commit:
@@ -620,7 +620,7 @@ def get_or_create(model_class, defaults=None, **kwargs):
     return instance, True
 
 
-def bulk_create(model_class, data_list: List[Dict[str, Any]], batch_size: int = 1000):
+def bulk_create(model_class, data_list: list[dict[str, Any]], batch_size: int = 1000):
     """
     Crear múltiples instancias de manera eficiente.
     
@@ -653,7 +653,7 @@ def bulk_create(model_class, data_list: List[Dict[str, Any]], batch_size: int = 
         raise
 
 
-def bulk_update(model_class, updates: List[Dict[str, Any]], id_field: str = 'id'):
+def bulk_update(model_class, updates: list[dict[str, Any]], id_field: str = 'id'):
     """
     Actualizar múltiples instancias de manera eficiente.
     

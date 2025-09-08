@@ -8,7 +8,7 @@ detallados sobre actividades, métricas y progreso de emprendedores asignados.
 import os
 import json
 import tempfile
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from collections import defaultdict
 from decimal import Decimal
 
@@ -267,7 +267,7 @@ def generate_post():
             'include_details': include_details,
             'group_by': group_by,
             'generated_by': current_user.id,
-            'generated_at': datetime.utcnow()
+            'generated_at': datetime.now(timezone.utc)
         }
         
         # Generar reporte según el tipo
@@ -684,7 +684,7 @@ def export_report(report_type):
             'format': format_type,
             'start_date': start_date,
             'end_date': end_date,
-            'timestamp': datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+            'timestamp': datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
         }
         
         if format_type == 'excel':
@@ -810,13 +810,13 @@ def _get_recent_reports(ally_id, limit=5):
     return [
         {
             'type': 'overview',
-            'generated_at': datetime.utcnow() - timedelta(days=1),
+            'generated_at': datetime.now(timezone.utc) - timedelta(days=1),
             'period': 'current_month',
             'format': 'pdf'
         },
         {
             'type': 'entrepreneurs',
-            'generated_at': datetime.utcnow() - timedelta(days=3),
+            'generated_at': datetime.now(timezone.utc) - timedelta(days=3),
             'period': 'current_quarter',
             'format': 'excel'
         }
@@ -825,7 +825,7 @@ def _get_recent_reports(ally_id, limit=5):
 
 def _get_weekly_trends(ally, weeks=8):
     """Obtiene tendencias semanales de actividad."""
-    end_date = datetime.utcnow().date()
+    end_date = datetime.now(timezone.utc).date()
     start_date = end_date - timedelta(weeks=weeks)
     
     # Horas por semana
@@ -924,7 +924,7 @@ def _get_activity_time_distribution(ally, start_date, end_date):
 
 def _get_upcoming_milestones(ally, days_ahead=30):
     """Obtiene próximos hitos y deadlines."""
-    cutoff_date = datetime.utcnow().date() + timedelta(days=days_ahead)
+    cutoff_date = datetime.now(timezone.utc).date() + timedelta(days=days_ahead)
     
     # Tareas con fechas límite próximas
     upcoming_tasks = (
@@ -933,7 +933,7 @@ def _get_upcoming_milestones(ally, days_ahead=30):
         .filter(
             Project.ally_id == ally.id,
             Task.due_date <= cutoff_date,
-            Task.due_date >= datetime.utcnow().date(),
+            Task.due_date >= datetime.now(timezone.utc).date(),
             Task.status != 'completed'
         )
         .order_by(Task.due_date)

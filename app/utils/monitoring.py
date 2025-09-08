@@ -6,9 +6,9 @@ Integra Prometheus, health checks y métricas de negocio.
 import os
 import time
 import psutil
-from typing import Dict, List, Any, Optional, Callable
+from typing import Any, Optional, Callable
 from functools import wraps
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from flask import Flask, request, g, jsonify
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
 
@@ -105,7 +105,7 @@ integration_request_duration_seconds = Histogram(
 # DECORADORES PARA MÉTRICAS
 # ====================================
 
-def track_time(metric_name: str, labels: Optional[Dict[str, str]] = None):
+def track_time(metric_name: str, labels: Optional[dict[str, str]] = None):
     """Decorator para rastrear tiempo de ejecución."""
     def decorator(func: Callable) -> Callable:
         @wraps(func)
@@ -134,7 +134,7 @@ def track_time(metric_name: str, labels: Optional[Dict[str, str]] = None):
     return decorator
 
 
-def count_calls(metric: Counter, labels: Optional[Dict[str, str]] = None):
+def count_calls(metric: Counter, labels: Optional[dict[str, str]] = None):
     """Decorator para contar llamadas a funciones."""
     def decorator(func: Callable) -> Callable:
         @wraps(func)
@@ -338,11 +338,11 @@ class HealthCheck:
     def __init__(self):
         self.checks = {}
     
-    def add_check(self, name: str, check_func: Callable[[], Dict[str, Any]]):
+    def add_check(self, name: str, check_func: Callable[[], dict[str, Any]]):
         """Agregar un check de salud."""
         self.checks[name] = check_func
     
-    def run_checks(self) -> Dict[str, Any]:
+    def run_checks(self) -> dict[str, Any]:
         """Ejecutar todos los checks de salud."""
         results = {}
         overall_healthy = True
@@ -357,7 +357,7 @@ class HealthCheck:
                     'status': 'healthy' if result.get('healthy', True) else 'unhealthy',
                     'details': result,
                     'response_time': duration,
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }
                 
                 if not result.get('healthy', True):
@@ -367,14 +367,14 @@ class HealthCheck:
                 results[name] = {
                     'status': 'unhealthy',
                     'error': str(e),
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }
                 overall_healthy = False
         
         return {
             'overall': 'healthy' if overall_healthy else 'unhealthy',
             'checks': results,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
 
 
@@ -504,7 +504,7 @@ health_checker.add_check('disk_space', check_disk_space)
 health_checker.add_check('email_service', check_email_service)
 
 
-def perform_health_checks() -> Dict[str, Any]:
+def perform_health_checks() -> dict[str, Any]:
     """
     Ejecutar todos los health checks registrados.
     
@@ -518,7 +518,7 @@ def perform_health_checks() -> Dict[str, Any]:
 # DASHBOARD DE MÉTRICAS
 # ====================================
 
-def get_metrics_summary() -> Dict[str, Any]:
+def get_metrics_summary() -> dict[str, Any]:
     """Obtener resumen de métricas para dashboard."""
     try:
         from app.models.user import User
@@ -527,7 +527,7 @@ def get_metrics_summary() -> Dict[str, Any]:
         from app.extensions import db
         from datetime import datetime, timedelta
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         last_24h = now - timedelta(hours=24)
         last_7d = now - timedelta(days=7)
         last_30d = now - timedelta(days=30)
@@ -600,7 +600,7 @@ class AlertManager:
         """Agregar handler para alertas."""
         self.alert_handlers.append(handler)
     
-    def check_thresholds(self, metrics: Dict[str, Any]):
+    def check_thresholds(self, metrics: dict[str, Any]):
         """Verificar umbrales y enviar alertas si es necesario."""
         alerts = []
         
@@ -628,7 +628,7 @@ class AlertManager:
         for alert in alerts:
             self._send_alert(alert)
     
-    def _send_alert(self, alert: Dict[str, Any]):
+    def _send_alert(self, alert: dict[str, Any]):
         """Enviar alerta a todos los handlers registrados."""
         for handler in self.alert_handlers:
             try:
@@ -643,7 +643,7 @@ class AlertManager:
 alert_manager = AlertManager()
 
 
-def email_alert_handler(alert_type: str, alert: Dict[str, Any]):
+def email_alert_handler(alert_type: str, alert: dict[str, Any]):
     """Handler para enviar alertas por email."""
     try:
         from flask_mail import Message
@@ -657,7 +657,7 @@ def email_alert_handler(alert_type: str, alert: Dict[str, Any]):
 Alert: {alert['message']}
 Value: {alert['value']}
 Threshold: {alert['threshold']}
-Time: {datetime.utcnow().isoformat()}
+Time: {datetime.now(timezone.utc).isoformat()}
             """
         )
         

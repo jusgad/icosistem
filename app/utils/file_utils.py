@@ -14,8 +14,8 @@ import mimetypes
 import hashlib
 import re
 from pathlib import Path
-from datetime import datetime
-from typing import Optional, Set, Generator, Union, Dict, List
+from datetime import datetime, timezone
+from typing import Optional, Generator, Union
 
 from werkzeug.utils import secure_filename as werkzeug_secure_filename
 from flask import current_app
@@ -33,7 +33,7 @@ DEFAULT_ALLOWED_DOCUMENT_EXTENSIONS = {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt
 DEFAULT_ALLOWED_EXTENSIONS = DEFAULT_ALLOWED_IMAGE_EXTENSIONS.union(DEFAULT_ALLOWED_DOCUMENT_EXTENSIONS)
 
 # Mapeo de extensiones a categorías (ejemplo)
-FILE_CATEGORIES: Dict[str, List[str]] = {
+FILE_CATEGORIES: dict[str, list[str]] = {
     'image': ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'tiff'],
     'document': ['pdf', 'doc', 'docx', 'odt', 'rtf', 'txt'],
     'spreadsheet': ['xls', 'xlsx', 'ods', 'csv'],
@@ -59,7 +59,7 @@ def get_file_extension(filename: str) -> str:
         return ''
     return filename.rsplit('.', 1)[1].lower()
 
-def is_allowed_extension(filename: str, allowed_extensions: Optional[Set[str]] = None) -> bool:
+def is_allowed_extension(filename: str, allowed_extensions: Optional[set[str]] = None) -> bool:
     """
     Verifica si la extensión de un archivo está permitida.
 
@@ -90,7 +90,7 @@ def generate_unique_filename(original_filename: str, prefix: str = "") -> str:
         Nombre de archivo único.
     """
     extension = get_file_extension(original_filename)
-    timestamp = int(datetime.utcnow().timestamp())
+    timestamp = int(datetime.now(timezone.utc).timestamp())
     unique_id = uuid.uuid4().hex[:8] # UUID corto para legibilidad
     
     base_name = f"{unique_id}_{timestamp}"

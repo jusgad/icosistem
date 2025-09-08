@@ -8,10 +8,10 @@ import sys
 import logging
 import logging.config
 from logging.handlers import RotatingFileHandler, SMTPHandler
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import traceback
-from typing import Dict, Any, Optional
+from typing import Any, Optional
 from flask import request, session, g, has_request_context
 from flask_login import current_user
 
@@ -23,7 +23,7 @@ class RequestFormatter(logging.Formatter):
         """Formatear el record incluyendo información del contexto."""
         
         # Información básica
-        record.timestamp = datetime.utcnow().isoformat()
+        record.timestamp = datetime.now(timezone.utc).isoformat()
         record.service = 'ecosistema-emprendimiento'
         
         # Información de request si está disponible
@@ -213,7 +213,7 @@ def setup_logging(level: int = logging.INFO,
                  max_bytes: int = 10 * 1024 * 1024,  # 10MB
                  backup_count: int = 5,
                  enable_email_alerts: bool = False,
-                 smtp_config: Optional[Dict[str, Any]] = None) -> None:
+                 smtp_config: Optional[dict[str, Any]] = None) -> None:
     """
     Configurar el sistema de logging.
     

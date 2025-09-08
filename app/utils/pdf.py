@@ -53,7 +53,7 @@ import tempfile
 from datetime import datetime, date
 from decimal import Decimal
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Any, Tuple, BinaryIO
+from typing import Optional, Union, Any, BinaryIO
 from dataclasses import dataclass, field
 from enum import Enum
 import base64
@@ -226,15 +226,15 @@ class PDFMetadata:
     author: str = "Ecosistema de Emprendimiento"
     subject: str = ""
     creator: str = "Sistema de Gestión de Emprendimiento"
-    keywords: List[str] = field(default_factory=list)
+    keywords: list[str] = field(default_factory=list)
     creation_date: Optional[datetime] = None
 
 @dataclass
 class PDFSettings:
     """Configuración para generación de PDF."""
-    page_size: Tuple[float, float] = A4
+    page_size: tuple[float, float] = A4
     orientation: PageOrientation = PageOrientation.PORTRAIT
-    margins: Dict[str, float] = field(default_factory=lambda: PDF_CONFIG['default_margins'].copy())
+    margins: dict[str, float] = field(default_factory=lambda: PDF_CONFIG['default_margins'].copy())
     font_family: str = 'Helvetica'
     font_size: int = 10
     include_header: bool = True
@@ -279,7 +279,7 @@ class PDFGenerator:
         
         logger.info("PDFGenerator inicializado")
     
-    def generate_document(self, content: List[Any], 
+    def generate_document(self, content: list[Any], 
                          output_path: str,
                          metadata: Optional[PDFMetadata] = None) -> str:
         """
@@ -437,7 +437,7 @@ class PDFGenerator:
 # GENERADORES ESPECÍFICOS PARA EMPRENDIMIENTO
 # ==============================================================================
 
-def generate_entrepreneur_report(entrepreneur_data: Dict[str, Any], 
+def generate_entrepreneur_report(entrepreneur_data: dict[str, Any], 
                                output_path: Optional[str] = None) -> str:
     """
     Genera reporte completo de emprendedor.
@@ -579,7 +579,7 @@ def generate_entrepreneur_report(entrepreneur_data: Dict[str, Any],
     generator = PDFGenerator()
     return generator.generate_document(content, output_path, metadata)
 
-def generate_business_plan(plan_data: Dict[str, Any], 
+def generate_business_plan(plan_data: dict[str, Any], 
                           output_path: Optional[str] = None) -> str:
     """
     Genera plan de negocio estructurado.
@@ -912,7 +912,7 @@ def generate_certificate(participant_name: str,
     generator = PDFGenerator(settings)
     return generator.generate_document(content, output_path, metadata)
 
-def generate_invoice(invoice_data: Dict[str, Any], 
+def generate_invoice(invoice_data: dict[str, Any], 
                     output_path: Optional[str] = None) -> str:
     """
     Genera factura o presupuesto.
@@ -1084,7 +1084,7 @@ def generate_invoice(invoice_data: Dict[str, Any],
     generator = PDFGenerator()
     return generator.generate_document(content, output_path, metadata)
 
-def generate_mentorship_report(mentorship_data: Dict[str, Any], 
+def generate_mentorship_report(mentorship_data: dict[str, Any], 
                              output_path: Optional[str] = None) -> str:
     """
     Genera reporte de sesión de mentoría.
@@ -1214,7 +1214,7 @@ def generate_mentorship_report(mentorship_data: Dict[str, Any],
 # UTILIDADES DE GRÁFICOS Y VISUALIZACIONES
 # ==============================================================================
 
-def create_business_chart(data: Dict[str, Any], chart_type: str = 'bar') -> Drawing:
+def create_business_chart(data: dict[str, Any], chart_type: str = 'bar') -> Drawing:
     """
     Crea gráfico para documentos de negocio.
     
@@ -1309,7 +1309,7 @@ def add_qr_code(content: str, size: float = 2*cm) -> Image:
 # UTILIDADES DE MANIPULACIÓN DE PDF
 # ==============================================================================
 
-def merge_pdfs(pdf_paths: List[str], output_path: str) -> str:
+def merge_pdfs(pdf_paths: list[str], output_path: str) -> str:
     """
     Une múltiples PDFs en uno solo.
     
@@ -1344,7 +1344,7 @@ def merge_pdfs(pdf_paths: List[str], output_path: str) -> str:
         logger.error(f"Error uniendo PDFs: {e}")
         raise PDFError(f"Error uniendo PDFs: {e}")
 
-def split_pdf(pdf_path: str, output_dir: str, pages_per_file: int = 1) -> List[str]:
+def split_pdf(pdf_path: str, output_dir: str, pages_per_file: int = 1) -> list[str]:
     """
     Divide un PDF en múltiples archivos.
     
@@ -1456,7 +1456,7 @@ def configure_pdf_settings(**kwargs):
     PDF_CONFIG.update(kwargs)
     logger.info("Configuración de PDF actualizada")
 
-def get_pdf_info() -> Dict[str, Any]:
+def get_pdf_info() -> dict[str, Any]:
     """Obtiene información sobre capacidades de PDF."""
     return {
         'reportlab_available': REPORTLAB_AVAILABLE,

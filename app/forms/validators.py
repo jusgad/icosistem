@@ -13,7 +13,7 @@ import logging
 import hashlib
 import mimetypes
 from datetime import datetime, date, timedelta
-from typing import Dict, List, Any, Optional, Union, Callable, Set, Tuple
+from typing import Any, Optional, Union, Callable
 from urllib.parse import urlparse
 from decimal import Decimal, InvalidOperation
 import dns.resolver
@@ -285,7 +285,7 @@ class TaxID(BaseValidator):
 class InternationalPhone(BaseValidator):
     """Validador avanzado para números telefónicos internacionales"""
     
-    def __init__(self, regions: List[str] = None, types: List[PhoneNumberType] = None, 
+    def __init__(self, regions: list[str] = None, types: list[PhoneNumberType] = None, 
                  message: str = None):
         super().__init__(message)
         self.regions = regions or ['CO', 'US', 'MX', 'BR', 'AR', 'PE', 'CL']
@@ -552,8 +552,8 @@ class SecureURL(BaseValidator):
 class SecureFileUpload(BaseValidator):
     """Validador avanzado para subida de archivos con seguridad"""
     
-    def __init__(self, allowed_extensions: Set[str], max_size: int = 10 * 1024 * 1024,
-                 allowed_mimes: Set[str] = None, scan_viruses: bool = False,
+    def __init__(self, allowed_extensions: set[str], max_size: int = 10 * 1024 * 1024,
+                 allowed_mimes: set[str] = None, scan_viruses: bool = False,
                  message: str = None):
         super().__init__(message)
         self.allowed_extensions = {ext.lower() for ext in allowed_extensions}
@@ -887,7 +887,7 @@ class Unique(BaseValidator):
     """Validador genérico para unicidad en base de datos"""
     
     def __init__(self, model, field: str, message: str = None,
-                 filters: Dict[str, Any] = None, case_sensitive: bool = False,
+                 filters: dict[str, Any] = None, case_sensitive: bool = False,
                  exclude_current: bool = False):
         super().__init__(message)
         self.model = model
@@ -1108,7 +1108,7 @@ class IndustryExpertise(BaseValidator):
 class ConditionalRequired(BaseValidator):
     """Validador que hace requerido un campo según condiciones"""
     
-    def __init__(self, condition_field: str, condition_values: List[Any],
+    def __init__(self, condition_field: str, condition_values: list[Any],
                  message: str = None):
         super().__init__(message)
         self.condition_field = condition_field

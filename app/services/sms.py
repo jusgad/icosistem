@@ -12,8 +12,8 @@ import re
 import json
 import logging
 import phonenumbers
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Union, Any, Tuple
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Union, Any
 from enum import Enum
 from dataclasses import dataclass, asdict
 from functools import wraps
@@ -78,7 +78,7 @@ class SMSTemplate:
     name: str
     content: str
     sms_type: SMSType
-    variables: List[str]
+    variables: list[str]
     max_length: int = 160
     language: str = "es"
     active: bool = True
@@ -92,7 +92,7 @@ class SMSMessage:
     sms_type: SMSType = SMSType.NOTIFICATION
     priority: SMSPriority = SMSPriority.NORMAL
     template_id: Optional[str] = None
-    variables: Optional[Dict[str, Any]] = None
+    variables: Optional[dict[str, Any]] = None
     scheduled_at: Optional[datetime] = None
     expires_at: Optional[datetime] = None
     user_id: Optional[int] = None
@@ -114,13 +114,13 @@ class SMSResult:
     
     def __post_init__(self):
         if self.timestamp is None:
-            self.timestamp = datetime.utcnow()
+            self.timestamp = datetime.now(timezone.utc)
 
 
 class SMSProvider:
     """Clase base para proveedores SMS"""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         self.config = config
         self.session = self._create_session()
         self.name = self.__class__.__name__.replace('Provider', '')
@@ -154,7 +154,7 @@ class SMSProvider:
 class TwilioProvider(SMSProvider):
     """Proveedor Twilio SMS"""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         super().__init__(config)
         self.client = TwilioClient(
             config['account_sid'],
@@ -178,7 +178,7 @@ class TwilioProvider(SMSProvider):
             
             if message.expires_at:
                 params['validity_period'] = int(
-                    (message.expires_at - datetime.utcnow()).total_seconds()
+                    (message.expires_at - datetime.now(timezone.utc)).total_seconds()
                 )
             
             # Enviar mensaje
@@ -281,7 +281,7 @@ class TwilioProvider(SMSProvider):
 class AWSSNSProvider(SMSProvider):
     """Proveedor AWS SNS"""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         super().__init__(config)
         self.sns_client = boto3.client(
             'sns',
@@ -357,7 +357,7 @@ class AWSSNSProvider(SMSProvider):
 class VonageProvider(SMSProvider):
     """Proveedor Vonage (ex-Nexmo)"""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         super().__init__(config)
         self.api_key = config['api_key']
         self.api_secret = config['api_secret']
@@ -480,7 +480,7 @@ class SMSService:
             SMSType.NOTIFICATION: {'limit': 10, 'window': 3600},  # 10 notif por hora
         }
     
-    def _initialize_providers(self) -> List[SMSProvider]:
+    def _initialize_providers(self) -> list[SMSProvider]:
         """Inicializa proveedores SMS"""
         providers = []
         
@@ -504,7 +504,7 @@ class SMSService:
         
         return providers
     
-    def _load_templates(self) -> Dict[str, SMSTemplate]:
+    def _load_templates(self) -> dict[str, SMSTemplate]:
         """Carga templates predefinidos"""
         templates = {
             'welcome_entrepreneur': SMSTemplate(
@@ -604,7 +604,7 @@ class SMSService:
                 return SMSResult(
                     success=True,
                     status=SMSStatus.QUEUED,
-                    message_id=f"queued_{datetime.utcnow().timestamp()}"
+                    message_id=f"queued_{datetime.now(timezone.utc).timestamp()}"
                 )
             
             # Envío síncrono
@@ -618,8 +618,8 @@ class SMSService:
                 error_message=str(e)
             )
     
-    def send_bulk_sms(self, messages: List[SMSMessage], 
-                     batch_size: int = 100) -> Dict[str, Any]:
+    def send_bulk_sms(self, messages: list[SMSMessage], 
+                     batch_size: int = 100) -> dict[str, Any]:
         """
         Envía SMS en lote de forma asíncrona.
         
@@ -678,7 +678,7 @@ class SMSService:
                 'otp_code': code,
                 'expiry_minutes': str(expiry_minutes)
             },
-            expires_at=datetime.utcnow() + timedelta(minutes=expiry_minutes)
+            expires_at=datetime.now(timezone.utc) + timedelta(minutes=expiry_minutes)
         )
         
         return self.send_sms(message)
@@ -703,7 +703,7 @@ class SMSService:
         
         return self.send_sms(message, async_send=True)
     
-    def send_meeting_reminder(self, phone_number: str, meeting_data: Dict[str, Any],
+    def send_meeting_reminder(self, phone_number: str, meeting_data: dict[str, Any],
                             user_id: Optional[int] = None) -> SMSResult:
         """Envía recordatorio de reunión"""
         message = SMSMessage(
@@ -738,7 +738,7 @@ class SMSService:
         
         return SMSStatus.PENDING
     
-    def get_provider_balances(self) -> Dict[str, Optional[float]]:
+    def get_provider_balances(self) -> dict[str, Optional[float]]:
         """Obtiene balances de todos los proveedores"""
         balances = {}
         for provider in self.providers:
@@ -787,12 +787,12 @@ class SMSService:
             return False
     
     def get_analytics(self, start_date: datetime = None,
-                     end_date: datetime = None) -> Dict[str, Any]:
+                     end_date: datetime = None) -> dict[str, Any]:
         """Obtiene analytics de SMS"""
         if not start_date:
-            start_date = datetime.utcnow() - timedelta(days=30)
+            start_date = datetime.now(timezone.utc) - timedelta(days=30)
         if not end_date:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(timezone.utc)
         
         # En producción, esto consultaría la base de datos
         # Por ahora retornamos datos de ejemplo
@@ -893,7 +893,7 @@ class SMSService:
         except:
             return phone_number
     
-    def _render_template(self, template_id: str, variables: Dict[str, Any]) -> str:
+    def _render_template(self, template_id: str, variables: dict[str, Any]) -> str:
         """Renderiza un template con las variables"""
         if template_id not in self.templates:
             raise ValidationError(f"Template {template_id} not found")

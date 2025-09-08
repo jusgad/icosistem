@@ -59,7 +59,7 @@ def verify_token(token: str, secret: str = None) -> bool:
     except Exception:
         return False
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict, Any, Tuple, Union, List
+from typing import Optional, Any, Union
 from dataclasses import dataclass
 from enum import Enum
 import os
@@ -209,7 +209,7 @@ class EncryptedData:
     iv: Optional[bytes] = None
     tag: Optional[bytes] = None
     algorithm: str = 'aes_gcm'
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
 @dataclass
 class KeyPair:
@@ -233,7 +233,7 @@ class TokenData:
     token: str
     expires_at: Optional[datetime] = None
     token_type: str = 'access'
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
 # ==============================================================================
 # UTILIDADES DE HASHING DE CONTRASEÑAS
@@ -256,7 +256,7 @@ def generate_salt(length: int = None) -> bytes:
 
 def hash_password(password: str, 
                  salt: Optional[bytes] = None,
-                 algorithm: HashAlgorithm = None) -> Tuple[str, bytes]:
+                 algorithm: HashAlgorithm = None) -> tuple[str, bytes]:
     """
     Hace hash de una contraseña usando el algoritmo especificado.
     
@@ -298,7 +298,7 @@ def hash_password(password: str,
         logger.error(f"Error hasheando contraseña: {e}")
         raise HashingError(f"Error en hash de contraseña: {e}")
 
-def _hash_pbkdf2(password: bytes, salt: bytes) -> Tuple[str, bytes]:
+def _hash_pbkdf2(password: bytes, salt: bytes) -> tuple[str, bytes]:
     """Hash usando PBKDF2."""
     if not CRYPTOGRAPHY_AVAILABLE:
         # Fallback usando hashlib
@@ -319,7 +319,7 @@ def _hash_pbkdf2(password: bytes, salt: bytes) -> Tuple[str, bytes]:
     hash_bytes = kdf.derive(password)
     return base64.b64encode(hash_bytes).decode('utf-8'), salt
 
-def _hash_bcrypt(password: bytes, salt: bytes) -> Tuple[str, bytes]:
+def _hash_bcrypt(password: bytes, salt: bytes) -> tuple[str, bytes]:
     """Hash usando bcrypt."""
     if not BCRYPT_AVAILABLE:
         raise HashingError("bcrypt no está disponible")
@@ -330,7 +330,7 @@ def _hash_bcrypt(password: bytes, salt: bytes) -> Tuple[str, bytes]:
     hashed = bcrypt.hashpw(password, bcrypt.gensalt(rounds=rounds))
     return base64.b64encode(hashed).decode('utf-8'), salt
 
-def _hash_argon2(password: bytes, salt: bytes) -> Tuple[str, bytes]:
+def _hash_argon2(password: bytes, salt: bytes) -> tuple[str, bytes]:
     """Hash usando Argon2."""
     if not ARGON2_AVAILABLE:
         raise HashingError("argon2 no está disponible")
@@ -830,7 +830,7 @@ def generate_api_key(prefix: str = "ek", length: int = 32) -> str:
     
     return f"{prefix}_{timestamp}_{random_part}"
 
-def generate_jwt_token(payload: Dict[str, Any], 
+def generate_jwt_token(payload: dict[str, Any], 
                       secret_key: str,
                       algorithm: str = None,
                       expires_in: int = None) -> TokenData:
@@ -882,7 +882,7 @@ def generate_jwt_token(payload: Dict[str, Any],
 
 def verify_jwt_token(token: str, 
                     secret_key: str,
-                    algorithm: str = None) -> Dict[str, Any]:
+                    algorithm: str = None) -> dict[str, Any]:
     """
     Verifica y decodifica token JWT.
     
@@ -911,7 +911,7 @@ def verify_jwt_token(token: str,
     except jwt.InvalidTokenError as e:
         raise InvalidTokenError(f"Token inválido: {e}")
 
-def generate_signed_token(payload: Dict[str, Any], 
+def generate_signed_token(payload: dict[str, Any], 
                          secret_key: Optional[str] = None) -> str:
     """
     Genera token firmado con HMAC.
@@ -941,7 +941,7 @@ def generate_signed_token(payload: Dict[str, Any],
     
     return f"{payload_b64}.{signature_b64}"
 
-def verify_signed_token(token: str, secret_key: str) -> Dict[str, Any]:
+def verify_signed_token(token: str, secret_key: str) -> dict[str, Any]:
     """
     Verifica token firmado con HMAC.
     
@@ -1075,7 +1075,7 @@ def _generate_hotp_code(secret: str, counter: int) -> str:
     
     return f"{otp:06d}"
 
-def generate_backup_codes(count: int = None, length: int = None) -> List[str]:
+def generate_backup_codes(count: int = None, length: int = None) -> list[str]:
     """
     Genera códigos de respaldo para 2FA.
     
@@ -1107,7 +1107,7 @@ def generate_backup_codes(count: int = None, length: int = None) -> List[str]:
     
     return codes
 
-def hash_backup_codes(codes: List[str]) -> List[str]:
+def hash_backup_codes(codes: list[str]) -> list[str]:
     """
     Hashea códigos de respaldo para almacenamiento seguro.
     
@@ -1133,7 +1133,7 @@ def hash_backup_codes(codes: List[str]) -> List[str]:
     
     return hashed_codes
 
-def verify_backup_code(code: str, hashed_codes: List[str]) -> Tuple[bool, Optional[str]]:
+def verify_backup_code(code: str, hashed_codes: list[str]) -> tuple[bool, Optional[str]]:
     """
     Verifica código de respaldo contra lista hasheada.
     
@@ -1329,7 +1329,7 @@ def verify_meeting_access_code(code: str,
         return False
 
 def generate_project_share_token(project_id: str, 
-                                permissions: List[str],
+                                permissions: list[str],
                                 expires_in: int = 604800) -> str:
     """
     Genera token para compartir proyecto.
@@ -1354,7 +1354,7 @@ def generate_project_share_token(project_id: str,
 
 def encrypt_sensitive_document(document_data: bytes, 
                              owner_id: str,
-                             document_type: str) -> Dict[str, str]:
+                             document_type: str) -> dict[str, str]:
     """
     Encripta documento sensible con metadatos.
     
@@ -1401,7 +1401,7 @@ def encrypt_sensitive_document(document_data: bytes,
 class CryptoManager:
     """Manager principal para operaciones criptográficas."""
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[dict[str, Any]] = None):
         self.config = CRYPTO_CONFIG.copy()
         if config:
             self.config.update(config)
@@ -1429,7 +1429,7 @@ class CryptoManager:
         if missing_deps:
             logger.warning(f"Dependencias faltantes: {missing_deps}")
     
-    def _get_available_algorithms(self) -> Dict[str, List[str]]:
+    def _get_available_algorithms(self) -> dict[str, list[str]]:
         """Obtiene algoritmos disponibles."""
         available = {
             'hashing': ['pbkdf2'],
@@ -1448,7 +1448,7 @@ class CryptoManager:
         return available
     
     # Métodos de conveniencia
-    def hash_password(self, password: str, **kwargs) -> Tuple[str, bytes]:
+    def hash_password(self, password: str, **kwargs) -> tuple[str, bytes]:
         """Hash de contraseña con configuración del manager."""
         return hash_password(password, **kwargs)
     
@@ -1468,11 +1468,11 @@ class CryptoManager:
         """Generación de token."""
         return generate_token(**kwargs)
     
-    def generate_jwt(self, payload: Dict[str, Any], secret: str, **kwargs) -> TokenData:
+    def generate_jwt(self, payload: dict[str, Any], secret: str, **kwargs) -> TokenData:
         """Generación de JWT."""
         return generate_jwt_token(payload, secret, **kwargs)
     
-    def verify_jwt(self, token: str, secret: str, **kwargs) -> Dict[str, Any]:
+    def verify_jwt(self, token: str, secret: str, **kwargs) -> dict[str, Any]:
         """Verificación de JWT."""
         return verify_jwt_token(token, secret, **kwargs)
     
@@ -1500,7 +1500,7 @@ class CryptoManager:
         """Verificación de código OTP."""
         return verify_totp_code(secret, code, **kwargs)
     
-    def get_security_report(self) -> Dict[str, Any]:
+    def get_security_report(self) -> dict[str, Any]:
         """Genera reporte de seguridad del sistema."""
         return {
             'crypto_manager_version': '1.0',
@@ -1540,7 +1540,7 @@ class CryptoManager:
 crypto_manager = CryptoManager()
 
 # Funciones de conveniencia que usan la instancia global
-def get_crypto_config() -> Dict[str, Any]:
+def get_crypto_config() -> dict[str, Any]:
     """Obtiene configuración criptográfica actual."""
     return crypto_manager.config.copy()
 
@@ -1548,7 +1548,7 @@ def configure_crypto(**kwargs):
     """Configura utilidades criptográficas globalmente."""
     crypto_manager.config.update(kwargs)
 
-def get_security_report() -> Dict[str, Any]:
+def get_security_report() -> dict[str, Any]:
     """Obtiene reporte de seguridad del sistema."""
     return crypto_manager.get_security_report()
 

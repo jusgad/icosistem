@@ -5,8 +5,8 @@ Este módulo define el modelo para clientes y stakeholders que tienen interés
 en monitorear y evaluar el progreso de emprendedores y proyectos.
 """
 
-from datetime import datetime
-from typing import List, Optional, Dict, Any
+from datetime import datetime, timezone
+from typing import Optional, Any
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Enum as SQLEnum
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -295,7 +295,7 @@ class Client(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         if existing:
             existing.interest_level = interest_level
             existing.notes = notes
-            existing.updated_at = datetime.utcnow()
+            existing.updated_at = datetime.now(timezone.utc)
             return existing
         
         # Crear nuevo interés
@@ -310,7 +310,7 @@ class Client(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         db.session.add(interest)
         return interest
     
-    def update_notification_preferences(self, preferences: Dict[str, Any]):
+    def update_notification_preferences(self, preferences: dict[str, Any]):
         """Actualizar preferencias de notificación"""
         if not isinstance(preferences, dict):
             raise ValidationError("Las preferencias deben ser un diccionario")
@@ -319,7 +319,7 @@ class Client(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         current_prefs.update(preferences)
         self.notification_preferences = current_prefs
     
-    def generate_dashboard_data(self) -> Dict[str, Any]:
+    def generate_dashboard_data(self) -> dict[str, Any]:
         """Generar datos para el dashboard del cliente"""
         active_projects = self.get_active_projects()
         entrepreneurs = self.get_supported_entrepreneurs()
@@ -360,7 +360,7 @@ class Client(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
                 .filter(Project.status == ProjectStatus.COMPLETED)
                 .count())
     
-    def _get_recent_activities(self, limit: int = 20) -> List[Dict[str, Any]]:
+    def _get_recent_activities(self, limit: int = 20) -> list[dict[str, Any]]:
         """Obtener actividades recientes"""
         activities = (self.activities
                      .order_by(self.activities.property.mapper.class_.created_at.desc())
@@ -391,7 +391,7 @@ class Client(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
             project_id=project.id
         ).first() is not None
     
-    def get_investment_summary(self) -> Dict[str, Any]:
+    def get_investment_summary(self) -> dict[str, Any]:
         """Obtener resumen de inversiones"""
         active_projects = self.get_active_projects()
         
@@ -415,7 +415,7 @@ class Client(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         success_rate = successful_projects / total_projects
         return success_rate * 100  # Porcentaje de éxito como ROI simplificado
     
-    def _group_investments_by_sector(self) -> Dict[str, int]:
+    def _group_investments_by_sector(self) -> dict[str, int]:
         """Agrupar inversiones por sector"""
         sector_investments = {}
         
@@ -454,7 +454,7 @@ class Client(BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin):
         
         return search.order_by(cls.name).all()
     
-    def to_dict(self, include_sensitive=False) -> Dict[str, Any]:
+    def to_dict(self, include_sensitive=False) -> dict[str, Any]:
         """Convertir a diccionario"""
         data = {
             'id': self.id,

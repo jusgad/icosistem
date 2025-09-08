@@ -21,8 +21,8 @@ from flask import Blueprint, request, jsonify, current_app, g, send_file
 from flask_restful import Resource, Api
 from sqlalchemy import or_, and_, func, desc, asc, case
 from sqlalchemy.orm import joinedload
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Tuple
+from datetime import datetime, timedelta, timezone
+from typing import Any, Optional
 from decimal import Decimal
 import json
 import io
@@ -912,7 +912,7 @@ class ClientDashboardResource(Resource):
                 'client_id': client_id,
                 'dashboard': dashboard_data,
                 'period': period,
-                'last_updated': datetime.utcnow().isoformat()
+                'last_updated': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -1066,7 +1066,7 @@ class ClientAnalyticsResource(Resource):
                 'analysis_type': analysis_type,
                 'period': period,
                 'benchmark_included': include_benchmark,
-                'generated_at': datetime.utcnow().isoformat()
+                'generated_at': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -1170,7 +1170,7 @@ class ClientStatsResource(Resource):
                     'organization_id': organization_id,
                     'program_id': program_id
                 },
-                'generated_at': datetime.utcnow().isoformat()
+                'generated_at': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -1324,7 +1324,7 @@ def market_intelligence(client_id):
             'trends': ClientService.get_market_trends(client),
             'opportunities': ClientService.get_market_opportunities(client),
             'competitive_landscape': ClientService.get_competitive_landscape(client),
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:
@@ -1411,7 +1411,7 @@ def benchmarking(client_id):
             'peer_comparison': ClientService.get_peer_comparison(client),
             'industry_averages': ClientService.get_industry_averages(client),
             'performance_ranking': ClientService.get_performance_ranking(client),
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:
@@ -1530,7 +1530,7 @@ def get_client_dashboard_insights():
         
         return jsonify({
             'insights': insights,
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:
@@ -1539,7 +1539,7 @@ def get_client_dashboard_insights():
 
 
 # Funciones auxiliares para otros módulos
-def get_client_summary(client_id: int) -> Optional[Dict[str, Any]]:
+def get_client_summary(client_id: int) -> Optional[dict[str, Any]]:
     """
     Obtiene resumen de un cliente
     
@@ -1574,7 +1574,7 @@ def get_client_summary(client_id: int) -> Optional[Dict[str, Any]]:
     }
 
 
-def check_client_investment_fit(client_id: int, entrepreneur_id: int) -> Dict[str, Any]:
+def check_client_investment_fit(client_id: int, entrepreneur_id: int) -> dict[str, Any]:
     """
     Verifica el fit entre un cliente y un emprendedor para inversión
     

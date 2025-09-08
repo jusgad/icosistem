@@ -21,8 +21,8 @@ import logging
 import time
 import json
 import hashlib
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union, Callable, Set
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Any, Union, Callable
 from functools import wraps, lru_cache
 from collections import defaultdict, deque
 from dataclasses import dataclass
@@ -201,7 +201,7 @@ def socket_auth_required(
                 }, timeout=cache_duration)
                 
                 # Actualizar última actividad
-                user.last_activity = datetime.utcnow()
+                user.last_activity = datetime.now(timezone.utc)
                 
                 kwargs['current_user'] = user
                 return f(*args, **kwargs)
@@ -221,7 +221,7 @@ def socket_auth_required(
 
 
 def socket_permission_required(
-    permission: Union[str, List[str]],
+    permission: Union[str, list[str]],
     permission_level: PermissionLevel = PermissionLevel.USER,
     resource_id_param: Optional[str] = None,
     check_ownership: bool = False
@@ -379,7 +379,7 @@ def socket_rate_limit(
 
 def socket_validate_data(
     schema: Optional[Any] = None,
-    required_fields: Optional[List[str]] = None,
+    required_fields: Optional[list[str]] = None,
     sanitize: bool = True,
     max_size: Optional[int] = None
 ):
@@ -454,7 +454,7 @@ def socket_log_activity(
     activity_type: ActivityType,
     description: Optional[str] = None,
     include_data: bool = False,
-    sensitive_fields: Optional[List[str]] = None
+    sensitive_fields: Optional[list[str]] = None
 ):
     """
     Logging automático de actividades para eventos WebSocket
@@ -539,7 +539,7 @@ def socket_cache_result(
     ttl: int = 300,
     cache_key_func: Optional[Callable] = None,
     per_user: bool = True,
-    invalidate_on: Optional[List[str]] = None
+    invalidate_on: Optional[list[str]] = None
 ):
     """
     Cache de resultados para eventos WebSocket
@@ -666,7 +666,7 @@ def socket_maintenance_check(
                         'code': 'SYSTEM_MAINTENANCE',
                         'message': custom_message or maintenance_info.get('message', 'System under maintenance'),
                         'estimated_duration': maintenance_info.get('estimated_duration'),
-                        'timestamp': format_datetime(datetime.utcnow())
+                        'timestamp': format_datetime(datetime.now(timezone.utc))
                     })
                     return
                 
@@ -713,7 +713,7 @@ def socket_namespace_required(namespace: str):
 
 def socket_project_access_required(
     project_id_param: str = 'project_id',
-    roles: Optional[List[UserRole]] = None
+    roles: Optional[list[UserRole]] = None
 ):
     """
     Verificación de acceso a proyecto específico
@@ -917,7 +917,7 @@ def _check_rate_limit(
 ) -> bool:
     """Verifica rate limit según la estrategia especificada"""
     try:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         if strategy == RateLimitStrategy.SLIDING_WINDOW:
             return _check_sliding_window_rate_limit(key, rate, window, now)
@@ -999,7 +999,7 @@ def _calculate_retry_after(key: str, window: int) -> int:
     recent_events = rate_limit_cache[key]['events']
     if recent_events:
         oldest_event = recent_events[0]
-        return max(0, window - int((datetime.utcnow() - oldest_event).total_seconds()))
+        return max(0, window - int((datetime.now(timezone.utc) - oldest_event).total_seconds()))
     return window
 
 
@@ -1018,7 +1018,7 @@ def _sanitize_dict_data(data: dict) -> dict:
     return sanitized
 
 
-def _remove_sensitive_fields(data: dict, sensitive_fields: List[str]) -> dict:
+def _remove_sensitive_fields(data: dict, sensitive_fields: list[str]) -> dict:
     """Remueve campos sensibles de los datos"""
     filtered_data = data.copy()
     for field in sensitive_fields:
@@ -1056,7 +1056,7 @@ def _update_event_metrics(event_name: str, execution_time: float, success: bool)
     
     metrics.call_count += 1
     metrics.total_time += execution_time
-    metrics.last_called = datetime.utcnow()
+    metrics.last_called = datetime.now(timezone.utc)
     metrics.average_time = metrics.total_time / metrics.call_count
     
     if not success:
@@ -1080,7 +1080,7 @@ def _generate_default_cache_key(func_name: str, args: tuple, user: Optional[User
     return "_".join(key_parts)
 
 
-def _check_project_access(user: User, project: Project, allowed_roles: Optional[List[UserRole]]) -> bool:
+def _check_project_access(user: User, project: Project, allowed_roles: Optional[list[UserRole]]) -> bool:
     """Verifica acceso a proyecto"""
     # Verificar si es el emprendedor del proyecto
     if project.entrepreneur_id == user.id:
@@ -1125,11 +1125,11 @@ def _check_mentorship_access(user: User, session: MentorshipSession, allow_obser
 # Decorador compuesto para funcionalidad completa
 def socket_endpoint(
     auth_required: bool = True,
-    permission: Optional[Union[str, List[str]]] = None,
+    permission: Optional[Union[str, list[str]]] = None,
     permission_level: PermissionLevel = PermissionLevel.USER,
     rate_limit_config: Optional[dict] = None,
     validation_schema: Optional[Any] = None,
-    required_fields: Optional[List[str]] = None,
+    required_fields: Optional[list[str]] = None,
     log_activity: bool = True,
     activity_type: ActivityType = ActivityType.USER_ACTIVITY,
     cache_result: bool = False,

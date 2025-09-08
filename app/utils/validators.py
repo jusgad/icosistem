@@ -32,7 +32,7 @@ import json
 import uuid
 import logging
 import mimetypes
-from typing import Dict, List, Optional, Union, Any, Tuple
+from typing import Optional, Union, Any
 from datetime import datetime, date
 from urllib.parse import urlparse
 from pathlib import Path
@@ -457,7 +457,7 @@ def is_valid_passport(passport: str) -> bool:
 # VALIDADORES DE CONTRASEÑAS
 # ==============================================================================
 
-def validate_password_strength(password: str, config: Optional[Dict] = None) -> Dict[str, Any]:
+def validate_password_strength(password: str, config: Optional[Dict] = None) -> dict[str, Any]:
     """
     Valida la fortaleza de una contraseña según políticas configurables.
     
@@ -582,7 +582,7 @@ def check_password_requirements(password: str) -> bool:
 # VALIDADORES DE ARCHIVOS
 # ==============================================================================
 
-def is_valid_file_extension(filename: str, allowed_categories: Optional[List[str]] = None) -> bool:
+def is_valid_file_extension(filename: str, allowed_categories: Optional[list[str]] = None) -> bool:
     """
     Valida la extensión de un archivo.
     
@@ -676,7 +676,7 @@ def is_safe_filename(filename: str) -> bool:
     
     return True
 
-def validate_file_upload(filename: str, file_size: int, mime_type: Optional[str] = None) -> Dict[str, Any]:
+def validate_file_upload(filename: str, file_size: int, mime_type: Optional[str] = None) -> dict[str, Any]:
     """
     Validación completa de archivo subido.
     
@@ -804,7 +804,7 @@ def validate_budget_amount(amount: Union[int, float], currency: str = 'COP') -> 
 # VALIDADORES DE FORMULARIOS
 # ==============================================================================
 
-def validate_form_data(data: Dict[str, Any], rules: Dict[str, Dict]) -> Dict[str, Any]:
+def validate_form_data(data: dict[str, Any], rules: dict[str, Dict]) -> dict[str, Any]:
     """
     Valida datos de formulario según reglas especificadas.
     
@@ -872,7 +872,7 @@ def validate_form_data(data: Dict[str, Any], rules: Dict[str, Dict]) -> Dict[str
     
     return errors
 
-def clean_input_data(data: Dict[str, Any]) -> Dict[str, Any]:
+def clean_input_data(data: dict[str, Any]) -> dict[str, Any]:
     """
     Limpia y sanitiza datos de entrada.
     
@@ -946,7 +946,7 @@ class EmailValidator:
         self.allow_smtputf8 = allow_smtputf8
         self.check_deliverability = check_deliverability
     
-    def validate(self, email: str) -> Dict[str, Any]:
+    def validate(self, email: str) -> dict[str, Any]:
         """
         Validación completa de email.
         
@@ -1004,7 +1004,7 @@ class PhoneValidator:
     def __init__(self, default_country: str = 'CO'):
         self.default_country = default_country
     
-    def validate(self, phone: str, country: Optional[str] = None) -> Dict[str, Any]:
+    def validate(self, phone: str, country: Optional[str] = None) -> dict[str, Any]:
         """
         Validación completa de teléfono.
         
@@ -1051,7 +1051,7 @@ class PhoneValidator:
 class DocumentValidator:
     """Validador de documentos de identidad colombianos."""
     
-    def validate_cedula(self, cedula: str) -> Dict[str, Any]:
+    def validate_cedula(self, cedula: str) -> dict[str, Any]:
         """Validación detallada de cédula."""
         result = {
             'is_valid': False,
@@ -1067,7 +1067,7 @@ class DocumentValidator:
         
         return result
     
-    def validate_nit(self, nit: str) -> Dict[str, Any]:
+    def validate_nit(self, nit: str) -> dict[str, Any]:
         """Validación detallada de NIT."""
         result = {
             'is_valid': False,
@@ -1093,11 +1093,11 @@ class PasswordValidator:
     def __init__(self, config: Optional[Dict] = None):
         self.config = config or PASSWORD_CONFIG.copy()
     
-    def validate(self, password: str) -> Dict[str, Any]:
+    def validate(self, password: str) -> dict[str, Any]:
         """Validación completa de contraseña."""
         return validate_password_strength(password, self.config)
     
-    def suggest_improvements(self, password: str) -> List[str]:
+    def suggest_improvements(self, password: str) -> list[str]:
         """Genera sugerencias para mejorar la contraseña."""
         result = self.validate(password)
         return result.get('suggestions', [])
@@ -1106,15 +1106,15 @@ class FileValidator:
     """Validador completo de archivos."""
     
     def __init__(self, 
-                 allowed_extensions: Optional[List[str]] = None,
+                 allowed_extensions: Optional[list[str]] = None,
                  max_size: int = 10 * 1024 * 1024,
-                 allowed_mime_types: Optional[List[str]] = None):
+                 allowed_mime_types: Optional[list[str]] = None):
         self.allowed_extensions = allowed_extensions
         self.max_size = max_size
         self.allowed_mime_types = allowed_mime_types or list(ALLOWED_MIME_TYPES)
     
     def validate(self, filename: str, file_size: int, 
-                 mime_type: Optional[str] = None) -> Dict[str, Any]:
+                 mime_type: Optional[str] = None) -> dict[str, Any]:
         """
         Validación completa de archivo.
         
@@ -1162,19 +1162,19 @@ class FileValidator:
 # FUNCIONES DE UTILIDAD
 # ==============================================================================
 
-def get_validation_patterns() -> Dict[str, re.Pattern]:
+def get_validation_patterns() -> dict[str, re.Pattern]:
     """Obtiene todos los patrones de validación disponibles."""
     return VALIDATION_PATTERNS.copy()
 
-def get_business_sectors() -> Dict[str, str]:
+def get_business_sectors() -> dict[str, str]:
     """Obtiene lista de sectores económicos válidos."""
     return VALID_BUSINESS_SECTORS.copy()
 
-def get_budget_ranges() -> Dict[str, Tuple[int, float]]:
+def get_budget_ranges() -> dict[str, tuple[int, float]]:
     """Obtiene rangos de presupuesto válidos."""
     return VALID_BUDGET_RANGES.copy()
 
-def get_allowed_file_extensions() -> Dict[str, set]:
+def get_allowed_file_extensions() -> dict[str, set]:
     """Obtiene extensiones de archivo permitidas por categoría."""
     return {k: v.copy() for k, v in ALLOWED_FILE_EXTENSIONS.items()}
 

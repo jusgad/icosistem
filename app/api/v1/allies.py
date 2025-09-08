@@ -22,7 +22,7 @@ from flask_restful import Resource, Api
 from sqlalchemy import or_, and_, func, desc, asc, case
 from sqlalchemy.orm import joinedload
 from datetime import datetime, timedelta, time
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any, Optional
 from decimal import Decimal
 import json
 
@@ -593,7 +593,7 @@ class AllyAvailabilityResource(Resource):
             if start_date:
                 start_date = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
             else:
-                start_date = datetime.utcnow()
+                start_date = datetime.now(timezone.utc)
             
             if end_date:
                 end_date = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
@@ -1111,7 +1111,7 @@ class AllyMetricsResource(Resource):
                 'ally_id': ally_id,
                 'period': period,
                 'metrics': metrics,
-                'generated_at': datetime.utcnow().isoformat()
+                'generated_at': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -1325,7 +1325,7 @@ class AllyStatsResource(Resource):
                     'organization_id': organization_id,
                     'program_id': program_id
                 },
-                'generated_at': datetime.utcnow().isoformat()
+                'generated_at': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -1474,7 +1474,7 @@ def impact_report(ally_id):
                 'ally_id': ally_id,
                 'period': period,
                 'report': report,
-                'generated_at': datetime.utcnow().isoformat()
+                'generated_at': datetime.now(timezone.utc).isoformat()
             })
             
     except Exception as e:
@@ -1581,7 +1581,7 @@ def get_ally_dashboard_insights():
         
         return jsonify({
             'insights': insights,
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(timezone.utc).isoformat()
         })
         
     except Exception as e:
@@ -1590,7 +1590,7 @@ def get_ally_dashboard_insights():
 
 
 # Funciones auxiliares para otros módulos
-def get_ally_summary(ally_id: int) -> Optional[Dict[str, Any]]:
+def get_ally_summary(ally_id: int) -> Optional[dict[str, Any]]:
     """
     Obtiene resumen de un aliado
     

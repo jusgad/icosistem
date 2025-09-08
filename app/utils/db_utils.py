@@ -37,8 +37,8 @@ import json
 import csv
 import gzip
 import pickle
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable, Type
+from datetime import datetime, timedelta, timezone
+from typing import Any, Optional, Union, Callable, Type
 from contextlib import contextmanager
 from functools import wraps
 from pathlib import Path
@@ -326,7 +326,7 @@ def test_connection(engine=None) -> bool:
 @measure_query_time
 @retry_db_operation(max_retries=2)
 def get_or_create(model_class: Type, session: Optional[Session] = None, 
-                  defaults: Optional[Dict] = None, **kwargs) -> Tuple[Any, bool]:
+                  defaults: Optional[Dict] = None, **kwargs) -> tuple[Any, bool]:
     """
     Obtiene un registro existente o crea uno nuevo.
     
@@ -377,9 +377,9 @@ def get_or_create(model_class: Type, session: Optional[Session] = None,
             raise QueryError(f"Error de integridad al crear {model_class.__name__}: {e}")
 
 @measure_query_time
-def bulk_create_or_update(model_class: Type, data_list: List[Dict], 
-                         unique_fields: List[str], session: Optional[Session] = None,
-                         batch_size: Optional[int] = None) -> Dict[str, int]:
+def bulk_create_or_update(model_class: Type, data_list: list[Dict], 
+                         unique_fields: list[str], session: Optional[Session] = None,
+                         batch_size: Optional[int] = None) -> dict[str, int]:
     """
     Crea o actualiza múltiples registros de forma eficiente.
     
@@ -482,7 +482,7 @@ def safe_delete(model_class: Type, instance_id: Any,
         
         if soft_delete and hasattr(instance, DB_CONFIG['soft_delete_column']):
             # Borrado lógico
-            setattr(instance, DB_CONFIG['soft_delete_column'], datetime.utcnow())
+            setattr(instance, DB_CONFIG['soft_delete_column'], datetime.now(timezone.utc))
             session.commit()
         else:
             # Borrado físico
@@ -554,7 +554,7 @@ def restore_deleted(model_class: Type, instance_id: Any,
 class PaginationResult:
     """Resultado de paginación con metadata útil."""
     
-    def __init__(self, items: List[Any], page: int, per_page: int, 
+    def __init__(self, items: list[Any], page: int, per_page: int, 
                  total: int, has_prev: bool = False, has_next: bool = False):
         self.items = items
         self.page = page
@@ -566,7 +566,7 @@ class PaginationResult:
         self.prev_num = page - 1 if has_prev else None
         self.next_num = page + 1 if has_next else None
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convierte el resultado a diccionario."""
         return {
             'items': [item.to_dict() if hasattr(item, 'to_dict') else str(item) for item in self.items],
@@ -634,7 +634,7 @@ def paginate_query(query: Query, page: int = 1, per_page: Optional[int] = None,
         has_next=has_next
     )
 
-def get_page_info(total_items: int, page: int, per_page: int) -> Dict[str, Any]:
+def get_page_info(total_items: int, page: int, per_page: int) -> dict[str, Any]:
     """
     Calcula información de paginación sin ejecutar consulta.
     
@@ -747,7 +747,7 @@ class FilterBuilder:
         
         return self
     
-    def add_search(self, search_term: str, fields: List[str]) -> 'FilterBuilder':
+    def add_search(self, search_term: str, fields: list[str]) -> 'FilterBuilder':
         """
         Añade búsqueda de texto en múltiples campos.
         
@@ -822,7 +822,7 @@ class FilterBuilder:
         return query
 
 @measure_query_time
-def apply_filters(query: Query, filters: Dict[str, Any]) -> Query:
+def apply_filters(query: Query, filters: dict[str, Any]) -> Query:
     """
     Aplica filtros dinámicos a una consulta.
     
@@ -886,7 +886,7 @@ def apply_filters(query: Query, filters: Dict[str, Any]) -> Query:
 
 @measure_query_time
 def build_search_query(model_class: Type, search_term: str, 
-                      search_fields: List[str], session: Session) -> Query:
+                      search_fields: list[str], session: Session) -> Query:
     """
     Construye consulta de búsqueda de texto completo.
     
@@ -1155,7 +1155,7 @@ class BackupManager:
             logger.error(f"Error restaurando desde {backup_file}: {e}")
             raise BackupError(f"Error en restore: {e}")
     
-    def list_backups(self, table_name: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list_backups(self, table_name: Optional[str] = None) -> list[dict[str, Any]]:
         """
         Lista los archivos de backup disponibles.
         
@@ -1310,7 +1310,7 @@ class QueryBuilder:
         """Obtiene un registro o None."""
         return self.query.one_or_none()
     
-    def all(self) -> List[Any]:
+    def all(self) -> list[Any]:
         """Obtiene todos los registros."""
         return self.query.all()
     
@@ -1318,7 +1318,7 @@ class QueryBuilder:
         """Pagina la consulta."""
         return paginate_query(self.query, page, per_page)
     
-    def to_dict_list(self) -> List[Dict[str, Any]]:
+    def to_dict_list(self) -> list[dict[str, Any]]:
         """Convierte resultados a lista de diccionarios."""
         results = self.all()
         return [item.to_dict() if hasattr(item, 'to_dict') else str(item) for item in results]
@@ -1355,7 +1355,7 @@ class DatabaseManager:
         """Prueba la conexión a la BD."""
         return test_connection(self.engine)
     
-    def get_table_info(self, table_name: str) -> Dict[str, Any]:
+    def get_table_info(self, table_name: str) -> dict[str, Any]:
         """
         Obtiene información de una tabla.
         
@@ -1385,7 +1385,7 @@ class DatabaseManager:
             logger.error(f"Error obteniendo info de tabla {table_name}: {e}")
             return {}
     
-    def get_database_stats(self) -> Dict[str, Any]:
+    def get_database_stats(self) -> dict[str, Any]:
         """
         Obtiene estadísticas de la base de datos.
         
@@ -1451,7 +1451,7 @@ class DatabaseManager:
             logger.error(f"Error optimizando tabla {table_name}: {e}")
             return False
     
-    def create_index(self, table_name: str, column_names: List[str], 
+    def create_index(self, table_name: str, column_names: list[str], 
                     index_name: Optional[str] = None, unique: bool = False) -> bool:
         """
         Crea un índice en la tabla.
@@ -1596,7 +1596,7 @@ class MigrationHelper:
             return False
     
     def migrate_data(self, source_query: str, target_table: str, 
-                    field_mapping: Dict[str, str], batch_size: int = 1000) -> int:
+                    field_mapping: dict[str, str], batch_size: int = 1000) -> int:
         """
         Migra datos entre tablas con mapeo de campos.
         
@@ -1644,7 +1644,7 @@ class MigrationHelper:
             logger.error(f"Error migrando datos: {e}")
             raise QueryError(f"Error en migración: {e}")
     
-    def _insert_batch(self, conn, table_name: str, batch: List[Dict]):
+    def _insert_batch(self, conn, table_name: str, batch: list[Dict]):
         """Inserta un lote de registros."""
         if not batch:
             return
@@ -1669,11 +1669,11 @@ db_manager = DatabaseManager()
 migration_helper = MigrationHelper()
 
 # Funciones de conveniencia que usan las instancias globales
-def get_table_info(table_name: str) -> Dict[str, Any]:
+def get_table_info(table_name: str) -> dict[str, Any]:
     """Función de conveniencia para obtener info de tabla."""
     return db_manager.get_table_info(table_name)
 
-def get_database_stats() -> Dict[str, Any]:
+def get_database_stats() -> dict[str, Any]:
     """Función de conveniencia para obtener estadísticas de BD."""
     return db_manager.get_database_stats()
 

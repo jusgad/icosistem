@@ -6,7 +6,7 @@ incluyendo métricas de proyectos, próximas reuniones, tareas pendientes,
 progreso de mentoría y notificaciones.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from flask import Blueprint, render_template, request, jsonify, g, current_app
 from flask_login import login_required, current_user
 from sqlalchemy import and_, or_, desc, func
@@ -72,7 +72,7 @@ def index():
             raise PermissionError("Perfil de emprendedor no encontrado")
 
         # Fechas para filtros
-        today = datetime.utcnow().date()
+        today = datetime.now(timezone.utc).date()
         week_start, week_end = get_week_range(today)
         month_start, month_end = get_month_range(today)
 
@@ -157,7 +157,7 @@ def quick_stats():
             'meetings_today': Meeting.query.filter(
                 and_(
                     Meeting.entrepreneur_id == entrepreneur_id,
-                    func.date(Meeting.scheduled_at) == datetime.utcnow().date(),
+                    func.date(Meeting.scheduled_at) == datetime.now(timezone.utc).date(),
                     Meeting.status != MeetingStatus.CANCELLED
                 )
             ).count(),
@@ -169,7 +169,7 @@ def quick_stats():
             
             'completion_rate': _calculate_completion_rate(entrepreneur_id),
             
-            'last_updated': datetime.utcnow().isoformat()
+            'last_updated': datetime.now(timezone.utc).isoformat()
         }
         
         return jsonify({
@@ -207,12 +207,12 @@ def toggle_task_status(task_id):
         # Cambiar estado
         if task.status == TaskStatus.PENDING:
             task.status = TaskStatus.COMPLETED
-            task.completed_at = datetime.utcnow()
+            task.completed_at = datetime.now(timezone.utc)
         else:
             task.status = TaskStatus.PENDING
             task.completed_at = None
         
-        task.updated_at = datetime.utcnow()
+        task.updated_at = datetime.now(timezone.utc)
         task.save()
         
         # Registrar actividad
@@ -258,7 +258,7 @@ def mark_notification_read(notification_id):
             }), 404
         
         notification.is_read = True
-        notification.read_at = datetime.utcnow()
+        notification.read_at = datetime.now(timezone.utc)
         notification.save()
         
         return jsonify({
@@ -314,7 +314,7 @@ def _get_projects_metrics(entrepreneur_id):
 
 def _get_upcoming_meetings(entrepreneur_id, limit=5):
     """Obtener próximas reuniones del emprendedor."""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     meetings = Meeting.query.filter(
         and_(
@@ -347,7 +347,7 @@ def _get_pending_tasks(entrepreneur_id, limit=10):
 def _get_mentorship_progress(entrepreneur_id):
     """Obtener progreso de mentoría del emprendedor."""
     # Sesiones del mes actual
-    month_start, month_end = get_month_range(datetime.utcnow().date())
+    month_start, month_end = get_month_range(datetime.now(timezone.utc).date())
     
     sessions_this_month = MentorshipSession.query.filter(
         and_(
@@ -367,7 +367,7 @@ def _get_mentorship_progress(entrepreneur_id):
     next_session = MentorshipSession.query.filter(
         and_(
             MentorshipSession.entrepreneur_id == entrepreneur_id,
-            MentorshipSession.scheduled_at >= datetime.utcnow(),
+            MentorshipSession.scheduled_at >= datetime.now(timezone.utc),
             MentorshipSession.status == SessionStatus.SCHEDULED
         )
     ).order_by(MentorshipSession.scheduled_at).first()

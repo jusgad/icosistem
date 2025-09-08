@@ -12,7 +12,7 @@ import asyncio
 import base64
 import secrets
 import urllib.parse
-from typing import Dict, List, Optional, Any, Union, Tuple, Callable
+from typing import Optional, Any, Union, Callable
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
@@ -135,11 +135,11 @@ class OAuthConfig:
     token_url: str
     userinfo_url: Optional[str] = None
     revoke_url: Optional[str] = None
-    scopes: List[str] = None
+    scopes: list[str] = None
     redirect_uri: Optional[str] = None
     flow_type: str = OAuthFlow.AUTHORIZATION_CODE.value
     use_pkce: bool = True
-    additional_params: Optional[Dict[str, str]] = None
+    additional_params: Optional[dict[str, str]] = None
 
 
 @dataclass
@@ -152,7 +152,7 @@ class OAuthTokens:
     id_token: Optional[str] = None
     scope: Optional[str] = None
     expires_at: Optional[datetime] = None
-    raw_response: Optional[Dict[str, Any]] = None
+    raw_response: Optional[dict[str, Any]] = None
 
 
 @dataclass
@@ -168,7 +168,7 @@ class OAuthUserInfo:
     locale: Optional[str] = None
     timezone: Optional[str] = None
     verified: bool = False
-    raw_data: Optional[Dict[str, Any]] = None
+    raw_data: Optional[dict[str, Any]] = None
 
 
 @dataclass
@@ -178,10 +178,10 @@ class OAuthIntegrationResult:
     integration_id: Optional[str] = None
     access_token: Optional[str] = None
     user_info: Optional[OAuthUserInfo] = None
-    permissions: Optional[List[str]] = None
+    permissions: Optional[list[str]] = None
     expires_at: Optional[datetime] = None
     error_message: Optional[str] = None
-    warning_messages: Optional[List[str]] = None
+    warning_messages: Optional[list[str]] = None
 
 
 class OAuthProviderInterface:
@@ -284,7 +284,7 @@ class GoogleOAuthProvider(OAuthProviderInterface):
             # Calcular tiempo de expiración
             expires_at = None
             if 'expires_in' in token_response:
-                expires_at = datetime.utcnow() + timedelta(seconds=token_response['expires_in'])
+                expires_at = datetime.now(timezone.utc) + timedelta(seconds=token_response['expires_in'])
             
             return OAuthTokens(
                 access_token=token_response['access_token'],
@@ -318,7 +318,7 @@ class GoogleOAuthProvider(OAuthProviderInterface):
             
             expires_at = None
             if 'expires_in' in token_response:
-                expires_at = datetime.utcnow() + timedelta(seconds=token_response['expires_in'])
+                expires_at = datetime.now(timezone.utc) + timedelta(seconds=token_response['expires_in'])
             
             return OAuthTokens(
                 access_token=token_response['access_token'],
@@ -455,7 +455,7 @@ class MicrosoftOAuthProvider(OAuthProviderInterface):
             
             expires_at = None
             if 'expires_in' in token_response:
-                expires_at = datetime.utcnow() + timedelta(seconds=token_response['expires_in'])
+                expires_at = datetime.now(timezone.utc) + timedelta(seconds=token_response['expires_in'])
             
             return OAuthTokens(
                 access_token=token_response['access_token'],
@@ -490,7 +490,7 @@ class MicrosoftOAuthProvider(OAuthProviderInterface):
             
             expires_at = None
             if 'expires_in' in token_response:
-                expires_at = datetime.utcnow() + timedelta(seconds=token_response['expires_in'])
+                expires_at = datetime.now(timezone.utc) + timedelta(seconds=token_response['expires_in'])
             
             return OAuthTokens(
                 access_token=token_response['access_token'],
@@ -729,7 +729,7 @@ class OAuthService(BaseService):
         self.providers = self._initialize_providers()
         self._setup_security()
     
-    def _initialize_providers(self) -> Dict[str, OAuthProviderInterface]:
+    def _initialize_providers(self) -> dict[str, OAuthProviderInterface]:
         """Inicializar proveedores OAuth"""
         providers = {}
         
@@ -787,7 +787,7 @@ class OAuthService(BaseService):
         self,
         provider: str,
         user_id: Optional[int] = None,
-        scopes: Optional[List[str]] = None,
+        scopes: Optional[list[str]] = None,
         integration_type: Optional[str] = None,
         redirect_after: Optional[str] = None,
         **kwargs
@@ -818,7 +818,7 @@ class OAuthService(BaseService):
                 'user_id': user_id,
                 'integration_type': integration_type,
                 'redirect_after': redirect_after,
-                'timestamp': datetime.utcnow().timestamp(),
+                'timestamp': datetime.now(timezone.utc).timestamp(),
                 'nonce': secrets.token_urlsafe(32)
             }
             
@@ -1000,8 +1000,8 @@ class OAuthService(BaseService):
             
             # Actualizar estado de integración
             integration.status = IntegrationStatus.ACTIVE.value
-            integration.last_token_refresh = datetime.utcnow()
-            integration.updated_at = datetime.utcnow()
+            integration.last_token_refresh = datetime.now(timezone.utc)
+            integration.updated_at = datetime.now(timezone.utc)
             
             db.session.commit()
             
@@ -1086,14 +1086,14 @@ class OAuthService(BaseService):
             # Marcar tokens como inactivos
             OAuthToken.query.filter_by(integration_id=integration_id).update({
                 'is_active': False,
-                'revoked_at': datetime.utcnow()
+                'revoked_at': datetime.now(timezone.utc)
             })
             
             # Actualizar integración
             integration.status = IntegrationStatus.REVOKED.value
-            integration.revoked_at = datetime.utcnow()
+            integration.revoked_at = datetime.now(timezone.utc)
             integration.revoked_by_id = user_id
-            integration.updated_at = datetime.utcnow()
+            integration.updated_at = datetime.now(timezone.utc)
             
             db.session.commit()
             
@@ -1129,7 +1129,7 @@ class OAuthService(BaseService):
         provider: Optional[str] = None,
         integration_type: Optional[str] = None,
         status: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Obtener integraciones del usuario
         
@@ -1140,7 +1140,7 @@ class OAuthService(BaseService):
             status: Filtrar por estado
             
         Returns:
-            List[Dict[str, Any]]: Lista de integraciones
+            list[dict[str, Any]]: Lista de integraciones
         """
         try:
             query = OAuthIntegration.query.filter_by(user_id=user_id)
@@ -1218,7 +1218,7 @@ class OAuthService(BaseService):
                 return None
             
             # Verificar expiración
-            if token_record.expires_at and token_record.expires_at <= datetime.utcnow():
+            if token_record.expires_at and token_record.expires_at <= datetime.now(timezone.utc):
                 if auto_refresh:
                     # Intentar renovar
                     if self.refresh_token(integration_id):
@@ -1232,7 +1232,7 @@ class OAuthService(BaseService):
             # Cachear token por tiempo limitado
             cache_timeout = 300  # 5 minutos
             if token_record.expires_at:
-                remaining_time = (token_record.expires_at - datetime.utcnow()).total_seconds()
+                remaining_time = (token_record.expires_at - datetime.now(timezone.utc)).total_seconds()
                 cache_timeout = min(cache_timeout, max(60, remaining_time - 60))
             
             cache.set(cache_key, access_token, timeout=int(cache_timeout))
@@ -1244,7 +1244,7 @@ class OAuthService(BaseService):
             return None
     
     # Métodos privados
-    def _encode_state(self, state_data: Dict[str, Any]) -> str:
+    def _encode_state(self, state_data: dict[str, Any]) -> str:
         """Codificar estado de manera segura"""
         try:
             # Convertir a JSON y codificar
@@ -1265,7 +1265,7 @@ class OAuthService(BaseService):
             logger.error(f"Error codificando estado: {str(e)}")
             raise SecurityError("Error en codificación de estado")
     
-    def _decode_and_validate_state(self, state: str) -> Dict[str, Any]:
+    def _decode_and_validate_state(self, state: str) -> dict[str, Any]:
         """Decodificar y validar estado"""
         try:
             # Separar datos y firma
@@ -1291,7 +1291,7 @@ class OAuthService(BaseService):
             
             # Validar timestamp
             timestamp = datetime.fromtimestamp(state_data['timestamp'])
-            if datetime.utcnow() - timestamp > self.state_timeout:
+            if datetime.now(timezone.utc) - timestamp > self.state_timeout:
                 raise SecurityError("Estado expirado")
             
             # Verificar en cache
@@ -1314,7 +1314,7 @@ class OAuthService(BaseService):
         user_info: OAuthUserInfo,
         user_id: Optional[int],
         integration_type: Optional[str],
-        state_data: Dict[str, Any]
+        state_data: dict[str, Any]
     ) -> OAuthIntegrationResult:
         """Procesar integración OAuth"""
         try:
@@ -1392,12 +1392,12 @@ class OAuthService(BaseService):
             logger.error(f"Error inicializando OAuth service: {str(e)}")
             raise
     
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Verifica el estado de salud del servicio OAuth."""
         health_status = {
             'service': 'oauth',
             'status': 'healthy',
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'providers': {},
             'checks': {
                 'providers_initialized': False,
@@ -1467,7 +1467,7 @@ def get_oauth_service():
 # Funciones de conveniencia
 def get_google_authorization_url(
     user_id: int,
-    scopes: List[str] = None,
+    scopes: list[str] = None,
     integration_type: str = 'general'
 ) -> str:
     """Obtener URL de autorización de Google"""
@@ -1485,7 +1485,7 @@ def get_google_authorization_url(
 
 def get_microsoft_authorization_url(
     user_id: int,
-    scopes: List[str] = None,
+    scopes: list[str] = None,
     integration_type: str = 'general'
 ) -> str:
     """Obtener URL de autorización de Microsoft"""
@@ -1501,7 +1501,7 @@ def get_microsoft_authorization_url(
     )
 
 
-def refresh_all_user_tokens(user_id: int) -> Dict[str, bool]:
+def refresh_all_user_tokens(user_id: int) -> dict[str, bool]:
     """Renovar todos los tokens de un usuario"""
     
     integrations = oauth_service.get_user_integrations(

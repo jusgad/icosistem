@@ -11,8 +11,8 @@ import smtplib
 import asyncio
 import hashlib
 import uuid
-from typing import Dict, List, Optional, Any, Union, Tuple
-from datetime import datetime, timedelta
+from typing import Optional, Any, Union
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from enum import Enum
 from dataclasses import dataclass, asdict
@@ -140,24 +140,24 @@ class EmailContent:
     text_body: Optional[str] = None
     html_body: Optional[str] = None
     template_id: Optional[int] = None
-    template_data: Optional[Dict[str, Any]] = None
+    template_data: Optional[dict[str, Any]] = None
 
 
 @dataclass
 class EmailMessage:
     """Mensaje de email completo"""
-    to: List[EmailAddress]
+    to: list[EmailAddress]
     content: EmailContent
     from_address: Optional[EmailAddress] = None
     reply_to: Optional[EmailAddress] = None
-    cc: Optional[List[EmailAddress]] = None
-    bcc: Optional[List[EmailAddress]] = None
-    attachments: Optional[List[EmailAttachment]] = None
+    cc: Optional[list[EmailAddress]] = None
+    bcc: Optional[list[EmailAddress]] = None
+    attachments: Optional[list[EmailAttachment]] = None
     priority: str = EmailPriority.MEDIUM.value
     tracking_enabled: bool = True
     unsubscribe_url: Optional[str] = None
-    tags: Optional[List[str]] = None
-    metadata: Optional[Dict[str, Any]] = None
+    tags: Optional[list[str]] = None
+    metadata: Optional[dict[str, Any]] = None
 
 
 @dataclass
@@ -178,8 +178,8 @@ class BulkEmailResult:
     successful: int
     failed: int
     queued: int
-    errors: List[str]
-    message_ids: List[str]
+    errors: list[str]
+    message_ids: list[str]
 
 
 class EmailProviderInterface(ABC):
@@ -191,7 +191,7 @@ class EmailProviderInterface(ABC):
         pass
     
     @abstractmethod
-    def send_bulk(self, messages: List[EmailMessage]) -> BulkEmailResult:
+    def send_bulk(self, messages: list[EmailMessage]) -> BulkEmailResult:
         """Envío masivo"""
         pass
     
@@ -201,7 +201,7 @@ class EmailProviderInterface(ABC):
         pass
     
     @abstractmethod
-    def get_delivery_status(self, message_id: str) -> Dict[str, Any]:
+    def get_delivery_status(self, message_id: str) -> dict[str, Any]:
         """Obtener estado de entrega"""
         pass
 
@@ -264,7 +264,7 @@ class SMTPProvider(EmailProviderInterface):
                 provider_used=EmailProvider.SMTP.value
             )
     
-    def send_bulk(self, messages: List[EmailMessage]) -> BulkEmailResult:
+    def send_bulk(self, messages: list[EmailMessage]) -> BulkEmailResult:
         """Envío masivo via SMTP"""
         successful = 0
         failed = 0
@@ -296,7 +296,7 @@ class SMTPProvider(EmailProviderInterface):
         required_configs = ['SMTP_HOST', 'SMTP_PORT']
         return all(current_app.config.get(config) for config in required_configs)
     
-    def get_delivery_status(self, message_id: str) -> Dict[str, Any]:
+    def get_delivery_status(self, message_id: str) -> dict[str, Any]:
         """SMTP no provee tracking nativo"""
         return {
             'status': 'unknown',
@@ -363,7 +363,7 @@ class SMTPProvider(EmailProviderInterface):
     
     def _generate_tracking_id(self) -> str:
         """Generar ID de tracking"""
-        return generate_hash(f"{datetime.utcnow()}-{uuid.uuid4()}")
+        return generate_hash(f"{datetime.now(timezone.utc)}-{uuid.uuid4()}")
 
 
 class SendGridProvider(EmailProviderInterface):
@@ -430,7 +430,7 @@ class SendGridProvider(EmailProviderInterface):
                 provider_used=EmailProvider.SENDGRID.value
             )
     
-    def send_bulk(self, messages: List[EmailMessage]) -> BulkEmailResult:
+    def send_bulk(self, messages: list[EmailMessage]) -> BulkEmailResult:
         """Envío masivo optimizado con SendGrid"""
         # Implementar envío masivo con personalización
         # SendGrid permite hasta 1000 destinatarios por request
@@ -473,7 +473,7 @@ class SendGridProvider(EmailProviderInterface):
         """Validar configuración SendGrid"""
         return bool(self.api_key)
     
-    def get_delivery_status(self, message_id: str) -> Dict[str, Any]:
+    def get_delivery_status(self, message_id: str) -> dict[str, Any]:
         """Obtener estado via SendGrid API"""
         try:
             # Implementar consulta a SendGrid Event API
@@ -481,7 +481,7 @@ class SendGridProvider(EmailProviderInterface):
         except Exception as e:
             return {'status': 'unknown', 'error': str(e)}
     
-    def _get_tracking_settings(self) -> Dict[str, Any]:
+    def _get_tracking_settings(self) -> dict[str, Any]:
         """Configuración de tracking para SendGrid"""
         return {
             "click_tracking": {"enable": True},
@@ -490,7 +490,7 @@ class SendGridProvider(EmailProviderInterface):
             "ganalytics": {"enable": True, "utm_campaign": "email_campaign"}
         }
     
-    def _create_bulk_message(self, messages: List[EmailMessage]) -> Mail:
+    def _create_bulk_message(self, messages: list[EmailMessage]) -> Mail:
         """Crear mensaje masivo para SendGrid"""
         # Implementar lógica de personalización masiva
         # Por simplicidad, retornamos el primer mensaje
@@ -502,7 +502,7 @@ class SendGridProvider(EmailProviderInterface):
         # Implementar creación completa del mensaje
         return sg_message
     
-    def _extract_message_id(self, headers: Dict[str, str]) -> str:
+    def _extract_message_id(self, headers: dict[str, str]) -> str:
         """Extraer message ID de headers"""
         return headers.get('X-Message-Id', str(uuid.uuid4()))
     
@@ -593,7 +593,7 @@ class AmazonSESProvider(EmailProviderInterface):
                 provider_used=EmailProvider.AMAZON_SES.value
             )
     
-    def send_bulk(self, messages: List[EmailMessage]) -> BulkEmailResult:
+    def send_bulk(self, messages: list[EmailMessage]) -> BulkEmailResult:
         """Envío masivo via SES"""
         successful = 0
         failed = 0
@@ -624,7 +624,7 @@ class AmazonSESProvider(EmailProviderInterface):
         """Validar configuración SES"""
         return bool(self.aws_access_key and self.aws_secret_key)
     
-    def get_delivery_status(self, message_id: str) -> Dict[str, Any]:
+    def get_delivery_status(self, message_id: str) -> dict[str, Any]:
         """SES no provee tracking directo de mensajes individuales"""
         return {
             'status': 'sent',
@@ -665,7 +665,7 @@ class EmailService(BaseService):
         self._suppressed_emails = None
     
     @property
-    def providers(self) -> Dict[str, EmailProviderInterface]:
+    def providers(self) -> dict[str, EmailProviderInterface]:
         """Lazy initialization of providers"""
         if self._providers is None:
             self._providers = self._initialize_providers()
@@ -690,7 +690,7 @@ class EmailService(BaseService):
         """Setter for suppressed emails"""
         self._suppressed_emails = value
     
-    def _initialize_providers(self) -> Dict[str, EmailProviderInterface]:
+    def _initialize_providers(self) -> dict[str, EmailProviderInterface]:
         """Inicializar proveedores de email"""
         providers = {}
         
@@ -748,21 +748,21 @@ class EmailService(BaseService):
     
     def send_email(
         self,
-        to: Union[str, List[str], EmailAddress, List[EmailAddress]],
+        to: Union[str, list[str], EmailAddress, list[EmailAddress]],
         subject: str,
         text_body: Optional[str] = None,
         html_body: Optional[str] = None,
         template: Optional[str] = None,
-        template_data: Optional[Dict[str, Any]] = None,
+        template_data: Optional[dict[str, Any]] = None,
         from_address: Optional[Union[str, EmailAddress]] = None,
         reply_to: Optional[Union[str, EmailAddress]] = None,
-        cc: Optional[List[Union[str, EmailAddress]]] = None,
-        bcc: Optional[List[Union[str, EmailAddress]]] = None,
-        attachments: Optional[List[EmailAttachment]] = None,
+        cc: Optional[list[Union[str, EmailAddress]]] = None,
+        bcc: Optional[list[Union[str, EmailAddress]]] = None,
+        attachments: Optional[list[EmailAttachment]] = None,
         priority: str = EmailPriority.MEDIUM.value,
         tracking_enabled: bool = True,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        tags: Optional[list[str]] = None,
+        metadata: Optional[dict[str, Any]] = None,
         provider: Optional[str] = None
     ) -> EmailResult:
         """
@@ -848,7 +848,7 @@ class EmailService(BaseService):
     
     async def send_email_async(
         self,
-        to: Union[str, List[str], EmailAddress, List[EmailAddress]],
+        to: Union[str, list[str], EmailAddress, list[EmailAddress]],
         subject: str,
         **kwargs
     ) -> EmailResult:
@@ -865,11 +865,11 @@ class EmailService(BaseService):
     
     def send_bulk_email(
         self,
-        recipients: List[Dict[str, Any]],
+        recipients: list[dict[str, Any]],
         subject: str,
         template: str,
         from_address: Optional[Union[str, EmailAddress]] = None,
-        tags: Optional[List[str]] = None,
+        tags: Optional[list[str]] = None,
         priority: str = EmailPriority.MEDIUM.value,
         provider: Optional[str] = None,
         batch_size: int = 100
@@ -978,7 +978,7 @@ class EmailService(BaseService):
         self,
         to: Union[str, EmailAddress],
         template_name: str,
-        template_data: Dict[str, Any],
+        template_data: dict[str, Any],
         from_address: Optional[Union[str, EmailAddress]] = None,
         **kwargs
     ) -> EmailResult:
@@ -1040,7 +1040,7 @@ class EmailService(BaseService):
         text_content: Optional[str] = None,
         description: Optional[str] = None,
         category: Optional[str] = None,
-        variables: Optional[List[str]] = None
+        variables: Optional[list[str]] = None
     ) -> EmailTemplate:
         """
         Crear nueva plantilla de email
@@ -1081,7 +1081,7 @@ class EmailService(BaseService):
                 category=category,
                 variables=variables,
                 is_active=True,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             
             db.session.add(template)
@@ -1115,13 +1115,13 @@ class EmailService(BaseService):
             
             # Registrar apertura si es la primera vez
             if not tracking.opened_at:
-                tracking.opened_at = datetime.utcnow()
+                tracking.opened_at = datetime.now(timezone.utc)
                 tracking.open_count = 1
                 tracking.user_agent = user_agent
                 tracking.ip_address = ip_address
             else:
                 tracking.open_count += 1
-                tracking.last_opened_at = datetime.utcnow()
+                tracking.last_opened_at = datetime.now(timezone.utc)
             
             db.session.commit()
             
@@ -1164,11 +1164,11 @@ class EmailService(BaseService):
             
             # Registrar click
             if not tracking.clicked_at:
-                tracking.clicked_at = datetime.utcnow()
+                tracking.clicked_at = datetime.now(timezone.utc)
                 tracking.click_count = 1
             else:
                 tracking.click_count += 1
-                tracking.last_clicked_at = datetime.utcnow()
+                tracking.last_clicked_at = datetime.now(timezone.utc)
             
             # Agregar URL a la lista de URLs clickeadas
             clicked_urls = tracking.clicked_urls or []
@@ -1195,7 +1195,7 @@ class EmailService(BaseService):
         email: str,
         bounce_type: str,
         reason: str,
-        provider_data: Dict[str, Any] = None
+        provider_data: dict[str, Any] = None
     ) -> bool:
         """
         Manejar bounce de email
@@ -1216,7 +1216,7 @@ class EmailService(BaseService):
                 bounce_type=bounce_type,
                 reason=reason,
                 provider_data=provider_data,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             
             db.session.add(bounce)
@@ -1265,7 +1265,7 @@ class EmailService(BaseService):
             if existing:
                 if not existing.is_active:
                     existing.is_active = True
-                    existing.updated_at = datetime.utcnow()
+                    existing.updated_at = datetime.now(timezone.utc)
                     existing.reason = reason
                 return True
             
@@ -1275,7 +1275,7 @@ class EmailService(BaseService):
                 reason=reason,
                 source=source,
                 is_active=True,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             
             db.session.add(suppression)
@@ -1313,7 +1313,7 @@ class EmailService(BaseService):
             
             if suppression:
                 suppression.is_active = False
-                suppression.updated_at = datetime.utcnow()
+                suppression.updated_at = datetime.now(timezone.utc)
                 db.session.commit()
                 
                 # Actualizar cache
@@ -1336,7 +1336,7 @@ class EmailService(BaseService):
         end_date: datetime,
         template_id: Optional[int] = None,
         campaign_id: Optional[int] = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Obtener analytics de email
         
@@ -1347,7 +1347,7 @@ class EmailService(BaseService):
             campaign_id: Filtrar por campaña
             
         Returns:
-            Dict[str, Any]: Métricas de email
+            dict[str, Any]: Métricas de email
         """
         try:
             query = EmailLog.query.filter(
@@ -1413,7 +1413,7 @@ class EmailService(BaseService):
         # Already initialized in __init__, nothing additional needed
         pass
     
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """
         Verifica el estado de salud del servicio de email.
         
@@ -1424,7 +1424,7 @@ class EmailService(BaseService):
             health_status = {
                 'service': 'email',
                 'status': 'healthy',
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'providers': {},
                 'configuration': {
                     'providers_configured': len(self.providers),
@@ -1462,7 +1462,7 @@ class EmailService(BaseService):
             return {
                 'service': 'email',
                 'status': 'error',
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'error': str(e)
             }
     
@@ -1508,7 +1508,7 @@ class EmailService(BaseService):
             metadata=kwargs.get('metadata', {})
         )
     
-    def _normalize_addresses(self, addresses) -> List[EmailAddress]:
+    def _normalize_addresses(self, addresses) -> list[EmailAddress]:
         """Normalizar lista de direcciones"""
         if not addresses:
             return []
@@ -1592,7 +1592,7 @@ class EmailService(BaseService):
     def _render_template_content(
         self,
         template_name: str,
-        template_data: Dict[str, Any],
+        template_data: dict[str, Any],
         content: EmailContent
     ) -> EmailContent:
         """Renderizar contenido de plantilla"""
@@ -1617,7 +1617,7 @@ class EmailService(BaseService):
             logger.error(f"Error renderizando plantilla '{template_name}': {str(e)}")
             return content
     
-    def _render_template_string(self, template_string: str, data: Dict[str, Any]) -> str:
+    def _render_template_string(self, template_string: str, data: dict[str, Any]) -> str:
         """Renderizar string de plantilla"""
         try:
             template = jinja2.Template(template_string)
@@ -1647,7 +1647,7 @@ class EmailService(BaseService):
             strip=True
         )
     
-    def _extract_template_variables(self, *contents) -> List[str]:
+    def _extract_template_variables(self, *contents) -> list[str]:
         """Extraer variables de plantillas Jinja2"""
         variables = set()
         
@@ -1695,7 +1695,7 @@ class EmailService(BaseService):
                 provider_response=result.provider_id,
                 tags=message.tags,
                 metadata=message.metadata,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             
             db.session.add(email_log)
@@ -1708,13 +1708,13 @@ class EmailService(BaseService):
     def _setup_tracking(self, message_id: str, message: EmailMessage):
         """Configurar tracking para email"""
         try:
-            tracking_id = generate_hash(f"{message_id}-{datetime.utcnow()}")
+            tracking_id = generate_hash(f"{message_id}-{datetime.now(timezone.utc)}")
             
             tracking = EmailTracking(
                 tracking_id=tracking_id,
                 message_id=message_id,
                 recipient_email=message.to[0].email if message.to else None,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             
             db.session.add(tracking)

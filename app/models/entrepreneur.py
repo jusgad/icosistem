@@ -5,7 +5,7 @@ Este módulo define la clase Entrepreneur que extiende User con funcionalidades 
 
 import logging
 from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional, Union
+from typing import Any, Optional, Union
 from decimal import Decimal
 from flask import current_app
 from sqlalchemy import Column, String, Boolean, DateTime, Integer, Text, ForeignKey, Numeric, event
@@ -351,7 +351,7 @@ class Entrepreneur(User):
     def days_in_ecosystem(self):
         """Días desde que se unió al ecosistema."""
         if self.joined_ecosystem_at:
-            return (datetime.utcnow() - self.joined_ecosystem_at).days
+            return (datetime.now(timezone.utc) - self.joined_ecosystem_at).days
         return 0
     
     @property
@@ -374,7 +374,7 @@ class Entrepreneur(User):
         
         # Actividad reciente
         if self.last_activity_update:
-            days_since_activity = (datetime.utcnow() - self.last_activity_update).days
+            days_since_activity = (datetime.now(timezone.utc) - self.last_activity_update).days
             if days_since_activity <= 7:
                 score += 20
             elif days_since_activity <= 30:
@@ -392,7 +392,7 @@ class Entrepreneur(User):
     # MÉTODOS DE GESTIÓN DE PROYECTOS
     # ====================================
     
-    def create_project(self, project_data: Dict[str, Any]) -> 'Project':
+    def create_project(self, project_data: dict[str, Any]) -> 'Project':
         """
         Crear nuevo proyecto.
         
@@ -419,7 +419,7 @@ class Entrepreneur(User):
             if self.total_projects_count == 1:
                 self.add_achievement('first_project_created', {
                     'project_name': project.name,
-                    'created_at': datetime.utcnow().isoformat()
+                    'created_at': datetime.now(timezone.utc).isoformat()
                 })
             
             # Enviar notificación
@@ -445,7 +445,7 @@ class Entrepreneur(User):
         """Obtener proyectos por estado."""
         return self.projects.filter_by(status=status).all()
     
-    def get_projects_summary(self) -> Dict[str, Any]:
+    def get_projects_summary(self) -> dict[str, Any]:
         """Obtener resumen de proyectos."""
         try:
             projects = self.projects.all()
@@ -503,7 +503,7 @@ class Entrepreneur(User):
     # MÉTODOS DE MENTORÍA
     # ====================================
     
-    def request_mentorship(self, areas: List[str] = None, preferences: Dict[str, Any] = None) -> bool:
+    def request_mentorship(self, areas: list[str] = None, preferences: dict[str, Any] = None) -> bool:
         """
         Solicitar mentoría.
         
@@ -542,7 +542,7 @@ class Entrepreneur(User):
             entrepreneur_logger.error(f"Error requesting mentorship: {str(e)}")
             return False
     
-    def _notify_potential_mentors(self, areas: List[str]):
+    def _notify_potential_mentors(self, areas: list[str]):
         """Notificar a mentores potenciales sobre solicitud de mentoría."""
         try:
             from .ally import Ally
@@ -572,7 +572,7 @@ class Entrepreneur(User):
         except Exception as e:
             entrepreneur_logger.error(f"Error notifying potential mentors: {str(e)}")
     
-    def get_mentorship_history(self) -> List[Dict[str, Any]]:
+    def get_mentorship_history(self) -> list[dict[str, Any]]:
         """Obtener historial de mentorías."""
         try:
             mentorships = self.mentorships_received.all()
@@ -600,7 +600,7 @@ class Entrepreneur(User):
     # MÉTODOS DE LOGROS Y PROGRESO
     # ====================================
     
-    def add_achievement(self, achievement_type: str, details: Dict[str, Any] = None):
+    def add_achievement(self, achievement_type: str, details: dict[str, Any] = None):
         """
         Añadir logro al perfil.
         
@@ -611,7 +611,7 @@ class Entrepreneur(User):
         try:
             achievement = {
                 'type': achievement_type,
-                'achieved_at': datetime.utcnow().isoformat(),
+                'achieved_at': datetime.now(timezone.utc).isoformat(),
                 'details': details or {}
             }
             
@@ -637,7 +637,7 @@ class Entrepreneur(User):
         except Exception as e:
             entrepreneur_logger.error(f"Error adding achievement: {str(e)}")
     
-    def complete_milestone(self, milestone: str, details: Dict[str, Any] = None):
+    def complete_milestone(self, milestone: str, details: dict[str, Any] = None):
         """
         Marcar hito como completado.
         
@@ -648,7 +648,7 @@ class Entrepreneur(User):
         try:
             completed_milestone = {
                 'milestone': milestone,
-                'completed_at': datetime.utcnow().isoformat(),
+                'completed_at': datetime.now(timezone.utc).isoformat(),
                 'details': details or {}
             }
             
@@ -675,7 +675,7 @@ class Entrepreneur(User):
         except Exception as e:
             entrepreneur_logger.error(f"Error completing milestone: {str(e)}")
     
-    def set_goals(self, short_term: List[str] = None, long_term: List[str] = None):
+    def set_goals(self, short_term: list[str] = None, long_term: list[str] = None):
         """
         Establecer objetivos a corto y largo plazo.
         
@@ -700,7 +700,7 @@ class Entrepreneur(User):
                 min(self.active_projects_count * 0.3, 1.0),
                 min(len(self.milestones_completed or []) * 0.2, 1.0),
                 1.0 if self.last_activity_update and 
-                     (datetime.utcnow() - self.last_activity_update).days <= 7 else 0.0
+                     (datetime.now(timezone.utc) - self.last_activity_update).days <= 7 else 0.0
             ]
             self.commitment_score = sum(commitment_factors) * 1.25  # Max 5.0
             
@@ -735,7 +735,7 @@ class Entrepreneur(User):
     # MÉTODOS DE ANÁLISIS Y MÉTRICAS
     # ====================================
     
-    def get_performance_dashboard(self) -> Dict[str, Any]:
+    def get_performance_dashboard(self) -> dict[str, Any]:
         """
         Obtener datos para dashboard de performance del emprendedor.
         
@@ -789,7 +789,7 @@ class Entrepreneur(User):
             entrepreneur_logger.error(f"Error getting performance dashboard: {str(e)}")
             return {'error': str(e)}
     
-    def get_growth_trajectory(self, months_back: int = 12) -> Dict[str, Any]:
+    def get_growth_trajectory(self, months_back: int = 12) -> dict[str, Any]:
         """
         Obtener trayectoria de crecimiento del emprendedor.
         
@@ -803,7 +803,7 @@ class Entrepreneur(User):
             # Obtener datos históricos (implementar con activity logs)
             from .activity_log import ActivityLog
             
-            start_date = datetime.utcnow()
+            start_date = datetime.now(timezone.utc)
             # TODO: Implementar lógica de trayectoria de crecimiento
             return {
                 'growth_trend': 'positive',

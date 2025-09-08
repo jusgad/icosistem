@@ -23,8 +23,8 @@ from flask_limiter.util import get_remote_address
 from werkzeug.exceptions import HTTPException, BadRequest, Unauthorized, Forbidden, NotFound, InternalServerError
 import logging
 import time
-from datetime import datetime
-from typing import Dict, Any, Optional, Callable
+from datetime import datetime, timezone
+from typing import Any, Optional, Callable
 import functools
 import jwt
 
@@ -195,7 +195,7 @@ def register_error_handlers(api_bp: Blueprint):
             'error': 'Validation Error',
             'message': str(error),
             'details': getattr(error, 'details', None),
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'path': request.path
         }), 400
     
@@ -205,7 +205,7 @@ def register_error_handlers(api_bp: Blueprint):
         return jsonify({
             'error': 'Authentication Required',
             'message': str(error),
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'path': request.path
         }), 401
     
@@ -215,7 +215,7 @@ def register_error_handlers(api_bp: Blueprint):
         return jsonify({
             'error': 'Access Forbidden',
             'message': str(error),
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'path': request.path
         }), 403
     
@@ -225,7 +225,7 @@ def register_error_handlers(api_bp: Blueprint):
         return jsonify({
             'error': 'Resource Not Found',
             'message': str(error),
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'path': request.path
         }), 404
     
@@ -236,7 +236,7 @@ def register_error_handlers(api_bp: Blueprint):
             'error': 'Business Logic Error',
             'message': str(error),
             'details': getattr(error, 'details', None),
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'path': request.path
         }), 422
     
@@ -247,7 +247,7 @@ def register_error_handlers(api_bp: Blueprint):
             'error': 'Rate Limit Exceeded',
             'message': str(error),
             'retry_after': getattr(error, 'retry_after', None),
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'path': request.path
         }), 429
     
@@ -258,7 +258,7 @@ def register_error_handlers(api_bp: Blueprint):
             'error': 'Bad Request',
             'message': 'The request could not be understood by the server',
             'details': str(error.description) if hasattr(error, 'description') else None,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'path': request.path
         }), 400
     
@@ -268,7 +268,7 @@ def register_error_handlers(api_bp: Blueprint):
         return jsonify({
             'error': 'Unauthorized',
             'message': 'Authentication credentials were not provided or are invalid',
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'path': request.path
         }), 401
     
@@ -278,7 +278,7 @@ def register_error_handlers(api_bp: Blueprint):
         return jsonify({
             'error': 'Forbidden',
             'message': 'You do not have permission to access this resource',
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'path': request.path
         }), 403
     
@@ -288,7 +288,7 @@ def register_error_handlers(api_bp: Blueprint):
         return jsonify({
             'error': 'Not Found',
             'message': 'The requested resource was not found',
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'path': request.path
         }), 404
     
@@ -299,7 +299,7 @@ def register_error_handlers(api_bp: Blueprint):
             'error': 'Method Not Allowed',
             'message': f'The {request.method} method is not allowed for this endpoint',
             'allowed_methods': list(error.valid_methods) if hasattr(error, 'valid_methods') else None,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'path': request.path
         }), 405
     
@@ -310,7 +310,7 @@ def register_error_handlers(api_bp: Blueprint):
             'error': 'Unprocessable Entity',
             'message': 'The request was well-formed but contains semantic errors',
             'details': str(error.description) if hasattr(error, 'description') else None,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'path': request.path
         }), 422
     
@@ -332,7 +332,7 @@ def register_error_handlers(api_bp: Blueprint):
             'error': 'Internal Server Error',
             'message': message,
             'details': details,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'path': request.path
         }), 500
     
@@ -351,7 +351,7 @@ def register_error_handlers(api_bp: Blueprint):
         return jsonify({
             'error': 'Unexpected Error',
             'message': 'An unexpected error occurred',
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'path': request.path
         }), 500
 
@@ -401,7 +401,7 @@ def register_utility_endpoints(api_bp: Blueprint):
         
         return jsonify({
             'status': 'healthy' if db_status == 'healthy' else 'unhealthy',
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'version': APIConfig.DEFAULT_VERSION,
             'services': {
                 'database': db_status,
@@ -416,7 +416,7 @@ def register_utility_endpoints(api_bp: Blueprint):
             'name': 'Ecosistema de Emprendimiento API',
             'version': APIConfig.DEFAULT_VERSION,
             'supported_versions': APIConfig.SUPPORTED_VERSIONS,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'documentation': {
                 'swagger_ui': '/api/docs',
                 'openapi_spec': '/api/openapi.json'
@@ -597,14 +597,14 @@ def api_response(func: Callable) -> Callable:
                 return jsonify({
                     'success': True,
                     'data': data,
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }), status_code
             
             # Si es solo data
             return jsonify({
                 'success': True,
                 'data': result,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }), 200
             
         except Exception as e:
@@ -614,7 +614,7 @@ def api_response(func: Callable) -> Callable:
     return wrapper
 
 
-def paginated_response(query, page: int, per_page: int, **kwargs) -> Dict[str, Any]:
+def paginated_response(query, page: int, per_page: int, **kwargs) -> dict[str, Any]:
     """
     Crea una respuesta paginada estandarizada
     
