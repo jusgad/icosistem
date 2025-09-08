@@ -1,213 +1,213 @@
 /**
  * Ecosistema Emprendimiento - Ally Reports Module
  * ===============================================
- * 
+ *
  * Módulo especializado de reportes para aliados/mentores
  * Incluye generación de reportes, análisis de métricas,
  * visualizaciones avanzadas y exportación de datos
- * 
+ *
  * @author: Ecosistema Emprendimiento Team
  * @version: 1.0.0
  * @updated: 2025
  * @requires: main.js, app.js, state.js, Chart.js
  */
 
-'use strict';
+'use strict'
 
 /**
  * Módulo principal de reportes para aliados
  */
 class AllyReports {
-    constructor(container, app) {
-        this.container = typeof container === 'string' ? 
-            document.querySelector(container) : container;
-        this.app = app;
-        this.main = app?.main || window.App;
-        this.state = app?.state || window.EcosistemaStateManager;
-        this.config = window.getConfig('modules.allyReports', {});
+  constructor (container, app) {
+    this.container = typeof container === 'string'
+      ? document.querySelector(container)
+      : container
+    this.app = app
+    this.main = app?.main || window.App
+    this.state = app?.state || window.EcosistemaStateManager
+    this.config = window.getConfig('modules.allyReports', {})
 
-        // Configuración del módulo
-        this.moduleConfig = {
-            enableRealTimeUpdates: true,
-            enableAutoRefresh: true,
-            autoRefreshInterval: 300000, // 5 minutos
-            enableExportFormats: ['pdf', 'excel', 'csv', 'json'],
-            enableCustomReports: true,
-            enableScheduledReports: true,
-            maxDataPoints: 1000,
-            defaultDateRange: 30, // días
-            enableComparativeAnalysis: true,
-            enablePredictiveAnalytics: false,
-            chartAnimations: true,
-            enableDrillDown: true,
-            cacheReports: true,
-            cacheTimeout: 600000 // 10 minutos
-        };
-
-        // Estado interno del módulo
-        this.moduleState = {
-            isInitialized: false,
-            currentReport: null,
-            selectedDateRange: {
-                start: new Date(Date.now() - (30 * 24 * 60 * 60 * 1000)),
-                end: new Date()
-            },
-            filters: {
-                emprendedores: [],
-                categorias: [],
-                estados: [],
-                tiposSesion: []
-            },
-            reports: new Map(),
-            charts: new Map(),
-            dataCache: new Map(),
-            exportQueue: [],
-            isGenerating: false,
-            lastRefresh: null,
-            autoRefreshTimer: null,
-            selectedMentees: new Set(),
-            comparisonMode: false,
-            drillDownStack: []
-        };
-
-        // Tipos de reportes disponibles
-        this.reportTypes = {
-            overview: {
-                name: 'Resumen General',
-                icon: 'fa-chart-pie',
-                description: 'Vista general de métricas de mentoría',
-                sections: ['metrics', 'sessions', 'progress', 'satisfaction'],
-                refreshInterval: 300000
-            },
-            mentees: {
-                name: 'Emprendedores',
-                icon: 'fa-users',
-                description: 'Análisis detallado de emprendedores',
-                sections: ['list', 'progress', 'engagement', 'outcomes'],
-                refreshInterval: 600000
-            },
-            sessions: {
-                name: 'Sesiones de Mentoría',
-                icon: 'fa-handshake',
-                description: 'Análisis de sesiones y su efectividad',
-                sections: ['frequency', 'duration', 'topics', 'feedback'],
-                refreshInterval: 300000
-            },
-            impact: {
-                name: 'Análisis de Impacto',
-                icon: 'fa-chart-line',
-                description: 'Medición del impacto de la mentoría',
-                sections: ['roi', 'success_rate', 'improvements', 'testimonials'],
-                refreshInterval: 900000
-            },
-            performance: {
-                name: 'Rendimiento Personal',
-                icon: 'fa-award',
-                description: 'Métricas de rendimiento del mentor',
-                sections: ['efficiency', 'ratings', 'growth', 'goals'],
-                refreshInterval: 600000
-            },
-            financial: {
-                name: 'Análisis Financiero',
-                icon: 'fa-dollar-sign',
-                description: 'Impacto financiero y ROI de mentoría',
-                sections: ['revenue', 'costs', 'roi', 'projections'],
-                refreshInterval: 1800000
-            },
-            custom: {
-                name: 'Reportes Personalizados',
-                icon: 'fa-cog',
-                description: 'Reportes configurables por el usuario',
-                sections: ['builder', 'templates', 'saved'],
-                refreshInterval: null
-            }
-        };
-
-        // Referencias DOM
-        this.elements = {};
-
-        // Event listeners
-        this.eventListeners = new Map();
-
-        // Instancias de gráficos
-        this.chartInstances = new Map();
-
-        // Templates de reportes
-        this.reportTemplates = new Map();
-
-        // Inicializar
-        this.init();
+    // Configuración del módulo
+    this.moduleConfig = {
+      enableRealTimeUpdates: true,
+      enableAutoRefresh: true,
+      autoRefreshInterval: 300000, // 5 minutos
+      enableExportFormats: ['pdf', 'excel', 'csv', 'json'],
+      enableCustomReports: true,
+      enableScheduledReports: true,
+      maxDataPoints: 1000,
+      defaultDateRange: 30, // días
+      enableComparativeAnalysis: true,
+      enablePredictiveAnalytics: false,
+      chartAnimations: true,
+      enableDrillDown: true,
+      cacheReports: true,
+      cacheTimeout: 600000 // 10 minutos
     }
 
-    /**
+    // Estado interno del módulo
+    this.moduleState = {
+      isInitialized: false,
+      currentReport: null,
+      selectedDateRange: {
+        start: new Date(Date.now() - (30 * 24 * 60 * 60 * 1000)),
+        end: new Date()
+      },
+      filters: {
+        emprendedores: [],
+        categorias: [],
+        estados: [],
+        tiposSesion: []
+      },
+      reports: new Map(),
+      charts: new Map(),
+      dataCache: new Map(),
+      exportQueue: [],
+      isGenerating: false,
+      lastRefresh: null,
+      autoRefreshTimer: null,
+      selectedMentees: new Set(),
+      comparisonMode: false,
+      drillDownStack: []
+    }
+
+    // Tipos de reportes disponibles
+    this.reportTypes = {
+      overview: {
+        name: 'Resumen General',
+        icon: 'fa-chart-pie',
+        description: 'Vista general de métricas de mentoría',
+        sections: ['metrics', 'sessions', 'progress', 'satisfaction'],
+        refreshInterval: 300000
+      },
+      mentees: {
+        name: 'Emprendedores',
+        icon: 'fa-users',
+        description: 'Análisis detallado de emprendedores',
+        sections: ['list', 'progress', 'engagement', 'outcomes'],
+        refreshInterval: 600000
+      },
+      sessions: {
+        name: 'Sesiones de Mentoría',
+        icon: 'fa-handshake',
+        description: 'Análisis de sesiones y su efectividad',
+        sections: ['frequency', 'duration', 'topics', 'feedback'],
+        refreshInterval: 300000
+      },
+      impact: {
+        name: 'Análisis de Impacto',
+        icon: 'fa-chart-line',
+        description: 'Medición del impacto de la mentoría',
+        sections: ['roi', 'success_rate', 'improvements', 'testimonials'],
+        refreshInterval: 900000
+      },
+      performance: {
+        name: 'Rendimiento Personal',
+        icon: 'fa-award',
+        description: 'Métricas de rendimiento del mentor',
+        sections: ['efficiency', 'ratings', 'growth', 'goals'],
+        refreshInterval: 600000
+      },
+      financial: {
+        name: 'Análisis Financiero',
+        icon: 'fa-dollar-sign',
+        description: 'Impacto financiero y ROI de mentoría',
+        sections: ['revenue', 'costs', 'roi', 'projections'],
+        refreshInterval: 1800000
+      },
+      custom: {
+        name: 'Reportes Personalizados',
+        icon: 'fa-cog',
+        description: 'Reportes configurables por el usuario',
+        sections: ['builder', 'templates', 'saved'],
+        refreshInterval: null
+      }
+    }
+
+    // Referencias DOM
+    this.elements = {}
+
+    // Event listeners
+    this.eventListeners = new Map()
+
+    // Instancias de gráficos
+    this.chartInstances = new Map()
+
+    // Templates de reportes
+    this.reportTemplates = new Map()
+
+    // Inicializar
+    this.init()
+  }
+
+  /**
      * Inicializar módulo
      */
-    async init() {
-        if (this.moduleState.isInitialized) return;
+  async init () {
+    if (this.moduleState.isInitialized) return
 
-        try {
-            console.log('📊 Inicializando Ally Reports');
+    try {
+      console.log('📊 Inicializando Ally Reports')
 
-            // Verificar permisos
-            if (!this.hasPermissions()) {
-                throw new Error('Usuario no tiene permisos para reportes');
-            }
+      // Verificar permisos
+      if (!this.hasPermissions()) {
+        throw new Error('Usuario no tiene permisos para reportes')
+      }
 
-            // Crear estructura DOM
-            this.createStructure();
+      // Crear estructura DOM
+      this.createStructure()
 
-            // Obtener referencias DOM
-            this.bindElements();
+      // Obtener referencias DOM
+      this.bindElements()
 
-            // Configurar eventos
-            this.bindEvents();
+      // Configurar eventos
+      this.bindEvents()
 
-            // Cargar templates de reportes
-            this.loadReportTemplates();
+      // Cargar templates de reportes
+      this.loadReportTemplates()
 
-            // Cargar datos iniciales
-            await this.loadInitialData();
+      // Cargar datos iniciales
+      await this.loadInitialData()
 
-            // Configurar auto-refresh
-            this.setupAutoRefresh();
+      // Configurar auto-refresh
+      this.setupAutoRefresh()
 
-            // Configurar estado reactivo
-            this.setupReactiveState();
+      // Configurar estado reactivo
+      this.setupReactiveState()
 
-            // Cargar reporte por defecto
-            await this.loadDefaultReport();
+      // Cargar reporte por defecto
+      await this.loadDefaultReport()
 
-            // Marcar como inicializado
-            this.moduleState.isInitialized = true;
+      // Marcar como inicializado
+      this.moduleState.isInitialized = true
 
-            console.log('✅ Ally Reports inicializado');
-
-        } catch (error) {
-            console.error('❌ Error inicializando Ally Reports:', error);
-            this.showError('Error inicializando reportes', error.message);
-        }
+      console.log('✅ Ally Reports inicializado')
+    } catch (error) {
+      console.error('❌ Error inicializando Ally Reports:', error)
+      this.showError('Error inicializando reportes', error.message)
     }
+  }
 
-    /**
+  /**
      * Verificar permisos del usuario
      */
-    hasPermissions() {
-        const userType = this.main.userType;
-        const allowedTypes = ['mentor', 'admin'];
-        
-        return allowedTypes.includes(userType) || 
-               this.main.currentUser?.permissions?.includes('ally_reports');
-    }
+  hasPermissions () {
+    const userType = this.main.userType
+    const allowedTypes = ['mentor', 'admin']
 
-    /**
+    return allowedTypes.includes(userType) ||
+               this.main.currentUser?.permissions?.includes('ally_reports')
+  }
+
+  /**
      * Crear estructura DOM del módulo
      */
-    createStructure() {
-        if (!this.container) {
-            throw new Error('Contenedor no encontrado para Ally Reports');
-        }
+  createStructure () {
+    if (!this.container) {
+      throw new Error('Contenedor no encontrado para Ally Reports')
+    }
 
-        this.container.innerHTML = `
+    this.container.innerHTML = `
             <div class="ally-reports" data-module="ally-reports">
                 <!-- Header del módulo -->
                 <div class="reports-header">
@@ -865,312 +865,308 @@ class AllyReports {
                     </div>
                 </div>
             </div>
-        `;
+        `
 
-        // Agregar estilos CSS específicos
-        this.injectStyles();
-    }
+    // Agregar estilos CSS específicos
+    this.injectStyles()
+  }
 
-    /**
+  /**
      * Obtener referencias a elementos DOM
      */
-    bindElements() {
-        const reports = this.container.querySelector('.ally-reports');
-        
-        this.elements = {
-            // Header
-            updateTime: reports.querySelector('.update-time'),
-            dateStart: reports.querySelector('[data-input="date-start"]'),
-            dateEnd: reports.querySelector('[data-input="date-end"]'),
-            
-            // Navegación
-            reportTabs: reports.querySelectorAll('[data-report-type]'),
-            
-            // Filtros
-            filterEmprendedores: reports.querySelector('[data-filter="emprendedores"]'),
-            filterCategorias: reports.querySelector('[data-filter="categorias"]'),
-            filterEstados: reports.querySelector('[data-filter="estados"]'),
-            filterTiposSesion: reports.querySelector('[data-filter="tiposSesion"]'),
-            
-            // KPIs
-            kpiValues: reports.querySelectorAll('[data-kpi]'),
-            
-            // Contenedores de contenido
-            menteesContent: reports.querySelector('[data-content="mentees-list"]'),
-            sessionsContent: reports.querySelector('[data-content="sessions-list"]'),
-            successStoriesContent: reports.querySelector('[data-content="success-stories"]'),
-            
-            // Modales
-            exportModal: reports.querySelector('#exportModal'),
-            
-            // Loading
-            loadingOverlay: reports.querySelector('.reports-loading')
-        };
-    }
+  bindElements () {
+    const reports = this.container.querySelector('.ally-reports')
 
-    /**
+    this.elements = {
+      // Header
+      updateTime: reports.querySelector('.update-time'),
+      dateStart: reports.querySelector('[data-input="date-start"]'),
+      dateEnd: reports.querySelector('[data-input="date-end"]'),
+
+      // Navegación
+      reportTabs: reports.querySelectorAll('[data-report-type]'),
+
+      // Filtros
+      filterEmprendedores: reports.querySelector('[data-filter="emprendedores"]'),
+      filterCategorias: reports.querySelector('[data-filter="categorias"]'),
+      filterEstados: reports.querySelector('[data-filter="estados"]'),
+      filterTiposSesion: reports.querySelector('[data-filter="tiposSesion"]'),
+
+      // KPIs
+      kpiValues: reports.querySelectorAll('[data-kpi]'),
+
+      // Contenedores de contenido
+      menteesContent: reports.querySelector('[data-content="mentees-list"]'),
+      sessionsContent: reports.querySelector('[data-content="sessions-list"]'),
+      successStoriesContent: reports.querySelector('[data-content="success-stories"]'),
+
+      // Modales
+      exportModal: reports.querySelector('#exportModal'),
+
+      // Loading
+      loadingOverlay: reports.querySelector('.reports-loading')
+    }
+  }
+
+  /**
      * Configurar eventos
      */
-    bindEvents() {
-        // Eventos de header
-        this.addEventDelegate('click', '[data-action="refresh-data"]', this.refreshData.bind(this));
-        this.addEventDelegate('click', '[data-action="apply-date-range"]', this.applyDateRange.bind(this));
-        this.addEventDelegate('click', '[data-action="toggle-comparison"]', this.toggleComparison.bind(this));
-        this.addEventDelegate('click', '[data-action="export"]', this.showExportModal.bind(this));
-        this.addEventDelegate('click', '[data-action="schedule-report"]', this.showScheduleModal.bind(this));
-        
-        // Eventos de navegación
-        this.addEventDelegate('click', '[data-report-type]', this.switchReport.bind(this));
-        
-        // Eventos de filtros
-        this.addEventDelegate('click', '[data-action="apply-filters"]', this.applyFilters.bind(this));
-        this.addEventDelegate('click', '[data-action="clear-filters"]', this.clearFilters.bind(this));
-        this.addEventDelegate('change', '[data-filter]', this.handleFilterChange.bind(this));
-        
-        // Eventos de búsqueda
-        this.addEventDelegate('input', '[data-search]', 
-            this.main.utils.debounce(this.handleSearch.bind(this), 300));
-        
-        // Eventos de gráficos
-        this.addEventDelegate('change', 'input[name="chartPeriod"]', this.handleChartPeriodChange.bind(this));
-        
-        // Eventos de tabla
-        this.addEventDelegate('click', '.mentee-details', this.showMenteeDetails.bind(this));
-        this.addEventDelegate('click', '.session-details', this.showSessionDetails.bind(this));
-        
-        // Eventos de exportación
-        this.addEventDelegate('click', '[data-action="confirm-export"]', this.confirmExport.bind(this));
-        
-        // Eventos de comparación
-        this.addEventDelegate('change', '.mentee-compare', this.handleMenteeCompare.bind(this));
-    }
+  bindEvents () {
+    // Eventos de header
+    this.addEventDelegate('click', '[data-action="refresh-data"]', this.refreshData.bind(this))
+    this.addEventDelegate('click', '[data-action="apply-date-range"]', this.applyDateRange.bind(this))
+    this.addEventDelegate('click', '[data-action="toggle-comparison"]', this.toggleComparison.bind(this))
+    this.addEventDelegate('click', '[data-action="export"]', this.showExportModal.bind(this))
+    this.addEventDelegate('click', '[data-action="schedule-report"]', this.showScheduleModal.bind(this))
 
-    /**
+    // Eventos de navegación
+    this.addEventDelegate('click', '[data-report-type]', this.switchReport.bind(this))
+
+    // Eventos de filtros
+    this.addEventDelegate('click', '[data-action="apply-filters"]', this.applyFilters.bind(this))
+    this.addEventDelegate('click', '[data-action="clear-filters"]', this.clearFilters.bind(this))
+    this.addEventDelegate('change', '[data-filter]', this.handleFilterChange.bind(this))
+
+    // Eventos de búsqueda
+    this.addEventDelegate('input', '[data-search]',
+      this.main.utils.debounce(this.handleSearch.bind(this), 300))
+
+    // Eventos de gráficos
+    this.addEventDelegate('change', 'input[name="chartPeriod"]', this.handleChartPeriodChange.bind(this))
+
+    // Eventos de tabla
+    this.addEventDelegate('click', '.mentee-details', this.showMenteeDetails.bind(this))
+    this.addEventDelegate('click', '.session-details', this.showSessionDetails.bind(this))
+
+    // Eventos de exportación
+    this.addEventDelegate('click', '[data-action="confirm-export"]', this.confirmExport.bind(this))
+
+    // Eventos de comparación
+    this.addEventDelegate('change', '.mentee-compare', this.handleMenteeCompare.bind(this))
+  }
+
+  /**
      * Agregar event listener con delegación
      */
-    addEventDelegate(event, selector, handler) {
-        const listener = (e) => {
-            const target = e.target.closest(selector);
-            if (target && this.container.contains(target)) {
-                handler(e, target);
-            }
-        };
-        
-        this.container.addEventListener(event, listener);
-        
-        if (!this.eventListeners.has(event)) {
-            this.eventListeners.set(event, []);
-        }
-        this.eventListeners.get(event).push({ selector, handler, listener });
+  addEventDelegate (event, selector, handler) {
+    const listener = (e) => {
+      const target = e.target.closest(selector)
+      if (target && this.container.contains(target)) {
+        handler(e, target)
+      }
     }
 
-    /**
+    this.container.addEventListener(event, listener)
+
+    if (!this.eventListeners.has(event)) {
+      this.eventListeners.set(event, [])
+    }
+    this.eventListeners.get(event).push({ selector, handler, listener })
+  }
+
+  /**
      * Cargar templates de reportes
      */
-    loadReportTemplates() {
-        // Templates predefinidos para diferentes tipos de reporte
-        this.reportTemplates.set('overview', {
-            sections: ['kpis', 'activity_chart', 'category_distribution', 'progress_summary'],
-            charts: ['activity', 'category', 'progress', 'satisfaction'],
-            refreshInterval: 300000
-        });
-        
-        this.reportTemplates.set('mentees', {
-            sections: ['summary', 'list', 'progress_details', 'engagement_metrics'],
-            charts: ['mentee_progress', 'engagement_timeline'],
-            refreshInterval: 600000
-        });
-        
-        // Más templates...
-    }
+  loadReportTemplates () {
+    // Templates predefinidos para diferentes tipos de reporte
+    this.reportTemplates.set('overview', {
+      sections: ['kpis', 'activity_chart', 'category_distribution', 'progress_summary'],
+      charts: ['activity', 'category', 'progress', 'satisfaction'],
+      refreshInterval: 300000
+    })
 
-    /**
+    this.reportTemplates.set('mentees', {
+      sections: ['summary', 'list', 'progress_details', 'engagement_metrics'],
+      charts: ['mentee_progress', 'engagement_timeline'],
+      refreshInterval: 600000
+    })
+
+    // Más templates...
+  }
+
+  /**
      * Cargar datos iniciales
      */
-    async loadInitialData() {
-        try {
-            // Configurar fechas por defecto
-            this.setDefaultDateRange();
-            
-            // Cargar opciones de filtros
-            await this.loadFilterOptions();
-            
-            // Cargar datos básicos
-            await this.loadBasicData();
-            
-        } catch (error) {
-            console.error('Error cargando datos iniciales:', error);
-            throw error;
-        }
-    }
+  async loadInitialData () {
+    try {
+      // Configurar fechas por defecto
+      this.setDefaultDateRange()
 
-    /**
+      // Cargar opciones de filtros
+      await this.loadFilterOptions()
+
+      // Cargar datos básicos
+      await this.loadBasicData()
+    } catch (error) {
+      console.error('Error cargando datos iniciales:', error)
+      throw error
+    }
+  }
+
+  /**
      * Configurar fechas por defecto
      */
-    setDefaultDateRange() {
-        const end = new Date();
-        const start = new Date(Date.now() - (this.moduleConfig.defaultDateRange * 24 * 60 * 60 * 1000));
-        
-        this.moduleState.selectedDateRange = { start, end };
-        
-        if (this.elements.dateStart) {
-            this.elements.dateStart.value = start.toISOString().split('T')[0];
-        }
-        if (this.elements.dateEnd) {
-            this.elements.dateEnd.value = end.toISOString().split('T')[0];
-        }
-    }
+  setDefaultDateRange () {
+    const end = new Date()
+    const start = new Date(Date.now() - (this.moduleConfig.defaultDateRange * 24 * 60 * 60 * 1000))
 
-    /**
+    this.moduleState.selectedDateRange = { start, end }
+
+    if (this.elements.dateStart) {
+      this.elements.dateStart.value = start.toISOString().split('T')[0]
+    }
+    if (this.elements.dateEnd) {
+      this.elements.dateEnd.value = end.toISOString().split('T')[0]
+    }
+  }
+
+  /**
      * Cargar opciones de filtros
      */
-    async loadFilterOptions() {
-        try {
-            const response = await this.main.http.get('/reports/filter-options');
-            
-            // Llenar select de emprendedores
-            if (this.elements.filterEmprendedores && response.mentees) {
-                this.elements.filterEmprendedores.innerHTML = 
-                    '<option value="">Todos</option>' +
-                    response.mentees.map(mentee => 
-                        `<option value="${mentee.id}">${mentee.name}</option>`
-                    ).join('');
-            }
-            
-        } catch (error) {
-            console.error('Error cargando opciones de filtros:', error);
-        }
-    }
+  async loadFilterOptions () {
+    try {
+      const response = await this.main.http.get('/reports/filter-options')
 
-    /**
+      // Llenar select de emprendedores
+      if (this.elements.filterEmprendedores && response.mentees) {
+        this.elements.filterEmprendedores.innerHTML =
+                    '<option value="">Todos</option>' +
+                    response.mentees.map(mentee =>
+                        `<option value="${mentee.id}">${mentee.name}</option>`
+                    ).join('')
+      }
+    } catch (error) {
+      console.error('Error cargando opciones de filtros:', error)
+    }
+  }
+
+  /**
      * Cargar datos básicos
      */
-    async loadBasicData() {
-        try {
-            const params = this.buildApiParams();
-            const response = await this.main.http.get('/reports/basic-data', { params });
-            
-            // Actualizar KPIs
-            this.updateKPIs(response.kpis);
-            
-            // Guardar en cache
-            this.moduleState.dataCache.set('basic-data', {
-                data: response,
-                timestamp: Date.now()
-            });
-            
-        } catch (error) {
-            console.error('Error cargando datos básicos:', error);
-            throw error;
-        }
-    }
+  async loadBasicData () {
+    try {
+      const params = this.buildApiParams()
+      const response = await this.main.http.get('/reports/basic-data', { params })
 
-    /**
+      // Actualizar KPIs
+      this.updateKPIs(response.kpis)
+
+      // Guardar en cache
+      this.moduleState.dataCache.set('basic-data', {
+        data: response,
+        timestamp: Date.now()
+      })
+    } catch (error) {
+      console.error('Error cargando datos básicos:', error)
+      throw error
+    }
+  }
+
+  /**
      * Cargar reporte por defecto
      */
-    async loadDefaultReport() {
-        await this.loadReport('overview');
-    }
+  async loadDefaultReport () {
+    await this.loadReport('overview')
+  }
 
-    /**
+  /**
      * Cargar reporte específico
      */
-    async loadReport(reportType) {
-        if (this.moduleState.isGenerating) return;
-        
-        try {
-            this.moduleState.isGenerating = true;
-            this.showLoading(true);
-            
-            const params = this.buildApiParams();
-            const response = await this.main.http.get(`/reports/${reportType}`, { params });
-            
-            // Guardar reporte
-            this.moduleState.reports.set(reportType, response);
-            this.moduleState.currentReport = reportType;
-            
-            // Renderizar contenido específico
-            await this.renderReport(reportType, response);
-            
-            // Actualizar timestamp
-            this.updateLastRefreshTime();
-            
-        } catch (error) {
-            console.error(`Error cargando reporte ${reportType}:`, error);
-            this.showError('Error cargando reporte', error.message);
-        } finally {
-            this.moduleState.isGenerating = false;
-            this.showLoading(false);
-        }
-    }
+  async loadReport (reportType) {
+    if (this.moduleState.isGenerating) return
 
-    /**
+    try {
+      this.moduleState.isGenerating = true
+      this.showLoading(true)
+
+      const params = this.buildApiParams()
+      const response = await this.main.http.get(`/reports/${reportType}`, { params })
+
+      // Guardar reporte
+      this.moduleState.reports.set(reportType, response)
+      this.moduleState.currentReport = reportType
+
+      // Renderizar contenido específico
+      await this.renderReport(reportType, response)
+
+      // Actualizar timestamp
+      this.updateLastRefreshTime()
+    } catch (error) {
+      console.error(`Error cargando reporte ${reportType}:`, error)
+      this.showError('Error cargando reporte', error.message)
+    } finally {
+      this.moduleState.isGenerating = false
+      this.showLoading(false)
+    }
+  }
+
+  /**
      * Renderizar reporte
      */
-    async renderReport(reportType, data) {
-        switch (reportType) {
-            case 'overview':
-                await this.renderOverviewReport(data);
-                break;
-            case 'mentees':
-                await this.renderMenteesReport(data);
-                break;
-            case 'sessions':
-                await this.renderSessionsReport(data);
-                break;
-            case 'impact':
-                await this.renderImpactReport(data);
-                break;
-            case 'performance':
-                await this.renderPerformanceReport(data);
-                break;
-            case 'financial':
-                await this.renderFinancialReport(data);
-                break;
-            default:
-                console.warn(`Tipo de reporte no implementado: ${reportType}`);
-        }
+  async renderReport (reportType, data) {
+    switch (reportType) {
+      case 'overview':
+        await this.renderOverviewReport(data)
+        break
+      case 'mentees':
+        await this.renderMenteesReport(data)
+        break
+      case 'sessions':
+        await this.renderSessionsReport(data)
+        break
+      case 'impact':
+        await this.renderImpactReport(data)
+        break
+      case 'performance':
+        await this.renderPerformanceReport(data)
+        break
+      case 'financial':
+        await this.renderFinancialReport(data)
+        break
+      default:
+        console.warn(`Tipo de reporte no implementado: ${reportType}`)
     }
+  }
 
-    /**
+  /**
      * Renderizar reporte de resumen
      */
-    async renderOverviewReport(data) {
-        // Actualizar KPIs
-        this.updateKPIs(data.kpis);
-        
-        // Crear gráfico de actividad
-        await this.createActivityChart(data.activity);
-        
-        // Crear gráfico de categorías
-        await this.createCategoryChart(data.categories);
-        
-        // Crear gráfico de progreso
-        await this.createProgressChart(data.progress);
-        
-        // Crear gráfico de satisfacción
-        await this.createSatisfactionChart(data.satisfaction);
-    }
+  async renderOverviewReport (data) {
+    // Actualizar KPIs
+    this.updateKPIs(data.kpis)
 
-    /**
+    // Crear gráfico de actividad
+    await this.createActivityChart(data.activity)
+
+    // Crear gráfico de categorías
+    await this.createCategoryChart(data.categories)
+
+    // Crear gráfico de progreso
+    await this.createProgressChart(data.progress)
+
+    // Crear gráfico de satisfacción
+    await this.createSatisfactionChart(data.satisfaction)
+  }
+
+  /**
      * Renderizar reporte de emprendedores
      */
-    async renderMenteesReport(data) {
-        // Actualizar resumen
-        this.updateSummaryCards(data.summary);
-        
-        // Renderizar tabla de emprendedores
-        this.renderMenteesTable(data.mentees);
-    }
+  async renderMenteesReport (data) {
+    // Actualizar resumen
+    this.updateSummaryCards(data.summary)
 
-    /**
+    // Renderizar tabla de emprendedores
+    this.renderMenteesTable(data.mentees)
+  }
+
+  /**
      * Renderizar tabla de emprendedores
      */
-    renderMenteesTable(mentees) {
-        const tbody = this.elements.menteesContent;
-        if (!tbody) return;
-        
-        tbody.innerHTML = mentees.map(mentee => `
+  renderMenteesTable (mentees) {
+    const tbody = this.elements.menteesContent
+    if (!tbody) return
+
+    tbody.innerHTML = mentees.map(mentee => `
             <tr>
                 <td>
                     <div class="d-flex align-items-center">
@@ -1232,368 +1228,367 @@ class AllyReports {
                     </div>
                 </td>
             </tr>
-        `).join('');
-    }
+        `).join('')
+  }
 
-    /**
+  /**
      * Crear gráfico de actividad
      */
-    async createActivityChart(data) {
-        const ctx = document.getElementById('activityChart');
-        if (!ctx) return;
-        
-        // Destruir gráfico anterior si existe
-        if (this.chartInstances.has('activity')) {
-            this.chartInstances.get('activity').destroy();
-        }
-        
-        const chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: data.labels,
-                datasets: [{
-                    label: 'Sesiones',
-                    data: data.sessions,
-                    borderColor: '#007bff',
-                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }, {
-                    label: 'Horas',
-                    data: data.hours,
-                    borderColor: '#28a745',
-                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-        
-        this.chartInstances.set('activity', chart);
+  async createActivityChart (data) {
+    const ctx = document.getElementById('activityChart')
+    if (!ctx) return
+
+    // Destruir gráfico anterior si existe
+    if (this.chartInstances.has('activity')) {
+      this.chartInstances.get('activity').destroy()
     }
 
-    /**
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: 'Sesiones',
+          data: data.sessions,
+          borderColor: '#007bff',
+          backgroundColor: 'rgba(0, 123, 255, 0.1)',
+          fill: true,
+          tension: 0.4
+        }, {
+          label: 'Horas',
+          data: data.hours,
+          borderColor: '#28a745',
+          backgroundColor: 'rgba(40, 167, 69, 0.1)',
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    })
+
+    this.chartInstances.set('activity', chart)
+  }
+
+  /**
      * Crear gráfico de categorías
      */
-    async createCategoryChart(data) {
-        const ctx = document.getElementById('categoryChart');
-        if (!ctx) return;
-        
-        if (this.chartInstances.has('category')) {
-            this.chartInstances.get('category').destroy();
-        }
-        
-        const chart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: data.labels,
-                datasets: [{
-                    data: data.values,
-                    backgroundColor: [
-                        '#007bff', '#28a745', '#ffc107', 
-                        '#dc3545', '#6f42c1', '#20c997'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
-            }
-        });
-        
-        this.chartInstances.set('category', chart);
+  async createCategoryChart (data) {
+    const ctx = document.getElementById('categoryChart')
+    if (!ctx) return
+
+    if (this.chartInstances.has('category')) {
+      this.chartInstances.get('category').destroy()
     }
 
-    /**
+    const chart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          data: data.values,
+          backgroundColor: [
+            '#007bff', '#28a745', '#ffc107',
+            '#dc3545', '#6f42c1', '#20c997'
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    })
+
+    this.chartInstances.set('category', chart)
+  }
+
+  /**
      * Actualizar KPIs
      */
-    updateKPIs(kpis) {
-        this.elements.kpiValues.forEach(element => {
-            const kpiName = element.dataset.kpi;
-            if (kpis[kpiName] !== undefined) {
-                element.textContent = this.formatKPIValue(kpiName, kpis[kpiName]);
-            }
-        });
-    }
+  updateKPIs (kpis) {
+    this.elements.kpiValues.forEach(element => {
+      const kpiName = element.dataset.kpi
+      if (kpis[kpiName] !== undefined) {
+        element.textContent = this.formatKPIValue(kpiName, kpis[kpiName])
+      }
+    })
+  }
 
-    /**
+  /**
      * Formatear valor de KPI
      */
-    formatKPIValue(kpiName, value) {
-        switch (kpiName) {
-            case 'total-hours':
-                return `${value}h`;
-            case 'avg-rating':
-                return value.toFixed(1);
-            default:
-                return this.main.utils.formatNumber(value);
-        }
+  formatKPIValue (kpiName, value) {
+    switch (kpiName) {
+      case 'total-hours':
+        return `${value}h`
+      case 'avg-rating':
+        return value.toFixed(1)
+      default:
+        return this.main.utils.formatNumber(value)
     }
+  }
 
-    /**
+  /**
      * Cambiar reporte
      */
-    async switchReport(event, element) {
-        const reportType = element.dataset.reportType;
-        
-        // Actualizar navegación activa
-        this.elements.reportTabs.forEach(tab => tab.classList.remove('active'));
-        element.classList.add('active');
-        
-        // Cargar reporte
-        await this.loadReport(reportType);
-    }
+  async switchReport (event, element) {
+    const reportType = element.dataset.reportType
 
-    /**
+    // Actualizar navegación activa
+    this.elements.reportTabs.forEach(tab => tab.classList.remove('active'))
+    element.classList.add('active')
+
+    // Cargar reporte
+    await this.loadReport(reportType)
+  }
+
+  /**
      * Aplicar rango de fechas
      */
-    async applyDateRange() {
-        const startDate = new Date(this.elements.dateStart.value);
-        const endDate = new Date(this.elements.dateEnd.value);
-        
-        if (startDate >= endDate) {
-            this.showError('Error', 'La fecha de inicio debe ser anterior a la fecha de fin');
-            return;
-        }
-        
-        this.moduleState.selectedDateRange = {
-            start: startDate,
-            end: endDate
-        };
-        
-        // Recargar reporte actual
-        if (this.moduleState.currentReport) {
-            await this.loadReport(this.moduleState.currentReport);
-        }
+  async applyDateRange () {
+    const startDate = new Date(this.elements.dateStart.value)
+    const endDate = new Date(this.elements.dateEnd.value)
+
+    if (startDate >= endDate) {
+      this.showError('Error', 'La fecha de inicio debe ser anterior a la fecha de fin')
+      return
     }
 
-    /**
+    this.moduleState.selectedDateRange = {
+      start: startDate,
+      end: endDate
+    }
+
+    // Recargar reporte actual
+    if (this.moduleState.currentReport) {
+      await this.loadReport(this.moduleState.currentReport)
+    }
+  }
+
+  /**
      * Aplicar filtros
      */
-    async applyFilters() {
-        // Recopilar filtros
-        this.moduleState.filters = {
-            emprendedores: Array.from(this.elements.filterEmprendedores.selectedOptions).map(o => o.value),
-            categorias: Array.from(this.elements.filterCategorias.selectedOptions).map(o => o.value),
-            estados: Array.from(this.elements.filterEstados.selectedOptions).map(o => o.value),
-            tiposSesion: Array.from(this.elements.filterTiposSesion.selectedOptions).map(o => o.value)
-        };
-        
-        // Recargar reporte actual
-        if (this.moduleState.currentReport) {
-            await this.loadReport(this.moduleState.currentReport);
-        }
+  async applyFilters () {
+    // Recopilar filtros
+    this.moduleState.filters = {
+      emprendedores: Array.from(this.elements.filterEmprendedores.selectedOptions).map(o => o.value),
+      categorias: Array.from(this.elements.filterCategorias.selectedOptions).map(o => o.value),
+      estados: Array.from(this.elements.filterEstados.selectedOptions).map(o => o.value),
+      tiposSesion: Array.from(this.elements.filterTiposSesion.selectedOptions).map(o => o.value)
     }
 
-    /**
+    // Recargar reporte actual
+    if (this.moduleState.currentReport) {
+      await this.loadReport(this.moduleState.currentReport)
+    }
+  }
+
+  /**
      * Limpiar filtros
      */
-    async clearFilters() {
-        // Resetear filtros
-        Object.keys(this.moduleState.filters).forEach(key => {
-            this.moduleState.filters[key] = [];
-        });
-        
-        // Limpiar selects
-        document.querySelectorAll('[data-filter]').forEach(select => {
-            select.selectedIndex = 0;
-        });
-        
-        // Recargar reporte
-        if (this.moduleState.currentReport) {
-            await this.loadReport(this.moduleState.currentReport);
-        }
-    }
+  async clearFilters () {
+    // Resetear filtros
+    Object.keys(this.moduleState.filters).forEach(key => {
+      this.moduleState.filters[key] = []
+    })
 
-    /**
+    // Limpiar selects
+    document.querySelectorAll('[data-filter]').forEach(select => {
+      select.selectedIndex = 0
+    })
+
+    // Recargar reporte
+    if (this.moduleState.currentReport) {
+      await this.loadReport(this.moduleState.currentReport)
+    }
+  }
+
+  /**
      * Refrescar datos
      */
-    async refreshData() {
-        // Limpiar cache
-        this.moduleState.dataCache.clear();
-        
-        // Recargar reporte actual
-        if (this.moduleState.currentReport) {
-            await this.loadReport(this.moduleState.currentReport);
-        }
-    }
+  async refreshData () {
+    // Limpiar cache
+    this.moduleState.dataCache.clear()
 
-    /**
+    // Recargar reporte actual
+    if (this.moduleState.currentReport) {
+      await this.loadReport(this.moduleState.currentReport)
+    }
+  }
+
+  /**
      * Mostrar modal de exportación
      */
-    showExportModal(event, element) {
-        const format = element.dataset.format;
-        const modal = new bootstrap.Modal(this.elements.exportModal);
-        
-        // Pre-seleccionar formato si se especifica
-        if (format) {
-            this.elements.exportModal.querySelector('[data-input="export-format"]').value = format;
-        }
-        
-        modal.show();
+  showExportModal (event, element) {
+    const format = element.dataset.format
+    const modal = new bootstrap.Modal(this.elements.exportModal)
+
+    // Pre-seleccionar formato si se especifica
+    if (format) {
+      this.elements.exportModal.querySelector('[data-input="export-format"]').value = format
     }
 
-    /**
+    modal.show()
+  }
+
+  /**
      * Confirmar exportación
      */
-    async confirmExport() {
-        const modal = bootstrap.Modal.getInstance(this.elements.exportModal);
-        const form = this.elements.exportModal.querySelector('form');
-        const formData = new FormData(form);
-        
-        try {
-            const exportData = {
-                report_type: this.moduleState.currentReport,
-                format: formData.get('export-format'),
-                filename: formData.get('filename') || 'reporte_mentoria',
-                date_range: this.moduleState.selectedDateRange,
-                filters: this.moduleState.filters,
-                include_charts: form.querySelector('[data-include="charts"]').checked,
-                include_raw_data: form.querySelector('[data-include="rawData"]').checked,
-                include_comments: form.querySelector('[data-include="comments"]').checked
-            };
-            
-            const response = await this.main.http.post('/reports/export', exportData, {
-                responseType: 'blob'
-            });
-            
-            // Descargar archivo
-            this.downloadFile(response, exportData.filename, exportData.format);
-            
-            modal.hide();
-            
-            this.main.notifications.success('Reporte exportado exitosamente');
-            
-        } catch (error) {
-            console.error('Error exportando reporte:', error);
-            this.showError('Error exportando reporte', error.message);
-        }
-    }
+  async confirmExport () {
+    const modal = bootstrap.Modal.getInstance(this.elements.exportModal)
+    const form = this.elements.exportModal.querySelector('form')
+    const formData = new FormData(form)
 
-    /**
+    try {
+      const exportData = {
+        report_type: this.moduleState.currentReport,
+        format: formData.get('export-format'),
+        filename: formData.get('filename') || 'reporte_mentoria',
+        date_range: this.moduleState.selectedDateRange,
+        filters: this.moduleState.filters,
+        include_charts: form.querySelector('[data-include="charts"]').checked,
+        include_raw_data: form.querySelector('[data-include="rawData"]').checked,
+        include_comments: form.querySelector('[data-include="comments"]').checked
+      }
+
+      const response = await this.main.http.post('/reports/export', exportData, {
+        responseType: 'blob'
+      })
+
+      // Descargar archivo
+      this.downloadFile(response, exportData.filename, exportData.format)
+
+      modal.hide()
+
+      this.main.notifications.success('Reporte exportado exitosamente')
+    } catch (error) {
+      console.error('Error exportando reporte:', error)
+      this.showError('Error exportando reporte', error.message)
+    }
+  }
+
+  /**
      * Descargar archivo
      */
-    downloadFile(data, filename, format) {
-        const blob = new Blob([data], { 
-            type: this.getMimeType(format) 
-        });
-        
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${filename}.${format}`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-    }
+  downloadFile (data, filename, format) {
+    const blob = new Blob([data], {
+      type: this.getMimeType(format)
+    })
 
-    /**
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${filename}.${format}`
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+  }
+
+  /**
      * Obtener MIME type por formato
      */
-    getMimeType(format) {
-        const mimeTypes = {
-            pdf: 'application/pdf',
-            excel: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            csv: 'text/csv',
-            json: 'application/json'
-        };
-        
-        return mimeTypes[format] || 'application/octet-stream';
+  getMimeType (format) {
+    const mimeTypes = {
+      pdf: 'application/pdf',
+      excel: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      csv: 'text/csv',
+      json: 'application/json'
     }
 
-    /**
+    return mimeTypes[format] || 'application/octet-stream'
+  }
+
+  /**
      * Construir parámetros para API
      */
-    buildApiParams() {
-        return {
-            start_date: this.moduleState.selectedDateRange.start.toISOString(),
-            end_date: this.moduleState.selectedDateRange.end.toISOString(),
-            mentees: this.moduleState.filters.emprendedores.join(','),
-            categories: this.moduleState.filters.categorias.join(','),
-            states: this.moduleState.filters.estados.join(','),
-            session_types: this.moduleState.filters.tiposSesion.join(',')
-        };
+  buildApiParams () {
+    return {
+      start_date: this.moduleState.selectedDateRange.start.toISOString(),
+      end_date: this.moduleState.selectedDateRange.end.toISOString(),
+      mentees: this.moduleState.filters.emprendedores.join(','),
+      categories: this.moduleState.filters.categorias.join(','),
+      states: this.moduleState.filters.estados.join(','),
+      session_types: this.moduleState.filters.tiposSesion.join(',')
     }
+  }
 
-    /**
+  /**
      * Configurar auto-refresh
      */
-    setupAutoRefresh() {
-        if (!this.moduleConfig.enableAutoRefresh) return;
-        
-        this.moduleState.autoRefreshTimer = setInterval(() => {
-            if (this.moduleState.currentReport && !this.moduleState.isGenerating) {
-                this.refreshData();
-            }
-        }, this.moduleConfig.autoRefreshInterval);
-    }
+  setupAutoRefresh () {
+    if (!this.moduleConfig.enableAutoRefresh) return
 
-    /**
+    this.moduleState.autoRefreshTimer = setInterval(() => {
+      if (this.moduleState.currentReport && !this.moduleState.isGenerating) {
+        this.refreshData()
+      }
+    }, this.moduleConfig.autoRefreshInterval)
+  }
+
+  /**
      * Configurar estado reactivo
      */
-    setupReactiveState() {
-        // Escuchar cambios en datos de mentoría
-        if (this.state) {
-            this.state.subscribe('mentorship', () => {
-                if (this.moduleConfig.enableRealTimeUpdates) {
-                    this.refreshData();
-                }
-            });
+  setupReactiveState () {
+    // Escuchar cambios en datos de mentoría
+    if (this.state) {
+      this.state.subscribe('mentorship', () => {
+        if (this.moduleConfig.enableRealTimeUpdates) {
+          this.refreshData()
         }
+      })
     }
+  }
 
-    /**
+  /**
      * Actualizar tiempo de última actualización
      */
-    updateLastRefreshTime() {
-        this.moduleState.lastRefresh = Date.now();
-        
-        if (this.elements.updateTime) {
-            this.elements.updateTime.textContent = 
-                `Actualizado ${this.main.utils.formatRelativeTime(this.moduleState.lastRefresh)}`;
-        }
-    }
+  updateLastRefreshTime () {
+    this.moduleState.lastRefresh = Date.now()
 
-    /**
+    if (this.elements.updateTime) {
+      this.elements.updateTime.textContent =
+                `Actualizado ${this.main.utils.formatRelativeTime(this.moduleState.lastRefresh)}`
+    }
+  }
+
+  /**
      * Mostrar/ocultar loading
      */
-    showLoading(show = true) {
-        if (this.elements.loadingOverlay) {
-            this.elements.loadingOverlay.classList.toggle('d-none', !show);
-        }
+  showLoading (show = true) {
+    if (this.elements.loadingOverlay) {
+      this.elements.loadingOverlay.classList.toggle('d-none', !show)
     }
+  }
 
-    /**
+  /**
      * Inyectar estilos CSS específicos
      */
-    injectStyles() {
-        const styleId = 'ally-reports-styles';
-        
-        if (document.getElementById(styleId)) return;
-        
-        const style = document.createElement('style');
-        style.id = styleId;
-        style.textContent = `
+  injectStyles () {
+    const styleId = 'ally-reports-styles'
+
+    if (document.getElementById(styleId)) return
+
+    const style = document.createElement('style')
+    style.id = styleId
+    style.textContent = `
             .ally-reports {
                 height: 100%;
                 display: flex;
@@ -1714,124 +1709,124 @@ class AllyReports {
                     flex-wrap: wrap;
                 }
             }
-        `;
-        
-        document.head.appendChild(style);
-    }
+        `
 
-    /**
+    document.head.appendChild(style)
+  }
+
+  /**
      * Mostrar error
      */
-    showError(title, message) {
-        if (this.main.notifications) {
-            this.main.notifications.error(`${title}: ${message}`);
-        } else {
-            console.error(`${title}:`, message);
-        }
+  showError (title, message) {
+    if (this.main.notifications) {
+      this.main.notifications.error(`${title}: ${message}`)
+    } else {
+      console.error(`${title}:`, message)
     }
+  }
 
-    /**
+  /**
      * Destruir módulo
      */
-    destroy() {
-        // Limpiar auto-refresh
-        if (this.moduleState.autoRefreshTimer) {
-            clearInterval(this.moduleState.autoRefreshTimer);
-        }
-        
-        // Destruir gráficos
-        this.chartInstances.forEach(chart => chart.destroy());
-        
-        // Limpiar event listeners
-        this.eventListeners.forEach((listeners, event) => {
-            listeners.forEach(({ listener }) => {
-                this.container.removeEventListener(event, listener);
-            });
-        });
-        
-        // Limpiar cache
-        this.moduleState.dataCache.clear();
-        
-        console.log('🧹 Ally Reports destruido');
+  destroy () {
+    // Limpiar auto-refresh
+    if (this.moduleState.autoRefreshTimer) {
+      clearInterval(this.moduleState.autoRefreshTimer)
     }
 
-    // Métodos auxiliares adicionales...
-    formatDate(date) {
-        return new Date(date).toLocaleDateString('es-CO');
+    // Destruir gráficos
+    this.chartInstances.forEach(chart => chart.destroy())
+
+    // Limpiar event listeners
+    this.eventListeners.forEach((listeners, event) => {
+      listeners.forEach(({ listener }) => {
+        this.container.removeEventListener(event, listener)
+      })
+    })
+
+    // Limpiar cache
+    this.moduleState.dataCache.clear()
+
+    console.log('🧹 Ally Reports destruido')
+  }
+
+  // Métodos auxiliares adicionales...
+  formatDate (date) {
+    return new Date(date).toLocaleDateString('es-CO')
+  }
+
+  formatRelativeTime (date) {
+    return this.main.utils.formatRelativeTime(date)
+  }
+
+  getCategoryColor (category) {
+    const colors = {
+      technology: 'primary',
+      health: 'danger',
+      education: 'success',
+      finance: 'warning',
+      sustainability: 'info'
+    }
+    return colors[category] || 'secondary'
+  }
+
+  getCategoryLabel (category) {
+    const labels = {
+      technology: 'Tecnología',
+      health: 'Salud',
+      education: 'Educación',
+      finance: 'Finanzas',
+      sustainability: 'Sostenibilidad'
+    }
+    return labels[category] || category
+  }
+
+  getStatusColor (status) {
+    const colors = {
+      active: 'success',
+      paused: 'warning',
+      completed: 'info',
+      cancelled: 'danger'
+    }
+    return colors[status] || 'secondary'
+  }
+
+  getStatusLabel (status) {
+    const labels = {
+      active: 'Activo',
+      paused: 'Pausado',
+      completed: 'Completado',
+      cancelled: 'Cancelado'
+    }
+    return labels[status] || status
+  }
+
+  renderStars (rating) {
+    const stars = []
+    const fullStars = Math.floor(rating)
+    const hasHalfStar = rating % 1 >= 0.5
+
+    for (let i = 0; i < fullStars; i++) {
+      stars.push('<i class="fa fa-star"></i>')
     }
 
-    formatRelativeTime(date) {
-        return this.main.utils.formatRelativeTime(date);
+    if (hasHalfStar) {
+      stars.push('<i class="fa fa-star-half-alt"></i>')
     }
 
-    getCategoryColor(category) {
-        const colors = {
-            technology: 'primary',
-            health: 'danger', 
-            education: 'success',
-            finance: 'warning',
-            sustainability: 'info'
-        };
-        return colors[category] || 'secondary';
+    const emptyStars = 5 - Math.ceil(rating)
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push('<i class="fa fa-star-o"></i>')
     }
 
-    getCategoryLabel(category) {
-        const labels = {
-            technology: 'Tecnología',
-            health: 'Salud',
-            education: 'Educación', 
-            finance: 'Finanzas',
-            sustainability: 'Sostenibilidad'
-        };
-        return labels[category] || category;
-    }
-
-    getStatusColor(status) {
-        const colors = {
-            active: 'success',
-            paused: 'warning',
-            completed: 'info',
-            cancelled: 'danger'
-        };
-        return colors[status] || 'secondary';
-    }
-
-    getStatusLabel(status) {
-        const labels = {
-            active: 'Activo',
-            paused: 'Pausado',
-            completed: 'Completado',
-            cancelled: 'Cancelado'
-        };
-        return labels[status] || status;
-    }
-
-    renderStars(rating) {
-        const stars = [];
-        const fullStars = Math.floor(rating);
-        const hasHalfStar = rating % 1 >= 0.5;
-        
-        for (let i = 0; i < fullStars; i++) {
-            stars.push('<i class="fa fa-star"></i>');
-        }
-        
-        if (hasHalfStar) {
-            stars.push('<i class="fa fa-star-half-alt"></i>');
-        }
-        
-        const emptyStars = 5 - Math.ceil(rating);
-        for (let i = 0; i < emptyStars; i++) {
-            stars.push('<i class="fa fa-star-o"></i>');
-        }
-        
-        return stars.join('');
-    }
+    return stars.join('')
+  }
 }
 
 // Exportar para uso en módulos
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = AllyReports;
+  module.exports = AllyReports
 }
 
 // Hacer disponible globalmente
-window.AllyReports = AllyReports;
+window.AllyReports = AllyReports
