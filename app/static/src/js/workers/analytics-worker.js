@@ -28,13 +28,13 @@ const MAX_RETENTION_TIME = 24 * 60 * 60 * 1000 // 24 horas en milisegundos
 // ============================================================================
 
 self.addEventListener('install', (event) => {
-  console.log('Analytics Worker: Instalado')
+  // // console.log('Analytics Worker: Instalado')
   // Forzar la activación inmediata del nuevo Service Worker
   event.waitUntil(self.skipWaiting())
 })
 
 self.addEventListener('activate', (event) => {
-  console.log('Analytics Worker: Activado y listo para recolectar analíticas.')
+  // // console.log('Analytics Worker: Activado y listo para recolectar analíticas.')
   // Tomar control inmediato de las páginas no controladas
   event.waitUntil(self.clients.claim())
   // Opcional: Limpiar datos antiguos o realizar migraciones de IndexedDB
@@ -46,7 +46,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'TRACK_ANALYTICS_EVENT') {
     const analyticsEvent = event.data.payload
-    console.log('Analytics Worker: Evento recibido:', analyticsEvent)
+    // // console.log('Analytics Worker: Evento recibido:', analyticsEvent)
 
     // Añadir timestamp y metadata si no existen
     analyticsEvent.timestamp = analyticsEvent.timestamp || new Date().toISOString()
@@ -56,12 +56,12 @@ self.addEventListener('message', (event) => {
     event.waitUntil(
       storeAnalyticsEvent(analyticsEvent)
         .then(() => {
-          console.log('Analytics Worker: Evento almacenado.')
+          // // console.log('Analytics Worker: Evento almacenado.')
           // Intentar registrar una sincronización para enviar los datos
           return registerBackgroundSync()
         })
         .catch(err => {
-          console.error('Analytics Worker: Error almacenando evento:', err)
+          // // console.error('Analytics Worker: Error almacenando evento:', err)
         })
     )
   }
@@ -72,7 +72,7 @@ self.addEventListener('message', (event) => {
  * y hay un tag de sincronización registrado.
  */
 self.addEventListener('sync', (event) => {
-  console.log('Analytics Worker: Evento sync recibido para el tag:', event.tag)
+  // // console.log('Analytics Worker: Evento sync recibido para el tag:', event.tag)
   if (event.tag === ANALYTICS_SYNC_TAG) {
     event.waitUntil(syncAnalyticsData())
   }
@@ -103,7 +103,7 @@ function openAnalyticsDB () {
     }
 
     request.onerror = (event) => {
-      console.error('Analytics Worker: Error al abrir IndexedDB:', event.target.errorCode)
+      // // console.error('Analytics Worker: Error al abrir IndexedDB:', event.target.errorCode)
       reject('Error al abrir IndexedDB: ' + event.target.errorCode)
     }
   })
@@ -131,7 +131,7 @@ async function storeAnalyticsEvent (eventData) {
       resolve()
     }
     request.onerror = (event) => {
-      console.error('Analytics Worker: Error al agregar evento a IndexedDB:', event.target.error)
+      // // console.error('Analytics Worker: Error al agregar evento a IndexedDB:', event.target.error)
       reject(event.target.error)
     }
   })
@@ -152,7 +152,7 @@ async function getAllPendingEvents () {
       resolve(event.target.result)
     }
     request.onerror = (event) => {
-      console.error('Analytics Worker: Error al obtener eventos de IndexedDB:', event.target.error)
+      // // console.error('Analytics Worker: Error al obtener eventos de IndexedDB:', event.target.error)
       reject(event.target.error)
     }
   })
@@ -182,7 +182,7 @@ async function deleteEventsByIds (eventIds) {
       }
       request.onerror = (event) => {
         // No rechazar la promesa completa por un fallo, solo loguear
-        console.error(`Analytics Worker: Error eliminando evento ${id} de IndexedDB:`, event.target.error)
+        // // console.error(`Analytics Worker: Error eliminando evento ${id} de IndexedDB:`, event.target.error)
         completedDeletes++ // Contar como completado para no bloquear la promesa
         if (completedDeletes === eventIds.length) {
           resolve()
@@ -193,12 +193,12 @@ async function deleteEventsByIds (eventIds) {
     transaction.oncomplete = () => {
       if (completedDeletes !== eventIds.length) {
         // Esto no debería pasar si manejamos los errores individuales
-        console.warn('Analytics Worker: No todos los eventos se eliminaron como se esperaba.')
+        // console.warn('Analytics Worker: No todos los eventos se eliminaron como se esperaba.')
       }
       resolve()
     }
     transaction.onerror = (event) => {
-      console.error('Analytics Worker: Error en la transacción de eliminación:', event.target.error)
+      // // console.error('Analytics Worker: Error en la transacción de eliminación:', event.target.error)
       reject(event.target.error)
     }
   })
@@ -215,10 +215,10 @@ async function deleteEventsByIds (eventIds) {
 async function registerBackgroundSync () {
   // Verificar si SyncManager es soportado
   if (!self.registration.sync) {
-    console.warn('Analytics Worker: BackgroundSync no es soportado por este navegador.')
+    // console.warn('Analytics Worker: BackgroundSync no es soportado por este navegador.')
     // Intentar enviar directamente si hay conexión
     if (navigator.onLine) {
-      console.log('Analytics Worker: Intentando envío directo por falta de BackgroundSync.')
+      // // console.log('Analytics Worker: Intentando envío directo por falta de BackgroundSync.')
       return syncAnalyticsData()
     }
     return
@@ -226,12 +226,12 @@ async function registerBackgroundSync () {
 
   try {
     await self.registration.sync.register(ANALYTICS_SYNC_TAG)
-    console.log('Analytics Worker: Sincronización en segundo plano registrada:', ANALYTICS_SYNC_TAG)
+    // // console.log('Analytics Worker: Sincronización en segundo plano registrada:', ANALYTICS_SYNC_TAG)
   } catch (err) {
-    console.error('Analytics Worker: No se pudo registrar la sincronización en segundo plano:', err)
+    // // console.error('Analytics Worker: No se pudo registrar la sincronización en segundo plano:', err)
     // Si falla el registro (ej. por permisos), intentar enviar directamente si hay conexión
     if (navigator.onLine) {
-      console.log('Analytics Worker: Intentando envío directo por fallo en registro de BackgroundSync.')
+      // // console.log('Analytics Worker: Intentando envío directo por fallo en registro de BackgroundSync.')
       return syncAnalyticsData()
     }
   }
@@ -244,11 +244,11 @@ async function syncAnalyticsData () {
   try {
     const pendingEvents = await getAllPendingEvents()
     if (pendingEvents.length === 0) {
-      console.log('Analytics Worker: No hay eventos pendientes para sincronizar.')
+      // // console.log('Analytics Worker: No hay eventos pendientes para sincronizar.')
       return
     }
 
-    console.log(`Analytics Worker: Sincronizando ${pendingEvents.length} eventos.`)
+    // // console.log(`Analytics Worker: Sincronizando ${pendingEvents.length} eventos.`)
 
     // Dividir en lotes
     const batches = []
@@ -270,17 +270,17 @@ async function syncAnalyticsData () {
         })
 
         if (response.ok) {
-          console.log(`Analytics Worker: Lote de ${batch.length} eventos enviado exitosamente.`)
+          // // console.log(`Analytics Worker: Lote de ${batch.length} eventos enviado exitosamente.`)
           await deleteEventsByIds(eventIdsInBatch)
-          console.log(`Analytics Worker: ${batch.length} eventos eliminados de la cola local.`)
+          // // console.log(`Analytics Worker: ${batch.length} eventos eliminados de la cola local.`)
         } else {
           const errorData = await response.json().catch(() => ({ message: 'Error desconocido del servidor' }))
-          console.error(`Analytics Worker: Falló el envío del lote. Status: ${response.status}`, errorData)
+          // // console.error(`Analytics Worker: Falló el envío del lote. Status: ${response.status}`, errorData)
           // No eliminar los eventos, se reintentarán en la próxima sincronización
           // Podrías implementar lógica para marcar eventos como "fallidos" después de X reintentos
           // o si el servidor devuelve un error específico (ej. 400 Bad Request).
           if (response.status === 400) { // Bad Request, no reintentar
-            console.warn('Analytics Worker: Lote rechazado por el servidor (400), eliminando eventos para evitar bucles.')
+            // console.warn('Analytics Worker: Lote rechazado por el servidor (400), eliminando eventos para evitar bucles.')
             await deleteEventsByIds(eventIdsInBatch)
           } else {
             // Para otros errores de servidor (5xx), dejar que BackgroundSync reintente.
@@ -288,15 +288,15 @@ async function syncAnalyticsData () {
           }
         }
       } catch (error) {
-        console.error('Analytics Worker: Error de red enviando lote:', error)
+        // // console.error('Analytics Worker: Error de red enviando lote:', error)
         // BackgroundSync reintentará automáticamente si la promesa es rechazada.
         throw error
       }
     }
-    console.log('Analytics Worker: Sincronización de datos completada.')
+    // // console.log('Analytics Worker: Sincronización de datos completada.')
     notifyClientSyncStatus(true, pendingEvents.length)
   } catch (error) {
-    console.error('Analytics Worker: Error durante la sincronización de datos:', error)
+    // // console.error('Analytics Worker: Error durante la sincronización de datos:', error)
     notifyClientSyncStatus(false, 0, error.message)
     // Es importante relanzar el error para que BackgroundSync sepa que la sincronización falló
     // y la reintente más tarde.
@@ -328,4 +328,4 @@ function notifyClientSyncStatus (success, count, errorMessage) {
   })
 }
 
-console.log('Analytics Worker: Script cargado y escuchando eventos.')
+// // console.log('Analytics Worker: Script cargado y escuchando eventos.')

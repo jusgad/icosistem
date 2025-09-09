@@ -55,7 +55,7 @@ class FileService {
       App.notifications.success(`Archivo "${file.name}" subido exitosamente.`)
       return response
     } catch (error) {
-      console.error('FileService: Error al subir archivo:', error)
+      // // console.error('FileService: Error al subir archivo:', error)
       App.notifications.error(error.message || `No se pudo subir el archivo "${file.name}".`)
       throw error // Re-lanzar para que el llamador pueda manejarlo
     }
@@ -78,7 +78,7 @@ class FileService {
       // El backend debería generar un uploadId único para esta sesión de subida
       return await App.http.post(`${this.chunkedUploadEndpoint}/init`, payload)
     } catch (error) {
-      console.error('FileService: Error al iniciar subida por chunks:', error)
+      // // console.error('FileService: Error al iniciar subida por chunks:', error)
       App.notifications.error('No se pudo iniciar la subida fragmentada del archivo.')
       throw error
     }
@@ -105,7 +105,7 @@ class FileService {
     try {
       return await App.http.post(`${this.chunkedUploadEndpoint}/upload`, formData, true, onProgress)
     } catch (error) {
-      console.error(`FileService: Error al subir chunk ${chunkIndex}:`, error)
+      // // console.error(`FileService: Error al subir chunk ${chunkIndex}:`, error)
       App.notifications.error(`Error al subir parte ${chunkIndex + 1} del archivo.`)
       throw error
     }
@@ -131,7 +131,7 @@ class FileService {
       App.notifications.success(`Archivo "${fileName}" procesado exitosamente.`)
       return response
     } catch (error) {
-      console.error('FileService: Error al finalizar subida por chunks:', error)
+      // // console.error('FileService: Error al finalizar subida por chunks:', error)
       App.notifications.error('Error al finalizar la subida fragmentada del archivo.')
       throw error
     }
@@ -146,7 +146,7 @@ class FileService {
     try {
       return await App.http.get(`${this.resumeUploadEndpoint}/${uploadId}`)
     } catch (error) {
-      console.warn('FileService: Error al verificar estado de subida (resume):', error)
+      // console.warn('FileService: Error al verificar estado de subida (resume):', error)
       // No notificar error al usuario, ya que esto puede ser una verificación de fondo.
       throw error
     }
@@ -161,7 +161,7 @@ class FileService {
     try {
       return await App.http.get(`${this.baseEndpoint}/${fileId}`)
     } catch (error) {
-      console.error(`FileService: Error al obtener información del archivo ${fileId}:`, error)
+      // // console.error(`FileService: Error al obtener información del archivo ${fileId}:`, error)
       App.notifications.error('No se pudo obtener la información del archivo.')
       throw error
     }
@@ -195,7 +195,7 @@ class FileService {
       await App.http.delete(`${this.baseEndpoint}/${fileId}`)
       App.notifications.success('Archivo eliminado exitosamente.')
     } catch (error) {
-      console.error(`FileService: Error al eliminar archivo ${fileId}:`, error)
+      // // console.error(`FileService: Error al eliminar archivo ${fileId}:`, error)
       App.notifications.error(error.message || 'No se pudo eliminar el archivo.')
       throw error
     }
@@ -211,7 +211,7 @@ class FileService {
       const queryString = new URLSearchParams(params).toString()
       return await App.http.get(`${this.baseEndpoint}?${queryString}`)
     } catch (error) {
-      console.error('FileService: Error al listar archivos:', error)
+      // // console.error('FileService: Error al listar archivos:', error)
       App.notifications.error('No se pudo cargar la lista de archivos.')
       throw error
     }
@@ -229,7 +229,7 @@ class FileService {
       App.notifications.success('Metadatos del archivo actualizados.')
       return response
     } catch (error) {
-      console.error(`FileService: Error al actualizar metadatos del archivo ${fileId}:`, error)
+      // // console.error(`FileService: Error al actualizar metadatos del archivo ${fileId}:`, error)
       App.notifications.error(error.message || 'No se pudieron actualizar los metadatos.')
       throw error
     }
@@ -244,7 +244,7 @@ class FileService {
     try {
       return await App.http.get(`${this.baseEndpoint}/${fileId}/versions`)
     } catch (error) {
-      console.error(`FileService: Error al obtener versiones del archivo ${fileId}:`, error)
+      // // console.error(`FileService: Error al obtener versiones del archivo ${fileId}:`, error)
       App.notifications.error('No se pudieron cargar las versiones del archivo.')
       throw error
     }
@@ -262,7 +262,7 @@ class FileService {
       App.notifications.success('Versión del archivo restaurada exitosamente.')
       return response
     } catch (error) {
-      console.error(`FileService: Error al restaurar versión ${versionId} del archivo ${fileId}:`, error)
+      // // console.error(`FileService: Error al restaurar versión ${versionId} del archivo ${fileId}:`, error)
       App.notifications.error('No se pudo restaurar la versión del archivo.')
       throw error
     }
@@ -274,7 +274,7 @@ class FileService {
 if (App && App.services) {
   App.services.file = new FileService()
 } else {
-  console.warn('App.services no está definido. FileService no se pudo registrar globalmente.')
+  // console.warn('App.services no está definido. FileService no se pudo registrar globalmente.')
   // Podrías optar por exportar la clase o una instancia si no hay un objeto App global.
   // export default new FileService();
 }

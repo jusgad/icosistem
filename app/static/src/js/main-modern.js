@@ -322,7 +322,7 @@ App.storage = {
                 return value; // Si no es JSON, devolver string
             }
         } catch (error) {
-            console.warn('Error getting from storage:', error);
+            // console.warn('Error getting from storage:', error);
             return defaultValue;
         }
     },
@@ -341,7 +341,7 @@ App.storage = {
             localStorage.setItem(`ecosistema_${key}`, serialized);
             return true;
         } catch (error) {
-            console.warn('Error setting to storage:', error);
+            // console.warn('Error setting to storage:', error);
             return false;
         }
     },
@@ -359,7 +359,7 @@ App.storage = {
             localStorage.removeItem(`ecosistema_${key}`);
             return true;
         } catch (error) {
-            console.warn('Error removing from storage:', error);
+            // console.warn('Error removing from storage:', error);
             return false;
         }
     },
@@ -376,7 +376,7 @@ App.storage = {
             }
             App.cache.clear();
         } catch (error) {
-            console.warn('Error clearing storage:', error);
+            // console.warn('Error clearing storage:', error);
         }
     },
 
@@ -565,7 +565,7 @@ App.notifications = {
  * Inicializar aplicación
  */
 App.init = async function() {
-    console.log(`🚀 Iniciando Ecosistema Emprendimiento v${this.version}`);
+    // // console.log(`🚀 Iniciando Ecosistema Emprendimiento v${this.version}`);
 
     try {
         // Configurar HTTP client
@@ -594,9 +594,9 @@ App.init = async function() {
         // Emitir evento de inicialización
         this.events.dispatchEvent(new CustomEvent('appInitialized'));
         
-        console.log('✅ Aplicación inicializada correctamente');
+        // // console.log('✅ Aplicación inicializada correctamente');
     } catch (error) {
-        console.error('❌ Error inicializando aplicación:', error);
+        // // console.error('❌ Error inicializando aplicación:', error);
         this.notifications.error('Error inicializando la aplicación');
     }
 };
@@ -608,8 +608,8 @@ App.initModernFeatures = function() {
     // Service Worker
     if ('serviceWorker' in navigator && this.environment === 'production') {
         navigator.serviceWorker.register('/sw.js')
-            .then(registration => console.log('Service Worker registrado:', registration))
-            .catch(error => console.warn('Error registrando Service Worker:', error));
+            .then(registration => // // console.log('Service Worker registrado:', registration))
+            .catch(error => // console.warn('Error registrando Service Worker:', error));
     }
     
     // Intersection Observer para lazy loading
@@ -634,7 +634,7 @@ App.initModernFeatures = function() {
         const perfObserver = new PerformanceObserver((list) => {
             list.getEntries().forEach(entry => {
                 if (entry.entryType === 'largest-contentful-paint') {
-                    console.log('LCP:', entry.startTime);
+                    // // console.log('LCP:', entry.startTime);
                 }
             });
         });
@@ -642,7 +642,7 @@ App.initModernFeatures = function() {
         try {
             perfObserver.observe({ entryTypes: ['largest-contentful-paint'] });
         } catch (error) {
-            console.warn('Performance Observer not supported:', error);
+            // console.warn('Performance Observer not supported:', error);
         }
     }
 };
@@ -657,9 +657,9 @@ App.loadCoreModules = async function() {
         try {
             const module = await import(`./modules/${moduleName}.js`);
             this.modules.set(moduleName, new module.default(this));
-            console.log(`📦 Módulo ${moduleName} cargado`);
+            // // console.log(`📦 Módulo ${moduleName} cargado`);
         } catch (error) {
-            console.warn(`⚠️ Error cargando módulo ${moduleName}:`, error);
+            // console.warn(`⚠️ Error cargando módulo ${moduleName}:`, error);
         }
     });
     
@@ -677,12 +677,12 @@ App.initWebSocket = function() {
     });
     
     this.socket.on('connect', () => {
-        console.log('🔌 WebSocket conectado');
+        // // console.log('🔌 WebSocket conectado');
         this.events.dispatchEvent(new CustomEvent('websocketConnected'));
     });
     
     this.socket.on('disconnect', () => {
-        console.log('🔌 WebSocket desconectado');
+        // // console.log('🔌 WebSocket desconectado');
         this.events.dispatchEvent(new CustomEvent('websocketDisconnected'));
     });
     

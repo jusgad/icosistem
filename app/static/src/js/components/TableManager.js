@@ -102,9 +102,9 @@ class EcoTableManager {
       }
 
       this.setupEventListeners()
-      console.log('📊 EcoTableManager initialized successfully')
+      // // console.log('📊 EcoTableManager initialized successfully')
     } catch (error) {
-      console.error('❌ Error initializing EcoTableManager:', error)
+      // // console.error('❌ Error initializing EcoTableManager:', error)
       this.handleError(error)
     }
   }
@@ -564,7 +564,7 @@ class EcoTableManager {
       this.state.totalRows = result.totalRows
       this.render()
     } catch (error) {
-      console.error('Error fetching data:', error)
+      // // console.error('Error fetching data:', error)
       this.handleError(error)
     } finally {
       this.state.isLoading = false
@@ -638,7 +638,7 @@ class EcoTableManager {
   destroy () {
     // Limpiar event listeners, timeouts, etc.
     this.element.innerHTML = ''
-    console.log('📊 EcoTableManager destroyed')
+    // // console.log('📊 EcoTableManager destroyed')
   }
 }
 

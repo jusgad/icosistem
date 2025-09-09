@@ -41,9 +41,9 @@ class EcoBadge {
     try {
       this.render()
       this.setupEventListeners()
-      console.log('🏷️ EcoBadge initialized successfully for:', this.element)
+      // // // console.log('🏷️ EcoBadge initialized successfully for:', this.element)
     } catch (error) {
-      console.error('❌ Error initializing EcoBadge:', error)
+      // // // console.error('❌ Error initializing EcoBadge:', error)
     }
   }
 
@@ -68,6 +68,7 @@ class EcoBadge {
       this.element.setAttribute('data-bs-toggle', 'tooltip')
       // Inicializar tooltip si Bootstrap está disponible
       if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+        // eslint-disable-next-line no-new
         new bootstrap.Tooltip(this.element)
       }
     }
@@ -164,7 +165,7 @@ class EcoBadge {
     if (this.element.parentNode) {
       this.element.parentNode.removeChild(this.element)
     }
-    console.log('🏷️ EcoBadge destroyed for:', this.element)
+    // // // console.log('🏷️ EcoBadge destroyed for:', this.element)
   }
 
   // Helper para añadir event listeners y guardarlos para limpieza

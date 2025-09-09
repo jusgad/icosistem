@@ -23,7 +23,7 @@ const NOTIFICATION_ASSETS_CACHE_NAME = 'notification-assets-v1'
  * Usamos skipWaiting() para activar el nuevo Service Worker inmediatamente.
  */
 self.addEventListener('install', (event) => {
-  console.log('Push Worker: Instalado')
+  // // console.log('Push Worker: Instalado')
   // Forzar la activación inmediata del nuevo Service Worker
   // Esto es útil para que las actualizaciones de push se apliquen rápidamente.
   event.waitUntil(self.skipWaiting())
@@ -35,7 +35,7 @@ self.addEventListener('install', (event) => {
  * páginas abiertas inmediatamente.
  */
 self.addEventListener('activate', (event) => {
-  console.log('Push Worker: Activado y listo para manejar notificaciones push.')
+  // // console.log('Push Worker: Activado y listo para manejar notificaciones push.')
   // Tomar control inmediato de las páginas no controladas
   event.waitUntil(self.clients.claim())
   // Opcional: Limpiar caches antiguas si este worker manejara caches.
@@ -46,7 +46,7 @@ self.addEventListener('activate', (event) => {
  * desde el servidor (a través de un servicio como FCM, Web Push Protocol, etc.).
  */
 self.addEventListener('push', (event) => {
-  console.log('Push Worker: Notificación Push Recibida.')
+  // // console.log('Push Worker: Notificación Push Recibida.')
 
   let notificationData = {}
   let payloadText = 'Tienes una nueva notificación.'
@@ -56,9 +56,9 @@ self.addEventListener('push', (event) => {
     try {
       payloadText = event.data.text() // Guardar el texto original por si el JSON falla
       notificationData = event.data.json()
-      console.log('Push Worker: Payload JSON parseado:', notificationData)
+      // // console.log('Push Worker: Payload JSON parseado:', notificationData)
     } catch (e) {
-      console.warn('Push Worker: No se pudo parsear el payload como JSON, usando texto plano.', e)
+      // console.warn('Push Worker: No se pudo parsear el payload como JSON, usando texto plano.', e)
       // Si falla el parseo JSON, usamos el texto directamente como cuerpo.
       // El título será uno por defecto.
       notificationData = {
@@ -69,7 +69,7 @@ self.addEventListener('push', (event) => {
       }
     }
   } else {
-    console.log('Push Worker: Notificación push recibida sin payload.')
+    // // console.log('Push Worker: Notificación push recibida sin payload.')
     // Configurar datos por defecto si no hay payload
     notificationData = {
       title: 'Notificación del Ecosistema',
@@ -115,8 +115,8 @@ self.addEventListener('push', (event) => {
   // hasta que la promesa de showNotification se resuelva.
   event.waitUntil(
     self.registration.showNotification(title, options)
-      .then(() => console.log('Push Worker: Notificación mostrada.'))
-      .catch(err => console.error('Push Worker: Error al mostrar notificación:', err))
+      .then(() => // // console.log('Push Worker: Notificación mostrada.'))
+      .catch(err => // // console.error('Push Worker: Error al mostrar notificación:', err))
   )
 })
 
@@ -125,7 +125,7 @@ self.addEventListener('push', (event) => {
  * generada por este Service Worker.
  */
 self.addEventListener('notificationclick', (event) => {
-  console.log('Push Worker: Clic en notificación recibido.')
+  // // console.log('Push Worker: Clic en notificación recibido.')
 
   // Cerrar la notificación
   event.notification.close()
@@ -133,9 +133,9 @@ self.addEventListener('notificationclick', (event) => {
   const notificationData = event.notification.data
   const action = event.action // Identificador de la acción si se hizo clic en un botón
 
-  console.log('Push Worker: Datos de la notificación:', notificationData)
+  // // console.log('Push Worker: Datos de la notificación:', notificationData)
   if (action) {
-    console.log('Push Worker: Acción seleccionada:', action)
+    // // console.log('Push Worker: Acción seleccionada:', action)
   }
 
   // Lógica para manejar el clic en la notificación o en una acción
@@ -148,11 +148,11 @@ self.addEventListener('notificationclick', (event) => {
         // Ejemplo: Abrir una URL diferente o enviar un mensaje a la página
         if (action === 'ver_proyecto' && notificationData?.id) {
           const projectUrl = `/proyectos/${notificationData.id}`
-          console.log(`Push Worker: Abriendo URL de acción: ${projectUrl}`)
+          // // console.log(`Push Worker: Abriendo URL de acción: ${projectUrl}`)
           return clients.openWindow(projectUrl)
         } else if (action === 'marcar_leido' && notificationData?.id) {
           // Lógica para marcar como leído (podría ser una petición fetch a la API)
-          console.log(`Push Worker: Marcando notificación ${notificationData.id} como leída.`)
+          // // console.log(`Push Worker: Marcando notificación ${notificationData.id} como leída.`)
           // fetch(`/api/notifications/${notificationData.id}/read`, { method: 'POST' });
           return // No abrir ventana para esta acción
         }
@@ -169,18 +169,18 @@ self.addEventListener('notificationclick', (event) => {
         const targetPath = new URL(urlToOpen, self.location.origin).pathname
 
         if (clientPath === targetPath && 'focus' in client) {
-          console.log('Push Worker: Cliente existente encontrado, enfocando:', client.url)
+          // // console.log('Push Worker: Cliente existente encontrado, enfocando:', client.url)
           return client.focus()
         }
       }
 
       // Si no hay cliente existente, abrir una nueva ventana/tab
       if (clients.openWindow) {
-        console.log('Push Worker: Abriendo nueva ventana:', urlToOpen)
+        // // console.log('Push Worker: Abriendo nueva ventana:', urlToOpen)
         return clients.openWindow(urlToOpen)
       }
     })
-      .catch(err => console.error('Push Worker: Error en notificationclick:', err))
+      .catch(err => // // console.error('Push Worker: Error en notificationclick:', err))
   )
 })
 
@@ -190,9 +190,9 @@ self.addEventListener('notificationclick', (event) => {
  * Opcional, pero útil para analíticas o limpieza.
  */
 self.addEventListener('notificationclose', (event) => {
-  console.log('Push Worker: Notificación cerrada por el usuario.')
+  // // console.log('Push Worker: Notificación cerrada por el usuario.')
   const dismissedNotification = event.notification
-  console.log('Push Worker: Datos de la notificación cerrada:', dismissedNotification.data)
+  // // console.log('Push Worker: Datos de la notificación cerrada:', dismissedNotification.data)
 
   // Aquí podrías enviar un evento de analítica al servidor para registrar
   // que la notificación fue descartada.
@@ -215,10 +215,10 @@ self.addEventListener('notificationclose', (event) => {
  */
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'GET_PUSH_WORKER_VERSION') {
-    console.log('Push Worker: Solicitud de versión recibida.')
+    // // console.log('Push Worker: Solicitud de versión recibida.')
     event.ports[0].postMessage({ version: '1.1.0' })
   }
   // Manejar otros tipos de mensajes si es necesario
 })
 
-console.log('Push Worker: Script cargado y escuchando eventos.')
+// // console.log('Push Worker: Script cargado y escuchando eventos.')

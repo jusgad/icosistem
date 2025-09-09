@@ -67,9 +67,9 @@ class EcoHeader {
         this.initNotificationSystem()
       }
 
-      console.log('🔝 EcoHeader initialized successfully')
+      // // // console.log('🔝 EcoHeader initialized successfully')
     } catch (error) {
-      console.error('❌ Error initializing EcoHeader:', error)
+      // // // console.error('❌ Error initializing EcoHeader:', error)
     }
   }
 
@@ -337,7 +337,7 @@ class EcoHeader {
         window.location.href = '/'
       }
     } catch (error) {
-      console.error('Error al cerrar sesión:', error)
+      // // // console.error('Error al cerrar sesión:', error)
       // Mostrar error al usuario si es necesario
     }
   }
@@ -420,7 +420,7 @@ class EcoHeader {
 
       dropdownMenu.innerHTML = notificationsHTML
     } catch (error) {
-      console.error('Error cargando notificaciones:', error)
+      // // // console.error('Error cargando notificaciones:', error)
       dropdownMenu.innerHTML = '<div class="p-3 text-center text-danger">Error al cargar notificaciones.</div>'
     }
   }
@@ -513,7 +513,7 @@ class EcoHeader {
     })
     this.eventListeners = []
     this.element.innerHTML = '' // Limpiar contenido
-    console.log('🔝 EcoHeader destroyed')
+    // // // console.log('🔝 EcoHeader destroyed')
   }
 
   // Helper para añadir event listeners y guardarlos para limpieza
@@ -543,6 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
       { label: 'Recursos', url: '/resources', icon: 'fa-book' }
     ]
 
+    // eslint-disable-next-line no-new
     new EcoHeader(headerElement, {
       appName: 'Mi Ecosistema',
       user: currentUser,

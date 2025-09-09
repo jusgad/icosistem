@@ -98,9 +98,9 @@ class EcoDatePicker {
 
       this.setupEventListeners()
 
-      console.log('📅 EcoDatePicker initialized successfully')
+      // // // console.log('📅 EcoDatePicker initialized successfully')
     } catch (error) {
-      console.error('❌ Error initializing EcoDatePicker:', error)
+      // // // console.error('❌ Error initializing EcoDatePicker:', error)
       this.handleError(error)
     }
   }
@@ -702,7 +702,7 @@ class EcoDatePicker {
      * Manejo de errores
      */
   handleError (error) {
-    console.error('EcoDatePicker Error:', error)
+    // // // console.error('EcoDatePicker Error:', error)
     if (this.config.onError) {
       this.config.onError(error, this)
     }
@@ -816,7 +816,7 @@ class EcoDatePicker {
       this.state.inputElement.remove()
     }
 
-    console.log('📅 EcoDatePicker destroyed')
+    // // // console.log('📅 EcoDatePicker destroyed')
   }
 
   // Helper para añadir event listeners y guardarlos para limpieza

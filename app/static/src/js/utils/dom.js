@@ -338,7 +338,7 @@ const Selectors = {
     try {
       return new DOMElement(context.querySelectorAll(selector))
     } catch (error) {
-      console.error('Invalid selector:', selector, error)
+      // // console.error('Invalid selector:', selector, error)
       return new DOMElement([])
     }
   },
@@ -351,7 +351,7 @@ const Selectors = {
       const elements = context.querySelectorAll(selector)
       return Array.from(elements)
     } catch (error) {
-      console.warn('Invalid selector:', selector)
+      // console.warn('Invalid selector:', selector)
       return []
     }
   },
@@ -1033,7 +1033,7 @@ const Forms = {
         const { data } = JSON.parse(saved)
         this.setData(form, data)
       } catch (error) {
-        console.error('Error restoring autosaved data:', error)
+        // // console.error('Error restoring autosaved data:', error)
       }
     }
 
@@ -1659,7 +1659,7 @@ const DOM = {
       document.body.appendChild(announcer)
     }
 
-    console.log('🎨 DOM utilities initialized')
+    // // console.log('🎨 DOM utilities initialized')
   }
 }
 

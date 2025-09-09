@@ -234,7 +234,7 @@ const MathUtils = {
         maximumFractionDigits: currency === 'COP' ? 0 : 2
       }).format(amount)
     } catch (error) {
-      console.error('Error formateando moneda:', error)
+      // // console.error('Error formateando moneda:', error)
       // Fallback simple
       return `${currency} ${amount.toFixed(2)}`
     }

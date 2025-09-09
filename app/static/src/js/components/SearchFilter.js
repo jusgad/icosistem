@@ -1,3 +1,4 @@
+/* global gtag */
 /**
  * SearchFilter Component
  * Sistema avanzado de búsqueda y filtrado para el ecosistema de emprendimiento
@@ -131,9 +132,9 @@ class EcoSearchFilter {
         await this.restorePersistedFilters()
       }
 
-      console.log('✅ EcoSearchFilter initialized successfully')
+      // // console.log('✅ EcoSearchFilter initialized successfully')
     } catch (error) {
-      console.error('❌ Error initializing EcoSearchFilter:', error)
+      // // console.error('❌ Error initializing EcoSearchFilter:', error)
       this.handleError(error)
     }
   }
@@ -1118,7 +1119,7 @@ class EcoSearchFilter {
       }
     } catch (error) {
       if (error.name !== 'AbortError') {
-        console.error('Search error:', error)
+        // // console.error('Search error:', error)
         this.handleError(error)
       }
     } finally {
@@ -1253,7 +1254,7 @@ class EcoSearchFilter {
         this.renderSuggestions(suggestions.data || [], query)
       }
     } catch (error) {
-      console.warn('Error fetching suggestions:', error)
+      // console.warn('Error fetching suggestions:', error)
     }
   }
 
@@ -1550,7 +1551,7 @@ class EcoSearchFilter {
         this.state.recentSearches = JSON.parse(saved)
       }
     } catch (error) {
-      console.warn('Error loading recent searches:', error)
+      // console.warn('Error loading recent searches:', error)
     }
   }
 
@@ -1569,7 +1570,7 @@ class EcoSearchFilter {
     if (this.config.onError) {
       this.config.onError(error)
     } else {
-      console.error('SearchFilter error:', error)
+      // // console.error('SearchFilter error:', error)
     }
   }
 
@@ -1639,7 +1640,7 @@ class EcoSearchFilter {
       element.removeEventListener(event, handler)
     })
 
-    console.log('🧹 EcoSearchFilter destroyed')
+    // // console.log('🧹 EcoSearchFilter destroyed')
   }
 }
 

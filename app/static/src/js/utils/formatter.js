@@ -77,7 +77,7 @@ const FormatterUtils = {
         hour12: true
       }).format(date)
     } catch (e) {
-      console.warn('FormatterUtils: Error formateando fecha y hora, usando fallback.', e)
+      // console.warn('FormatterUtils: Error formateando fecha y hora, usando fallback.', e)
       return this.formatDate(date, 'DD/MM/YYYY hh:mm a', locale)
     }
   },
@@ -136,7 +136,7 @@ const FormatterUtils = {
     try {
       return new Intl.NumberFormat(locale, options).format(numberInput)
     } catch (e) {
-      console.warn('FormatterUtils: Error formateando número, usando fallback.', e)
+      // console.warn('FormatterUtils: Error formateando número, usando fallback.', e)
       return String(numberInput)
     }
   },
@@ -154,7 +154,7 @@ const FormatterUtils = {
     try {
       return new Intl.NumberFormat(locale, defaultOptions).format(numberInput)
     } catch (e) {
-      console.warn('FormatterUtils: Error formateando porcentaje, usando fallback.', e)
+      // console.warn('FormatterUtils: Error formateando porcentaje, usando fallback.', e)
       return `${(numberInput * 100).toFixed(defaultOptions.maximumFractionDigits)}%`
     }
   },
@@ -173,7 +173,7 @@ const FormatterUtils = {
     try {
       return new Intl.NumberFormat(locale, defaultOptions).format(amount)
     } catch (e) {
-      console.warn('FormatterUtils: Error formateando moneda, usando fallback.', e)
+      // console.warn('FormatterUtils: Error formateando moneda, usando fallback.', e)
       return `${currencyCode} ${amount.toFixed(2)}`
     }
   },

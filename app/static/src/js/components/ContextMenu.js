@@ -60,9 +60,9 @@ class EcoContextMenu {
   init () {
     try {
       this.setupEventListeners()
-      console.log('🖱️ EcoContextMenu initialized successfully for target:', this.targetElement)
+      // // // console.log('🖱️ EcoContextMenu initialized successfully for target:', this.targetElement)
     } catch (error) {
-      console.error('❌ Error initializing EcoContextMenu:', error)
+      // // // console.error('❌ Error initializing EcoContextMenu:', error)
       this.handleError(error)
     }
   }
@@ -361,6 +361,9 @@ class EcoContextMenu {
      */
   handleError (error) {
     // Podría mostrar un mensaje de error en la UI o usar un sistema de notificaciones
+    if (error) {
+      // Handle the error appropriately
+    }
   }
 
   /**
@@ -390,7 +393,7 @@ class EcoContextMenu {
       element.removeEventListener(event, handler)
     })
     this.eventListeners = []
-    console.log('🖱️ EcoContextMenu destroyed for target:', this.targetElement)
+    // // // console.log('🖱️ EcoContextMenu destroyed for target:', this.targetElement)
   }
 
   // Helper para añadir event listeners y guardarlos para limpieza

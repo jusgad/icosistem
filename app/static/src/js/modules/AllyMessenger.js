@@ -108,7 +108,7 @@ class AllyMessenger {
      */
   async init () {
     try {
-      console.log('🤝 Inicializando AllyMessenger')
+      // // console.log('🤝 Inicializando AllyMessenger')
 
       // Verificar permisos
       if (!this.checkPermissions()) {
@@ -140,9 +140,9 @@ class AllyMessenger {
       // Configurar auto-guardado
       this.setupAutoSave()
 
-      console.log('✅ AllyMessenger inicializado correctamente')
+      // // console.log('✅ AllyMessenger inicializado correctamente')
     } catch (error) {
-      console.error('❌ Error inicializando AllyMessenger:', error)
+      // // console.error('❌ Error inicializando AllyMessenger:', error)
       this.showError('Error inicializando sistema de mensajería')
     }
   }
@@ -576,7 +576,7 @@ class AllyMessenger {
      */
   setupWebSocket () {
     if (!this.main.websocket) {
-      console.warn('WebSocket no disponible')
+      // console.warn('WebSocket no disponible')
       return
     }
 
@@ -618,7 +618,7 @@ class AllyMessenger {
         await this.selectConversation(lastConversationId)
       }
     } catch (error) {
-      console.error('Error cargando datos iniciales:', error)
+      // // console.error('Error cargando datos iniciales:', error)
     }
   }
 
@@ -636,7 +636,7 @@ class AllyMessenger {
 
       this.renderConversations()
     } catch (error) {
-      console.error('Error cargando conversaciones:', error)
+      // // console.error('Error cargando conversaciones:', error)
     }
   }
 
@@ -736,7 +736,7 @@ class AllyMessenger {
         this.loadMentorshipData(conversationId)
       }
     } catch (error) {
-      console.error('Error seleccionando conversación:', error)
+      // // console.error('Error seleccionando conversación:', error)
       this.showError('Error al cargar la conversación')
     }
   }
@@ -777,7 +777,7 @@ class AllyMessenger {
 
       return response
     } catch (error) {
-      console.error('Error cargando mensajes:', error)
+      // // console.error('Error cargando mensajes:', error)
       throw error
     }
   }
@@ -1071,7 +1071,7 @@ class AllyMessenger {
       // Scroll automático
       this.scrollToBottom()
     } catch (error) {
-      console.error('Error enviando mensaje:', error)
+      // // console.error('Error enviando mensaje:', error)
       this.showError('Error al enviar el mensaje')
     }
   }
@@ -1198,7 +1198,7 @@ class AllyMessenger {
         break
 
       default:
-        console.warn('Acción no reconocida:', action)
+        // console.warn('Acción no reconocida:', action)
     }
   }
 
@@ -1241,7 +1241,7 @@ class AllyMessenger {
         this.showSuccess('Sesión programada correctamente')
       })
     } catch (error) {
-      console.error('Error programando sesión:', error)
+      // // console.error('Error programando sesión:', error)
       this.showError('Error al programar la sesión')
     }
   }
@@ -1289,7 +1289,7 @@ class AllyMessenger {
       try {
         await this.uploadFile(file)
       } catch (error) {
-        console.error('Error subiendo archivo:', error)
+        // // console.error('Error subiendo archivo:', error)
         this.showError(`Error subiendo ${file.name}`)
       }
     }
@@ -1465,7 +1465,7 @@ class AllyMessenger {
     this.moduleState.messages.clear()
     this.moduleState.uploadQueue.clear()
 
-    console.log('🧹 AllyMessenger destruido')
+    // // console.log('🧹 AllyMessenger destruido')
   }
 }
 

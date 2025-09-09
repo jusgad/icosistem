@@ -55,9 +55,9 @@ class ClientDashboard {
       this.startAutoRefresh()
       this.hideLoader()
 
-      console.log('✅ ClientDashboard initialized successfully')
+      // // console.log('✅ ClientDashboard initialized successfully')
     } catch (error) {
-      console.error('❌ Error initializing ClientDashboard:', error)
+      // // console.error('❌ Error initializing ClientDashboard:', error)
       this.showError('Error al inicializar el dashboard')
     }
   }
@@ -131,12 +131,12 @@ class ClientDashboard {
       })
 
       this.socket.on('connect', () => {
-        console.log('🔗 WebSocket connected')
+        // // console.log('🔗 WebSocket connected')
         this.updateConnectionStatus(true)
       })
 
       this.socket.on('disconnect', () => {
-        console.log('🔌 WebSocket disconnected')
+        // // console.log('🔌 WebSocket disconnected')
         this.updateConnectionStatus(false)
       })
 
@@ -188,7 +188,7 @@ class ClientDashboard {
       this.state.lastUpdate = new Date()
       this.updateLastRefreshTime()
     } catch (error) {
-      console.error('Error loading dashboard data:', error)
+      // // console.error('Error loading dashboard data:', error)
       this.showError('Error al cargar los datos del dashboard')
     } finally {
       this.state.isLoading = false
@@ -300,7 +300,7 @@ class ClientDashboard {
   async initializeCharts () {
     try {
       if (typeof Chart === 'undefined') {
-        console.warn('Chart.js not loaded')
+        // console.warn('Chart.js not loaded')
         return
       }
 
@@ -316,7 +316,7 @@ class ClientDashboard {
       // Gráfico de distribución geográfica
       await this.initGeographicChart()
     } catch (error) {
-      console.error('Error initializing charts:', error)
+      // // console.error('Error initializing charts:', error)
     }
   }
 
@@ -556,7 +556,7 @@ class ClientDashboard {
           break
       }
     } catch (error) {
-      console.error(`Error loading ${view} data:`, error)
+      // // console.error(`Error loading ${view} data:`, error)
       this.showError(`Error al cargar datos de ${view}`)
     }
   }
@@ -588,7 +588,7 @@ class ClientDashboard {
       // Actualizar gráficos con datos filtrados
       await this.updateChartsWithFilters(data.analytics)
     } catch (error) {
-      console.error('Error applying filters:', error)
+      // // console.error('Error applying filters:', error)
       this.showError('Error al aplicar filtros')
     } finally {
       this.hideLoader()
@@ -608,7 +608,7 @@ class ClientDashboard {
       const data = await this.fetchData(`/entrepreneurs/search?q=${encodeURIComponent(query)}`)
       this.updateEntrepreneursTable({ entrepreneurs: data.results, pagination: data.pagination })
     } catch (error) {
-      console.error('Error searching entrepreneurs:', error)
+      // // console.error('Error searching entrepreneurs:', error)
     }
   }
 
@@ -620,7 +620,7 @@ class ClientDashboard {
       const data = await this.fetchData(`/entrepreneurs/${entrepreneurId}/details`)
       this.showEntrepreneurModal(data)
     } catch (error) {
-      console.error('Error loading entrepreneur details:', error)
+      // // console.error('Error loading entrepreneur details:', error)
       this.showError('Error al cargar detalles del emprendedor')
     }
   }
@@ -633,7 +633,7 @@ class ClientDashboard {
       const data = await this.fetchData(`/entrepreneurs/${entrepreneurId}/projects`)
       this.showProjectsModal(data)
     } catch (error) {
-      console.error('Error loading projects:', error)
+      // // console.error('Error loading projects:', error)
       this.showError('Error al cargar proyectos')
     }
   }
@@ -646,7 +646,7 @@ class ClientDashboard {
       const data = await this.fetchData(`/entrepreneurs/${entrepreneurId}/impact`)
       this.showImpactModal(data)
     } catch (error) {
-      console.error('Error loading impact data:', error)
+      // // console.error('Error loading impact data:', error)
       this.showError('Error al cargar datos de impacto')
     }
   }
@@ -685,7 +685,7 @@ class ClientDashboard {
 
       this.showSuccess('Reporte exportado exitosamente')
     } catch (error) {
-      console.error('Error exporting report:', error)
+      // // console.error('Error exporting report:', error)
       this.showError('Error al exportar reporte')
     } finally {
       this.hideLoader()
@@ -1020,7 +1020,7 @@ class ClientDashboard {
       }
     })
 
-    console.log('🧹 ClientDashboard destroyed')
+    // // console.log('🧹 ClientDashboard destroyed')
   }
 }
 

@@ -10,12 +10,14 @@
  * @updated: 2025
  */
 
+/* global importScripts, workbox, clients, self */
+
 // Importar scripts de Workbox (asumiendo que están en una carpeta 'workbox')
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.5.4/workbox-sw.js')
 
 // Verificar que Workbox se cargó correctamente
 if (workbox) {
-  console.log('🎉 Workbox cargado exitosamente!')
+  // // // console.log('🎉 Workbox cargado exitosamente!')
 
   // Configuración de Workbox
   workbox.setConfig({
@@ -142,13 +144,13 @@ if (workbox) {
   // ============================================================================
 
   self.addEventListener('install', (event) => {
-    console.log('SW: Instalado')
+    // // // console.log('SW: Instalado')
     // Forzar la activación inmediata del nuevo Service Worker
     event.waitUntil(self.skipWaiting())
   })
 
   self.addEventListener('activate', (event) => {
-    console.log('SW: Activado')
+    // // // console.log('SW: Activado')
     // Tomar control inmediato de las páginas
     event.waitUntil(self.clients.claim())
     // Limpiar caches antiguas
@@ -159,7 +161,7 @@ if (workbox) {
             // Define aquí un patrón para tus caches antiguas si es necesario
             return cacheName.startsWith('ecosistema-') && cacheName !== workbox.core.cacheNames.precache
           }).map(cacheName => {
-            console.log('SW: Eliminando cache antigua:', cacheName)
+            // // // console.log('SW: Eliminando cache antigua:', cacheName)
             return caches.delete(cacheName)
           })
         )
@@ -168,7 +170,7 @@ if (workbox) {
   })
 
   self.addEventListener('message', (event) => {
-    console.log('SW: Mensaje recibido:', event.data)
+    // // // console.log('SW: Mensaje recibido:', event.data)
     if (event.data && event.data.type === 'SKIP_WAITING') {
       self.skipWaiting()
     }
@@ -189,15 +191,15 @@ if (workbox) {
       while (entry = await queue.shiftRequest()) {
         try {
           await fetch(entry.request.clone())
-          console.log('SW: Petición de Background Sync enviada:', entry.request.url)
+          // // // console.log('SW: Petición de Background Sync enviada:', entry.request.url)
         } catch (error) {
-          console.error('SW: Falló la petición de Background Sync:', entry.request.url, error)
+          // // // console.error('SW: Falló la petición de Background Sync:', entry.request.url, error)
           // Volver a encolar la petición para reintentar más tarde
           await queue.unshiftRequest(entry)
           throw error // Importante para que Workbox sepa que falló y reintente
         }
       }
-      console.log('SW: Cola de Background Sync procesada.')
+      // // // console.log('SW: Cola de Background Sync procesada.')
     }
   })
 
@@ -218,14 +220,14 @@ if (workbox) {
   // ============================================================================
 
   self.addEventListener('push', (event) => {
-    console.log('SW: Notificación Push recibida')
+    // // // console.log('SW: Notificación Push recibida')
 
     let data = {}
     if (event.data) {
       try {
         data = event.data.json()
       } catch (e) {
-        console.error('SW: Error parseando datos de la notificación push', e)
+        // // // console.error('SW: Error parseando datos de la notificación push', e)
         data = { title: 'Notificación', body: event.data.text() }
       }
     }
@@ -252,7 +254,7 @@ if (workbox) {
   })
 
   self.addEventListener('notificationclick', (event) => {
-    console.log('SW: Click en notificación')
+    // // // console.log('SW: Click en notificación')
     event.notification.close() // Cerrar la notificación
 
     const notificationData = event.notification.data
@@ -260,7 +262,7 @@ if (workbox) {
 
     // Abrir la URL o realizar una acción específica
     if (event.action) {
-      console.log(`SW: Acción de notificación seleccionada: ${event.action}`)
+      // // // console.log(`SW: Acción de notificación seleccionada: ${event.action}`)
       // Aquí puedes manejar acciones personalizadas, ej:
       // clients.openWindow(`/actions/${event.action}?data=${encodeURIComponent(JSON.stringify(notificationData))}`);
     } else {
@@ -284,7 +286,7 @@ if (workbox) {
   })
 
   self.addEventListener('notificationclose', (event) => {
-    console.log('SW: Notificación cerrada', event.notification)
+    // // // console.log('SW: Notificación cerrada', event.notification)
     // Aquí puedes realizar acciones si el usuario cierra la notificación sin interactuar
   })
 
@@ -292,5 +294,5 @@ if (workbox) {
   // Esto es útil para que el SW se active inmediatamente después de la instalación
   workbox.core.clientsClaim()
 } else {
-  console.error('❌ Workbox no se pudo cargar.')
+  // // // console.error('❌ Workbox no se pudo cargar.')
 }

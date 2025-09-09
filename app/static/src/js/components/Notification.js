@@ -6,6 +6,8 @@
  * @version 2.0.0
  */
 
+/* global gtag */
+
 class NotificationSystem {
   constructor (options = {}) {
     this.config = {
@@ -102,9 +104,9 @@ class NotificationSystem {
       this.state.isInitialized = true
       this.processQueue()
 
-      console.log('✅ NotificationSystem initialized successfully')
+      // // console.log('✅ NotificationSystem initialized successfully')
     } catch (error) {
-      console.error('❌ Error initializing NotificationSystem:', error)
+      // // console.error('❌ Error initializing NotificationSystem:', error)
     }
   }
 
@@ -313,11 +315,11 @@ class NotificationSystem {
       })
 
       this.state.socket.on('connect', () => {
-        console.log('🔗 Notification WebSocket connected')
+        // // console.log('🔗 Notification WebSocket connected')
       })
 
       this.state.socket.on('disconnect', () => {
-        console.log('🔌 Notification WebSocket disconnected')
+        // // console.log('🔌 Notification WebSocket disconnected')
       })
 
       // Eventos de notificaciones
@@ -350,7 +352,7 @@ class NotificationSystem {
         this.showMentorshipRequest(data)
       })
     } catch (error) {
-      console.error('Error initializing WebSocket:', error)
+      // // console.error('Error initializing WebSocket:', error)
     }
   }
 
@@ -394,7 +396,7 @@ class NotificationSystem {
         }
       }
     } catch (error) {
-      console.warn('Error initializing sounds:', error)
+      // console.warn('Error initializing sounds:', error)
     }
   }
 
@@ -408,9 +410,9 @@ class NotificationSystem {
 
     try {
       const registration = await navigator.serviceWorker.register('/static/js/sw-notifications.js')
-      console.log('Service Worker registered:', registration)
+      // // console.log('Service Worker registered:', registration)
     } catch (error) {
-      console.warn('Service Worker registration failed:', error)
+      // console.warn('Service Worker registration failed:', error)
     }
   }
 
@@ -420,7 +422,7 @@ class NotificationSystem {
   show (options) {
     // Validar rate limiting
     if (!this.checkRateLimit(options.type || 'default')) {
-      console.warn('Rate limit exceeded for notifications')
+      // console.warn('Rate limit exceeded for notifications')
       return null
     }
 
@@ -933,7 +935,7 @@ class NotificationSystem {
       senderRole: data.sender.role,
       avatar: data.sender.avatar,
       actions: [
-        { action: 'view', label: 'Ver', handler: () => window.location.href = data.url },
+        { action: 'view', label: 'Ver', handler: () => { window.location.href = data.url } },
         { action: 'dismiss', label: 'Cerrar' }
       ],
       data
@@ -1118,7 +1120,7 @@ class NotificationSystem {
 
       localStorage.setItem(this.config.storageKey, JSON.stringify(trimmed))
     } catch (error) {
-      console.warn('Error persisting notification:', error)
+      // console.warn('Error persisting notification:', error)
     }
   }
 
@@ -1142,7 +1144,7 @@ class NotificationSystem {
         })
       })
     } catch (error) {
-      console.warn('Error loading persisted notifications:', error)
+      // console.warn('Error loading persisted notifications:', error)
     }
   }
 
@@ -1363,7 +1365,7 @@ class NotificationSystem {
       this.container.remove()
     }
 
-    console.log('🧹 NotificationSystem destroyed')
+    // // console.log('🧹 NotificationSystem destroyed')
   }
 }
 

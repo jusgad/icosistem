@@ -923,7 +923,7 @@ def _subscribe_to_newsletter(email: str, interests: str) -> bool:
         db.session.rollback()
         return False
 
-def _track_page_view(page_name: str, additional_data: Dict = None):
+def _track_page_view(page_name: str, additional_data: dict = None):
     """Registra vista de página para analytics."""
     try:
         analytics_service = AnalyticsService()

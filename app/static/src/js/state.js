@@ -80,7 +80,7 @@ class EcosistemaStateManager {
      * Inicializar state manager
      */
     async init() {
-        console.log('🗄️ Inicializando State Manager');
+        // // console.log('🗄️ Inicializando State Manager');
         
         try {
             // Registrar módulos de estado
@@ -109,10 +109,10 @@ class EcosistemaStateManager {
             this.appState.isHydrated = true;
             this.emit('state:hydrated');
             
-            console.log('✅ State Manager inicializado');
+            // // console.log('✅ State Manager inicializado');
             
         } catch (error) {
-            console.error('❌ Error inicializando State Manager:', error);
+            // // console.error('❌ Error inicializando State Manager:', error);
             this.handleError('INIT_ERROR', error);
         }
     }
@@ -185,7 +185,7 @@ class EcosistemaStateManager {
      */
     registerModule(name, module) {
         if (this.modules.has(name)) {
-            console.warn(`Módulo ${name} ya está registrado`);
+            // console.warn(`Módulo ${name} ya está registrado`);
             return;
         }
 
@@ -200,7 +200,7 @@ class EcosistemaStateManager {
             module.init();
         }
         
-        console.log(`📦 Módulo ${name} registrado`);
+        // // console.log(`📦 Módulo ${name} registrado`);
     }
 
     /**
@@ -211,9 +211,9 @@ class EcosistemaStateManager {
         this.addMiddleware('logger', (mutation, state, prevState) => {
             if (this.main?.debug) {
                 console.group(`🔄 Mutation: ${mutation.type}`);
-                console.log('Payload:', mutation.payload);
-                console.log('Estado anterior:', prevState);
-                console.log('Estado nuevo:', state);
+                // // console.log('Payload:', mutation.payload);
+                // // console.log('Estado anterior:', prevState);
+                // // console.log('Estado nuevo:', state);
                 console.groupEnd();
             }
         });
@@ -309,7 +309,7 @@ class EcosistemaStateManager {
             this.emit('state:mutation', { mutation, state: this.state, prevState });
 
         } catch (error) {
-            console.error('Error ejecutando mutation:', error);
+            // // console.error('Error ejecutando mutation:', error);
             this.handleError('MUTATION_ERROR', error, mutation);
             
             // Revertir estado en caso de error
@@ -465,7 +465,7 @@ class EcosistemaStateManager {
                     toRemove.push(subscription);
                 }
             } catch (error) {
-                console.error('Error en callback de observador:', error);
+                // // console.error('Error en callback de observador:', error);
             }
         });
 
@@ -509,11 +509,11 @@ class EcosistemaStateManager {
                     }
                 });
                 
-                console.log('💧 Estado hidratado desde persistencia');
+                // // console.log('💧 Estado hidratado desde persistencia');
             }
             
         } catch (error) {
-            console.warn('⚠️ Error hidratando estado:', error);
+            // console.warn('⚠️ Error hidratando estado:', error);
         }
     }
 
@@ -535,7 +535,7 @@ class EcosistemaStateManager {
             }
             
         } catch (error) {
-            console.error('Error persistiendo estado:', error);
+            // // console.error('Error persistiendo estado:', error);
         }
     }
 
@@ -576,7 +576,7 @@ class EcosistemaStateManager {
             return stored;
             
         } catch (error) {
-            console.error('Error cargando estado persistido:', error);
+            // // console.error('Error cargando estado persistido:', error);
             return null;
         }
     }
@@ -644,7 +644,7 @@ class EcosistemaStateManager {
             this.emit('state:syncSuccess');
 
         } catch (error) {
-            console.error('Error sincronizando con servidor:', error);
+            // // console.error('Error sincronizando con servidor:', error);
             this.emit('state:syncError', error);
         } finally {
             this.syncState.syncInProgress = false;
@@ -689,7 +689,7 @@ class EcosistemaStateManager {
             this.emit('state:realTimeUpdate', update);
             
         } catch (error) {
-            console.error('Error aplicando actualización en tiempo real:', error);
+            // // console.error('Error aplicando actualización en tiempo real:', error);
         }
     }
 
@@ -732,7 +732,7 @@ class EcosistemaStateManager {
             }
             
         } catch (error) {
-            console.error('Error en sincronización entre pestañas:', error);
+            // // console.error('Error en sincronización entre pestañas:', error);
         }
     }
 
@@ -788,7 +788,7 @@ class EcosistemaStateManager {
         try {
             await this.main.http.post('/errors/report', errorData);
         } catch (error) {
-            console.error('Error reportando error:', error);
+            // // console.error('Error reportando error:', error);
         }
     }
 
@@ -954,7 +954,7 @@ class EcosistemaStateManager {
             }
         });
         
-        console.log('🧹 State Manager destruido');
+        // // console.log('🧹 State Manager destruido');
     }
 }
 

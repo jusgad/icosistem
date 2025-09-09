@@ -216,7 +216,7 @@ class AnalyticsService {
         await App.http.post(`${this.baseEndpoint}/batch`, { events: eventsToSend })
       }
     } catch (error) {
-      console.warn('AnalyticsService: Error enviando eventos en lote. Re-encolando.', error)
+      // console.warn('AnalyticsService: Error enviando eventos en lote. Re-encolando.', error)
       // Re-encolar eventos si falla el envío (con límite para evitar bucles infinitos)
       if (eventsToSend.length < this.batchSize * 5) { // Evitar re-encolar demasiado
         this.queue.unshift(...eventsToSend)
@@ -259,14 +259,14 @@ class AnalyticsService {
      */
   async getAnalyticsData (reportName, params = {}) {
     if (!this.trackingEnabled) { // O un flag diferente para solo lectura de analíticas
-      console.warn('AnalyticsService: El seguimiento está deshabilitado, no se pueden obtener datos.')
+      // console.warn('AnalyticsService: El seguimiento está deshabilitado, no se pueden obtener datos.')
       return null
     }
     try {
       const queryString = new URLSearchParams(params).toString()
       return await App.http.get(`${this.baseEndpoint}/${reportName}?${queryString}`)
     } catch (error) {
-      console.error(`AnalyticsService: Error obteniendo datos para ${reportName}:`, error)
+      // // console.error(`AnalyticsService: Error obteniendo datos para ${reportName}:`, error)
       App.notifications.error('No se pudieron cargar los datos de analíticas.')
       return null
     }

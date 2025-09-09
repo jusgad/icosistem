@@ -88,7 +88,7 @@ class NotificationService {
       App.config.userNotificationPreferences = preferences // Guardar en config global
       return preferences
     } catch (error) {
-      console.warn('NotificationService: Error al obtener preferencias de notificación.', error)
+      // console.warn('NotificationService: Error al obtener preferencias de notificación.', error)
       return null
     }
   }
@@ -106,7 +106,7 @@ class NotificationService {
       App.notifications.success('Preferencias de notificación actualizadas.')
       return updatedPreferences
     } catch (error) {
-      console.error('NotificationService: Error al actualizar preferencias.', error)
+      // // console.error('NotificationService: Error al actualizar preferencias.', error)
       App.notifications.error(error.message || 'No se pudieron actualizar las preferencias.')
       return null
     }
@@ -131,7 +131,7 @@ class NotificationService {
         unreadCount: this.unreadCount
       })
     } catch (error) {
-      console.warn('NotificationService: Error al obtener notificaciones recientes.', error)
+      // console.warn('NotificationService: Error al obtener notificaciones recientes.', error)
     }
   }
 
@@ -190,7 +190,7 @@ class NotificationService {
       App.events.dispatchEvent('notifications:read', { notificationId })
       return true
     } catch (error) {
-      console.error(`NotificationService: Error al marcar notificación ${notificationId} como leída.`, error)
+      // // console.error(`NotificationService: Error al marcar notificación ${notificationId} como leída.`, error)
       return false
     }
   }
@@ -215,7 +215,7 @@ class NotificationService {
       App.events.dispatchEvent('notifications:all_read')
       return true
     } catch (error) {
-      console.error('NotificationService: Error al marcar todas las notificaciones como leídas.', error)
+      // // console.error('NotificationService: Error al marcar todas las notificaciones como leídas.', error)
       return false
     }
   }
@@ -244,7 +244,7 @@ class NotificationService {
       App.events.dispatchEvent('notifications:deleted', { notificationId })
       return true
     } catch (error) {
-      console.error(`NotificationService: Error al eliminar notificación ${notificationId}.`, error)
+      // // console.error(`NotificationService: Error al eliminar notificación ${notificationId}.`, error)
       return false
     }
   }
@@ -271,7 +271,7 @@ class NotificationService {
      */
   async requestPushPermission () {
     if (!('Notification' in window)) {
-      console.warn('Este navegador no soporta notificaciones de escritorio.')
+      // console.warn('Este navegador no soporta notificaciones de escritorio.')
       return 'unsupported'
     }
 
@@ -295,7 +295,7 @@ class NotificationService {
      */
   async _subscribeToPushService () {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      console.warn('Push messaging no soportado.')
+      // console.warn('Push messaging no soportado.')
       return
     }
 
@@ -307,7 +307,7 @@ class NotificationService {
         // Obtener VAPID public key del backend o config
         const vapidPublicKey = App.config.VAPID_PUBLIC_KEY
         if (!vapidPublicKey) {
-          console.error('VAPID public key no configurada.')
+          // // console.error('VAPID public key no configurada.')
           return
         }
 
@@ -319,9 +319,9 @@ class NotificationService {
 
       // Enviar suscripción al backend
       await App.http.post(`${this.baseEndpoint}/subscribe-push`, subscription.toJSON())
-      console.log('Suscrito a notificaciones push.')
+      // // console.log('Suscrito a notificaciones push.')
     } catch (error) {
-      console.error('Error al suscribirse a notificaciones push:', error)
+      // // console.error('Error al suscribirse a notificaciones push:', error)
     }
   }
 

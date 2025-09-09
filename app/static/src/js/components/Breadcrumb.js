@@ -117,7 +117,7 @@ class BreadcrumbComponent {
      */
   init () {
     if (!this.container) {
-      console.warn('Breadcrumb: Container no encontrado')
+      // // console.warn('Breadcrumb: Container no encontrado')
       return
     }
 

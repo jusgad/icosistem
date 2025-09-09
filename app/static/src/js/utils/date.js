@@ -178,7 +178,7 @@ class DateUtils {
       // Formateo manual para formatos personalizados
       return this._manualFormat(d, format)
     } catch (error) {
-      console.warn('Error formateando fecha:', error)
+      // console.warn('Error formateando fecha:', error)
       return d.toLocaleDateString(LOCALE_ES)
     }
   }

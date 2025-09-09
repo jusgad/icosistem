@@ -87,7 +87,7 @@ class ClientReports {
     if (this.moduleState.isInitialized) return
 
     try {
-      console.log('📈 Inicializando Client Reports')
+      // // console.log('📈 Inicializando Client Reports')
       this.showLoader(true, 'Cargando reportes...')
 
       this.createStructure()
@@ -98,9 +98,9 @@ class ClientReports {
       await this.loadReport(this.moduleState.currentReportType)
 
       this.moduleState.isInitialized = true
-      console.log('✅ Client Reports inicializado')
+      // // console.log('✅ Client Reports inicializado')
     } catch (error) {
-      console.error('❌ Error inicializando Client Reports:', error)
+      // // console.error('❌ Error inicializando Client Reports:', error)
       this.showError('Error al inicializar el módulo de reportes', error.message)
     } finally {
       this.showLoader(false)
@@ -243,7 +243,7 @@ class ClientReports {
       this.moduleState.availableReports = reports
       this.populateReportTypeSelect()
     } catch (error) {
-      console.error('Error cargando reportes disponibles:', error)
+      // // console.error('Error cargando reportes disponibles:', error)
       this.showError('No se pudieron cargar los tipos de reporte.')
     }
   }
@@ -299,7 +299,7 @@ class ClientReports {
       this.renderReportContent(reportData)
       this.elements.reportTitle.textContent = reportData.title || 'Reporte'
     } catch (error) {
-      console.error(`Error cargando reporte ${reportType}:`, error)
+      // // console.error(`Error cargando reporte ${reportType}:`, error)
       this.showError(`No se pudo cargar el reporte: ${reportType}`)
       this.elements.reportDataContainer.innerHTML = '<p class="text-danger">Error al cargar el reporte.</p>'
     } finally {
@@ -453,7 +453,7 @@ class ClientReports {
 
       this.main.notifications.success('Reporte exportado exitosamente.')
     } catch (error) {
-      console.error('Error exportando reporte:', error)
+      // // console.error('Error exportando reporte:', error)
       this.showError('Error al exportar el reporte.')
     } finally {
       this.showLoader(false)
@@ -481,7 +481,7 @@ class ClientReports {
     if (this.main.notifications) {
       this.main.notifications.error(message || title, { title: message ? title : 'Error' })
     } else {
-      console.error(title, message)
+      // // console.error(title, message)
     }
   }
 
@@ -495,7 +495,7 @@ class ClientReports {
     })
     this.container.innerHTML = ''
     this.moduleState.isInitialized = false
-    console.log('🧹 Client Reports destruido')
+    // // console.log('🧹 Client Reports destruido')
   }
 }
 

@@ -60,11 +60,11 @@ class AuthManager {
      * Inicializar módulo
      */
   async init () {
-    console.log('🔒 Inicializando Auth Manager')
+    // // console.log('🔒 Inicializando Auth Manager')
     this.loadSession()
     await this.checkAuthStatus()
     this.setupEventListeners()
-    console.log('✅ Auth Manager inicializado')
+    // // console.log('✅ Auth Manager inicializado')
   }
 
   /**
@@ -102,7 +102,7 @@ class AuthManager {
       }
       // Si el token expiró localmente, no hacer la llamada
       if (this.moduleState.tokenExpiresAt && new Date() > this.moduleState.tokenExpiresAt) {
-        console.log('Token expirado localmente, realizando logout.')
+        // // console.log('Token expirado localmente, realizando logout.')
         this.logout() // Esto limpiará el estado
         return false
       }
@@ -111,7 +111,7 @@ class AuthManager {
       this.handleAuthResponse(response)
       return this.moduleState.isAuthenticated
     } catch (error) {
-      console.warn('Error verificando estado de autenticación:', error.message)
+      // console.warn('Error verificando estado de autenticación:', error.message)
       // Si hay un error (ej. token inválido en backend), desautenticar
       if (error.status === 401 || error.message.includes('401')) {
         this.updateAuthState(false, null)
@@ -141,7 +141,7 @@ class AuthManager {
         throw new Error(response.message || 'Credenciales inválidas')
       }
     } catch (error) {
-      console.error('Error en login:', error)
+      // // console.error('Error en login:', error)
       this.main.notifications.error(error.message || 'Error al iniciar sesión')
       this.updateAuthState(false, null)
     } finally {
@@ -165,7 +165,7 @@ class AuthManager {
         throw new Error(response.message || 'Error en el registro')
       }
     } catch (error) {
-      console.error('Error en registro:', error)
+      // // console.error('Error en registro:', error)
       this.main.notifications.error(error.message || 'Error al registrar la cuenta')
     } finally {
       this.main.loading.hide()
@@ -180,7 +180,7 @@ class AuthManager {
       await this.main.http.post(this.moduleConfig.logoutEndpoint)
     } catch (error) {
       // Ignorar errores de logout en el backend, siempre limpiar localmente
-      console.warn('Error en logout del servidor:', error.message)
+      // console.warn('Error en logout del servidor:', error.message)
     } finally {
       this.updateAuthState(false, null)
       this.main.notifications.info('Sesión cerrada')
@@ -198,7 +198,7 @@ class AuthManager {
       const response = await this.main.http.post(this.moduleConfig.forgotPasswordEndpoint, { email })
       this.main.notifications.success(response.message || 'Si el email existe, recibirás instrucciones para resetear tu contraseña.')
     } catch (error) {
-      console.error('Error en forgotPassword:', error)
+      // // console.error('Error en forgotPassword:', error)
       this.main.notifications.error(error.message || 'Error al solicitar reseteo de contraseña.')
     } finally {
       this.main.loading.hide()
@@ -217,7 +217,7 @@ class AuthManager {
       this.main.notifications.success(response.message || 'Contraseña reseteada exitosamente. Ya puedes iniciar sesión.')
       window.location.href = '/login' // O a donde corresponda
     } catch (error) {
-      console.error('Error en resetPassword:', error)
+      // // console.error('Error en resetPassword:', error)
       this.main.notifications.error(error.message || 'Error al resetear la contraseña.')
     } finally {
       this.main.loading.hide()
@@ -402,7 +402,7 @@ class AuthManager {
   destroy () {
     this.clearSessionWarning()
     // Limpiar otros listeners si es necesario
-    console.log('🧹 Auth Manager destruido')
+    // // console.log('🧹 Auth Manager destruido')
   }
 }
 

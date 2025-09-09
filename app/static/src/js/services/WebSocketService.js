@@ -70,14 +70,14 @@ class WebSocketService {
     }
 
     if (this.isConnected || (this.socket && this.socket.readyState === WebSocket.CONNECTING)) {
-      console.warn('WebSocketService: Ya conectado o intentando conectar.')
+      // console.warn('WebSocketService: Ya conectado o intentando conectar.')
       return
     }
 
     // Verificar autenticación antes de conectar
     const token = App.services.auth ? App.services.auth.getToken() : null
     if (!token && App.config.WS_REQUIRE_AUTH !== false) {
-      console.warn('WebSocketService: Autenticación requerida para WebSocket, pero no hay token.')
+      // console.warn('WebSocketService: Autenticación requerida para WebSocket, pero no hay token.')
       // Podrías decidir no conectar o intentar una conexión anónima si tu backend lo soporta.
       return
     }
@@ -91,7 +91,7 @@ class WebSocketService {
     // Podrías añadir otros parámetros como `client_version`, `user_id`, etc.
     // urlWithParams.searchParams.append('clientVersion', App.config.VERSION);
 
-    console.log(`WebSocketService: Conectando a ${urlWithParams.toString()}...`)
+    // // console.log(`WebSocketService: Conectando a ${urlWithParams.toString()}...`)
     this.socket = new WebSocket(urlWithParams.toString())
 
     this.socket.onopen = (event) => this._handleOpen(event)
@@ -107,7 +107,7 @@ class WebSocketService {
      */
   disconnect (code = 1000, reason = 'Cierre manual por el cliente') {
     if (this.socket) {
-      console.log(`WebSocketService: Desconectando con código ${code} y razón "${reason}"...`)
+      // // console.log(`WebSocketService: Desconectando con código ${code} y razón "${reason}"...`)
       this.socket.close(code, reason)
       this._clearTimers() // Limpiar timers de ping/pong
     }
@@ -119,7 +119,7 @@ class WebSocketService {
      * @private
      */
   _handleOpen (event) {
-    console.log('WebSocketService: Conexión establecida.')
+    // // console.log('WebSocketService: Conexión establecida.')
     this.isConnected = true
     this.reconnectAttempts = 0 // Resetear intentos de reconexión
     App.events.dispatchEvent('websocket:connected', event)
@@ -156,12 +156,12 @@ class WebSocketService {
           try {
             callback(message.data || message)
           } catch (e) {
-            console.error(`WebSocketService: Error en callback para evento '${eventName}':`, e)
+            // // console.error(`WebSocketService: Error en callback para evento '${eventName}':`, e)
           }
         })
       }
     } catch (error) {
-      console.error('WebSocketService: Error procesando mensaje:', error, 'Data:', event.data)
+      // // console.error('WebSocketService: Error procesando mensaje:', error, 'Data:', event.data)
     }
   }
 
@@ -170,7 +170,7 @@ class WebSocketService {
      * @private
      */
   _handleError (event) {
-    console.error('WebSocketService: Error en WebSocket:', event)
+    // // console.error('WebSocketService: Error en WebSocket:', event)
     App.events.dispatchEvent('websocket:error', event)
     // El evento 'close' se disparará después, manejando la reconexión allí si es necesario.
   }
@@ -180,7 +180,7 @@ class WebSocketService {
      * @private
      */
   _handleClose (event) {
-    console.log(`WebSocketService: Conexión cerrada. Código: ${event.code}, Razón: "${event.reason}", Limpio: ${event.wasClean}`)
+    // // console.log(`WebSocketService: Conexión cerrada. Código: ${event.code}, Razón: "${event.reason}", Limpio: ${event.wasClean}`)
     this.isConnected = false
     this.socket = null // Liberar la referencia al socket
     this._clearTimers()
@@ -205,7 +205,7 @@ class WebSocketService {
         this.reconnectInterval * Math.pow(2, this.reconnectAttempts - 1),
         App.config.WS_MAX_RECONNECT_DELAY || 60000 // Max delay de 60s
       )
-      console.log(`WebSocketService: Intento de reconexión ${this.reconnectAttempts}/${this.maxReconnectAttempts} en ${delay / 1000}s...`)
+      // // console.log(`WebSocketService: Intento de reconexión ${this.reconnectAttempts}/${this.maxReconnectAttempts} en ${delay / 1000}s...`)
       setTimeout(() => {
         // Solo intentar reconectar si no estamos ya conectados o conectando
         if (!this.isConnected && (!this.socket || this.socket.readyState === WebSocket.CLOSED)) {
@@ -213,7 +213,7 @@ class WebSocketService {
         }
       }, delay)
     } else {
-      console.error('WebSocketService: Máximo de intentos de reconexión alcanzado.')
+      // // console.error('WebSocketService: Máximo de intentos de reconexión alcanzado.')
       App.events.dispatchEvent('websocket:reconnect_failed')
     }
   }
@@ -233,11 +233,11 @@ class WebSocketService {
 
           // Esperar pong
           this.pongTimeoutId = setTimeout(() => {
-            console.warn('WebSocketService: No se recibió pong, la conexión podría estar muerta. Terminando...')
+            // console.warn('WebSocketService: No se recibió pong, la conexión podría estar muerta. Terminando...')
             this.socket.close(1001, 'Pong timeout') // 1001: Going Away (indica que el endpoint se va)
           }, this.pongWaitDuration)
         } catch (error) {
-          console.error('WebSocketService: Error enviando ping:', error)
+          // // console.error('WebSocketService: Error enviando ping:', error)
           // Si falla el envío del ping, la conexión probablemente esté mal, cerramos.
           this.socket.close(1001, 'Error enviando ping')
         }
@@ -283,7 +283,7 @@ class WebSocketService {
      */
   send (event, data = {}) {
     if (!this.isConnected || !this.socket || this.socket.readyState !== WebSocket.OPEN) {
-      console.warn('WebSocketService: No conectado. Mensaje no enviado:', { event, data })
+      // console.warn('WebSocketService: No conectado. Mensaje no enviado:', { event, data })
       return false
     }
     try {
@@ -292,7 +292,7 @@ class WebSocketService {
       // console.debug('WebSocketService: Mensaje enviado:', { event, data });
       return true
     } catch (error) {
-      console.error('WebSocketService: Error enviando mensaje:', error)
+      // // console.error('WebSocketService: Error enviando mensaje:', error)
       return false
     }
   }
@@ -304,7 +304,7 @@ class WebSocketService {
      */
   on (eventName, callback) {
     if (typeof callback !== 'function') {
-      console.error('WebSocketService: El callback debe ser una función.')
+      // // console.error('WebSocketService: El callback debe ser una función.')
       return
     }
     if (!this.eventListeners.has(eventName)) {
@@ -354,7 +354,7 @@ class WebSocketService {
 if (App && App.services) {
   App.services.websocket = new WebSocketService()
 } else {
-  console.warn('App.services no está definido. WebSocketService no se pudo registrar globalmente.')
+  // console.warn('App.services no está definido. WebSocketService no se pudo registrar globalmente.')
   // Podrías optar por exportar la clase o una instancia si no hay un objeto App global.
   // export default new WebSocketService();
 }

@@ -117,9 +117,9 @@ class EcoChart {
         this.startAutoRefresh()
       }
 
-      console.log('✅ EcoChart initialized successfully')
+      // // // console.log('✅ EcoChart initialized successfully')
     } catch (error) {
-      console.error('❌ Error initializing EcoChart:', error)
+      // // // console.error('❌ Error initializing EcoChart:', error)
       this.handleError(error)
     }
   }
@@ -650,7 +650,7 @@ class EcoChart {
         await this.createChart(data)
       }
     } catch (error) {
-      console.error('Error loading chart data:', error)
+      // // // console.error('Error loading chart data:', error)
       this.handleError(error)
     } finally {
       this.state.isLoading = false
@@ -806,13 +806,13 @@ class EcoChart {
         })
 
         this.state.socket.on('connect', () => {
-          console.log('Chart WebSocket connected')
+          // // // console.log('Chart WebSocket connected')
         })
       } else {
-        console.warn('Socket.IO not available for real-time updates')
+        // // console.warn('Socket.IO not available for real-time updates')
       }
     } catch (error) {
-      console.error('Error initializing real-time updates:', error)
+      // // // console.error('Error initializing real-time updates:', error)
     }
   }
 
@@ -951,7 +951,7 @@ class EcoChart {
 
       return exportData
     } catch (error) {
-      console.error('Error exporting chart:', error)
+      // // // console.error('Error exporting chart:', error)
       this.handleError(error)
       return null
     }
@@ -988,6 +988,8 @@ class EcoChart {
     const canvas = this.state.chart.canvas
     const imgData = canvas.toDataURL('image/png')
 
+    /* global jsPDF */
+    // eslint-disable-next-line new-cap
     const pdf = new jsPDF(options.orientation || 'landscape')
     const imgWidth = options.width || 280
     const imgHeight = (canvas.height * imgWidth) / canvas.width
@@ -1218,7 +1220,7 @@ class EcoChart {
   }
 
   handleError (error) {
-    console.error('Chart error:', error)
+    // // // console.error('Chart error:', error)
 
     if (this.config.onError) {
       this.config.onError(error)
@@ -1326,7 +1328,7 @@ class EcoChart {
       this.resizeObserver.disconnect()
     }
 
-    console.log('🧹 EcoChart destroyed')
+    // // // console.log('🧹 EcoChart destroyed')
   }
 }
 

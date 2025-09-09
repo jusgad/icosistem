@@ -31,7 +31,7 @@ const PerformanceUtils = {
       try {
         window.performance.mark(markName)
       } catch (e) {
-        console.warn(`PerformanceUtils: Error al crear la marca '${markName}'.`, e)
+        // console.warn(`PerformanceUtils: Error al crear la marca '${markName}'.`, e)
       }
     }
   },
@@ -50,7 +50,7 @@ const PerformanceUtils = {
         const measures = window.performance.getEntriesByName(measureName, 'measure')
         return measures.length > 0 ? measures[measures.length - 1] : null
       } catch (e) {
-        console.warn(`PerformanceUtils: Error al crear la medida '${measureName}'.`, e)
+        // console.warn(`PerformanceUtils: Error al crear la medida '${measureName}'.`, e)
         return null
       }
     }
@@ -135,7 +135,7 @@ const PerformanceUtils = {
       })
       observer.observe({ type: 'largest-contentful-paint', buffered: true })
     } else {
-      console.warn('PerformanceObserver no soportado para LCP.')
+      // console.warn('PerformanceObserver no soportado para LCP.')
     }
   },
 
@@ -153,7 +153,7 @@ const PerformanceUtils = {
       })
       observer.observe({ type: 'first-input', buffered: true })
     } else {
-      console.warn('PerformanceObserver no soportado para FID.')
+      // console.warn('PerformanceObserver no soportado para FID.')
     }
   },
 
@@ -175,7 +175,7 @@ const PerformanceUtils = {
       observer.observe({ type: 'layout-shift', buffered: true })
       // También se puede reportar CLS al final de la sesión (visibilitychange, pagehide)
     } else {
-      console.warn('PerformanceObserver no soportado para CLS.')
+      // console.warn('PerformanceObserver no soportado para CLS.')
     }
   },
 
@@ -196,7 +196,7 @@ const PerformanceUtils = {
       }
       const type = entryTypeMap[metricName.toUpperCase()]
       if (!type) {
-        console.warn(`Métrica Web Vital desconocida: ${metricName}`)
+        // console.warn(`Métrica Web Vital desconocida: ${metricName}`)
         return
       }
 
@@ -214,7 +214,7 @@ const PerformanceUtils = {
       })
       observer.observe({ type, buffered: true })
     } else {
-      console.warn(`PerformanceObserver no soportado para ${metricName}.`)
+      // console.warn(`PerformanceObserver no soportado para ${metricName}.`)
     }
   },
 
@@ -246,14 +246,14 @@ const PerformanceUtils = {
     }
 
     // En una aplicación real, se enviaría a un backend de analytics.
-    console.log('Performance Metric to Server:', payload)
+    // // console.log('Performance Metric to Server:', payload)
 
     // Ejemplo de envío con fetch:
     // fetch('/api/performance-metrics', {
     //     method: 'POST',
     //     headers: { 'Content-Type': 'application/json' },
     //     body: JSON.stringify(payload)
-    // }).catch(error => console.error('Error sending performance metric:', error));
+    // }).catch(error => // // console.error('Error sending performance metric:', error));
   },
 
   /**
@@ -274,7 +274,7 @@ const PerformanceUtils = {
       this.mark(endMark)
       const measure = this.measure(functionName, startMark, endMark)
       if (measure) {
-        console.log(`Performance: ${functionName} tomó ${measure.duration.toFixed(2)}ms`)
+        // // console.log(`Performance: ${functionName} tomó ${measure.duration.toFixed(2)}ms`)
         // Opcionalmente, enviar al servidor:
         // this.sendMetricToServer(functionName, measure.duration);
       }
@@ -301,7 +301,7 @@ const PerformanceUtils = {
       this.mark(endMark)
       const measure = this.measure(`async_${functionName}`, startMark, endMark)
       if (measure) {
-        console.log(`Performance: async ${functionName} tomó ${measure.duration.toFixed(2)}ms`)
+        // // console.log(`Performance: async ${functionName} tomó ${measure.duration.toFixed(2)}ms`)
         // this.sendMetricToServer(`async_${functionName}`, measure.duration);
       }
       this.clearPerformanceEntries([startMark, endMark], [`async_${functionName}`])

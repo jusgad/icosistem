@@ -86,7 +86,7 @@ class SyncService {
      */
   registerDataType (name, config) {
     if (!config.endpoint || !config.localCacheKey) {
-      console.error(`SyncService: Configuración inválida para el tipo de dato '${name}'.`)
+      // // console.error(`SyncService: Configuración inválida para el tipo de dato '${name}'.`)
       return
     }
     this.registeredDataTypes.set(name, {
@@ -128,15 +128,15 @@ class SyncService {
      */
   async syncAllRegisteredTypes (forceFullSync = false) {
     if (this.isSyncing) {
-      console.warn('SyncService: Sincronización ya en progreso.')
+      // console.warn('SyncService: Sincronización ya en progreso.')
       return
     }
     if (!navigator.onLine) {
-      console.warn('SyncService: Sin conexión, sincronización pospuesta.')
+      // console.warn('SyncService: Sin conexión, sincronización pospuesta.')
       return
     }
     if (!App.services.auth || !App.services.auth.check()) {
-      console.warn('SyncService: Usuario no autenticado, sincronización detenida.')
+      // console.warn('SyncService: Usuario no autenticado, sincronización detenida.')
       this.stopPeriodicSync()
       return
     }
@@ -162,12 +162,12 @@ class SyncService {
   async syncDataType (typeName, forceFullSync = false) {
     const dataType = this.registeredDataTypes.get(typeName)
     if (!dataType) {
-      console.error(`SyncService: Tipo de dato '${typeName}' no registrado.`)
+      // // console.error(`SyncService: Tipo de dato '${typeName}' no registrado.`)
       return
     }
 
     if (dataType.status === 'syncing') {
-      console.warn(`SyncService: Sincronización para '${typeName}' ya en progreso.`)
+      // console.warn(`SyncService: Sincronización para '${typeName}' ya en progreso.`)
       return
     }
 
@@ -184,7 +184,7 @@ class SyncService {
       if (!pushSuccessful) {
         // Si el push falla, podríamos decidir no continuar con el fetch
         // o manejarlo de forma diferente. Por ahora, continuamos.
-        console.warn(`SyncService: Falló el envío de cambios locales para '${typeName}'.`)
+        // console.warn(`SyncService: Falló el envío de cambios locales para '${typeName}'.`)
       }
 
       // 2. Obtener cambios del servidor
@@ -204,7 +204,7 @@ class SyncService {
       // Ejecutar post-sync hook si existe
       if (dataType.postSyncHook) await dataType.postSyncHook(serverChanges)
     } catch (error) {
-      console.error(`SyncService: Error sincronizando '${typeName}':`, error)
+      // // console.error(`SyncService: Error sincronizando '${typeName}':`, error)
       this._updateDataTypeStatus(typeName, 'error', error.message)
       App.events.dispatchEvent(`sync:${typeName}_error`, { typeName, error: error.message })
     }
@@ -222,7 +222,7 @@ class SyncService {
      */
   queueOperation (operation) {
     if (!operation.type || !operation.dataType || !operation.data) {
-      console.error('SyncService: Operación de sincronización inválida.', operation)
+      // // console.error('SyncService: Operación de sincronización inválida.', operation)
       return
     }
     operation.timestamp = new Date().toISOString()
@@ -257,23 +257,23 @@ class SyncService {
       try {
         const dataType = this.registeredDataTypes.get(operation.dataType)
         if (!dataType) {
-          console.warn(`SyncService: Tipo de dato '${operation.dataType}' no registrado para operación encolada.`)
+          // console.warn(`SyncService: Tipo de dato '${operation.dataType}' no registrado para operación encolada.`)
           operation.retries = (operation.retries || 0) + 1 // Contar como reintento
           if (operation.retries < this.maxRetries) operationsToRetry.push(operation)
-          else console.error(`SyncService: Operación descartada para '${operation.dataType}' después de ${this.maxRetries} reintentos.`)
-          continue
+          else // // console.error(`SyncService: Operación descartada para '${operation.dataType}' después de ${this.maxRetries} reintentos.`)
+          { continue }
         }
 
         await this._executeOperation(operation, dataType)
         App.events.dispatchEvent('sync:operation_processed', operation)
       } catch (error) {
-        console.error(`SyncService: Error procesando operación ${operation.id}:`, error)
+        // // console.error(`SyncService: Error procesando operación ${operation.id}:`, error)
         operation.retries = (operation.retries || 0) + 1
         if (operation.retries < this.maxRetries) {
           operationsToRetry.push(operation)
           await new Promise(resolve => setTimeout(resolve, this.retryDelay)) // Esperar antes de reintentar
         } else {
-          console.error(`SyncService: Operación ${operation.id} descartada después de ${this.maxRetries} reintentos.`)
+          // // console.error(`SyncService: Operación ${operation.id} descartada después de ${this.maxRetries} reintentos.`)
           App.events.dispatchEvent('sync:operation_failed', { operation, error: error.message })
         }
       }
@@ -417,7 +417,7 @@ class SyncService {
       // { data: [...], deleted_ids: [...], new_sync_token: '...' }
       return response.data || response // Ajustar según la respuesta real de tu API
     } catch (error) {
-      console.error(`SyncService: Error obteniendo cambios del servidor para '${dataType.name}':`, error)
+      // // console.error(`SyncService: Error obteniendo cambios del servidor para '${dataType.name}':`, error)
       throw new Error(`No se pudieron obtener los cambios del servidor para ${dataType.name}.`)
     }
   }
@@ -511,12 +511,12 @@ class SyncService {
       // this._updateLocalCacheWithOperationResponse(dataType, response);
       return response
     } catch (error) {
-      console.error(`SyncService: Error ejecutando operación ${operation.id}:`, error)
+      // // console.error(`SyncService: Error ejecutando operación ${operation.id}:`, error)
       // Si el error es un 409 (Conflicto), podría necesitar una lógica de resolución especial.
       if (error.status === 409) {
         // Intentar obtener la versión más reciente del servidor y resolver el conflicto.
         // Esto es complejo y depende de la aplicación.
-        console.warn(`SyncService: Conflicto detectado para operación ${operation.id}. Se requiere resolución manual o estrategia automática.`)
+        // console.warn(`SyncService: Conflicto detectado para operación ${operation.id}. Se requiere resolución manual o estrategia automática.`)
       }
       throw error // Re-lanzar para que processQueue lo maneje (reintentos)
     }

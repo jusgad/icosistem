@@ -1272,7 +1272,7 @@ class EcosistemaConfig {
         });
 
         if (missing.length > 0) {
-            console.error('Configuraciones requeridas faltantes:', missing);
+            // // console.error('Configuraciones requeridas faltantes:', missing);
             throw new Error(`Configuraciones faltantes: ${missing.join(', ')}`);
         }
 
@@ -1305,7 +1305,7 @@ class EcosistemaConfig {
         }
 
         if (issues.length > 0) {
-            console.error('Problemas de configuración de producción:', issues);
+            // // console.error('Problemas de configuración de producción:', issues);
         }
     }
 
@@ -1417,5 +1417,5 @@ if (typeof module !== 'undefined' && module.exports) {
 window.EcosistemaConfig = EcosistemaConfig;
 
 // Log de inicialización
-console.log(`⚙️ Configuración cargada para ambiente: ${window.ConfigManager.environment}`);
-console.log(`🎯 Características habilitadas:`, window.ConfigManager.config.meta.features);
+// // console.log(`⚙️ Configuración cargada para ambiente: ${window.ConfigManager.environment}`);
+// // console.log(`🎯 Características habilitadas:`, window.ConfigManager.config.meta.features);

@@ -79,7 +79,7 @@ class ImpactDashboard {
     if (this.moduleState.isInitialized) return
 
     try {
-      console.log('🌍 Inicializando Impact Dashboard')
+      // // console.log('🌍 Inicializando Impact Dashboard')
       this.showLoader(true, 'Inicializando dashboard de impacto...')
 
       this.createStructure()
@@ -92,9 +92,9 @@ class ImpactDashboard {
       this.setupAutoRefresh()
 
       this.moduleState.isInitialized = true
-      console.log('✅ Impact Dashboard inicializado')
+      // // console.log('✅ Impact Dashboard inicializado')
     } catch (error) {
-      console.error('❌ Error inicializando Impact Dashboard:', error)
+      // // console.error('❌ Error inicializando Impact Dashboard:', error)
       this.showError('Error al inicializar el dashboard de impacto', error.message)
     } finally {
       this.showLoader(false)
@@ -220,7 +220,7 @@ class ImpactDashboard {
       this.moduleState.lastUpdate = new Date()
       this.updateLastRefreshTime()
     } catch (error) {
-      console.error('Error cargando datos de impacto:', error)
+      // // console.error('Error cargando datos de impacto:', error)
       this.showError('No se pudieron cargar los datos de impacto.')
     } finally {
       this.showLoader(false)
@@ -424,7 +424,7 @@ class ImpactDashboard {
     if (this.main.notifications) {
       this.main.notifications.error(message || title, { title: message ? title : 'Error' })
     } else {
-      console.error(title, message)
+      // // console.error(title, message)
     }
   }
 
@@ -441,7 +441,7 @@ class ImpactDashboard {
     })
     this.container.innerHTML = ''
     this.moduleState.isInitialized = false
-    console.log('🧹 Impact Dashboard destruido')
+    // // console.log('🧹 Impact Dashboard destruido')
   }
 }
 

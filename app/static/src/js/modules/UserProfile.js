@@ -63,7 +63,7 @@ class UserProfile {
     if (this.moduleState.isInitialized) return
 
     try {
-      console.log('👤 Inicializando User Profile')
+      // // console.log('👤 Inicializando User Profile')
       this.showLoader(true, 'Cargando perfil...')
 
       this.createStructure()
@@ -73,9 +73,9 @@ class UserProfile {
       await this.loadUserProfile()
 
       this.moduleState.isInitialized = true
-      console.log('✅ User Profile inicializado')
+      // // console.log('✅ User Profile inicializado')
     } catch (error) {
-      console.error('❌ Error inicializando User Profile:', error)
+      // // console.error('❌ Error inicializando User Profile:', error)
       this.showError('Error al inicializar el perfil de usuario', error.message)
     } finally {
       this.showLoader(false)
@@ -290,7 +290,7 @@ class UserProfile {
       this.renderProfile()
       this.renderPrivacySettings()
     } catch (error) {
-      console.error('Error cargando perfil:', error)
+      // // console.error('Error cargando perfil:', error)
       this.showError('No se pudo cargar la información del perfil.')
     } finally {
       this.showLoader(false)
@@ -389,7 +389,7 @@ class UserProfile {
       this.toggleEditMode(false)
       this.main.notifications.success('Perfil actualizado exitosamente.')
     } catch (error) {
-      console.error('Error actualizando perfil:', error)
+      // // console.error('Error actualizando perfil:', error)
       this.showError('No se pudo actualizar el perfil.', error.message || '')
     } finally {
       this.showLoader(false)
@@ -429,7 +429,7 @@ class UserProfile {
       this.elements.avatarImage.src = response.avatar_url
       this.main.notifications.success('Avatar actualizado exitosamente.')
     } catch (error) {
-      console.error('Error subiendo avatar:', error)
+      // // console.error('Error subiendo avatar:', error)
       this.showError('No se pudo subir el avatar.', error.message || '')
     } finally {
       this.showLoader(false)
@@ -460,7 +460,7 @@ class UserProfile {
       this.renderPrivacySettings()
       this.main.notifications.success('Configuración de privacidad actualizada.')
     } catch (error) {
-      console.error('Error actualizando privacidad:', error)
+      // // console.error('Error actualizando privacidad:', error)
       this.showError('No se pudo actualizar la configuración de privacidad.', error.message || '')
     } finally {
       this.showLoader(false)
@@ -488,7 +488,7 @@ class UserProfile {
     if (this.main.notifications) {
       this.main.notifications.error(message || title, { title: message ? title : 'Error' })
     } else {
-      console.error(title, message)
+      // // console.error(title, message)
     }
   }
 
@@ -501,7 +501,7 @@ class UserProfile {
     })
     this.container.innerHTML = ''
     this.moduleState.isInitialized = false
-    console.log('🧹 User Profile destruido')
+    // // console.log('🧹 User Profile destruido')
   }
 }
 

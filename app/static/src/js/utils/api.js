@@ -277,12 +277,12 @@ class APIClient {
       })
 
       this.socket.on('connect', () => {
-        console.log('API WebSocket connected')
+        // // console.log('API WebSocket connected')
         this.dispatchEvent('api:websocket:connected')
       })
 
       this.socket.on('disconnect', () => {
-        console.log('API WebSocket disconnected')
+        // // console.log('API WebSocket disconnected')
         this.dispatchEvent('api:websocket:disconnected')
       })
 
@@ -922,10 +922,10 @@ class APIClient {
 
   logError (error) {
     console.group('🚨 API Error')
-    console.error('Message:', error.message)
-    console.error('Status:', error.status)
-    console.error('Config:', error.config)
-    console.error('Stack:', error.stack)
+    // // console.error('Message:', error.message)
+    // // console.error('Status:', error.status)
+    // // console.error('Config:', error.config)
+    // // console.error('Stack:', error.stack)
     console.groupEnd()
 
     // Enviar a servicio de logging si está configurado

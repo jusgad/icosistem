@@ -75,7 +75,7 @@ class CacheService {
   _getStore (storeName = null) {
     const name = storeName || this.defaultStoreName
     if (!this.stores[name] || (name !== 'memory' && !this._isStorageAvailable(name))) {
-      console.warn(`CacheService: Store '${name}' no disponible, usando 'memory' como fallback.`)
+      // console.warn(`CacheService: Store '${name}' no disponible, usando 'memory' como fallback.`)
       return this.stores.memory
     }
     return this.stores[name]
@@ -118,7 +118,7 @@ class CacheService {
       }
       return true
     } catch (e) {
-      console.error(`CacheService: Error al establecer '${key}' en '${storeName}':`, e)
+      // // console.error(`CacheService: Error al establecer '${key}' en '${storeName}':`, e)
       // Podría implementar una estrategia de limpieza si el storage está lleno (LRU)
       if (e.name === 'QuotaExceededError') {
         this.evictOldest(storeName, 1) // Intentar liberar espacio
@@ -127,7 +127,7 @@ class CacheService {
           else store.setItem(cacheKey, JSON.stringify(item))
           return true
         } catch (e2) {
-          console.error(`CacheService: Reintento fallido para '${key}':`, e2)
+          // // console.error(`CacheService: Reintento fallido para '${key}':`, e2)
         }
       }
       return false
@@ -155,7 +155,7 @@ class CacheService {
         }
       }
     } catch (e) {
-      console.error(`CacheService: Error al obtener '${key}' de '${storeName}':`, e)
+      // // console.error(`CacheService: Error al obtener '${key}' de '${storeName}':`, e)
       this.remove(key, storeName) // Remover item corrupto
       return null
     }
@@ -199,7 +199,7 @@ class CacheService {
       }
       return true
     } catch (e) {
-      console.error(`CacheService: Error al eliminar '${key}' de '${storeName}':`, e)
+      // // console.error(`CacheService: Error al eliminar '${key}' de '${storeName}':`, e)
       return false
     }
   }
@@ -304,7 +304,7 @@ class CacheService {
         store.removeItem(items[i].key)
       }
     }
-    console.warn(`CacheService: Se eliminaron ${count} items antiguos de '${storeName}' para liberar espacio.`)
+    // console.warn(`CacheService: Se eliminaron ${count} items antiguos de '${storeName}' para liberar espacio.`)
   }
 
   /**

@@ -140,13 +140,13 @@ const FileUtils = {
      */
   createObjectURL (fileOrBlob) {
     if (!(fileOrBlob instanceof File) && !(fileOrBlob instanceof Blob)) {
-      console.error('El argumento debe ser un objeto File o Blob.')
+      // // console.error('El argumento debe ser un objeto File o Blob.')
       return null
     }
     try {
       return URL.createObjectURL(fileOrBlob)
     } catch (error) {
-      console.error('Error creando Object URL:', error)
+      // // console.error('Error creando Object URL:', error)
       return null
     }
   },
@@ -160,7 +160,7 @@ const FileUtils = {
       try {
         URL.revokeObjectURL(objectURL)
       } catch (error) {
-        console.error('Error revocando Object URL:', error)
+        // // console.error('Error revocando Object URL:', error)
       }
     }
   },
@@ -223,7 +223,7 @@ const FileUtils = {
       const blob = await res.blob()
       return new File([blob], filename, { type: blob.type })
     } catch (error) {
-      console.error('Error convirtiendo Data URL a File:', error)
+      // // console.error('Error convirtiendo Data URL a File:', error)
       throw error
     }
   },
@@ -295,7 +295,7 @@ const FileUtils = {
     } else if (source instanceof Blob || source instanceof File) {
       link.href = URL.createObjectURL(source)
     } else {
-      console.error('Fuente inválida para descarga.')
+      // // console.error('Fuente inválida para descarga.')
       return
     }
     link.download = filename

@@ -51,7 +51,7 @@ class AuthService {
           App.services.user.currentUser = this.currentUser // Sincronizar con UserService
           App.events.dispatchEvent('auth:login', this.currentUser)
         } catch (e) {
-          console.error('AuthService: Error parsing stored user data.', e)
+          // // console.error('AuthService: Error parsing stored user data.', e)
           this.logout() // Limpiar si los datos son corruptos
         }
       } else {
@@ -91,7 +91,7 @@ class AuthService {
         throw new Error(response.message || 'Respuesta de login inválida.')
       }
     } catch (error) {
-      console.error('AuthService: Error en login:', error)
+      // // console.error('AuthService: Error en login:', error)
       App.events.dispatchEvent('auth:login_failed', error)
       throw error
     }
@@ -107,7 +107,7 @@ class AuthService {
       await App.http.post(`${this.authEndpoint}/logout`)
     } catch (error) {
       // Ignorar errores de logout del backend, ya que el cliente debe cerrar sesión de todas formas
-      console.warn('AuthService: Error notificando logout al backend:', error)
+      // console.warn('AuthService: Error notificando logout al backend:', error)
     } finally {
       this.clearToken()
       this.clearCurrentUser()
@@ -131,7 +131,7 @@ class AuthService {
       App.events.dispatchEvent('auth:register_success', response)
       return response
     } catch (error) {
-      console.error('AuthService: Error en registro:', error)
+      // // console.error('AuthService: Error en registro:', error)
       App.events.dispatchEvent('auth:register_failed', error)
       throw error
     }
@@ -155,7 +155,7 @@ class AuthService {
       App.events.dispatchEvent('auth:user_refreshed', userData)
       return userData
     } catch (error) {
-      console.warn('AuthService: Error obteniendo usuario actual, cerrando sesión.', error)
+      // console.warn('AuthService: Error obteniendo usuario actual, cerrando sesión.', error)
       // Si falla (ej. token expirado), cerrar sesión
       await this.logout()
       return null
@@ -227,7 +227,7 @@ class AuthService {
     try {
       return await App.http.post(`${this.authEndpoint}/forgot-password`, { email })
     } catch (error) {
-      console.error('AuthService: Error solicitando reseteo de contraseña:', error)
+      // // console.error('AuthService: Error solicitando reseteo de contraseña:', error)
       throw error
     }
   }
@@ -247,7 +247,7 @@ class AuthService {
         confirm_password: confirmPassword
       })
     } catch (error) {
-      console.error('AuthService: Error reseteando contraseña:', error)
+      // // console.error('AuthService: Error reseteando contraseña:', error)
       throw error
     }
   }
@@ -267,7 +267,7 @@ class AuthService {
         confirm_password: confirmPassword
       })
     } catch (error) {
-      console.error('AuthService: Error cambiando contraseña:', error)
+      // // console.error('AuthService: Error cambiando contraseña:', error)
       throw error
     }
   }
@@ -281,7 +281,7 @@ class AuthService {
     try {
       return await App.http.post(`${this.authEndpoint}/verify-email/${token}`)
     } catch (error) {
-      console.error('AuthService: Error verificando token de email:', error)
+      // // console.error('AuthService: Error verificando token de email:', error)
       throw error
     }
   }
@@ -295,7 +295,7 @@ class AuthService {
     try {
       return await App.http.post(`${this.authEndpoint}/resend-verification`, { email })
     } catch (error) {
-      console.error('AuthService: Error reenviando email de verificación:', error)
+      // // console.error('AuthService: Error reenviando email de verificación:', error)
       throw error
     }
   }

@@ -155,9 +155,9 @@ class EcoFileUpload {
       await this.setupEventListeners()
       await this.initializeWebSocket()
 
-      console.log('✅ EcoFileUpload initialized successfully')
+      // // // console.log('✅ EcoFileUpload initialized successfully')
     } catch (error) {
-      console.error('❌ Error initializing EcoFileUpload:', error)
+      // // // console.error('❌ Error initializing EcoFileUpload:', error)
       this.handleError(error)
     }
   }
@@ -377,7 +377,7 @@ class EcoFileUpload {
 
       if (!financialKeywords.some(keyword => fileName.includes(keyword))) {
         // Solo advertencia, no error
-        console.warn('Archivo financiero sin palabras clave reconocidas')
+        // // console.warn('Archivo financiero sin palabras clave reconocidas')
       }
 
       return null
@@ -480,7 +480,7 @@ class EcoFileUpload {
           img.src = URL.createObjectURL(file)
         })
       } catch (error) {
-        console.warn('Error compressing image:', error)
+        // // console.warn('Error compressing image:', error)
         return file
       }
     })
@@ -506,7 +506,7 @@ class EcoFileUpload {
           metadata.height = dimensions.height
           metadata.aspectRatio = dimensions.width / dimensions.height
         } catch (error) {
-          console.warn('Error getting image dimensions:', error)
+          // // console.warn('Error getting image dimensions:', error)
         }
       } else if (file.type.startsWith('video/')) {
         metadata.category = 'video'
@@ -516,7 +516,7 @@ class EcoFileUpload {
           metadata.width = videoInfo.width
           metadata.height = videoInfo.height
         } catch (error) {
-          console.warn('Error getting video info:', error)
+          // // console.warn('Error getting video info:', error)
         }
       } else if (file.type === 'application/pdf') {
         metadata.category = 'document'
@@ -524,7 +524,7 @@ class EcoFileUpload {
           // En producción, esto sería procesado en el servidor
           metadata.pages = await this.getPDFPageCount(file)
         } catch (error) {
-          console.warn('Error getting PDF info:', error)
+          // // console.warn('Error getting PDF info:', error)
         }
       }
 
@@ -540,14 +540,14 @@ class EcoFileUpload {
           const thumbnail = await this.generateImageThumbnail(file)
           return { ...fileData, thumbnail }
         } catch (error) {
-          console.warn('Error generating image thumbnail:', error)
+          // // console.warn('Error generating image thumbnail:', error)
         }
       } else if (file.type.startsWith('video/')) {
         try {
           const thumbnail = await this.generateVideoThumbnail(file)
           return { ...fileData, thumbnail }
         } catch (error) {
-          console.warn('Error generating video thumbnail:', error)
+          // // console.warn('Error generating video thumbnail:', error)
         }
       }
 
@@ -705,7 +705,7 @@ class EcoFileUpload {
       try {
         await this.addFile(file)
       } catch (error) {
-        console.error('Error adding file:', error)
+        // // // console.error('Error adding file:', error)
         this.showError(`Error al agregar ${file.name}: ${error.message}`)
       }
     }
@@ -791,7 +791,7 @@ class EcoFileUpload {
           }
         }
       } catch (error) {
-        console.warn(`Validator ${name} failed:`, error)
+        // // console.warn(`Validator ${name} failed:`, error)
       }
     }
 
@@ -817,7 +817,7 @@ class EcoFileUpload {
           processedData = { ...processedData, ...result }
         }
       } catch (error) {
-        console.warn(`Processor ${name} failed:`, error)
+        // // console.warn(`Processor ${name} failed:`, error)
       }
     }
 
@@ -875,7 +875,7 @@ class EcoFileUpload {
       const retryCount = this.state.retryCount.get(fileId) || 0
       if (retryCount < this.config.retryAttempts) {
         this.state.retryCount.set(fileId, retryCount + 1)
-        console.log(`Retrying upload for ${fileData.name} (attempt ${retryCount + 1})`)
+        // // // console.log(`Retrying upload for ${fileData.name} (attempt ${retryCount + 1})`)
 
         await this.delay(this.config.retryDelay)
         return this.uploadFile(fileId)
@@ -1180,10 +1180,11 @@ class EcoFileUpload {
         case 'pending':
           progressText.textContent = 'Pendiente'
           break
-        case 'uploading':
+        case 'uploading': {
           const speed = fileData.speed ? this.formatSpeed(fileData.speed) : ''
           progressText.textContent = `${Math.round(fileData.progress)}% ${speed}`
           break
+        }
         case 'completed':
           progressText.textContent = 'Completado'
           break
@@ -1302,7 +1303,7 @@ class EcoFileUpload {
       this.state.socket = io(this.config.webSocketUrl)
 
       this.state.socket.on('connect', () => {
-        console.log('🔗 FileUpload WebSocket connected')
+        // // // console.log('🔗 FileUpload WebSocket connected')
       })
 
       this.state.socket.on('uploadProgress', (data) => {
@@ -1317,7 +1318,7 @@ class EcoFileUpload {
         this.handleWebSocketError(data)
       })
     } catch (error) {
-      console.warn('Error initializing WebSocket:', error)
+      // // console.warn('Error initializing WebSocket:', error)
     }
   }
 
@@ -1702,7 +1703,7 @@ class EcoFileUpload {
         return serverInfo
       }
     } catch (error) {
-      console.warn('Error checking resume info:', error)
+      // // console.warn('Error checking resume info:', error)
     }
 
     return null
@@ -1772,7 +1773,7 @@ class EcoFileUpload {
       this.resizeObserver.disconnect()
     }
 
-    console.log('🧹 EcoFileUpload destroyed')
+    // // // console.log('🧹 EcoFileUpload destroyed')
   }
 }
 

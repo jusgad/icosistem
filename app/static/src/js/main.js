@@ -1,3 +1,4 @@
+/* global gtag */
 /**
  * Main JavaScript for Ecosistema Emprendimiento
  * =============================================
@@ -317,7 +318,7 @@ App.storage = {
             const value = localStorage.getItem(`ecosistema_${key}`);
             return value ? JSON.parse(value) : defaultValue;
         } catch (error) {
-            console.warn('Error getting from storage:', error);
+            // console.warn('Error getting from storage:', error);
             return defaultValue;
         }
     },
@@ -338,7 +339,7 @@ App.storage = {
             localStorage.setItem(`ecosistema_${key}`, JSON.stringify(value));
             return true;
         } catch (error) {
-            console.warn('Error setting to storage:', error);
+            // console.warn('Error setting to storage:', error);
             return false;
         }
     },
@@ -358,7 +359,7 @@ App.storage = {
             localStorage.removeItem(`ecosistema_${key}`);
             return true;
         } catch (error) {
-            console.warn('Error removing from storage:', error);
+            // console.warn('Error removing from storage:', error);
             return false;
         }
     },
@@ -375,7 +376,7 @@ App.storage = {
             }
             App.cache.clear();
         } catch (error) {
-            console.warn('Error clearing storage:', error);
+            // console.warn('Error clearing storage:', error);
         }
     }
 };
@@ -1144,7 +1145,7 @@ App.websocket = {
      */
     connect() {
         if (!App.utils.hasSupport('webSockets')) {
-            console.warn('WebSocket no soportado');
+            // console.warn('WebSocket no soportado');
             return;
         }
 
@@ -1152,7 +1153,7 @@ App.websocket = {
             this.socket = new WebSocket(App.wsUrl);
             this.bindEvents();
         } catch (error) {
-            console.error('Error conectando WebSocket:', error);
+            // // console.error('Error conectando WebSocket:', error);
         }
     },
 
@@ -1161,7 +1162,7 @@ App.websocket = {
      */
     bindEvents() {
         this.socket.onopen = () => {
-            console.log('WebSocket conectado');
+            // // console.log('WebSocket conectado');
             this.reconnectAttempts = 0;
             this.startHeartbeat();
             
@@ -1179,12 +1180,12 @@ App.websocket = {
                 const data = JSON.parse(event.data);
                 this.handleMessage(data);
             } catch (error) {
-                console.error('Error parsing WebSocket message:', error);
+                // // console.error('Error parsing WebSocket message:', error);
             }
         };
 
         this.socket.onclose = () => {
-            console.log('WebSocket desconectado');
+            // // console.log('WebSocket desconectado');
             this.stopHeartbeat();
             this.reconnect();
             
@@ -1192,7 +1193,7 @@ App.websocket = {
         };
 
         this.socket.onerror = (error) => {
-            console.error('Error en WebSocket:', error);
+            // // console.error('Error en WebSocket:', error);
             App.events.dispatchEvent(new CustomEvent('websocketError', { detail: error }));
         };
     },
@@ -1308,7 +1309,7 @@ App.websocket = {
      */
     reconnect() {
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-            console.error('Máximo número de intentos de reconexión alcanzado');
+            // // console.error('Máximo número de intentos de reconexión alcanzado');
             return;
         }
 
@@ -1316,7 +1317,7 @@ App.websocket = {
         const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
 
         setTimeout(() => {
-            console.log(`Intentando reconectar WebSocket (intento ${this.reconnectAttempts})`);
+            // // console.log(`Intentando reconectar WebSocket (intento ${this.reconnectAttempts})`);
             this.connect();
         }, delay);
     },
@@ -1559,7 +1560,7 @@ App.errorHandler = {
      */
     setupUnhandledRejection() {
         window.addEventListener('unhandledrejection', (event) => {
-            console.error('Unhandled promise rejection:', event.reason);
+            // // console.error('Unhandled promise rejection:', event.reason);
             
             if (App.debug) {
                 App.notifications.error('Error no controlado en la aplicación');
@@ -1572,7 +1573,7 @@ App.errorHandler = {
      * @param {Object} errorInfo - Información del error
      */
     handleError(errorInfo) {
-        console.error('Global error:', errorInfo);
+        // // console.error('Global error:', errorInfo);
 
         // En desarrollo, mostrar errores al usuario
         if (App.debug) {
@@ -1691,7 +1692,7 @@ App.analytics = {
         try {
             await App.http.post('/analytics', data);
         } catch (error) {
-            console.warn('Error sending analytics:', error);
+            // console.warn('Error sending analytics:', error);
         }
     }
 };
@@ -1704,11 +1705,11 @@ App.analytics = {
  * Inicializar aplicación
  */
 App.init = function() {
-    console.log(`🚀 Iniciando Ecosistema Emprendimiento v${this.version}`);
+    // // console.log(`🚀 Iniciando Ecosistema Emprendimiento v${this.version}`);
 
     // Verificar soporte básico
     if (!document.querySelector || !window.addEventListener) {
-        console.error('Navegador no soportado');
+        // // console.error('Navegador no soportado');
         return;
     }
 
@@ -1740,7 +1741,7 @@ App.init = function() {
     // Emitir evento de inicialización
     this.events.dispatchEvent(new CustomEvent('appInitialized'));
 
-    console.log('✅ Aplicación inicializada correctamente');
+    // // console.log('✅ Aplicación inicializada correctamente');
 };
 
 /**
@@ -1757,7 +1758,7 @@ App.loadCurrentUser = async function() {
             this.currentUser = user;
         }
     } catch (error) {
-        console.warn('No se pudo cargar información del usuario:', error);
+        // console.warn('No se pudo cargar información del usuario:', error);
     }
 };
 
@@ -1860,9 +1861,9 @@ App.loadModule = async function(moduleName) {
             this.modules[moduleName].init(this);
         }
 
-        console.log(`📦 Módulo ${moduleName} cargado`);
+        // // console.log(`📦 Módulo ${moduleName} cargado`);
     } catch (error) {
-        console.warn(`⚠️ Error cargando módulo ${moduleName}:`, error);
+        // console.warn(`⚠️ Error cargando módulo ${moduleName}:`, error);
     }
 };
 

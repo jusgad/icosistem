@@ -76,9 +76,9 @@ class FileManager {
       await this.setupKeyboardShortcuts()
       await this.initializeContextMenu()
 
-      console.log('✅ FileManager initialized successfully')
+      // // console.log('✅ FileManager initialized successfully')
     } catch (error) {
-      console.error('❌ Error initializing FileManager:', error)
+      // // console.error('❌ Error initializing FileManager:', error)
       this.showError('Error al inicializar el gestor de archivos')
     }
   }
@@ -573,7 +573,7 @@ class FileManager {
       })
 
       this.socket.on('connect', () => {
-        console.log('🔗 FileManager WebSocket connected')
+        // // console.log('🔗 FileManager WebSocket connected')
       })
 
       this.socket.on('file_uploaded', (data) => {
@@ -603,7 +603,7 @@ class FileManager {
       this.state.currentUser = response.user
       this.state.permissions = response.permissions
     } catch (error) {
-      console.error('Error loading user info:', error)
+      // // console.error('Error loading user info:', error)
     }
   }
 
@@ -630,7 +630,7 @@ class FileManager {
       this.renderFiles(data.files)
       this.updateStatusBar(data)
     } catch (error) {
-      console.error('Error loading directory:', error)
+      // // console.error('Error loading directory:', error)
       this.showError('Error al cargar el directorio')
     } finally {
       this.hideLoader()
@@ -913,7 +913,7 @@ class FileManager {
       try {
         await this.uploadFile(file)
       } catch (error) {
-        console.error(`Error uploading ${file.name}:`, error)
+        // // console.error(`Error uploading ${file.name}:`, error)
         this.showError(`Error al subir ${file.name}: ${error.message}`)
       }
     }
@@ -1129,7 +1129,7 @@ class FileManager {
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
     } catch (error) {
-      console.error('Error downloading file:', error)
+      // // console.error('Error downloading file:', error)
       this.showError('Error al descargar el archivo')
     }
   }
@@ -1181,7 +1181,7 @@ class FileManager {
       this.showSuccess('Carpeta creada exitosamente')
       await this.loadDirectory()
     } catch (error) {
-      console.error('Error creating folder:', error)
+      // // console.error('Error creating folder:', error)
       this.showError('Error al crear la carpeta')
     }
   }
@@ -1316,12 +1316,12 @@ class FileManager {
 
   showError (message) {
     // Implementar notificación de error
-    console.error(message)
+    // // console.error(message)
   }
 
   showSuccess (message) {
     // Implementar notificación de éxito
-    console.log(message)
+    // // console.log(message)
   }
 
   updateToolbarState () {
@@ -1383,7 +1383,7 @@ class FileManager {
       element.removeEventListener(event, handler)
     })
 
-    console.log('🧹 FileManager destroyed')
+    // // console.log('🧹 FileManager destroyed')
   }
 }
 

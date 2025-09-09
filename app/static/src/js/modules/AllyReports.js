@@ -147,7 +147,7 @@ class AllyReports {
     if (this.moduleState.isInitialized) return
 
     try {
-      console.log('📊 Inicializando Ally Reports')
+      // // console.log('📊 Inicializando Ally Reports')
 
       // Verificar permisos
       if (!this.hasPermissions()) {
@@ -181,9 +181,9 @@ class AllyReports {
       // Marcar como inicializado
       this.moduleState.isInitialized = true
 
-      console.log('✅ Ally Reports inicializado')
+      // // console.log('✅ Ally Reports inicializado')
     } catch (error) {
-      console.error('❌ Error inicializando Ally Reports:', error)
+      // // console.error('❌ Error inicializando Ally Reports:', error)
       this.showError('Error inicializando reportes', error.message)
     }
   }
@@ -998,7 +998,7 @@ class AllyReports {
       // Cargar datos básicos
       await this.loadBasicData()
     } catch (error) {
-      console.error('Error cargando datos iniciales:', error)
+      // // console.error('Error cargando datos iniciales:', error)
       throw error
     }
   }
@@ -1036,7 +1036,7 @@ class AllyReports {
                     ).join('')
       }
     } catch (error) {
-      console.error('Error cargando opciones de filtros:', error)
+      // // console.error('Error cargando opciones de filtros:', error)
     }
   }
 
@@ -1057,7 +1057,7 @@ class AllyReports {
         timestamp: Date.now()
       })
     } catch (error) {
-      console.error('Error cargando datos básicos:', error)
+      // // console.error('Error cargando datos básicos:', error)
       throw error
     }
   }
@@ -1092,7 +1092,7 @@ class AllyReports {
       // Actualizar timestamp
       this.updateLastRefreshTime()
     } catch (error) {
-      console.error(`Error cargando reporte ${reportType}:`, error)
+      // // console.error(`Error cargando reporte ${reportType}:`, error)
       this.showError('Error cargando reporte', error.message)
     } finally {
       this.moduleState.isGenerating = false
@@ -1124,7 +1124,7 @@ class AllyReports {
         await this.renderFinancialReport(data)
         break
       default:
-        console.warn(`Tipo de reporte no implementado: ${reportType}`)
+        // console.warn(`Tipo de reporte no implementado: ${reportType}`)
     }
   }
 
@@ -1479,7 +1479,7 @@ class AllyReports {
 
       this.main.notifications.success('Reporte exportado exitosamente')
     } catch (error) {
-      console.error('Error exportando reporte:', error)
+      // // console.error('Error exportando reporte:', error)
       this.showError('Error exportando reporte', error.message)
     }
   }
@@ -1721,7 +1721,7 @@ class AllyReports {
     if (this.main.notifications) {
       this.main.notifications.error(`${title}: ${message}`)
     } else {
-      console.error(`${title}:`, message)
+      // // console.error(`${title}:`, message)
     }
   }
 
@@ -1747,7 +1747,7 @@ class AllyReports {
     // Limpiar cache
     this.moduleState.dataCache.clear()
 
-    console.log('🧹 Ally Reports destruido')
+    // // console.log('🧹 Ally Reports destruido')
   }
 
   // Métodos auxiliares adicionales...

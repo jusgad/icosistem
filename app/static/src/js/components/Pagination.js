@@ -6,6 +6,8 @@
  * @version 2.0.0
  */
 
+/* global gtag */
+
 class EcoPagination {
   constructor (container, options = {}) {
     this.container = typeof container === 'string' ? document.getElementById(container) : container
@@ -170,9 +172,9 @@ class EcoPagination {
         await this.syncWithUrl()
       }
 
-      console.log('✅ EcoPagination initialized successfully')
+      // // console.log('✅ EcoPagination initialized successfully')
     } catch (error) {
-      console.error('❌ Error initializing EcoPagination:', error)
+      // // console.error('❌ Error initializing EcoPagination:', error)
       this.handleError(error)
     }
   }
@@ -1577,7 +1579,7 @@ class EcoPagination {
         this.calculateTotalPages()
       }
     } catch (error) {
-      console.warn('Error restoring pagination state:', error)
+      // console.warn('Error restoring pagination state:', error)
     }
   }
 
@@ -1599,7 +1601,7 @@ class EcoPagination {
      * Manejo de errores
      */
   handleError (error) {
-    console.error('Pagination error:', error)
+    // // console.error('Pagination error:', error)
 
     if (this.config.onError) {
       this.config.onError(error)
@@ -1671,7 +1673,7 @@ class EcoPagination {
     // Limpiar caché
     this.state.cache.clear()
 
-    console.log('🧹 EcoPagination destroyed')
+    // // console.log('🧹 EcoPagination destroyed')
   }
 }
 

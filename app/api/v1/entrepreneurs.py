@@ -1136,21 +1136,7 @@ __all__ = [
     'entrepreneurs_bp',
     'EntrepreneurConfig',
     'get_entrepreneur_summary'
-]d)
-        
-        # Verificar permisos
-        if not self._can_edit_entrepreneur(current_user, entrepreneur):
-            raise AuthorizationError("No tiene permisos para editar este emprendedor")
-        
-        data = request.get_json()
-        
-        try:
-            # Actualizar usando el servicio
-            updated_entrepreneur = EntrepreneurService.update_entrepreneur_profile(
-                entrepreneur=entrepreneur,
-                update_data=data,
-                updated_by=current_user.id
-            )
+]
             
             return updated_entrepreneur.to_dict(include_user=True, include_stats=True)
             

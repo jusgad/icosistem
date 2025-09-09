@@ -91,7 +91,7 @@ class URLHandler {
         route: this.identifyRoute(parsed.pathname)
       }
     } catch (error) {
-      console.error('Error parsing URL:', error)
+      // // console.error('Error parsing URL:', error)
       return null
     }
   }
@@ -136,7 +136,7 @@ class URLHandler {
 
       return config.absolute ? url.href : url.pathname + url.search + url.hash
     } catch (error) {
-      console.error('Error building URL:', error)
+      // // console.error('Error building URL:', error)
       return path
     }
   }
@@ -309,7 +309,7 @@ class URLHandler {
 
       return parsed.href
     } catch (error) {
-      console.error('Error sanitizing URL:', error)
+      // // console.error('Error sanitizing URL:', error)
       return null
     }
   }
@@ -353,7 +353,7 @@ class URLHandler {
 
       return true
     } catch (error) {
-      console.error('Error comparing URLs:', error)
+      // // console.error('Error comparing URLs:', error)
       return false
     }
   }
@@ -432,7 +432,7 @@ class SimpleRouter {
         this.handleRoute(path)
       }
     } catch (error) {
-      console.error('Navigation error:', error)
+      // // console.error('Navigation error:', error)
     }
 
     return this
@@ -485,7 +485,7 @@ class SimpleRouter {
       if (this.fallback) {
         return this.handleRoute(this.fallback)
       } else {
-        console.warn('No route found for:', path)
+        // console.warn('No route found for:', path)
         return
       }
     }
@@ -507,7 +507,7 @@ class SimpleRouter {
       this.currentRoute = route
       await route.handler(route.params, route)
     } catch (error) {
-      console.error('Route handler error:', error)
+      // // console.error('Route handler error:', error)
     }
   }
 
@@ -953,7 +953,7 @@ class URLTracker {
         body: JSON.stringify(data)
       })
     } catch (error) {
-      console.error('Error sending tracking data:', error)
+      // // console.error('Error sending tracking data:', error)
     }
   }
 
@@ -1099,7 +1099,7 @@ const URLUtils = {
       this.setupAutoTracking()
     }
 
-    console.log('🔗 URL utilities initialized')
+    // // console.log('🔗 URL utilities initialized')
   },
 
   /**
@@ -1252,7 +1252,7 @@ const URLUtils = {
     const shortURL = `${window.location.origin}/s/${shortId}`
 
     // En implementación real, guardar en base de datos
-    console.log(`Short URL generated: ${shortURL} -> ${url}`)
+    // // console.log(`Short URL generated: ${shortURL} -> ${url}`)
 
     return {
       shortURL,

@@ -158,7 +158,7 @@ class DebouncedFunction {
     try {
       this.result = this.func.apply(thisArg, args)
     } catch (error) {
-      console.error('Error in debounced function:', error)
+      // // console.error('Error in debounced function:', error)
       throw error
     }
 
@@ -667,7 +667,7 @@ const DebounceUtils = {
       }
 
       if (callCount > config.maxCalls) {
-        console.warn('Rate limit exceeded for debounced function')
+        // console.warn('Rate limit exceeded for debounced function')
         return
       }
 
@@ -932,7 +932,7 @@ const DebounceMonitor = {
                     monitoringData.executions
       }
 
-      console.log(`[Debounce Monitor] ${label}:`, {
+      // // console.log(`[Debounce Monitor] ${label}:`, {
         efficiency: `${((monitoringData.executions / monitoringData.calls) * 100).toFixed(1)}%`,
         savedCalls: monitoringData.calls - monitoringData.executions,
         avgWait: `${monitoringData.avgWaitTime.toFixed(0)}ms`
@@ -1025,7 +1025,7 @@ const Debounce = {
       globalDebounceManager.cancelAll()
     })
 
-    console.log('🚀 Debounce system initialized')
+    // // console.log('🚀 Debounce system initialized')
   }
 }
 

@@ -66,7 +66,7 @@ class EcosistemaRouter {
      * Inicializar router
      */
     init() {
-        console.log('🧭 Inicializando Router del Ecosistema');
+        // // console.log('🧭 Inicializando Router del Ecosistema');
         
         // Configurar rutas del sistema
         this.setupRoutes();
@@ -89,7 +89,7 @@ class EcosistemaRouter {
         // Manejar ruta inicial
         this.handleInitialRoute();
         
-        console.log('✅ Router inicializado correctamente');
+        // // console.log('✅ Router inicializado correctamente');
     }
 
     /**
@@ -458,7 +458,7 @@ class EcosistemaRouter {
                 try {
                     await this.loadRouteData(route);
                 } catch (error) {
-                    console.error('Error cargando datos de ruta:', error);
+                    // // console.error('Error cargando datos de ruta:', error);
                     return this.navigate('/500', { replace: true });
                 }
             }
@@ -511,7 +511,7 @@ class EcosistemaRouter {
 
         // Guard de error
         this.addGuard('onError', async (error, route) => {
-            console.error('Error en navegación:', error);
+            // // console.error('Error en navegación:', error);
             
             if (error.status === 404) {
                 return this.navigate('/404', { replace: true });
@@ -824,7 +824,7 @@ class EcosistemaRouter {
 
         const layout = this.layouts.get(layoutName);
         if (!layout) {
-            console.warn(`Layout ${layoutName} no encontrado`);
+            // console.warn(`Layout ${layoutName} no encontrado`);
             return;
         }
 
@@ -864,7 +864,7 @@ class EcosistemaRouter {
             }
 
         } catch (error) {
-            console.error(`Error cargando componente ${componentName}:`, error);
+            // // console.error(`Error cargando componente ${componentName}:`, error);
             throw error;
         } finally {
             this.hidePageLoading();
@@ -891,7 +891,7 @@ class EcosistemaRouter {
             return ModuleClass;
 
         } catch (error) {
-            console.error(`Error cargando módulo ${modulePath}:`, error);
+            // // console.error(`Error cargando módulo ${modulePath}:`, error);
             throw error;
         }
     }
@@ -938,7 +938,7 @@ class EcosistemaRouter {
                 this.preloadedModules.add(modulePath);
             }, this.config.preloadDelay);
         } catch (error) {
-            console.warn(`Error precargando módulo ${modulePath}:`, error);
+            // console.warn(`Error precargando módulo ${modulePath}:`, error);
         }
     }
 
@@ -1067,7 +1067,7 @@ class EcosistemaRouter {
                     this.navigate(response.redirect);
                 }
             } catch (error) {
-                console.error('Error en envío de formulario:', error);
+                // // console.error('Error en envío de formulario:', error);
             }
         }
     }
@@ -1261,7 +1261,7 @@ class EcosistemaRouter {
         this.moduleCache.clear();
         this.preloadedModules.clear();
         
-        console.log('🧹 Router destruido');
+        // // console.log('🧹 Router destruido');
     }
 }
 

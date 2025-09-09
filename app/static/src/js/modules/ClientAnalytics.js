@@ -79,7 +79,7 @@ class ClientAnalytics {
     if (this.moduleState.isInitialized) return
 
     try {
-      console.log('🔍 Inicializando Client Analytics')
+      // // console.log('🔍 Inicializando Client Analytics')
       this.showLoader(true, 'Cargando análisis...')
 
       this.createStructure()
@@ -90,9 +90,9 @@ class ClientAnalytics {
       this.initializeCharts()
 
       this.moduleState.isInitialized = true
-      console.log('✅ Client Analytics inicializado')
+      // // console.log('✅ Client Analytics inicializado')
     } catch (error) {
-      console.error('❌ Error inicializando Client Analytics:', error)
+      // // console.error('❌ Error inicializando Client Analytics:', error)
       this.showError('Error al inicializar el módulo de análisis', error.message)
     } finally {
       this.showLoader(false)
@@ -233,7 +233,7 @@ class ClientAnalytics {
       this.moduleState.analyticsData = data
       this.renderCurrentView()
     } catch (error) {
-      console.error(`Error cargando datos para ${this.moduleState.currentView}:`, error)
+      // // console.error(`Error cargando datos para ${this.moduleState.currentView}:`, error)
       this.showError('No se pudieron cargar los datos de análisis.')
       this.elements.analyticsViewContainer.innerHTML = '<p class="text-danger">Error al cargar la vista de análisis.</p>'
     } finally {
@@ -521,7 +521,7 @@ class ClientAnalytics {
     if (this.main.notifications) {
       this.main.notifications.error(message || title, { title: message ? title : 'Error' })
     } else {
-      console.error(title, message)
+      // // console.error(title, message)
     }
   }
 
@@ -535,7 +535,7 @@ class ClientAnalytics {
     })
     this.container.innerHTML = ''
     this.moduleState.isInitialized = false
-    console.log('🧹 Client Analytics destruido')
+    // // console.log('🧹 Client Analytics destruido')
   }
 }
 

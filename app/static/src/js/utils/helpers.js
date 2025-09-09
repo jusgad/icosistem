@@ -27,7 +27,7 @@ const DateHelpers = {
 
       return new Intl.DateTimeFormat('es-CO', defaultOptions).format(dateObj)
     } catch (error) {
-      console.error('Error formatting date:', error)
+      // // console.error('Error formatting date:', error)
       return ''
     }
   },
@@ -69,7 +69,7 @@ const DateHelpers = {
 
       return `hace ${Math.floor(diffInSeconds / 31536000)} años`
     } catch (error) {
-      console.error('Error formatting relative time:', error)
+      // // console.error('Error formatting relative time:', error)
       return ''
     }
   },
@@ -155,7 +155,7 @@ const NumberHelpers = {
         maximumFractionDigits: 0
       }).format(amount)
     } catch (error) {
-      console.error('Error formatting currency:', error)
+      // // console.error('Error formatting currency:', error)
       return amount.toString()
     }
   },
@@ -578,7 +578,7 @@ const DOMHelpers = {
     try {
       return context.querySelector(selector)
     } catch (error) {
-      console.error('Invalid selector:', selector)
+      // // console.error('Invalid selector:', selector)
       return null
     }
   },
@@ -590,7 +590,7 @@ const DOMHelpers = {
     try {
       return Array.from(context.querySelectorAll(selector))
     } catch (error) {
-      console.error('Invalid selector:', selector)
+      // // console.error('Invalid selector:', selector)
       return []
     }
   },
@@ -712,7 +712,7 @@ const DOMHelpers = {
         return true
       }
     } catch (error) {
-      console.error('Error copying to clipboard:', error)
+      // // console.error('Error copying to clipboard:', error)
       return false
     }
   },
@@ -752,7 +752,7 @@ const StorageHelpers = {
       localStorage.setItem(key, JSON.stringify(item))
       return true
     } catch (error) {
-      console.error('Error setting localStorage:', error)
+      // // console.error('Error setting localStorage:', error)
       return false
     }
   },
@@ -772,7 +772,7 @@ const StorageHelpers = {
 
       return item.value
     } catch (error) {
-      console.error('Error getting localStorage:', error)
+      // // console.error('Error getting localStorage:', error)
       return null
     }
   },
@@ -782,7 +782,7 @@ const StorageHelpers = {
       localStorage.removeItem(key)
       return true
     } catch (error) {
-      console.error('Error removing localStorage:', error)
+      // // console.error('Error removing localStorage:', error)
       return false
     }
   },
@@ -795,7 +795,7 @@ const StorageHelpers = {
       sessionStorage.setItem(key, JSON.stringify(value))
       return true
     } catch (error) {
-      console.error('Error setting sessionStorage:', error)
+      // // console.error('Error setting sessionStorage:', error)
       return false
     }
   },
@@ -805,7 +805,7 @@ const StorageHelpers = {
       const item = sessionStorage.getItem(key)
       return item ? JSON.parse(item) : null
     } catch (error) {
-      console.error('Error getting sessionStorage:', error)
+      // // console.error('Error getting sessionStorage:', error)
       return null
     }
   },
@@ -815,7 +815,7 @@ const StorageHelpers = {
       sessionStorage.removeItem(key)
       return true
     } catch (error) {
-      console.error('Error removing sessionStorage:', error)
+      // // console.error('Error removing sessionStorage:', error)
       return false
     }
   },
@@ -830,7 +830,7 @@ const StorageHelpers = {
         this.getLocal(key) // Esto eliminará automáticamente los expirados
       })
     } catch (error) {
-      console.error('Error cleaning expired storage:', error)
+      // // console.error('Error cleaning expired storage:', error)
     }
   }
 }
@@ -926,7 +926,7 @@ const PerformanceHelpers = {
       const result = fn.apply(this, args)
       const end = performance.now()
 
-      console.log(`${name} took ${end - start} milliseconds`)
+      // // console.log(`${name} took ${end - start} milliseconds`)
       return result
     }
   }
@@ -1310,7 +1310,7 @@ const Helpers = {
     // Configurar eventos globales
     this.setupGlobalEvents()
 
-    console.log('🚀 Helpers initialized successfully')
+    // // console.log('🚀 Helpers initialized successfully')
   },
 
   /**

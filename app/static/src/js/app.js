@@ -154,7 +154,7 @@ App.data = {
 
             return data;
         } catch (error) {
-            console.error(`Error fetching ${type}:`, error);
+            // // console.error(`Error fetching ${type}:`, error);
             
             // Devolver datos en cache si existen
             if (cachedData) {
@@ -251,7 +251,7 @@ App.dashboard = {
         this.bindEvents();
         this.startAutoRefresh();
         
-        console.log('📊 Dashboard inicializado');
+        // // console.log('📊 Dashboard inicializado');
     },
 
     /**
@@ -269,7 +269,7 @@ App.dashboard = {
             this.renderMetrics(metrics);
             
         } catch (error) {
-            console.error('Error cargando métricas:', error);
+            // // console.error('Error cargando métricas:', error);
             App.notifications.error('Error al cargar las métricas del dashboard');
         } finally {
             App.loading.hide();
@@ -761,7 +761,7 @@ App.projects = {
         this.initKanban();
         this.bindEvents();
         
-        console.log('🚀 Sistema de proyectos inicializado');
+        // // console.log('🚀 Sistema de proyectos inicializado');
     },
 
     /**
@@ -777,7 +777,7 @@ App.projects = {
             this.renderProjectsList(projects);
             
         } catch (error) {
-            console.error('Error cargando proyectos:', error);
+            // // console.error('Error cargando proyectos:', error);
             App.notifications.error('Error al cargar los proyectos');
         }
     },
@@ -1092,7 +1092,7 @@ App.meetings = {
         this.initCalendar();
         this.bindEvents();
         
-        console.log('📅 Sistema de reuniones inicializado');
+        // // console.log('📅 Sistema de reuniones inicializado');
     },
 
     /**
@@ -1109,7 +1109,7 @@ App.meetings = {
             this.renderMeetingsList(meetings);
             
         } catch (error) {
-            console.error('Error cargando reuniones:', error);
+            // // console.error('Error cargando reuniones:', error);
             App.notifications.error('Error al cargar las reuniones');
         }
     },
@@ -1398,7 +1398,7 @@ App.chat = {
         this.initEmojiPicker();
         this.loadConversations();
         
-        console.log('💬 Sistema de chat inicializado');
+        // // console.log('💬 Sistema de chat inicializado');
     },
 
     /**
@@ -1409,7 +1409,7 @@ App.chat = {
             const conversations = await App.http.get('/conversations');
             this.renderConversationsList(conversations);
         } catch (error) {
-            console.error('Error cargando conversaciones:', error);
+            // // console.error('Error cargando conversaciones:', error);
         }
     },
 
@@ -1484,7 +1484,7 @@ App.chat = {
             const messages = await App.http.get(`/conversations/${conversationId}/messages`);
             this.renderMessages(messages);
         } catch (error) {
-            console.error('Error cargando mensajes:', error);
+            // // console.error('Error cargando mensajes:', error);
         }
     },
 
@@ -1617,7 +1617,7 @@ App.chat = {
         try {
             await App.http.post(`/conversations/${conversationId}/read`);
         } catch (error) {
-            console.warn('Error marcando como leído:', error);
+            // console.warn('Error marcando como leído:', error);
         }
     },
 
@@ -1727,7 +1727,7 @@ App.initEcosystem = function() {
     // Vincular eventos específicos del WebSocket para el ecosistema
     this.bindEcosystemWebSocketEvents();
     
-    console.log('🌱 Funcionalidades del ecosistema inicializadas');
+    // // console.log('🌱 Funcionalidades del ecosistema inicializadas');
 };
 
 /**

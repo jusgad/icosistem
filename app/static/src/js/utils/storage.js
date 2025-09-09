@@ -25,7 +25,7 @@ const StorageUtils = {
       storage.removeItem(x)
       return true
     } catch (e) {
-      console.warn(`StorageUtils: El almacenamiento tipo '${type}' no está disponible o está deshabilitado.`, e)
+      // console.warn(`StorageUtils: El almacenamiento tipo '${type}' no está disponible o está deshabilitado.`, e)
       return false
     }
   },
@@ -45,7 +45,7 @@ const StorageUtils = {
       window[type].setItem(key, String(value))
       return true
     } catch (e) {
-      console.error(`StorageUtils: Error al guardar en '${type}' con clave '${key}'.`, e)
+      // // console.error(`StorageUtils: Error al guardar en '${type}' con clave '${key}'.`, e)
       return false
     }
   },
@@ -63,7 +63,7 @@ const StorageUtils = {
     try {
       return window[type].getItem(key)
     } catch (e) {
-      console.error(`StorageUtils: Error al obtener de '${type}' con clave '${key}'.`, e)
+      // // console.error(`StorageUtils: Error al obtener de '${type}' con clave '${key}'.`, e)
       return null
     }
   },
@@ -84,7 +84,7 @@ const StorageUtils = {
       window[type].setItem(key, jsonString)
       return true
     } catch (e) {
-      console.error(`StorageUtils: Error al guardar JSON en '${type}' con clave '${key}'.`, e)
+      // // console.error(`StorageUtils: Error al guardar JSON en '${type}' con clave '${key}'.`, e)
       return false
     }
   },
@@ -106,7 +106,7 @@ const StorageUtils = {
       }
       return JSON.parse(jsonString)
     } catch (e) {
-      console.error(`StorageUtils: Error al obtener JSON de '${type}' con clave '${key}'.`, e)
+      // // console.error(`StorageUtils: Error al obtener JSON de '${type}' con clave '${key}'.`, e)
       // Si falla el parseo, podría ser útil remover el item corrupto
       // this.remove(key, type);
       return null
@@ -127,7 +127,7 @@ const StorageUtils = {
       window[type].removeItem(key)
       return true
     } catch (e) {
-      console.error(`StorageUtils: Error al eliminar de '${type}' con clave '${key}'.`, e)
+      // // console.error(`StorageUtils: Error al eliminar de '${type}' con clave '${key}'.`, e)
       return false
     }
   },
@@ -146,7 +146,7 @@ const StorageUtils = {
       window[type].clear()
       return true
     } catch (e) {
-      console.error(`StorageUtils: Error al limpiar '${type}'.`, e)
+      // // console.error(`StorageUtils: Error al limpiar '${type}'.`, e)
       return false
     }
   },
@@ -224,7 +224,7 @@ const StorageUtils = {
       }
       return keys
     } catch (e) {
-      console.error(`StorageUtils: Error al obtener todas las claves de '${type}'.`, e)
+      // // console.error(`StorageUtils: Error al obtener todas las claves de '${type}'.`, e)
       return []
     }
   },
@@ -248,7 +248,7 @@ const StorageUtils = {
       }
       return parseFloat((totalBytes / 1024).toFixed(2))
     } catch (e) {
-      console.error(`StorageUtils: Error al calcular el uso de '${type}'.`, e)
+      // // console.error(`StorageUtils: Error al calcular el uso de '${type}'.`, e)
       return -1
     }
   }

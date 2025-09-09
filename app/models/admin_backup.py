@@ -41,20 +41,20 @@ from .user import User
     # CAMPOS BÁSICOS DE AUTENTICACIÓN
     # ====================================
     
-    email = Column(String(120), unique=True, nullable=False, index=True,
-                  doc="Email único del usuario")
+email = Column(String(120), unique=True, nullable=False, index=True,
+               doc="Email único del usuario")
     
-    password_hash = Column(String(255), nullable=False,
-                          doc="Hash de la contraseña")
+password_hash = Column(String(255), nullable=False,
+                      doc="Hash de la contraseña")
     
-    is_active = Column(Boolean, default=True, nullable=False, index=True,
-                      doc="Indica si el usuario está activo")
+is_active = Column(Boolean, default=True, nullable=False, index=True,
+                   doc="Indica si el usuario está activo")
     
-    email_verified = Column(Boolean, default=False, nullable=False,
-                           doc="Indica si el email ha sido verificado")
+email_verified = Column(Boolean, default=False, nullable=False,
+                        doc="Indica si el email ha sido verificado")
     
-    email_verification_token = Column(String(255), nullable=True,
-                                     doc="Token para verificación de email")
+email_verification_token = Column(String(255), nullable=True,
+                                   doc="Token para verificación de email")
     
     email_verification_sent_at = Column(DateTime(timezone=True), nullable=True,
                                        doc="Fecha de envío del token de verificación")

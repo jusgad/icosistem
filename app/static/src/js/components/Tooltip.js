@@ -154,7 +154,7 @@ class TooltipComponent {
      */
   init () {
     if (!this.options.content && !this.options.ajax && !this.options.template) {
-      console.warn('Tooltip: No hay contenido para mostrar')
+      // console.warn('Tooltip: No hay contenido para mostrar')
       return
     }
 
@@ -533,7 +533,7 @@ class TooltipComponent {
       try {
         content = await this.loadAjaxContent()
       } catch (error) {
-        console.error('Error loading tooltip content:', error)
+        // // console.error('Error loading tooltip content:', error)
         content = 'Error al cargar el contenido'
       }
     }

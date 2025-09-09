@@ -597,7 +597,7 @@ class AvatarComponent {
         this.options.onUpload(file, result)
       }
     } catch (error) {
-      console.error('Error uploading avatar:', error)
+      // // // console.error('Error uploading avatar:', error)
       this.showError('Error al subir la imagen')
     } finally {
       this.hideLoading()
@@ -633,7 +633,7 @@ class AvatarComponent {
         this.setStatus(data.status, data.lastSeen)
       }
     } catch (error) {
-      console.error('Error updating status:', error)
+      // // // console.error('Error updating status:', error)
     }
   }
 
@@ -716,7 +716,7 @@ class AvatarComponent {
      */
   showError (message) {
     // Implementar sistema de notificaciones
-    console.error('Avatar Error:', message)
+    // // // console.error('Avatar Error:', message)
 
     // Trigger evento para sistema de notificaciones externo
     this.dispatchEvent('avatar:error-message', { message })
@@ -771,15 +771,22 @@ class AvatarComponent {
   md5 (string) {
     // Implementación básica de MD5 o usar librería externa
     // Para producción, usar crypto-js o similar
-    function md5cycle (x, k) {
-      let a = x[0]; let b = x[1]; let c = x[2]; let d = x[3]
-      a = ff(a, b, c, d, k[0], 7, -680876936)
-      d = ff(d, a, b, c, k[1], 12, -389564586)
-      c = ff(c, d, a, b, k[2], 17, 606105819)
-      b = ff(b, c, d, a, k[3], 22, -1044525330)
-      // ... implementación completa del MD5
-      return [a, b, c, d]
-    }
+
+    // Helper function for MD5 operations - not currently used
+    // function ff (a, b, c, d, x, s, t) {
+    //   return ((a + ((b & c) | (~b & d)) + x + t) << s) | (((a + ((b & c) | (~b & d)) + x + t) & 0xffffffff) >>> (32 - s))
+    // }
+
+    // Simplified MD5 cycle - not used currently
+    // function md5cycle (x, k) {
+    //   let a = x[0]; let b = x[1]; let c = x[2]; let d = x[3]
+    //   a = ff(a, b, c, d, k[0], 7, -680876936)
+    //   d = ff(d, a, b, c, k[1], 12, -389564586)
+    //   c = ff(c, d, a, b, k[2], 17, 606105819)
+    //   b = ff(b, c, d, a, k[3], 22, -1044525330)
+    //   // ... implementación completa del MD5
+    //   return [a, b, c, d]
+    // }
 
     // Implementación simplificada para el ejemplo
     // En producción usar una librería como crypto-js

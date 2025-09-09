@@ -23,9 +23,9 @@ from urllib.parse import urlparse
 # Configuraciones específicas por ambiente
 from .base import BaseConfig
 from .development import DevelopmentConfig
-from .production import ProductionConfig
+# from .production import ProductionConfig  # Temporarily disabled
 from .testing import TestingConfig
-from .docker import DockerConfig
+# from .docker import DockerConfig  # Temporarily disabled
 
 # Importar también desde config.py de la raíz para compatibilidad
 try:
@@ -36,11 +36,11 @@ try:
     
     # Crear mapeo de compatibilidad con la estructura anterior
     config = {
-        'development': RootDevConfig,
-        'testing': RootTestConfig,
-        'production': RootProdConfig,
-        'docker': RootDockerConfig,
-        'default': RootDevConfig
+        'development': DevelopmentConfig,
+        'testing': TestingConfig,
+        # 'production': ProductionConfig,  # Temporarily disabled
+        # 'docker': DockerConfig,  # Temporarily disabled
+        'default': DevelopmentConfig
     }
     
 except ImportError:
@@ -48,8 +48,8 @@ except ImportError:
     config = {
         'development': DevelopmentConfig,
         'testing': TestingConfig,
-        'production': ProductionConfig,
-        'docker': DockerConfig,
+        # 'production': ProductionConfig,  # Temporarily disabled
+        # 'docker': DockerConfig,  # Temporarily disabled
         'default': DevelopmentConfig
     }
 
@@ -74,8 +74,8 @@ class ConfigManager:
     _config_map: dict[str, Type[BaseConfig]] = {
         'development': DevelopmentConfig,
         'testing': TestingConfig,
-        'production': ProductionConfig,
-        'docker': DockerConfig,
+        # 'production': ProductionConfig,  # Temporarily disabled
+        # 'docker': DockerConfig,  # Temporarily disabled
     }
     
     # Variables críticas que deben estar presentes

@@ -1,3 +1,4 @@
+/* global gtag */
 /**
  * Sidebar Component
  * Sistema avanzado de navegación lateral para el ecosistema de emprendimiento
@@ -144,9 +145,9 @@ class EcoSidebar {
         await this.initializeWebSocket()
       }
 
-      console.log('✅ EcoSidebar initialized successfully')
+      // // console.log('✅ EcoSidebar initialized successfully')
     } catch (error) {
-      console.error('❌ Error initializing EcoSidebar:', error)
+      // // console.error('❌ Error initializing EcoSidebar:', error)
       this.handleError(error)
     }
   }
@@ -1471,7 +1472,7 @@ class EcoSidebar {
      */
   async initializeWebSocket () {
     if (typeof io === 'undefined') {
-      console.warn('Socket.IO not available for real-time updates')
+      // console.warn('Socket.IO not available for real-time updates')
       return
     }
 
@@ -1480,12 +1481,12 @@ class EcoSidebar {
 
       this.state.socket.on('connect', () => {
         this.state.isConnected = true
-        console.log('🔗 Sidebar WebSocket connected')
+        // // console.log('🔗 Sidebar WebSocket connected')
       })
 
       this.state.socket.on('disconnect', () => {
         this.state.isConnected = false
-        console.log('🔌 Sidebar WebSocket disconnected')
+        // // console.log('🔌 Sidebar WebSocket disconnected')
       })
 
       // Eventos específicos
@@ -1501,7 +1502,7 @@ class EcoSidebar {
         this.handleUserStatusChange(data)
       })
     } catch (error) {
-      console.error('Error initializing WebSocket:', error)
+      // // console.error('Error initializing WebSocket:', error)
     }
   }
 
@@ -1523,7 +1524,7 @@ class EcoSidebar {
         this.updateNotifications(notifications)
       }
     } catch (error) {
-      console.warn('Error loading notifications:', error)
+      // console.warn('Error loading notifications:', error)
     }
   }
 
@@ -1726,7 +1727,7 @@ class EcoSidebar {
         this.state.activeItem = state.activeItem
       }
     } catch (error) {
-      console.warn('Error restoring sidebar state:', error)
+      // console.warn('Error restoring sidebar state:', error)
     }
   }
 
@@ -1828,7 +1829,7 @@ class EcoSidebar {
      * Manejo de errores
      */
   handleError (error) {
-    console.error('Sidebar error:', error)
+    // // console.error('Sidebar error:', error)
 
     if (this.config.onError) {
       this.config.onError(error)
@@ -1961,7 +1962,7 @@ class EcoSidebar {
       clearTimeout(this.searchTimeout)
     }
 
-    console.log('🧹 EcoSidebar destroyed')
+    // // console.log('🧹 EcoSidebar destroyed')
   }
 }
 

@@ -288,7 +288,7 @@ class EventEmitter {
 
   log (message) {
     if (this.enableLogging) {
-      console.log(`[EventEmitter] ${message}`)
+      // // console.log(`[EventEmitter] ${message}`)
     }
   }
 }
@@ -384,7 +384,7 @@ class EventBus extends EventEmitter {
     // Middleware de logging
     this.use((eventData) => {
       if (eventData.type.startsWith('system:')) {
-        console.warn(`[System Event] ${eventData.type}:`, eventData.args)
+        // console.warn(`[System Event] ${eventData.type}:`, eventData.args)
       }
       return true
     })
@@ -1005,7 +1005,7 @@ class EventAnalytics {
         body: JSON.stringify({ events })
       })
     } catch (error) {
-      console.error('Failed to send analytics events:', error)
+      // // console.error('Failed to send analytics events:', error)
       // Reintroducir eventos en caso de error
       this.eventQueue.unshift(...events)
     }
@@ -1352,7 +1352,7 @@ class EventPerformanceMonitor {
         this.recordMetric(eventData.type, duration)
 
         if (duration > this.slowEventThreshold) {
-          console.warn(`Slow event detected: ${eventData.type} took ${duration.toFixed(2)}ms`)
+          // console.warn(`Slow event detected: ${eventData.type} took ${duration.toFixed(2)}ms`)
         }
       }, 0)
 
@@ -1499,7 +1499,7 @@ const Events = {
 
 // Auto-inicialización
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🎯 Events system initialized')
+  // // console.log('🎯 Events system initialized')
 
   // Configurar limpieza al cerrar
   window.addEventListener('beforeunload', () => {

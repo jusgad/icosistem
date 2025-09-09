@@ -71,7 +71,7 @@ export default class AuthManager {
      * Inicializar módulo de forma asíncrona
      */
   async init () {
-    console.log('🔒 Inicializando Auth Manager (Modern)')
+    // // console.log('🔒 Inicializando Auth Manager (Modern)')
 
     try {
       this.loadSession()
@@ -79,9 +79,9 @@ export default class AuthManager {
       this.setupEventListeners()
       this.setupInterceptors()
 
-      console.log('✅ Auth Manager inicializado correctamente')
+      // // console.log('✅ Auth Manager inicializado correctamente')
     } catch (error) {
-      console.error('❌ Error inicializando Auth Manager:', error)
+      // // console.error('❌ Error inicializando Auth Manager:', error)
     }
   }
 
@@ -128,7 +128,7 @@ export default class AuthManager {
       // Verificar si el token expiró localmente
       const expiresAt = this.state.get('tokenExpiresAt')
       if (expiresAt && new Date() > expiresAt) {
-        console.log('Token expirado localmente, intentando refresh...')
+        // // console.log('Token expirado localmente, intentando refresh...')
         return await this.refreshToken()
       }
 
@@ -140,11 +140,11 @@ export default class AuthManager {
       return this.state.get('isAuthenticated')
     } catch (error) {
       if (error.name === 'AbortError') {
-        console.log('Verificación de auth cancelada')
+        // // console.log('Verificación de auth cancelada')
         return false
       }
 
-      console.warn('Error verificando estado de autenticación:', error.message)
+      // console.warn('Error verificando estado de autenticación:', error.message)
 
       if (error.response?.status === 401) {
         await this.handleUnauthorized()
@@ -228,7 +228,7 @@ export default class AuthManager {
 
       // Intentar notificar al servidor
       await this.app.http.post(this.config.endpoints.logout).catch(() => {
-        console.warn('Error notificando logout al servidor')
+        // console.warn('Error notificando logout al servidor')
       })
     } finally {
       this.clearSessionData()
@@ -260,7 +260,7 @@ export default class AuthManager {
       this.handleAuthResponse(response, true)
       return this.state.get('isAuthenticated')
     } catch (error) {
-      console.error('Error refreshing token:', error)
+      // // console.error('Error refreshing token:', error)
       await this.logout(false)
       return false
     }
@@ -563,7 +563,7 @@ export default class AuthManager {
         try {
           await this.login(credentials)
         } catch (error) {
-          console.error('Login error:', error)
+          // // console.error('Login error:', error)
         }
       })
     }
@@ -579,7 +579,7 @@ export default class AuthManager {
         try {
           await this.register(userData)
         } catch (error) {
-          console.error('Registration error:', error)
+          // // console.error('Registration error:', error)
         }
       })
     }
@@ -598,7 +598,7 @@ export default class AuthManager {
   }
 
   async onLoginError (error) {
-    console.error('Error en login:', error)
+    // // console.error('Error en login:', error)
     const message = error.response?.data?.message || error.message || 'Error al iniciar sesión'
     this.app.notifications.error(message)
   }
@@ -614,7 +614,7 @@ export default class AuthManager {
   }
 
   async onRegistrationError (error) {
-    console.error('Error en registro:', error)
+    // // console.error('Error en registro:', error)
     const message = error.response?.data?.message || error.message || 'Error al registrar la cuenta'
     this.app.notifications.error(message)
   }
@@ -682,6 +682,6 @@ export default class AuthManager {
     this.eventListeners.forEach((removeListener) => removeListener())
     this.eventListeners.clear()
 
-    console.log('🧹 Auth Manager destruido')
+    // // console.log('🧹 Auth Manager destruido')
   }
 }

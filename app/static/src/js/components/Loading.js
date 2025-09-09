@@ -52,9 +52,9 @@ class EcoLoading {
         document.body.appendChild(this.element)
       }
       // No renderizar inmediatamente, solo al llamar a show()
-      console.log('⏳ EcoLoading initialized for:', this.element || 'fullscreen')
+      // // // console.log('⏳ EcoLoading initialized for:', this.element || 'fullscreen')
     } catch (error) {
-      console.error('❌ Error initializing EcoLoading:', error)
+      // // // console.error('❌ Error initializing EcoLoading:', error)
     }
   }
 
@@ -215,7 +215,7 @@ class EcoLoading {
     if (this.element && this.element.ecoLoadingInstance) {
       delete this.element.ecoLoadingInstance
     }
-    console.log('⏳ EcoLoading destroyed for:', this.element || 'fullscreen')
+    // // // console.log('⏳ EcoLoading destroyed for:', this.element || 'fullscreen')
   }
 }
 

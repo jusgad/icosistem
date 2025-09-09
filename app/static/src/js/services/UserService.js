@@ -45,7 +45,7 @@ class UserService {
       App.events.dispatchEvent('user:loaded', userData)
       return userData
     } catch (error) {
-      console.warn('UserService: No hay usuario autenticado o error al obtenerlo.', error)
+      // console.warn('UserService: No hay usuario autenticado o error al obtenerlo.', error)
       this.currentUser = null
       App.events.dispatchEvent('user:unauthenticated')
       return null
@@ -72,7 +72,7 @@ class UserService {
       this.cache.set(cacheKey, { data: profileData, timestamp: Date.now() })
       return profileData
     } catch (error) {
-      console.error(`UserService: Error al obtener perfil para usuario ${userId}:`, error)
+      // // console.error(`UserService: Error al obtener perfil para usuario ${userId}:`, error)
       App.notifications.error('No se pudo cargar el perfil del usuario.')
       return null
     }
@@ -96,7 +96,7 @@ class UserService {
       App.events.dispatchEvent('user:profile_updated', this.currentUser)
       return updatedProfile
     } catch (error) {
-      console.error('UserService: Error al actualizar perfil:', error)
+      // // console.error('UserService: Error al actualizar perfil:', error)
       App.notifications.error(error.message || 'No se pudo actualizar el perfil.')
       return null
     }
@@ -129,7 +129,7 @@ class UserService {
       App.notifications.success('Foto de perfil actualizada.')
       return response
     } catch (error) {
-      console.error('UserService: Error al subir foto de perfil:', error)
+      // // console.error('UserService: Error al subir foto de perfil:', error)
       App.notifications.error(error.message || 'No se pudo subir la foto de perfil.')
       return null
     }
@@ -150,7 +150,7 @@ class UserService {
       App.notifications.success('Contraseña cambiada exitosamente.')
       return true
     } catch (error) {
-      console.error('UserService: Error al cambiar contraseña:', error)
+      // // console.error('UserService: Error al cambiar contraseña:', error)
       App.notifications.error(error.message || 'No se pudo cambiar la contraseña.')
       return false
     }
@@ -167,7 +167,7 @@ class UserService {
       App.notifications.info('Si el email está registrado, recibirás instrucciones para resetear tu contraseña.')
       return true
     } catch (error) {
-      console.error('UserService: Error al solicitar reseteo de contraseña:', error)
+      // // console.error('UserService: Error al solicitar reseteo de contraseña:', error)
       App.notifications.error(error.message || 'No se pudo procesar la solicitud.')
       return false
     }
@@ -188,7 +188,7 @@ class UserService {
       App.notifications.success('Contraseña reseteada exitosamente. Ya puedes iniciar sesión.')
       return true
     } catch (error) {
-      console.error('UserService: Error al resetear contraseña:', error)
+      // // console.error('UserService: Error al resetear contraseña:', error)
       App.notifications.error(error.message || 'No se pudo resetear la contraseña. El token podría ser inválido o haber expirado.')
       return false
     }
@@ -204,7 +204,7 @@ class UserService {
       const queryString = new URLSearchParams(params).toString()
       return await App.http.get(`${this.baseEndpoint}?${queryString}`)
     } catch (error) {
-      console.error('UserService: Error al listar usuarios:', error)
+      // // console.error('UserService: Error al listar usuarios:', error)
       App.notifications.error('No se pudo cargar la lista de usuarios.')
       return null
     }
@@ -221,7 +221,7 @@ class UserService {
       App.notifications.success(`Usuario ${newUser.email} creado exitosamente.`)
       return newUser
     } catch (error) {
-      console.error('UserService: Error al crear usuario:', error)
+      // // console.error('UserService: Error al crear usuario:', error)
       App.notifications.error(error.message || 'No se pudo crear el usuario.')
       return null
     }
@@ -240,7 +240,7 @@ class UserService {
       this.cache.delete(`user_profile_${userId}`) // Invalidar cache
       return updatedUser
     } catch (error) {
-      console.error(`UserService: Error al actualizar usuario ${userId}:`, error)
+      // // console.error(`UserService: Error al actualizar usuario ${userId}:`, error)
       App.notifications.error(error.message || 'No se pudo actualizar el usuario.')
       return null
     }
@@ -258,7 +258,7 @@ class UserService {
       this.cache.delete(`user_profile_${userId}`) // Invalidar cache
       return true
     } catch (error) {
-      console.error(`UserService: Error al eliminar usuario ${userId}:`, error)
+      // // console.error(`UserService: Error al eliminar usuario ${userId}:`, error)
       App.notifications.error(error.message || 'No se pudo eliminar el usuario.')
       return false
     }
@@ -279,7 +279,7 @@ class UserService {
       const response = await App.http.post(`${this.baseEndpoint}/validate-email`, payload)
       return response.is_available
     } catch (error) {
-      console.error('UserService: Error al verificar email:', error)
+      // // console.error('UserService: Error al verificar email:', error)
       // Asumir no disponible en caso de error para evitar duplicados
       return false
     }
@@ -294,7 +294,7 @@ class UserService {
     try {
       return await App.http.get(`${this.baseEndpoint}/${this.currentUser.id}/notification-preferences`)
     } catch (error) {
-      console.error('UserService: Error al obtener preferencias de notificación:', error)
+      // // console.error('UserService: Error al obtener preferencias de notificación:', error)
       return null
     }
   }
@@ -311,7 +311,7 @@ class UserService {
       App.notifications.success('Preferencias de notificación actualizadas.')
       return updatedPrefs
     } catch (error) {
-      console.error('UserService: Error al actualizar preferencias de notificación:', error)
+      // // console.error('UserService: Error al actualizar preferencias de notificación:', error)
       App.notifications.error('No se pudieron actualizar las preferencias.')
       return null
     }

@@ -76,7 +76,7 @@ class SettingsManager {
     if (this.moduleState.isInitialized) return
 
     try {
-      console.log('⚙️ Inicializando Settings Manager')
+      // // console.log('⚙️ Inicializando Settings Manager')
       this.showLoader(true, 'Cargando configuración...')
 
       this.createStructure()
@@ -87,9 +87,9 @@ class SettingsManager {
       this.renderSettings()
 
       this.moduleState.isInitialized = true
-      console.log('✅ Settings Manager inicializado')
+      // // console.log('✅ Settings Manager inicializado')
     } catch (error) {
-      console.error('❌ Error inicializando Settings Manager:', error)
+      // // console.error('❌ Error inicializando Settings Manager:', error)
       this.showError('Error al inicializar la configuración', error.message)
     } finally {
       this.showLoader(false)
@@ -262,7 +262,7 @@ class SettingsManager {
       this.moduleState.settings = { ...this.moduleState.settings, ...settings }
       this.renderSettings()
     } catch (error) {
-      console.error('Error cargando configuración:', error)
+      // // console.error('Error cargando configuración:', error)
       this.showError('No se pudo cargar la configuración.')
     }
   }
@@ -311,7 +311,7 @@ class SettingsManager {
       this.main.notifications.success('Configuración guardada correctamente.')
       this.applyTheme()
     } catch (error) {
-      console.error('Error guardando configuración:', error)
+      // // console.error('Error guardando configuración:', error)
       this.showError('No se pudo guardar la configuración.')
     } finally {
       this.showLoader(false)
@@ -346,7 +346,7 @@ class SettingsManager {
     if (this.main.notifications) {
       this.main.notifications.error(message || title, { title: message ? title : 'Error' })
     } else {
-      console.error(title, message)
+      // // console.error(title, message)
     }
   }
 
@@ -359,7 +359,7 @@ class SettingsManager {
     })
     this.container.innerHTML = ''
     this.moduleState.isInitialized = false
-    console.log('🧹 Settings Manager destruido')
+    // // console.log('🧹 Settings Manager destruido')
   }
 }
 

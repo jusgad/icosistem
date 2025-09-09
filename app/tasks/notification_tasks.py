@@ -863,7 +863,7 @@ def send_project_notification(self, project_id: int, notification_type: str, met
                     'project_id': project.id,
                     'notification_type': notification_type,
                     'action_url': f'/projects/{project.id}',
-                    **metadata if metadata else {}
+                    **(metadata if metadata else {})
                 }
             }
             

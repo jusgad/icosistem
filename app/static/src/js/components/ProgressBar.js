@@ -56,9 +56,9 @@ class EcoProgressBar {
     try {
       this.render()
       this.update() // Establecer valor inicial
-      console.log('📊 EcoProgressBar initialized successfully for element:', this.element)
+      // // console.log('📊 EcoProgressBar initialized successfully for element:', this.element)
     } catch (error) {
-      console.error('❌ Error initializing EcoProgressBar:', error)
+      // // console.error('❌ Error initializing EcoProgressBar:', error)
       this.handleError(error)
     }
   }
@@ -210,7 +210,7 @@ class EcoProgressBar {
   destroy () {
     this.element.innerHTML = ''
     this.element.classList.remove('eco-progress-bar-container', `theme-${this.config.theme}`)
-    console.log('📊 EcoProgressBar destroyed for element:', this.element)
+    // // console.log('📊 EcoProgressBar destroyed for element:', this.element)
   }
 }
 

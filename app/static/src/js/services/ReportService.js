@@ -37,7 +37,7 @@ class ReportService {
     try {
       return await App.http.get(`${this.baseEndpoint}/types`)
     } catch (error) {
-      console.error('ReportService: Error al obtener tipos de reportes:', error)
+      // // console.error('ReportService: Error al obtener tipos de reportes:', error)
       App.notifications.error('No se pudo cargar la lista de tipos de reportes.')
       return []
     }
@@ -61,7 +61,7 @@ class ReportService {
       App.notifications.info(`Solicitud de reporte "${reportType}" enviada. Te notificaremos cuando esté listo.`)
       return response // Debería incluir un ID de reporte o job
     } catch (error) {
-      console.error('ReportService: Error al solicitar generación de reporte:', error)
+      // // console.error('ReportService: Error al solicitar generación de reporte:', error)
       App.notifications.error(error.message || 'No se pudo solicitar la generación del reporte.')
       throw error
     }
@@ -76,7 +76,7 @@ class ReportService {
     try {
       return await App.http.get(`${this.baseEndpoint}/${reportId}/status`)
     } catch (error) {
-      console.warn(`ReportService: Error al verificar estado del reporte ${reportId}:`, error)
+      // console.warn(`ReportService: Error al verificar estado del reporte ${reportId}:`, error)
       // No notificar al usuario por cada fallo de chequeo, podría ser un error temporal.
       throw error
     }
@@ -91,7 +91,7 @@ class ReportService {
      */
   pollReportStatus (reportId, onComplete, onError, onProgress) {
     if (this.activeReportChecks.has(reportId)) {
-      console.warn(`ReportService: Ya se está verificando el reporte ${reportId}.`)
+      // console.warn(`ReportService: Ya se está verificando el reporte ${reportId}.`)
       return
     }
 
@@ -121,7 +121,7 @@ class ReportService {
           if (onError) onError(error)
           App.events.dispatchEvent('report:failed', { reportId, error })
         } else {
-          console.warn(`ReportService: Error en polling para reporte ${reportId}. Reintentando...`)
+          // console.warn(`ReportService: Error en polling para reporte ${reportId}. Reintentando...`)
         }
       }
     }
@@ -165,7 +165,7 @@ class ReportService {
       // App.http.download debería manejar la descarga del archivo
       await App.http.download(url, filename || `reporte_${reportId}.pdf`)
     } catch (error) {
-      console.error(`ReportService: Error al descargar reporte ${reportId}:`, error)
+      // // console.error(`ReportService: Error al descargar reporte ${reportId}:`, error)
       App.notifications.error('No se pudo descargar el reporte.')
     }
   }
@@ -180,7 +180,7 @@ class ReportService {
       const queryString = new URLSearchParams(params).toString()
       return await App.http.get(`${this.baseEndpoint}?${queryString}`)
     } catch (error) {
-      console.error('ReportService: Error al listar reportes:', error)
+      // // console.error('ReportService: Error al listar reportes:', error)
       App.notifications.error('No se pudo cargar la lista de reportes.')
       return { items: [], pagination: {} }
     }
@@ -195,7 +195,7 @@ class ReportService {
     try {
       return await App.http.get(`${this.baseEndpoint}/${reportId}`)
     } catch (error) {
-      console.error(`ReportService: Error al obtener detalles del reporte ${reportId}:`, error)
+      // // console.error(`ReportService: Error al obtener detalles del reporte ${reportId}:`, error)
       App.notifications.error('No se pudo cargar la información del reporte.')
       return null
     }
@@ -213,7 +213,7 @@ class ReportService {
       App.events.dispatchEvent('report:deleted', { reportId })
       return true
     } catch (error) {
-      console.error(`ReportService: Error al eliminar reporte ${reportId}:`, error)
+      // // console.error(`ReportService: Error al eliminar reporte ${reportId}:`, error)
       App.notifications.error(error.message || 'No se pudo eliminar el reporte.')
       return false
     }
@@ -230,7 +230,7 @@ class ReportService {
       const queryString = new URLSearchParams(filters).toString()
       return await App.http.get(`${this.analyticsEndpoint}/dashboard/${dashboardId}?${queryString}`)
     } catch (error) {
-      console.error(`ReportService: Error al obtener datos del dashboard ${dashboardId}:`, error)
+      // // console.error(`ReportService: Error al obtener datos del dashboard ${dashboardId}:`, error)
       App.notifications.error('No se pudieron cargar los datos del dashboard.')
       return null
     }
@@ -244,7 +244,7 @@ class ReportService {
     try {
       return await App.http.get(`${this.analyticsEndpoint}/dashboards`)
     } catch (error) {
-      console.error('ReportService: Error al obtener lista de dashboards:', error)
+      // // console.error('ReportService: Error al obtener lista de dashboards:', error)
       App.notifications.error('No se pudo cargar la lista de dashboards.')
       return []
     }

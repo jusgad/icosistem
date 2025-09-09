@@ -1009,7 +1009,7 @@ class DataGenerator:
                         timezone='America/Bogota',
                         meeting_type=self.fake.random_element(['video_call', 'in_person', 'phone_call']),
                         location=self.fake.address() if self.fake.boolean(chance_of_getting_true=30) else None,
-                        meeting_url=f"https://meet.google.com/{self.fake.lexify('???-????-???)}'",
+                        meeting_url=f"https://meet.google.com/{self.fake.lexify('???-????-???')}",
                         status=self.fake.random_element(['scheduled', 'completed', 'cancelled', 'postponed']),
                         agenda=self.fake.random_elements(
                             elements=[

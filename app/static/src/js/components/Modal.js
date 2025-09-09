@@ -488,7 +488,7 @@ class Modal {
         fieldHTML += '</select>'
         break
 
-      case 'checkbox':
+      case 'checkbox': {
         const checked = value ? 'checked' : ''
         fieldHTML += `
                     <div class="form-check">
@@ -505,6 +505,7 @@ class Modal {
                     </div>
                 `
         break
+      }
 
       case 'radio':
         (field.options || []).forEach((option, index) => {
@@ -783,6 +784,7 @@ class Modal {
     document.body.appendChild(this.state.backdrop)
 
     // Force reflow para activar transición
+    // eslint-disable-next-line no-unused-expressions
     this.state.backdrop.offsetHeight
     this.state.backdrop.classList.add('show')
   }
@@ -963,10 +965,11 @@ class Modal {
     switch (fieldElement.type) {
       case 'checkbox':
         return fieldElement.checked
-      case 'radio':
+      case 'radio': {
         const radioGroup = document.querySelectorAll(`[name="${fieldElement.name}"]`)
         const checkedRadio = Array.from(radioGroup).find(r => r.checked)
         return checkedRadio ? checkedRadio.value : ''
+      }
       case 'file':
         return fieldElement.files
       default:
@@ -1017,7 +1020,7 @@ class Modal {
       const content = await response.text()
       this.setContent(content)
     } catch (error) {
-      console.error('Error loading modal content:', error)
+      // // console.error('Error loading modal content:', error)
       this.setContent('<div class="alert alert-danger">Error al cargar el contenido</div>')
     } finally {
       this.hideLoading()

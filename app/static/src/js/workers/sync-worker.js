@@ -16,6 +16,8 @@
  * @updated: 2025-03-16
  */
 
+/* global importScripts, workbox, clients, self */
+
 // Importar Workbox si se usa para estrategias de reintento de red
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.5.4/workbox-sw.js')
 
@@ -29,7 +31,7 @@ const PENDING_PROJECTS_STORE = 'pending-projects'
 const PENDING_TASKS_STORE = 'pending-tasks'
 
 if (workbox) {
-  console.log('Sync Worker: Workbox cargado exitosamente!')
+  // // // console.log('Sync Worker: Workbox cargado exitosamente!')
 
   // Configurar un plugin de Background Sync para reintentar peticiones POST fallidas
   const bgSyncPlugin = new workbox.backgroundSync.BackgroundSyncPlugin(QUEUE_NAME_FAILED_REQUESTS, {
@@ -39,7 +41,7 @@ if (workbox) {
       while (entry = await queue.shiftRequest()) {
         try {
           const response = await fetch(entry.request.clone())
-          console.log('Sync Worker (Workbox): Petición reintentada y enviada:', entry.request.url)
+          // // // console.log('Sync Worker (Workbox): Petición reintentada y enviada:', entry.request.url)
           // Opcional: notificar al cliente sobre el éxito
           self.clients.matchAll().then(clients => {
             clients.forEach(client => client.postMessage({
@@ -48,7 +50,7 @@ if (workbox) {
             }))
           })
         } catch (error) {
-          console.error('Sync Worker (Workbox): Falló el reintento de la petición:', entry.request.url, error)
+          // // // console.error('Sync Worker (Workbox): Falló el reintento de la petición:', entry.request.url, error)
           // Volver a encolar la petición para reintentar más tarde
           await queue.unshiftRequest(entry)
           // Opcional: notificar al cliente sobre el fallo persistente
@@ -62,7 +64,7 @@ if (workbox) {
           throw error // Importante para que Workbox sepa que falló y reintente
         }
       }
-      console.log('Sync Worker (Workbox): Cola de peticiones fallidas procesada.')
+      // // // console.log('Sync Worker (Workbox): Cola de peticiones fallidas procesada.')
     }
   })
 
@@ -74,7 +76,7 @@ if (workbox) {
     })
   )
 } else {
-  console.warn('Sync Worker: Workbox no se pudo cargar. Algunas funcionalidades de reintento automático podrían no estar disponibles.')
+  // // console.warn('Sync Worker: Workbox no se pudo cargar. Algunas funcionalidades de reintento automático podrían no estar disponibles.')
 }
 
 // ============================================================================
@@ -82,12 +84,12 @@ if (workbox) {
 // ============================================================================
 
 self.addEventListener('install', (event) => {
-  console.log('Sync Worker: Instalado')
+  // // // console.log('Sync Worker: Instalado')
   event.waitUntil(self.skipWaiting())
 })
 
 self.addEventListener('activate', (event) => {
-  console.log('Sync Worker: Activado y listo para manejar sincronización en segundo plano.')
+  // // // console.log('Sync Worker: Activado y listo para manejar sincronización en segundo plano.')
   event.waitUntil(self.clients.claim())
 })
 
@@ -96,7 +98,7 @@ self.addEventListener('activate', (event) => {
  * y hay un tag de sincronización registrado.
  */
 self.addEventListener('sync', (event) => {
-  console.log('Sync Worker: Evento sync recibido para el tag:', event.tag)
+  // // // console.log('Sync Worker: Evento sync recibido para el tag:', event.tag)
 
   if (event.tag === SYNC_TAG_PROJECT_SUBMISSION) {
     event.waitUntil(syncNewProjects())
@@ -112,7 +114,7 @@ self.addEventListener('sync', (event) => {
  */
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'QUEUE_PROJECT_FOR_SYNC') {
-    console.log('Sync Worker: Recibido proyecto para encolar:', event.data.payload)
+    // // // console.log('Sync Worker: Recibido proyecto para encolar:', event.data.payload)
     event.waitUntil(
       addPendingData(PENDING_PROJECTS_STORE, event.data.payload)
         .then(() => registerBackgroundSync(SYNC_TAG_PROJECT_SUBMISSION))
@@ -178,11 +180,11 @@ async function addPendingData (storeName, data) {
     const request = store.add(data)
 
     request.onsuccess = () => {
-      console.log(`Sync Worker: Datos agregados a ${storeName}:`, data.id || data)
+      // // // console.log(`Sync Worker: Datos agregados a ${storeName}:`, data.id || data)
       resolve()
     }
     request.onerror = (event) => {
-      console.error(`Sync Worker: Error agregando datos a ${storeName}:`, event.target.error)
+      // // console.error(`Sync Worker: Error agregando datos a ${storeName}:`, event.target.error)
       reject(event.target.error)
     }
   })
@@ -223,7 +225,7 @@ async function deletePendingData (storeName, id) {
     const request = store.delete(id)
 
     request.onsuccess = () => {
-      console.log(`Sync Worker: Dato eliminado de ${storeName}:`, id)
+      // // console.log(`Sync Worker: Dato eliminado de ${storeName}:`, id)
       resolve()
     }
     request.onerror = (event) => {
@@ -242,12 +244,12 @@ async function registerBackgroundSync (syncTag) {
     try {
       const registration = await navigator.serviceWorker.ready
       await registration.sync.register(syncTag)
-      console.log(`Sync Worker: Sincronización en segundo plano registrada para '${syncTag}'`)
+      // // console.log(`Sync Worker: Sincronización en segundo plano registrada para '${syncTag}'`)
     } catch (err) {
-      console.error(`Sync Worker: No se pudo registrar la sincronización en segundo plano para '${syncTag}':`, err)
+      // // console.error(`Sync Worker: No se pudo registrar la sincronización en segundo plano para '${syncTag}':`, err)
     }
   } else {
-    console.warn('Sync Worker: SyncManager no soportado.')
+    // console.warn('Sync Worker: SyncManager no soportado.')
   }
 }
 
@@ -257,7 +259,7 @@ async function registerBackgroundSync (syncTag) {
 async function syncNewProjects () {
   try {
     const pendingProjects = await getAllPendingData(PENDING_PROJECTS_STORE)
-    console.log('Sync Worker: Sincronizando proyectos pendientes:', pendingProjects.length)
+    // // console.log('Sync Worker: Sincronizando proyectos pendientes:', pendingProjects.length)
 
     for (const project of pendingProjects) {
       try {
@@ -274,24 +276,24 @@ async function syncNewProjects () {
 
         if (response.ok) {
           const responseData = await response.json()
-          console.log('Sync Worker: Proyecto sincronizado exitosamente:', responseData)
+          // // console.log('Sync Worker: Proyecto sincronizado exitosamente:', responseData)
           await deletePendingData(PENDING_PROJECTS_STORE, project.id)
           notifyClient('PROJECT_SYNC_SUCCESS', { projectId: project.id, serverId: responseData.id })
         } else {
           const errorData = await response.json().catch(() => ({ message: 'Error desconocido del servidor' }))
-          console.error('Sync Worker: Falló la sincronización del proyecto:', project.id, response.status, errorData)
+          // // console.error('Sync Worker: Falló la sincronización del proyecto:', project.id, response.status, errorData)
           notifyClient('PROJECT_SYNC_FAILURE', { projectId: project.id, status: response.status, error: errorData.message })
           // No eliminar, se reintentará en la próxima sincronización o manualmente
         }
       } catch (error) {
-        console.error('Sync Worker: Error de red sincronizando proyecto:', project.id, error)
+        // // console.error('Sync Worker: Error de red sincronizando proyecto:', project.id, error)
         notifyClient('PROJECT_SYNC_NETWORK_ERROR', { projectId: project.id, error: error.message })
         // No eliminar, se reintentará
       }
     }
     showSyncNotification('Proyectos Sincronizados', 'Todos los proyectos pendientes han sido enviados al servidor.')
   } catch (error) {
-    console.error('Sync Worker: Error procesando la cola de proyectos:', error)
+    // // console.error('Sync Worker: Error procesando la cola de proyectos:', error)
     showSyncNotification('Error de Sincronización', 'Hubo un problema al sincronizar los proyectos.', true)
   }
 }
@@ -303,7 +305,7 @@ async function syncNewProjects () {
 async function syncTaskUpdates () {
   // Lógica similar a syncNewProjects pero para PENDING_TASKS_STORE
   // y el endpoint /api/v1/tasks o similar.
-  console.log('Sync Worker: Sincronizando actualizaciones de tareas...')
+  // // console.log('Sync Worker: Sincronizando actualizaciones de tareas...')
   // ...
 }
 
@@ -355,4 +357,4 @@ self.addEventListener('notificationclick', (event) => {
   }
 })
 
-console.log('Sync Worker: Script cargado y escuchando eventos.')
+// // console.log('Sync Worker: Script cargado y escuchando eventos.')
